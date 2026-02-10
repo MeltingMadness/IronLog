@@ -3,14 +3,18 @@ package com.ironlog.app.di
 import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.repository.ExerciseRepositoryImpl
 import com.ironlog.app.data.repository.StatisticsRepositoryImpl
+import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.presentation.dashboard.DashboardViewModel
 import com.ironlog.app.presentation.exercises.ExerciseLibraryViewModel
 import com.ironlog.app.presentation.history.WorkoutDetailViewModel
 import com.ironlog.app.presentation.history.WorkoutHistoryViewModel
+import com.ironlog.app.presentation.plans.PlanEditorViewModel
+import com.ironlog.app.presentation.plans.TrainingPlanListViewModel
 import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
 import org.koin.android.ext.koin.androidContext
@@ -24,11 +28,13 @@ val appModule = module {
     single { get<IronLogDatabase>().workoutSessionDao() }
     single { get<IronLogDatabase>().workoutSetDao() }
     single { get<IronLogDatabase>().personalRecordDao() }
+    single { get<IronLogDatabase>().trainingPlanDao() }
 
     // Repositories
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
+    single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
 
     // ViewModels
     viewModel { ExerciseLibraryViewModel(get()) }
@@ -37,4 +43,6 @@ val appModule = module {
     viewModel { WorkoutHistoryViewModel(get()) }
     viewModel { WorkoutDetailViewModel(get(), get(), get(), get()) }
     viewModel { ExerciseStatsViewModel(get(), get(), get()) }
+    viewModel { TrainingPlanListViewModel(get(), get(), get()) }
+    viewModel { PlanEditorViewModel(get(), get(), get()) }
 }

@@ -10,6 +10,8 @@ import com.ironlog.app.presentation.dashboard.DashboardScreen
 import com.ironlog.app.presentation.exercises.ExerciseLibraryScreen
 import com.ironlog.app.presentation.history.WorkoutDetailScreen
 import com.ironlog.app.presentation.history.WorkoutHistoryScreen
+import com.ironlog.app.presentation.plans.PlanEditorScreen
+import com.ironlog.app.presentation.plans.TrainingPlanListScreen
 import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
 import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
@@ -74,6 +76,36 @@ fun IronLogNavHost(navController: NavHostController) {
             arguments = listOf(navArgument("exerciseId") { type = NavType.LongType })
         ) {
             ExerciseStatsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // Training Plans
+        composable(Screen.TrainingPlanList.route) {
+            TrainingPlanListScreen(
+                onCreatePlan = {
+                    navController.navigate(Screen.PlanEditorNew.route)
+                },
+                onEditPlan = { planId ->
+                    navController.navigate(Screen.PlanEditor.createRoute(planId))
+                },
+                onStartWorkout = { sessionId ->
+                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
+                }
+            )
+        }
+
+        composable(Screen.PlanEditorNew.route) {
+            PlanEditorScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.PlanEditor.route,
+            arguments = listOf(navArgument("planId") { type = NavType.LongType })
+        ) {
+            PlanEditorScreen(
                 onBack = { navController.popBackStack() }
             )
         }

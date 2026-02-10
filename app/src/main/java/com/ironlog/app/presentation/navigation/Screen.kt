@@ -1,6 +1,7 @@
 package com.ironlog.app.presentation.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -19,6 +20,11 @@ sealed class Screen(val route: String) {
     data object ExerciseStats : Screen("exercise_stats/{exerciseId}") {
         fun createRoute(exerciseId: Long) = "exercise_stats/$exerciseId"
     }
+    data object TrainingPlanList : Screen("plans")
+    data object PlanEditorNew : Screen("plans/new")
+    data object PlanEditor : Screen("plans/edit/{planId}") {
+        fun createRoute(planId: Long) = "plans/edit/$planId"
+    }
 }
 
 enum class BottomNavItem(
@@ -27,6 +33,7 @@ enum class BottomNavItem(
     val icon: ImageVector
 ) {
     HOME(Screen.Dashboard, "Home", Icons.Default.Home),
+    PLANS(Screen.TrainingPlanList, "Pläne", Icons.AutoMirrored.Filled.List),
     HISTORY(Screen.WorkoutHistory, "Verlauf", Icons.Default.History),
     EXERCISES(Screen.ExerciseLibrary, "Übungen", Icons.Default.FitnessCenter),
 }
