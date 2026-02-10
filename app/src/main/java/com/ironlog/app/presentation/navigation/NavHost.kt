@@ -34,7 +34,10 @@ fun IronLogNavHost(navController: NavHostController) {
 
         composable(
             route = Screen.ActiveWorkout.route,
-            arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+            arguments = listOf(
+                navArgument("sessionId") { type = NavType.LongType },
+                navArgument("planId") { type = NavType.LongType; defaultValue = 0L }
+            )
         ) {
             ActiveWorkoutScreen(
                 onWorkoutFinished = {
@@ -89,8 +92,8 @@ fun IronLogNavHost(navController: NavHostController) {
                 onEditPlan = { planId ->
                     navController.navigate(Screen.PlanEditor.createRoute(planId))
                 },
-                onStartWorkout = { sessionId ->
-                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
+                onStartWorkout = { sessionId, planId ->
+                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId, planId))
                 }
             )
         }

@@ -9,8 +9,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(val route: String) {
     data object Dashboard : Screen("dashboard")
-    data object ActiveWorkout : Screen("active_workout/{sessionId}") {
-        fun createRoute(sessionId: Long) = "active_workout/$sessionId"
+    data object ActiveWorkout : Screen("active_workout/{sessionId}?planId={planId}") {
+        fun createRoute(sessionId: Long, planId: Long = 0L): String {
+            return if (planId > 0L) {
+                "active_workout/$sessionId?planId=$planId"
+            } else {
+                "active_workout/$sessionId?planId=0"
+            }
+        }
     }
     data object ExerciseLibrary : Screen("exercises")
     data object WorkoutHistory : Screen("history")

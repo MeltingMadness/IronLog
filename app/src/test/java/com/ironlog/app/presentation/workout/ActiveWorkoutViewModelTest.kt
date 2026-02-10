@@ -8,6 +8,7 @@ import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
+import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +32,7 @@ class ActiveWorkoutViewModelTest {
     private lateinit var workoutRepo: FakeWorkoutRepository
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statsRepo: FakeStatisticsRepository
+    private lateinit var planRepo: FakeTrainingPlanRepository
 
     private val testExercise = Exercise(
         id = 1L,
@@ -47,6 +49,7 @@ class ActiveWorkoutViewModelTest {
         workoutRepo = FakeWorkoutRepository()
         exerciseRepo = FakeExerciseRepository()
         statsRepo = FakeStatisticsRepository()
+        planRepo = FakeTrainingPlanRepository()
 
         exerciseRepo.addExercise(testExercise)
         workoutRepo.addSession(
@@ -62,7 +65,7 @@ class ActiveWorkoutViewModelTest {
 
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo)
     }
 
     // --- Log Set ---

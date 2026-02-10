@@ -7,10 +7,7 @@ import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class PlanListItem(
@@ -70,27 +67,7 @@ class TrainingPlanListViewModel(
     fun startPlanWorkout(plan: TrainingPlan, onSessionCreated: (Long) -> Unit) {
         viewModelScope.launch {
             try {
-                // Create session with plan name
                 val sessionId = workoutRepository.startWorkout(plan.name)
-
-                // Pre-populate exercises by adding empty sets as placeholders
-                // The exercises will be loaded via the plan in ActiveWorkoutViewModel
-                for (exercise in plan.exercises.sortedBy { it.orderIndex }) {
-                    val ex = exerciseRepository.getExerciseById(exercise.exerciseId)
-                    if (ex != null) {
-                        // Add a placeholder set with 0 reps to register the exercise
-                        val set = com.ironlog.app.domain.model.WorkoutSet(
-                            sessionId = sessionId,
-                            exerciseId = exercise.exerciseId,
-                            setNumber = 0,
-                            reps = 0,
-                            weightKg = 0.0,
-                            completedAt = java.time.LocalDateTime.now()
-                        )
-                        workoutRepository.addSet(set)
-                    }
-                }
-
                 onSessionCreated(sessionId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

@@ -46,7 +46,7 @@ import org.koin.androidx.compose.koinViewModel
 fun TrainingPlanListScreen(
     onCreatePlan: () -> Unit,
     onEditPlan: (Long) -> Unit,
-    onStartWorkout: (Long) -> Unit,
+    onStartWorkout: (Long, Long) -> Unit,
     viewModel: TrainingPlanListViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,7 +111,7 @@ fun TrainingPlanListScreen(
                             item = item,
                             onStart = {
                                 viewModel.startPlanWorkout(item.plan) { sessionId ->
-                                    onStartWorkout(sessionId)
+                                    onStartWorkout(sessionId, item.plan.id)
                                 }
                             },
                             onClick = { onEditPlan(item.plan.id) },

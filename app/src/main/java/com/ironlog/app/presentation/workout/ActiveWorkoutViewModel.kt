@@ -9,6 +9,7 @@ import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,10 +43,12 @@ class ActiveWorkoutViewModel(
     savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val statisticsRepository: StatisticsRepository
+    private val statisticsRepository: StatisticsRepository,
+    private val trainingPlanRepository: TrainingPlanRepository
 ) : ViewModel() {
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
+    private val planId: Long = savedStateHandle["planId"] ?: 0L
 
     private val showExercisePicker = MutableStateFlow(false)
     private val showFinishDialog = MutableStateFlow(false)
@@ -75,6 +78,28 @@ class ActiveWorkoutViewModel(
 
     init {
         observeSets()
+        if (planId > 0L) {
+            loadPlanExercises()
+        }
+    }
+
+    /**
+     * Pre-populate exercises from a training plan (no sets created yet).
+     */
+    private fun loadPlanExercises() {
+        viewModelScope.launch {
+            try {
+                val plan = trainingPlanRepository.getPlanById(planId) ?: return@launch
+                for (planExercise in plan.exercises.sortedBy { it.orderIndex }) {
+                    val exercise = exerciseRepository.getExerciseById(planExercise.exerciseId)
+                    if (exercise != null) {
+                        addExercise(exercise)
+                    }
+                }
+            } catch (e: Exception) {
+                _error.value = "Plan-Übungen konnten nicht geladen werden: ${e.message}"
+            }
+        }
     }
 
     private fun observeSets() {

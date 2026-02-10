@@ -38,7 +38,7 @@ val appModule = module {
 
     // ViewModels
     viewModel { ExerciseLibraryViewModel(get()) }
-    viewModel { ActiveWorkoutViewModel(get(), get(), get(), get()) }
+    viewModel { ActiveWorkoutViewModel(get(), get(), get(), get(), get()) }
     viewModel { DashboardViewModel(get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get()) }
     viewModel { WorkoutDetailViewModel(get(), get(), get(), get()) }
