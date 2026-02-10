@@ -2,6 +2,7 @@ package com.ironlog.app.data.repository
 
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.WorkoutSession
@@ -10,7 +11,6 @@ import com.ironlog.app.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
@@ -20,7 +20,7 @@ class WorkoutRepositoryImpl(
     override suspend fun startWorkout(name: String): Long {
         val now = LocalDateTime.now()
         val entity = WorkoutSessionEntity(
-            startTime = now.toEpochSecond(ZoneOffset.UTC) * 1000,
+            startTime = EpochConverter.toLong(now),
             name = name
         )
         return sessionDao.insert(entity)
@@ -29,7 +29,7 @@ class WorkoutRepositoryImpl(
     override suspend fun finishWorkout(sessionId: Long) {
         val session = sessionDao.getSessionById(sessionId) ?: return
         val now = LocalDateTime.now()
-        val nowMillis = now.toEpochSecond(ZoneOffset.UTC) * 1000
+        val nowMillis = EpochConverter.toLong(now)
         val durationSeconds = (nowMillis - session.startTime) / 1000
         sessionDao.update(
             session.copy(

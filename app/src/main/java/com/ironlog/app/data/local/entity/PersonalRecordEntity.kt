@@ -31,7 +31,7 @@ data class PersonalRecordEntity(
         exerciseId = exerciseId,
         type = RecordType.safeValueOf(type),
         value = value,
-        achievedAt = Converters.longToDateTime(achievedAt)
+        achievedAt = EpochConverter.toLocalDateTime(achievedAt)
     )
 
     companion object {
@@ -40,7 +40,7 @@ data class PersonalRecordEntity(
             exerciseId = record.exerciseId,
             type = record.type.name,
             value = record.value,
-            achievedAt = Converters.dateTimeToLong(record.achievedAt)
+            achievedAt = EpochConverter.toLong(record.achievedAt)
         )
     }
 }

@@ -45,7 +45,7 @@ data class WorkoutSetEntity(
         reps = reps,
         weightKg = weightKg,
         isWarmup = isWarmup,
-        completedAt = Converters.longToDateTime(completedAt)
+        completedAt = EpochConverter.toLocalDateTime(completedAt)
     )
 
     companion object {
@@ -57,7 +57,7 @@ data class WorkoutSetEntity(
             reps = set.reps,
             weightKg = set.weightKg,
             isWarmup = set.isWarmup,
-            completedAt = Converters.dateTimeToLong(set.completedAt)
+            completedAt = EpochConverter.toLong(set.completedAt)
         )
     }
 }

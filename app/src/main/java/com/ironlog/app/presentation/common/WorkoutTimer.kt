@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -21,7 +22,7 @@ fun WorkoutTimer(
     var elapsed by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(startTime) {
-        while (true) {
+        while (isActive) {
             val now = LocalDateTime.now()
             elapsed = now.toEpochSecond(ZoneOffset.UTC) - startTime.toEpochSecond(ZoneOffset.UTC)
             delay(1000)

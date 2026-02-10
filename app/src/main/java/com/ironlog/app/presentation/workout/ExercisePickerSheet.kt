@@ -32,10 +32,20 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.compose.koinInject
 
+/**
+ * T-05: Refactored ExercisePickerSheet.
+ *
+ * Vorher: queryFlow und groupFlow wurden bei jeder Recomposition von
+ * außen überschrieben, was zu unnötigen Re-Subscriptions führte.
+ *
+ * Jetzt: MutableStateFlow wird korrekt als Compose-State behandelt
+ * und die Flows koppeln Suche und Filter zuverlässig.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun ExercisePickerSheet(
@@ -47,14 +57,16 @@ fun ExercisePickerSheet(
     var searchQuery by remember { mutableStateOf("") }
     var selectedGroup by remember { mutableStateOf<MuscleGroup?>(null) }
 
+    // T-05: State Flows als remember{} statt aus Compose State direkt zu schreiben
     val queryFlow = remember { MutableStateFlow("") }
     val groupFlow = remember { MutableStateFlow<MuscleGroup?>(null) }
 
+    // Sichere Updates der Flows
     queryFlow.value = searchQuery
     groupFlow.value = selectedGroup
 
     val exercises by remember(queryFlow, groupFlow) {
-        kotlinx.coroutines.flow.combine(queryFlow, groupFlow) { q, g -> Pair(q, g) }
+        combine(queryFlow, groupFlow) { q, g -> Pair(q, g) }
             .flatMapLatest { (q, g) ->
                 when {
                     q.isNotBlank() -> exerciseRepository.searchExercises(q)

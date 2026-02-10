@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,13 +21,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -98,7 +102,8 @@ fun WorkoutHistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.workouts, key = { it.session.id }) { item ->
-                        WorkoutCard(
+                        // N-08: Swipe-to-Delete
+                        SwipeToDeleteCard(
                             item = item,
                             onClick = { onWorkoutClick(item.session.id) },
                             onDelete = { deleteSessionId = item.session.id }
@@ -135,11 +140,49 @@ fun WorkoutHistoryScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WorkoutCard(
+private fun SwipeToDeleteCard(
     item: WorkoutHistoryItem,
     onClick: () -> Unit,
     onDelete: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDelete()
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(end = 24.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Löschen",
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    ) {
+        WorkoutCard(item = item, onClick = onClick)
+    }
+}
+
+@Composable
+private fun WorkoutCard(
+    item: WorkoutHistoryItem,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -149,46 +192,47 @@ private fun WorkoutCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            // Show name if available
+            if (item.session.name.isNotBlank()) {
                 Text(
-                    // M-03: Locale-aware
-                    text = item.session.startTime.format(DateFormatting.DATE_FULL),
+                    text = item.session.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
-                Text(
-                    // M-03: Locale-aware
-                    text = item.session.startTime.format(DateFormatting.TIME_SHORT) + " Uhr",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                val durationMin = item.session.durationSeconds / 60
-                Text(
-                    text = "${durationMin} min · ${item.exerciseCount} Übungen · ${item.setCount} Sätze",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (item.totalVolume > 0) {
-                    Text(
-                        text = "Volumen: ${"%.0f".format(item.totalVolume)} kg",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Spacer(modifier = Modifier.height(2.dp))
             }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Löschen",
-                    tint = MaterialTheme.colorScheme.error
+            Text(
+                // M-03: Locale-aware
+                text = item.session.startTime.format(DateFormatting.DATE_FULL),
+                style = if (item.session.name.isNotBlank()) MaterialTheme.typography.bodyMedium
+                        else MaterialTheme.typography.titleMedium,
+                fontWeight = if (item.session.name.isBlank()) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (item.session.name.isNotBlank()) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                // M-03: Locale-aware
+                text = item.session.startTime.format(DateFormatting.TIME_SHORT) + " Uhr",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            val durationMin = item.session.durationSeconds / 60
+            Text(
+                text = "${durationMin} min · ${item.exerciseCount} Übungen · ${item.setCount} Sätze",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (item.totalVolume > 0) {
+                Text(
+                    text = "Volumen: ${"%.0f".format(item.totalVolume)} kg",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

@@ -54,6 +54,10 @@ class WorkoutDetailViewModel(
                 val grouped = sets.groupBy { it.exerciseId }
                 val exercises = grouped.map { (exerciseId, exerciseSets) ->
                     val exercise = exerciseRepository.getExerciseById(exerciseId)
+                    val records = try {
+                        statisticsRepository.getRecentRecordsList()
+                            .filter { it.exerciseId == exerciseId }
+                    } catch (_: Exception) { emptyList() }
                     ExerciseDetail(
                         exercise = exercise ?: Exercise(
                             id = exerciseId,
@@ -61,7 +65,8 @@ class WorkoutDetailViewModel(
                             primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
                             category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                         ),
-                        sets = exerciseSets.sortedBy { it.setNumber }
+                        sets = exerciseSets.sortedBy { it.setNumber },
+                        records = records
                     )
                 }
 

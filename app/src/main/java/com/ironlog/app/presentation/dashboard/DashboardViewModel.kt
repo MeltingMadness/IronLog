@@ -61,12 +61,12 @@ class DashboardViewModel(
 
                 // This week
                 val startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                val startOfWeekMillis = startOfWeek.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000
+                val startOfWeekMillis = com.ironlog.app.data.local.entity.EpochConverter.toLong(startOfWeek.atStartOfDay())
                 val workoutsThisWeek = workoutRepository.getCompletedSessionCountSince(startOfWeekMillis)
 
                 // This month
                 val startOfMonth = now.withDayOfMonth(1)
-                val startOfMonthMillis = startOfMonth.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000
+                val startOfMonthMillis = com.ironlog.app.data.local.entity.EpochConverter.toLong(startOfMonth.atStartOfDay())
                 val workoutsThisMonth = workoutRepository.getCompletedSessionCountSince(startOfMonthMillis)
 
                 // Streak

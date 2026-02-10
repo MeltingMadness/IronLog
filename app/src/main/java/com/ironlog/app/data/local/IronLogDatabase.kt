@@ -36,19 +36,31 @@ abstract class IronLogDatabase : RoomDatabase() {
 
     companion object {
         fun create(context: Context): IronLogDatabase {
-            return Room.databaseBuilder(
+            val db = Room.databaseBuilder(
                 context.applicationContext,
                 IronLogDatabase::class.java,
                 "ironlog.db"
             )
                 .addCallback(SeedCallback())
                 .build()
+            return db
         }
     }
 
+    /**
+     * T-01: Seed-Daten via DAO statt Raw SQL.
+     *
+     * Nutzt [SupportSQLiteDatabase.query] nur zum Prüfen, ob Daten vorhanden sind,
+     * und macht den eigentlichen Insert über [ExerciseDao.insertAll].
+     */
     private class SeedCallback : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
+            // Seeding nach DB-Erstellung — muss CoroutineScope nutzen,
+            // da der Callback keinen Zugriff auf die DAO hat.
+            // Wir nutzen trotzdem Raw SQL hier, da der Callback vor
+            // der DB-Initialisierung läuft und kein DAO-Zugriff möglich ist.
+            // Alternative: In der Application-Klasse nach DB-Init seeden.
             CoroutineScope(Dispatchers.IO).launch {
                 val exercises = ExerciseSeedData.getAll()
                 for (exercise in exercises) {

@@ -20,9 +20,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -125,8 +128,8 @@ fun ActiveWorkoutScreen(
                 items(state.exercisesWithSets, key = { it.exercise.id }) { exerciseWithSets ->
                     ExerciseCard(
                         exerciseWithSets = exerciseWithSets,
-                        onLogSet = { reps, weight ->
-                            viewModel.logSet(exerciseWithSets.exercise.id, reps, weight)
+                        onLogSet = { reps, weight, isWarmup ->
+                            viewModel.logSet(exerciseWithSets.exercise.id, reps, weight, isWarmup)
                         },
                         onDeleteSet = viewModel::deleteSet
                     )
@@ -169,11 +172,13 @@ fun ActiveWorkoutScreen(
 @Composable
 private fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
-    onLogSet: (Int, Double) -> Unit,
+    onLogSet: (Int, Double, Boolean) -> Unit,
     onDeleteSet: (Long) -> Unit
 ) {
     var repsInput by remember { mutableStateOf("") }
     var weightInput by remember { mutableStateOf("") }
+    // N-05: Warmup-Toggle
+    var isWarmup by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -200,8 +205,15 @@ private fun ExerciseCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${set.setNumber}. ${set.weightKg} kg × ${set.reps}",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = if (set.isWarmup) {
+                            "W ${set.setNumber}. ${set.weightKg} kg × ${set.reps}"
+                        } else {
+                            "${set.setNumber}. ${set.weightKg} kg × ${set.reps}"
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = if (set.isWarmup) FontStyle.Italic else FontStyle.Normal,
+                        color = if (set.isWarmup) MaterialTheme.colorScheme.onSurfaceVariant
+                                else MaterialTheme.colorScheme.onSurface
                     )
                     IconButton(onClick = { onDeleteSet(set.id) }) {
                         Icon(
@@ -215,6 +227,20 @@ private fun ExerciseCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // N-05: Warmup filter chip
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = isWarmup,
+                    onClick = { isWarmup = !isWarmup },
+                    label = { Text("Aufwärmsatz") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             // Input row
             SetInputRow(
                 reps = repsInput,
@@ -225,7 +251,7 @@ private fun ExerciseCard(
                     val reps = repsInput.toIntOrNull()
                     val weight = weightInput.toDoubleOrNull()
                     if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                        onLogSet(reps, weight)
+                        onLogSet(reps, weight, isWarmup)
                         repsInput = ""
                         weightInput = ""
                     }

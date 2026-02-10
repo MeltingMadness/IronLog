@@ -1,6 +1,8 @@
 package com.ironlog.app.presentation.exercises
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +46,7 @@ import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ExerciseLibraryScreen(
     onExerciseClick: (Long) -> Unit,
@@ -117,6 +119,10 @@ fun ExerciseLibraryScreen(
                     )
                 }
             } else {
+                // N-09: Delete custom exercise state
+                var deleteExerciseId by remember { mutableStateOf<Long?>(null) }
+                var deleteExerciseName by remember { mutableStateOf("") }
+
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(state.exercises, key = { it.id }) { exercise ->
                         ListItem(
@@ -124,9 +130,49 @@ fun ExerciseLibraryScreen(
                             supportingContent = {
                                 Text("${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}")
                             },
-                            modifier = Modifier.clickable { onExerciseClick(exercise.id) }
+                            trailingContent = {
+                                if (exercise.isCustom) {
+                                    Text(
+                                        "Eigene",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.tertiary
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .combinedClickable(
+                                    onClick = { onExerciseClick(exercise.id) },
+                                    onLongClick = {
+                                        if (exercise.isCustom) {
+                                            deleteExerciseId = exercise.id
+                                            deleteExerciseName = exercise.name
+                                        }
+                                    }
+                                )
                         )
                     }
+                }
+
+                // N-09: Delete confirmation dialog
+                deleteExerciseId?.let { id ->
+                    AlertDialog(
+                        onDismissRequest = { deleteExerciseId = null },
+                        title = { Text("Übung löschen?") },
+                        text = { Text("\"${deleteExerciseName}\" wird unwiderruflich gelöscht.") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.deleteCustomExercise(id)
+                                deleteExerciseId = null
+                            }) {
+                                Text("Löschen", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { deleteExerciseId = null }) {
+                                Text("Abbrechen")
+                            }
+                        }
+                    )
                 }
             }
         }
