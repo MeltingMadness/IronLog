@@ -132,7 +132,8 @@ class DashboardViewModel(
     fun startNewWorkout(onSessionCreated: (Long) -> Unit) {
         viewModelScope.launch {
             try {
-                val sessionId = workoutRepository.startWorkout()
+                val autoName = "Training ${java.time.LocalDate.now().format(com.ironlog.app.domain.util.DateFormatting.DATE_SHORT)}"
+                val sessionId = workoutRepository.startWorkout(autoName)
                 onSessionCreated(sessionId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

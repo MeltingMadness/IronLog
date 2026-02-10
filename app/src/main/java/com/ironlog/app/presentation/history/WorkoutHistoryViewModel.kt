@@ -47,7 +47,8 @@ class WorkoutHistoryViewModel(
                 .catchAndLog("WorkoutHistoryVM")
                 .collect { sessions ->
                     try {
-                        val items = sessions.map { session ->
+                        val limitedSessions = sessions.take(50)
+                        val items = limitedSessions.map { session ->
                             val exerciseCount = workoutRepository.getExerciseIdsForSession(session.id).size
                             val setCount = workoutRepository.getSetCountForSession(session.id)
                             val volume = workoutRepository.getTotalVolumeForSession(session.id)

@@ -112,8 +112,7 @@ class ExerciseStatsViewModel(
             val value = when (metric) {
                 ChartMetric.WEIGHT -> sessionSets.maxOf { it.weightKg }.toFloat()
                 ChartMetric.E1RM -> sessionSets.maxOf { set ->
-                    if (set.reps > 1) (set.weightKg * (1 + set.reps / 30.0)).toFloat()
-                    else set.weightKg.toFloat()
+                    com.ironlog.app.domain.util.WorkoutCalculations.calculateE1RM(set.weightKg, set.reps).toFloat()
                 }
                 ChartMetric.VOLUME -> sessionSets.sumOf { it.weightKg * it.reps }.toFloat()
             }

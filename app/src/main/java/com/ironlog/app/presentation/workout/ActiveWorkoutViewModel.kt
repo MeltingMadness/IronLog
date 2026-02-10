@@ -178,7 +178,7 @@ class ActiveWorkoutViewModel(
 
             // Estimated 1RM (Epley)
             if (reps > 1) {
-                val e1rm = weightKg * (1 + reps / 30.0)
+                val e1rm = com.ironlog.app.domain.util.WorkoutCalculations.calculateE1RM(weightKg, reps)
                 if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_E1RM, e1rm)) {
                     _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_E1RM))
                 }

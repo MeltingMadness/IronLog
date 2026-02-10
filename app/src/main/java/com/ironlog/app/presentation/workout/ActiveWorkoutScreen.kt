@@ -75,7 +75,10 @@ fun ActiveWorkoutScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Training") },
+                title = {
+                    val name = state.session?.name?.takeIf { it.isNotBlank() } ?: "Training"
+                    Text(name)
+                },
                 actions = {
                     TextButton(onClick = viewModel::showFinishDialog) {
                         Text("Beenden", color = MaterialTheme.colorScheme.error)
