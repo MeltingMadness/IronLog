@@ -1,0 +1,246 @@
+package com.ironlog.app.presentation.exercises
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.domain.model.ExerciseCategory
+import com.ironlog.app.domain.model.MuscleGroup
+import org.koin.androidx.compose.koinViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExerciseLibraryScreen(
+    onExerciseClick: (Long) -> Unit,
+    viewModel: ExerciseLibraryViewModel = koinViewModel()
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Übungen") })
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = viewModel::onShowAddDialog) {
+                Icon(Icons.Default.Add, contentDescription = "Übung erstellen")
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Search
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = viewModel::onSearchQueryChange,
+                label = { Text("Suchen") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                singleLine = true
+            )
+
+            // Muscle group chips
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = state.selectedMuscleGroup == null,
+                    onClick = { viewModel.onMuscleGroupSelected(null) },
+                    label = { Text("Alle") }
+                )
+                MuscleGroup.entries.forEach { group ->
+                    FilterChip(
+                        selected = state.selectedMuscleGroup == group,
+                        onClick = { viewModel.onMuscleGroupSelected(group) },
+                        label = { Text(group.displayName) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Exercise list
+            if (state.exercises.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Keine Übungen gefunden",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(state.exercises, key = { it.id }) { exercise ->
+                        ListItem(
+                            headlineContent = { Text(exercise.name) },
+                            supportingContent = {
+                                Text("${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}")
+                            },
+                            modifier = Modifier.clickable { onExerciseClick(exercise.id) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Add exercise dialog
+        if (state.showAddDialog) {
+            AddExerciseDialog(
+                onDismiss = viewModel::onDismissAddDialog,
+                onConfirm = { name, group, category ->
+                    viewModel.addCustomExercise(name, group, category)
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddExerciseDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, MuscleGroup, ExerciseCategory) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var selectedGroup by remember { mutableStateOf(MuscleGroup.BRUST) }
+    var selectedCategory by remember { mutableStateOf(ExerciseCategory.LANGHANTEL) }
+    var groupExpanded by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Neue Übung") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = groupExpanded,
+                    onExpandedChange = { groupExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedGroup.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Muskelgruppe") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = groupExpanded,
+                        onDismissRequest = { groupExpanded = false }
+                    ) {
+                        MuscleGroup.entries.forEach { group ->
+                            DropdownMenuItem(
+                                text = { Text(group.displayName) },
+                                onClick = {
+                                    selectedGroup = group
+                                    groupExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedCategory.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Kategorie") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
+                    ) {
+                        ExerciseCategory.entries.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.displayName) },
+                                onClick = {
+                                    selectedCategory = category
+                                    categoryExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (name.isNotBlank()) onConfirm(name, selectedGroup, selectedCategory) },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Erstellen")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Abbrechen")
+            }
+        }
+    )
+}
