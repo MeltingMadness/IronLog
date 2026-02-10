@@ -29,7 +29,7 @@ data class PersonalRecordEntity(
     fun toDomain(): PersonalRecord = PersonalRecord(
         id = id,
         exerciseId = exerciseId,
-        type = RecordType.valueOf(type),
+        type = RecordType.safeValueOf(type),
         value = value,
         achievedAt = Converters.longToDateTime(achievedAt)
     )

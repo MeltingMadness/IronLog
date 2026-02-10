@@ -8,6 +8,7 @@ import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -29,7 +30,8 @@ data class ExerciseStatsUiState(
     val selectedMetric: ChartMetric = ChartMetric.WEIGHT,
     val chartData: List<ChartDataPoint> = emptyList(),
     val recentSets: List<WorkoutSet> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val error: String? = null
 )
 
 class ExerciseStatsViewModel(
@@ -50,34 +52,49 @@ class ExerciseStatsViewModel(
 
     private fun loadStats() {
         viewModelScope.launch {
-            val exercise = exerciseRepository.getExerciseById(exerciseId)
-            val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
-                .filter { !it.isWarmup && it.reps > 0 }
+            try {
+                val exercise = exerciseRepository.getExerciseById(exerciseId)
+                val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
+                    .filter { !it.isWarmup && it.reps > 0 }
 
-            _uiState.value = _uiState.value.copy(
-                exercise = exercise,
-                recentSets = sets.take(50),
-                isLoading = false
-            )
+                _uiState.value = _uiState.value.copy(
+                    exercise = exercise,
+                    recentSets = sets.take(50),
+                    isLoading = false
+                )
 
-            updateChartData(sets, ChartMetric.WEIGHT)
+                updateChartData(sets, ChartMetric.WEIGHT)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Statistiken konnten nicht geladen werden: ${e.message}"
+                )
+            }
         }
     }
 
     private fun observeRecords() {
         viewModelScope.launch {
-            statisticsRepository.getRecordsForExercise(exerciseId).collect { records ->
-                _uiState.value = _uiState.value.copy(records = records)
-            }
+            statisticsRepository.getRecordsForExercise(exerciseId)
+                .catchAndLog("ExerciseStatsVM")
+                .collect { records ->
+                    _uiState.value = _uiState.value.copy(records = records)
+                }
         }
     }
 
     fun onMetricSelected(metric: ChartMetric) {
         viewModelScope.launch {
-            val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
-                .filter { !it.isWarmup && it.reps > 0 }
-            _uiState.value = _uiState.value.copy(selectedMetric = metric)
-            updateChartData(sets, metric)
+            try {
+                val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
+                    .filter { !it.isWarmup && it.reps > 0 }
+                _uiState.value = _uiState.value.copy(selectedMetric = metric)
+                updateChartData(sets, metric)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Metrik konnte nicht gewechselt werden: ${e.message}"
+                )
+            }
         }
     }
 

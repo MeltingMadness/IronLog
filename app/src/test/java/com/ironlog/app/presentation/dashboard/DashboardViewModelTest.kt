@@ -1,0 +1,194 @@
+package com.ironlog.app.presentation.dashboard
+
+import com.ironlog.app.domain.model.ExerciseCategory
+import com.ironlog.app.domain.model.MuscleGroup
+import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.fakes.FakeExerciseRepository
+import com.ironlog.app.fakes.FakeStatisticsRepository
+import com.ironlog.app.fakes.FakeWorkoutRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DashboardViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var workoutRepo: FakeWorkoutRepository
+    private lateinit var exerciseRepo: FakeExerciseRepository
+    private lateinit var statsRepo: FakeStatisticsRepository
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        workoutRepo = FakeWorkoutRepository()
+        exerciseRepo = FakeExerciseRepository()
+        statsRepo = FakeStatisticsRepository()
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun createViewModel() = DashboardViewModel(workoutRepo, statsRepo, exerciseRepo)
+
+    // --- Streak Tests ---
+
+    @Test
+    fun `Streak ist 0 bei keinen Trainings`() = runTest {
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(0, streak)
+    }
+
+    @Test
+    fun `Streak ist 1 bei Training heute`() = runTest {
+        val today = LocalDateTime.of(LocalDate.now(), LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 1, startTime = today, endTime = today.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(1, streak)
+    }
+
+    @Test
+    fun `Streak ist 1 bei Training gestern`() = runTest {
+        val yesterday = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 1, startTime = yesterday, endTime = yesterday.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(1, streak)
+    }
+
+    @Test
+    fun `Streak zaehlt aufeinanderfolgende Tage`() = runTest {
+        val today = LocalDate.now()
+        for (i in 0L..4L) {
+            val dt = LocalDateTime.of(today.minusDays(i), LocalTime.of(10, 0))
+            workoutRepo.addSession(
+                WorkoutSession(
+                    id = i + 1,
+                    startTime = dt,
+                    endTime = dt.plusHours(1),
+                    durationSeconds = 3600
+                ),
+                isActive = false
+            )
+        }
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(5, streak)
+    }
+
+    @Test
+    fun `Luecke bricht Streak`() = runTest {
+        val today = LocalDate.now()
+        // Today
+        val todayDt = LocalDateTime.of(today, LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 1, startTime = todayDt, endTime = todayDt.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+        // Yesterday
+        val yesterdayDt = LocalDateTime.of(today.minusDays(1), LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 2, startTime = yesterdayDt, endTime = yesterdayDt.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+        // 3 days ago (skip day before yesterday)
+        val threeDaysAgoDt = LocalDateTime.of(today.minusDays(3), LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 3, startTime = threeDaysAgoDt, endTime = threeDaysAgoDt.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(2, streak) // today + yesterday, gap breaks
+    }
+
+    @Test
+    fun `Streak 0 wenn letztes Training vorgestern`() = runTest {
+        val twoDaysAgo = LocalDateTime.of(LocalDate.now().minusDays(2), LocalTime.of(10, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 1, startTime = twoDaysAgo, endTime = twoDaysAgo.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(0, streak)
+    }
+
+    @Test
+    fun `Mehrere Trainings am gleichen Tag zaehlen als 1`() = runTest {
+        val today = LocalDate.now()
+        val morning = LocalDateTime.of(today, LocalTime.of(8, 0))
+        val evening = LocalDateTime.of(today, LocalTime.of(18, 0))
+        workoutRepo.addSession(
+            WorkoutSession(id = 1, startTime = morning, endTime = morning.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+        workoutRepo.addSession(
+            WorkoutSession(id = 2, startTime = evening, endTime = evening.plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        val streak = vm.calculateStreak()
+        assertEquals(1, streak)
+    }
+
+    // --- Dashboard Loading ---
+
+    @Test
+    fun `Dashboard laedt initial mit isLoading true`() = runTest {
+        val vm = createViewModel()
+        // Before advancing dispatcher
+        assertTrue(vm.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `Dashboard laedt erfolgreich`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.isLoading)
+        assertNull(vm.uiState.value.error)
+    }
+
+    // --- Start Workout ---
+
+    @Test
+    fun `startNewWorkout erstellt Session und ruft Callback`() = runTest {
+        val vm = createViewModel()
+        var receivedId: Long? = null
+
+        vm.startNewWorkout { receivedId = it }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(receivedId != null && receivedId!! > 0)
+    }
+}

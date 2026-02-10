@@ -10,5 +10,14 @@ enum class MuscleGroup(val displayName: String) {
     GESAESS("Gesäß"),
     CORE("Core"),
     UNTERARME("Unterarme"),
-    WADEN("Waden")
+    WADEN("Waden");
+
+    companion object {
+        fun safeValueOf(name: String, fallback: MuscleGroup = BRUST): MuscleGroup =
+            try {
+                valueOf(name)
+            } catch (_: IllegalArgumentException) {
+                fallback
+            }
+    }
 }

@@ -5,5 +5,14 @@ enum class ExerciseCategory(val displayName: String) {
     KURZHANTEL("Kurzhantel"),
     MASCHINE("Maschine"),
     KABEL("Kabel"),
-    EIGENGEWICHT("Eigengewicht")
+    EIGENGEWICHT("Eigengewicht");
+
+    companion object {
+        fun safeValueOf(name: String, fallback: ExerciseCategory = LANGHANTEL): ExerciseCategory =
+            try {
+                valueOf(name)
+            } catch (_: IllegalArgumentException) {
+                fallback
+            }
+    }
 }

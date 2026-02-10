@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +20,8 @@ data class ExerciseLibraryUiState(
     val exercises: List<Exercise> = emptyList(),
     val searchQuery: String = "",
     val selectedMuscleGroup: MuscleGroup? = null,
-    val showAddDialog: Boolean = false
+    val showAddDialog: Boolean = false,
+    val error: String? = null
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -30,6 +32,7 @@ class ExerciseLibraryViewModel(
     private val searchQuery = MutableStateFlow("")
     private val selectedMuscleGroup = MutableStateFlow<MuscleGroup?>(null)
     private val showAddDialog = MutableStateFlow(false)
+    private val _error = MutableStateFlow<String?>(null)
 
     private val exercises = combine(searchQuery, selectedMuscleGroup) { query, group ->
         Pair(query, group)
@@ -39,16 +42,18 @@ class ExerciseLibraryViewModel(
             group != null -> exerciseRepository.getExercisesByMuscleGroup(group)
             else -> exerciseRepository.getAllExercises()
         }
-    }
+    }.catchAndLog("ExerciseLibraryVM")
 
     val uiState: StateFlow<ExerciseLibraryUiState> = combine(
-        exercises, searchQuery, selectedMuscleGroup, showAddDialog
-    ) { exerciseList, query, group, showDialog ->
+        exercises, searchQuery, selectedMuscleGroup, showAddDialog, _error
+    ) { args ->
+        @Suppress("UNCHECKED_CAST")
         ExerciseLibraryUiState(
-            exercises = exerciseList,
-            searchQuery = query,
-            selectedMuscleGroup = group,
-            showAddDialog = showDialog
+            exercises = args[0] as List<Exercise>,
+            searchQuery = args[1] as String,
+            selectedMuscleGroup = args[2] as MuscleGroup?,
+            showAddDialog = args[3] as Boolean,
+            error = args[4] as String?
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseLibraryUiState())
 
@@ -70,21 +75,33 @@ class ExerciseLibraryViewModel(
 
     fun addCustomExercise(name: String, muscleGroup: MuscleGroup, category: ExerciseCategory) {
         viewModelScope.launch {
-            exerciseRepository.addCustomExercise(
-                Exercise(
-                    name = name,
-                    primaryMuscleGroup = muscleGroup,
-                    category = category,
-                    isCustom = true
+            try {
+                exerciseRepository.addCustomExercise(
+                    Exercise(
+                        name = name,
+                        primaryMuscleGroup = muscleGroup,
+                        category = category,
+                        isCustom = true
+                    )
                 )
-            )
-            showAddDialog.value = false
+                showAddDialog.value = false
+            } catch (e: Exception) {
+                _error.value = "Übung konnte nicht hinzugefügt werden: ${e.message}"
+            }
         }
     }
 
     fun deleteCustomExercise(id: Long) {
         viewModelScope.launch {
-            exerciseRepository.deleteCustomExercise(id)
+            try {
+                exerciseRepository.deleteCustomExercise(id)
+            } catch (e: Exception) {
+                _error.value = "Übung konnte nicht gelöscht werden: ${e.message}"
+            }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

@@ -24,7 +24,8 @@ data class WorkoutDetailUiState(
     val session: WorkoutSession? = null,
     val exercises: List<ExerciseDetail> = emptyList(),
     val totalVolume: Double = 0.0,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val error: String? = null
 )
 
 class WorkoutDetailViewModel(
@@ -45,30 +46,37 @@ class WorkoutDetailViewModel(
 
     private fun loadDetail() {
         viewModelScope.launch {
-            val session = workoutRepository.getSessionById(sessionId)
-            val sets = workoutRepository.getSetsForSessionList(sessionId)
-            val volume = workoutRepository.getTotalVolumeForSession(sessionId)
+            try {
+                val session = workoutRepository.getSessionById(sessionId)
+                val sets = workoutRepository.getSetsForSessionList(sessionId)
+                val volume = workoutRepository.getTotalVolumeForSession(sessionId)
 
-            val grouped = sets.groupBy { it.exerciseId }
-            val exercises = grouped.map { (exerciseId, exerciseSets) ->
-                val exercise = exerciseRepository.getExerciseById(exerciseId)
-                ExerciseDetail(
-                    exercise = exercise ?: Exercise(
-                        id = exerciseId,
-                        name = "Unbekannt",
-                        primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
-                        category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
-                    ),
-                    sets = exerciseSets.sortedBy { it.setNumber }
+                val grouped = sets.groupBy { it.exerciseId }
+                val exercises = grouped.map { (exerciseId, exerciseSets) ->
+                    val exercise = exerciseRepository.getExerciseById(exerciseId)
+                    ExerciseDetail(
+                        exercise = exercise ?: Exercise(
+                            id = exerciseId,
+                            name = "Unbekannt",
+                            primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
+                            category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
+                        ),
+                        sets = exerciseSets.sortedBy { it.setNumber }
+                    )
+                }
+
+                _uiState.value = WorkoutDetailUiState(
+                    session = session,
+                    exercises = exercises,
+                    totalVolume = volume,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Training-Details konnten nicht geladen werden: ${e.message}"
                 )
             }
-
-            _uiState.value = WorkoutDetailUiState(
-                session = session,
-                exercises = exercises,
-                totalVolume = volume,
-                isLoading = false
-            )
         }
     }
 }

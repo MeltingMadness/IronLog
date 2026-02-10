@@ -18,10 +18,14 @@ data class ExerciseEntity(
     fun toDomain(): Exercise = Exercise(
         id = id,
         name = name,
-        primaryMuscleGroup = MuscleGroup.valueOf(primaryMuscleGroup),
+        primaryMuscleGroup = MuscleGroup.safeValueOf(primaryMuscleGroup),
         secondaryMuscleGroups = if (secondaryMuscleGroups.isBlank()) emptyList()
-            else secondaryMuscleGroups.split(",").map { MuscleGroup.valueOf(it.trim()) },
-        category = ExerciseCategory.valueOf(category),
+            else secondaryMuscleGroups.split(",").mapNotNull { raw ->
+                val trimmed = raw.trim()
+                if (trimmed.isEmpty()) null
+                else MuscleGroup.safeValueOf(trimmed)
+            },
+        category = ExerciseCategory.safeValueOf(category),
         isCustom = isCustom
     )
 

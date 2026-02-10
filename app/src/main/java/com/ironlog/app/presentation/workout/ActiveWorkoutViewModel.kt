@@ -10,6 +10,7 @@ import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +30,8 @@ data class ActiveWorkoutUiState(
     val session: WorkoutSession? = null,
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
-    val showFinishDialog: Boolean = false
+    val showFinishDialog: Boolean = false,
+    val error: String? = null
 )
 
 sealed class WorkoutEvent {
@@ -49,6 +51,7 @@ class ActiveWorkoutViewModel(
     private val showFinishDialog = MutableStateFlow(false)
     private val exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
+    private val _error = MutableStateFlow<String?>(null)
 
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()
@@ -57,13 +60,16 @@ class ActiveWorkoutViewModel(
         workoutRepository.observeSessionById(sessionId),
         exercisesWithSets,
         showExercisePicker,
-        showFinishDialog
-    ) { session, ewsList, showPicker, showFinish ->
+        showFinishDialog,
+        _error
+    ) { args ->
+        @Suppress("UNCHECKED_CAST")
         ActiveWorkoutUiState(
-            session = session,
-            exercisesWithSets = ewsList,
-            showExercisePicker = showPicker,
-            showFinishDialog = showFinish
+            session = args[0] as WorkoutSession?,
+            exercisesWithSets = args[1] as List<ExerciseWithSets>,
+            showExercisePicker = args[2] as Boolean,
+            showFinishDialog = args[3] as Boolean,
+            error = args[4] as String?
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
@@ -73,27 +79,29 @@ class ActiveWorkoutViewModel(
 
     private fun observeSets() {
         viewModelScope.launch {
-            workoutRepository.getSetsForSession(sessionId).collect { sets ->
-                val grouped = sets.groupBy { it.exerciseId }
-                val fromSets = grouped.map { (exerciseId, exerciseSets) ->
-                    val exercise = exerciseRepository.getExerciseById(exerciseId)
-                    ExerciseWithSets(
-                        exercise = exercise ?: Exercise(
-                            id = exerciseId,
-                            name = "Unbekannt",
-                            primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
-                            category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
-                        ),
-                        sets = exerciseSets.sortedBy { it.setNumber }
-                    )
+            workoutRepository.getSetsForSession(sessionId)
+                .catchAndLog("ActiveWorkoutVM")
+                .collect { sets ->
+                    val grouped = sets.groupBy { it.exerciseId }
+                    val fromSets = grouped.map { (exerciseId, exerciseSets) ->
+                        val exercise = exerciseRepository.getExerciseById(exerciseId)
+                        ExerciseWithSets(
+                            exercise = exercise ?: Exercise(
+                                id = exerciseId,
+                                name = "Unbekannt",
+                                primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
+                                category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
+                            ),
+                            sets = exerciseSets.sortedBy { it.setNumber }
+                        )
+                    }
+                    // Merge with added exercises that have no sets yet
+                    val existingIds = fromSets.map { it.exercise.id }.toSet()
+                    val emptyExercises = addedExercises.value
+                        .filter { it.id !in existingIds }
+                        .map { ExerciseWithSets(exercise = it, sets = emptyList()) }
+                    exercisesWithSets.value = fromSets + emptyExercises
                 }
-                // Merge with added exercises that have no sets yet
-                val existingIds = fromSets.map { it.exercise.id }.toSet()
-                val emptyExercises = addedExercises.value
-                    .filter { it.id !in existingIds }
-                    .map { ExerciseWithSets(exercise = it, sets = emptyList()) }
-                exercisesWithSets.value = fromSets + emptyExercises
-            }
         }
     }
 
@@ -127,74 +135,94 @@ class ActiveWorkoutViewModel(
 
     fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false) {
         viewModelScope.launch {
-            val currentSets = exercisesWithSets.value
-                .find { it.exercise.id == exerciseId }
-                ?.sets ?: emptyList()
-            val setNumber = currentSets.size + 1
+            try {
+                val currentSets = exercisesWithSets.value
+                    .find { it.exercise.id == exerciseId }
+                    ?.sets ?: emptyList()
+                val setNumber = currentSets.size + 1
 
-            val set = WorkoutSet(
-                sessionId = sessionId,
-                exerciseId = exerciseId,
-                setNumber = setNumber,
-                reps = reps,
-                weightKg = weightKg,
-                isWarmup = isWarmup,
-                completedAt = LocalDateTime.now()
-            )
-            workoutRepository.addSet(set)
+                val set = WorkoutSet(
+                    sessionId = sessionId,
+                    exerciseId = exerciseId,
+                    setNumber = setNumber,
+                    reps = reps,
+                    weightKg = weightKg,
+                    isWarmup = isWarmup,
+                    completedAt = LocalDateTime.now()
+                )
+                workoutRepository.addSet(set)
 
-            // Check for personal records
-            if (!isWarmup) {
-                checkRecords(exerciseId, reps, weightKg)
+                // Check for personal records
+                if (!isWarmup) {
+                    checkRecords(exerciseId, reps, weightKg)
+                }
+            } catch (e: Exception) {
+                _error.value = "Satz konnte nicht gespeichert werden: ${e.message}"
             }
         }
     }
 
     private suspend fun checkRecords(exerciseId: Long, reps: Int, weightKg: Double) {
-        val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
+        try {
+            val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
 
-        // Max weight
-        if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_WEIGHT, weightKg)) {
-            _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_WEIGHT))
-        }
-
-        // Max reps
-        if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_REPS, reps.toDouble())) {
-            _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_REPS))
-        }
-
-        // Estimated 1RM (Epley)
-        if (reps > 1) {
-            val e1rm = weightKg * (1 + reps / 30.0)
-            if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_E1RM, e1rm)) {
-                _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_E1RM))
+            // Max weight
+            if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_WEIGHT, weightKg)) {
+                _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_WEIGHT))
             }
-        }
 
-        // Volume (weight × reps)
-        val volume = weightKg * reps
-        val allSets = statisticsRepository.getSetsForExerciseList(exerciseId)
-        // Group by session and find max session volume
-        val sessionVolumes = allSets
-            .filter { !it.isWarmup }
-            .groupBy { it.sessionId }
-            .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
-        val maxVolume = sessionVolumes.values.maxOrNull() ?: 0.0
-        if (maxVolume > 0) {
-            statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_VOLUME, maxVolume)
+            // Max reps
+            if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_REPS, reps.toDouble())) {
+                _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_REPS))
+            }
+
+            // Estimated 1RM (Epley)
+            if (reps > 1) {
+                val e1rm = weightKg * (1 + reps / 30.0)
+                if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_E1RM, e1rm)) {
+                    _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_E1RM))
+                }
+            }
+
+            // Volume (weight × reps)
+            val allSets = statisticsRepository.getSetsForExerciseList(exerciseId)
+            // Group by session and find max session volume
+            val sessionVolumes = allSets
+                .filter { !it.isWarmup }
+                .groupBy { it.sessionId }
+                .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
+            val maxVolume = sessionVolumes.values.maxOrNull() ?: 0.0
+            if (maxVolume > 0) {
+                statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_VOLUME, maxVolume)
+            }
+        } catch (e: Exception) {
+            // PR check failure should not crash the app, just log it
+            android.util.Log.w("ActiveWorkoutVM", "PR-Prüfung fehlgeschlagen: ${e.message}", e)
         }
     }
 
     fun deleteSet(setId: Long) {
         viewModelScope.launch {
-            workoutRepository.deleteSet(setId)
+            try {
+                workoutRepository.deleteSet(setId)
+            } catch (e: Exception) {
+                _error.value = "Satz konnte nicht gelöscht werden: ${e.message}"
+            }
         }
     }
 
     fun finishWorkout() {
         viewModelScope.launch {
-            workoutRepository.finishWorkout(sessionId)
-            showFinishDialog.value = false
+            try {
+                workoutRepository.finishWorkout(sessionId)
+                showFinishDialog.value = false
+            } catch (e: Exception) {
+                _error.value = "Training konnte nicht beendet werden: ${e.message}"
+            }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
