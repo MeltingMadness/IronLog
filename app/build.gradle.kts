@@ -11,15 +11,11 @@ android {
     defaultConfig {
         applicationId = "com.ironlog.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
     }
 
     buildTypes {
@@ -39,6 +35,10 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 kotlin {
@@ -79,15 +79,15 @@ dependencies {
     implementation("io.insert-koin:koin-androidx-compose:$koinVersion")
 
     // Vico Charts
-    implementation("com.patrykandpatrick.vico:compose-m3:2.0.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:2.4.3")
 
     // Core
-    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core-ktx:1.17.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("io.insert-koin:koin-test:$koinVersion")
-    testImplementation("io.mockk:mockk:1.13.14")
-    testImplementation("app.cash.turbine:turbine:1.2.0")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
 }

@@ -79,6 +79,7 @@ abstract class IronLogDatabase : RoomDatabase() {
                 "ironlog.db"
             )
                 .addMigrations(MIGRATION_1_2)
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(SeedCallback())
                 .build()
             return db
