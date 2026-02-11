@@ -30,7 +30,8 @@ class MainActivity : ComponentActivity() {
                 val showBottomBar = currentRoute in listOf(
                     Screen.Dashboard.route,
                     Screen.WorkoutHistory.route,
-                    Screen.ExerciseLibrary.route
+                    Screen.ExerciseLibrary.route,
+                    Screen.TrainingPlanList.route
                 )
 
                 Scaffold(
