@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.presentation.common.SetInputRow
 import com.ironlog.app.presentation.common.WorkoutTimer
+import com.ironlog.app.presentation.workout.PlanTarget
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -175,10 +176,21 @@ private fun ExerciseCard(
     onLogSet: (Int, Double, Boolean) -> Unit,
     onDeleteSet: (Long) -> Unit
 ) {
-    var repsInput by remember { mutableStateOf("") }
-    var weightInput by remember { mutableStateOf("") }
+    var repsInput by remember(exerciseWithSets.planTarget) {
+        mutableStateOf(exerciseWithSets.planTarget?.let {
+            if (it.targetReps > 0) it.targetReps.toString() else ""
+        } ?: "")
+    }
+    var weightInput by remember(exerciseWithSets.planTarget) {
+        mutableStateOf(exerciseWithSets.planTarget?.let {
+            if (it.targetWeightKg > 0) it.targetWeightKg.toString() else ""
+        } ?: "")
+    }
     // N-05: Warmup-Toggle
     var isWarmup by remember { mutableStateOf(false) }
+
+    val planTarget = exerciseWithSets.planTarget
+    val completedSets = exerciseWithSets.sets.count { !it.isWarmup }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -192,6 +204,30 @@ private fun ExerciseCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
+
+            // Plan target info
+            if (planTarget != null) {
+                val targetText = buildString {
+                    append("Ziel: ${planTarget.targetSets} × ${planTarget.targetReps} Wdh")
+                    if (planTarget.targetWeightKg > 0) {
+                        append(" @ ${planTarget.targetWeightKg} kg")
+                    }
+                }
+                Text(
+                    text = targetText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                // Progress
+                Text(
+                    text = if (completedSets >= planTarget.targetSets) "✓ Alle Sätze geschafft!"
+                           else "$completedSets / ${planTarget.targetSets} Sätze",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (completedSets >= planTarget.targetSets) FontWeight.Bold else FontWeight.Normal,
+                    color = if (completedSets >= planTarget.targetSets) MaterialTheme.colorScheme.tertiary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

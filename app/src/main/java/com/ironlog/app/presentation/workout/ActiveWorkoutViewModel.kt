@@ -22,9 +22,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+data class PlanTarget(
+    val targetSets: Int = 0,
+    val targetReps: Int = 0,
+    val targetWeightKg: Double = 0.0
+)
+
 data class ExerciseWithSets(
     val exercise: Exercise,
-    val sets: List<WorkoutSet>
+    val sets: List<WorkoutSet>,
+    val planTarget: PlanTarget? = null
 )
 
 data class ActiveWorkoutUiState(
@@ -55,6 +62,7 @@ class ActiveWorkoutViewModel(
     private val exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<String?>(null)
+    private val planTargets = mutableMapOf<Long, PlanTarget>()
 
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()
@@ -93,6 +101,11 @@ class ActiveWorkoutViewModel(
                 for (planExercise in plan.exercises.sortedBy { it.orderIndex }) {
                     val exercise = exerciseRepository.getExerciseById(planExercise.exerciseId)
                     if (exercise != null) {
+                        planTargets[exercise.id] = PlanTarget(
+                            targetSets = planExercise.targetSets,
+                            targetReps = planExercise.targetReps,
+                            targetWeightKg = planExercise.targetWeightKg
+                        )
                         addExercise(exercise)
                     }
                 }
@@ -117,14 +130,15 @@ class ActiveWorkoutViewModel(
                                 primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
                                 category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                             ),
-                            sets = exerciseSets.sortedBy { it.setNumber }
+                            sets = exerciseSets.sortedBy { it.setNumber },
+                            planTarget = planTargets[exerciseId]
                         )
                     }
                     // Merge with added exercises that have no sets yet
                     val existingIds = fromSets.map { it.exercise.id }.toSet()
                     val emptyExercises = addedExercises.value
                         .filter { it.id !in existingIds }
-                        .map { ExerciseWithSets(exercise = it, sets = emptyList()) }
+                        .map { ExerciseWithSets(exercise = it, sets = emptyList(), planTarget = planTargets[it.id]) }
                     exercisesWithSets.value = fromSets + emptyExercises
                 }
         }
@@ -137,7 +151,11 @@ class ActiveWorkoutViewModel(
             // Trigger UI update
             val existing = exercisesWithSets.value
             if (existing.none { it.exercise.id == exercise.id }) {
-                exercisesWithSets.value = existing + ExerciseWithSets(exercise = exercise, sets = emptyList())
+                exercisesWithSets.value = existing + ExerciseWithSets(
+                exercise = exercise,
+                sets = emptyList(),
+                planTarget = planTargets[exercise.id]
+            )
             }
         }
     }
