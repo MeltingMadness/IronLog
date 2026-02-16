@@ -1,9 +1,10 @@
-package com.ironlog.app.data.preferences
+﻿package com.ironlog.app.data.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.ReminderConfig
+import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -23,6 +24,10 @@ class AppPreferencesRepositoryImpl(
             ?.let { runCatching { WeekStart.valueOf(it) }.getOrNull() }
             ?: WeekStart.MONDAY
 
+        val themeMode = prefs[AppPreferenceKeys.THEME_MODE]
+            ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+            ?: ThemeMode.SYSTEM
+
         val reminderConfig = ReminderConfig(
             enabled = prefs[AppPreferenceKeys.REMINDER_ENABLED] ?: false,
             hour = (prefs[AppPreferenceKeys.REMINDER_HOUR] ?: ReminderConfig().hour).coerceIn(0, 23),
@@ -33,6 +38,9 @@ class AppPreferencesRepositoryImpl(
         AppPreferences(
             unitSystem = unitSystem,
             weekStart = weekStart,
+            themeMode = themeMode,
+            useDynamicColor = prefs[AppPreferenceKeys.USE_DYNAMIC_COLOR] ?: false,
+            reducedMotion = prefs[AppPreferenceKeys.REDUCED_MOTION] ?: false,
             defaultWarmupFlag = prefs[AppPreferenceKeys.DEFAULT_WARMUP_FLAG] ?: false,
             timerKeepScreenOn = prefs[AppPreferenceKeys.TIMER_KEEP_SCREEN_ON] ?: false,
             betaDiagnosticsOptIn = prefs[AppPreferenceKeys.BETA_DIAGNOSTICS_OPT_IN] ?: false,
@@ -49,6 +57,24 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateWeekStart(weekStart: WeekStart) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.WEEK_START] = weekStart.name
+        }
+    }
+
+    override suspend fun updateThemeMode(themeMode: ThemeMode) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.THEME_MODE] = themeMode.name
+        }
+    }
+
+    override suspend fun updateUseDynamicColor(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.USE_DYNAMIC_COLOR] = enabled
+        }
+    }
+
+    override suspend fun updateReducedMotion(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.REDUCED_MOTION] = enabled
         }
     }
 

@@ -1,4 +1,4 @@
-package com.ironlog.app
+﻿package com.ironlog.app
 
 import android.os.Bundle
 import android.view.WindowManager
@@ -29,13 +29,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            IronLogTheme {
-                val preferencesRepository: AppPreferencesRepository = koinInject()
-                val reminderScheduler: ReminderScheduler = koinInject()
-                val preferences by preferencesRepository.preferences.collectAsStateWithLifecycle(
-                    initialValue = AppPreferences()
-                )
+            val preferencesRepository: AppPreferencesRepository = koinInject()
+            val reminderScheduler: ReminderScheduler = koinInject()
+            val preferences by preferencesRepository.preferences.collectAsStateWithLifecycle(
+                initialValue = AppPreferences()
+            )
 
+            IronLogTheme(
+                themeMode = preferences.themeMode,
+                useDynamicColor = preferences.useDynamicColor,
+                reducedMotion = preferences.reducedMotion
+            ) {
                 LaunchedEffect(preferences.timerKeepScreenOn) {
                     if (preferences.timerKeepScreenOn) {
                         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

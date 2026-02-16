@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.statistics
+﻿package com.ironlog.app.presentation.statistics
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +39,7 @@ import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.StatCard
+import com.ironlog.app.presentation.theme.ironLogDimens
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
@@ -65,6 +66,7 @@ fun ExerciseStatsScreen(
     val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
         initialValue = AppPreferences()
     )
+    val dims = ironLogDimens
 
     LaunchedEffect(state.chartData) {
         if (state.chartData.isNotEmpty()) {
@@ -111,13 +113,13 @@ fun ExerciseStatsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(dims.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
             ) {
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = "${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}",
+                            text = "${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -141,14 +143,14 @@ fun ExerciseStatsScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                                .padding(vertical = dims.spacingXs)
                         )
                     }
                 } else {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             val maxWeight = state.records.find { it.type == RecordType.MAX_WEIGHT }
                             val maxReps = state.records.find { it.type == RecordType.MAX_REPS }
@@ -171,7 +173,7 @@ fun ExerciseStatsScreen(
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             val maxE1rm = state.records.find { it.type == RecordType.MAX_E1RM }
                             val maxVolume = state.records.find { it.type == RecordType.MAX_VOLUME }
@@ -206,13 +208,13 @@ fun ExerciseStatsScreen(
                     item {
                         Row(
                             modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             ChartMetric.entries.forEach { metric ->
                                 FilterChip(
                                     selected = state.selectedMetric == metric,
                                     onClick = { viewModel.onMetricSelected(metric) },
-                                    label = { Text(metric.displayName) }
+                                    label = { Text(stringResource(id = metric.labelRes)) }
                                 )
                             }
                         }
@@ -240,12 +242,12 @@ fun ExerciseStatsScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                                .padding(vertical = dims.spacingXs)
                         )
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(dims.spacingMd)) }
             }
         }
     }

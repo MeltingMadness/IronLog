@@ -1,10 +1,12 @@
-package com.ironlog.app.domain.util
+﻿package com.ironlog.app.domain.util
 
+import java.time.DayOfWeek
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Zentrale Datum-Formatter mit deutscher Locale.
+ * Zentrale Datum- und Zeit-Formatter mit deutscher Locale.
  * Vermeidet hardcoded Patterns in Screen-Dateien.
  */
 object DateFormatting {
@@ -21,4 +23,12 @@ object DateFormatting {
 
     /** z.B. "10.02." fuer automatische Trainingsnamen */
     val DATE_SHORT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.", DE)
+
+    fun formatClock(hour: Int, minute: Int, locale: Locale = DE): String {
+        return String.format(locale, "%02d:%02d", hour, minute)
+    }
+
+    fun dayShort(dayOfWeek: DayOfWeek, locale: Locale = DE): String {
+        return dayOfWeek.getDisplayName(TextStyle.SHORT, locale)
+    }
 }

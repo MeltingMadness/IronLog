@@ -1,4 +1,4 @@
-package com.ironlog.app.data.preferences
+﻿package com.ironlog.app.data.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
@@ -14,6 +14,9 @@ val Context.appPreferencesDataStore by preferencesDataStore(name = "app_preferen
 internal object AppPreferenceKeys {
     val UNIT_SYSTEM = stringPreferencesKey("unit_system")
     val WEEK_START = stringPreferencesKey("week_start")
+    val THEME_MODE = stringPreferencesKey("theme_mode")
+    val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
+    val REDUCED_MOTION = booleanPreferencesKey("reduced_motion")
     val DEFAULT_WARMUP_FLAG = booleanPreferencesKey("default_warmup_flag")
     val TIMER_KEEP_SCREEN_ON = booleanPreferencesKey("timer_keep_screen_on")
     val BETA_DIAGNOSTICS_OPT_IN = booleanPreferencesKey("beta_diagnostics_opt_in")

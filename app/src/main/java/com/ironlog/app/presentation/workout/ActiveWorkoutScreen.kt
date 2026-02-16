@@ -1,6 +1,7 @@
-package com.ironlog.app.presentation.workout
+﻿package com.ironlog.app.presentation.workout
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -53,6 +55,8 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.SetInputRow
 import com.ironlog.app.presentation.common.WorkoutTimer
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -69,6 +73,16 @@ fun ActiveWorkoutScreen(
     )
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val dims = ironLogDimens
+
+    var quickSelectedExerciseId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(state.exercisesWithSets) {
+        val currentIds = state.exercisesWithSets.map { it.exercise.id }.toSet()
+        if (quickSelectedExerciseId == null || quickSelectedExerciseId !in currentIds) {
+            quickSelectedExerciseId = state.exercisesWithSets.firstOrNull()?.exercise?.id
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -121,7 +135,7 @@ fun ActiveWorkoutScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     WorkoutTimer(startTime = session.startTime)
@@ -132,19 +146,19 @@ fun ActiveWorkoutScreen(
                 onClick = viewModel::showExercisePicker,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Text(
                     text = stringResource(id = R.string.workout_add_exercise),
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = dims.spacingXs)
                 )
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(16.dp)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
+                contentPadding = PaddingValues(dims.spacingMd)
             ) {
                 items(state.exercisesWithSets, key = { it.exercise.id }) { exerciseWithSets ->
                     ExerciseCard(
@@ -157,6 +171,16 @@ fun ActiveWorkoutScreen(
                     )
                 }
             }
+
+            QuickLogComposer(
+                exercisesWithSets = state.exercisesWithSets,
+                selectedExerciseId = quickSelectedExerciseId,
+                onSelectExercise = { quickSelectedExerciseId = it },
+                defaultWarmupFlag = preferences.defaultWarmupFlag,
+                onLogSet = { exerciseId, reps, weight, isWarmup ->
+                    viewModel.logSet(exerciseId, reps, weight, isWarmup)
+                }
+            )
         }
 
         if (state.showExercisePicker) {
@@ -190,12 +214,95 @@ fun ActiveWorkoutScreen(
 }
 
 @Composable
+private fun QuickLogComposer(
+    exercisesWithSets: List<ExerciseWithSets>,
+    selectedExerciseId: Long?,
+    onSelectExercise: (Long) -> Unit,
+    defaultWarmupFlag: Boolean,
+    onLogSet: (Long, Int, Double, Boolean) -> Unit
+) {
+    if (exercisesWithSets.isEmpty() || selectedExerciseId == null) return
+
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
+    var repsInput by remember(selectedExerciseId) { mutableStateOf("") }
+    var weightInput by remember(selectedExerciseId) { mutableStateOf("") }
+    var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingSm),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+        ) {
+            Text(
+                text = stringResource(id = R.string.workout_quick_log_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
+                exercisesWithSets.forEach { entry ->
+                    FilterChip(
+                        selected = selectedExerciseId == entry.exercise.id,
+                        onClick = { onSelectExercise(entry.exercise.id) },
+                        label = { Text(entry.exercise.name) }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
+                FilterChip(
+                    selected = isWarmup,
+                    onClick = { isWarmup = !isWarmup },
+                    label = { Text(stringResource(id = R.string.workout_warmup_chip)) }
+                )
+            }
+
+            SetInputRow(
+                reps = repsInput,
+                onRepsChange = { repsInput = it },
+                weight = weightInput,
+                onWeightChange = { weightInput = it },
+                onLog = {
+                    val reps = repsInput.toIntOrNull()
+                    val weight = weightInput.toDoubleOrNull()
+                    if (reps != null && reps > 0 && weight != null && weight >= 0) {
+                        onLogSet(selectedExerciseId, reps, weight, isWarmup)
+                        repsInput = ""
+                        weightInput = ""
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
 private fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
     defaultWarmupFlag: Boolean,
     onLogSet: (Int, Double, Boolean) -> Unit,
     onDeleteSet: (Long) -> Unit
 ) {
+    val dims = ironLogDimens
     val planTarget = exerciseWithSets.planTarget
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { !it.isWarmup }
@@ -207,7 +314,7 @@ private fun ExerciseCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(dims.spacingMd)) {
             Text(
                 text = exerciseWithSets.exercise.name,
                 style = MaterialTheme.typography.titleMedium,
@@ -244,7 +351,7 @@ private fun ExerciseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dims.spacingXs))
 
             if (planTarget != null && targetSetCount > 0) {
                 for (setIndex in 1..targetSetCount) {
@@ -273,7 +380,7 @@ private fun ExerciseCard(
                     LoggedSetRow(set = set, onDeleteSet = onDeleteSet)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dims.spacingXs))
 
                 var showExtraInput by remember { mutableStateOf(false) }
                 AnimatedVisibility(visible = showExtraInput) {
@@ -293,7 +400,7 @@ private fun ExerciseCard(
                     LoggedSetRow(set = set, onDeleteSet = onDeleteSet)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dims.spacingXs))
 
                 ExtraSetInput(
                     planTarget = null,
@@ -444,3 +551,5 @@ private fun ExtraSetInput(
         )
     }
 }
+
+

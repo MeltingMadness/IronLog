@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.plans
+﻿package com.ironlog.app.presentation.plans
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,6 +44,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import com.ironlog.app.presentation.workout.ExercisePickerSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -55,6 +57,7 @@ fun PlanEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val dims = ironLogDimens
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) onBack()
@@ -103,11 +106,11 @@ fun PlanEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
         ) {
             item {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(dims.spacing2))
                 OutlinedTextField(
                     value = state.planName,
                     onValueChange = viewModel::updatePlanName,
@@ -142,7 +145,7 @@ fun PlanEditorScreen(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(80.dp)) }
+            item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
         }
 
         if (state.showExercisePicker) {
@@ -169,13 +172,16 @@ private fun PlanExerciseCard(
     onRepsChange: (Int) -> Unit,
     onWeightChange: (Double) -> Unit
 ) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = surfaces.muted
         )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(dims.spacingSm)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -212,7 +218,7 @@ private fun PlanExerciseCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(

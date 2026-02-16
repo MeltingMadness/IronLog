@@ -1,7 +1,8 @@
-package com.ironlog.app.fakes
+﻿package com.ironlog.app.fakes
 
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.ReminderConfig
+import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -15,6 +16,9 @@ class FakeAppPreferencesRepository(
 
     private val state = MutableStateFlow(initial)
 
+    val current: AppPreferences
+        get() = state.value
+
     override val preferences: Flow<AppPreferences> = state.asStateFlow()
 
     override suspend fun updateUnitSystem(unitSystem: UnitSystem) {
@@ -23,6 +27,18 @@ class FakeAppPreferencesRepository(
 
     override suspend fun updateWeekStart(weekStart: WeekStart) {
         state.value = state.value.copy(weekStart = weekStart)
+    }
+
+    override suspend fun updateThemeMode(themeMode: ThemeMode) {
+        state.value = state.value.copy(themeMode = themeMode)
+    }
+
+    override suspend fun updateUseDynamicColor(enabled: Boolean) {
+        state.value = state.value.copy(useDynamicColor = enabled)
+    }
+
+    override suspend fun updateReducedMotion(enabled: Boolean) {
+        state.value = state.value.copy(reducedMotion = enabled)
     }
 
     override suspend fun updateDefaultWarmupFlag(enabled: Boolean) {

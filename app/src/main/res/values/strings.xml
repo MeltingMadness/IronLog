@@ -20,6 +20,9 @@
     <string name="dashboard_continue_workout">Training fortsetzen</string>
     <string name="dashboard_welcome_title">Willkommen bei IronLog</string>
     <string name="dashboard_welcome_subtitle">Starte dein erstes Training und tracke deinen Fortschritt.</string>
+    <string name="dashboard_command_title">Bereit fuer die naechste Session?</string>
+    <string name="dashboard_command_subtitle_idle">Starte direkt mit einem neuen Workout und logge deinen ersten Satz in Sekunden.</string>
+    <string name="dashboard_command_subtitle_active">Dein Training laeuft bereits. Setze nahtlos dort fort, wo du aufgehoert hast.</string>
     <string name="dashboard_quick_stats">Schnellstatistik</string>
     <string name="dashboard_this_week">Diese Woche</string>
     <string name="dashboard_this_month">Diesen Monat</string>
@@ -34,6 +37,7 @@
     <string name="workout_title_default">Aktives Training</string>
     <string name="workout_finish_action">Beenden</string>
     <string name="workout_add_exercise">Uebung hinzufuegen</string>
+    <string name="workout_quick_log_title">Quick Log</string>
     <string name="workout_finish_dialog_title">Training beenden?</string>
     <string name="workout_finish_dialog_text">Dein aktuelles Training wird abgeschlossen.</string>
     <string name="workout_finish_dialog_confirm">Beenden</string>
@@ -72,7 +76,7 @@
     <string name="plans_empty_title">Keine Plaene vorhanden</string>
     <string name="plans_empty_subtitle">Lege deinen ersten Trainingsplan an.</string>
     <string name="plans_delete_title">Plan loeschen?</string>
-    <string name="plans_delete_text">Plan \"%1$s\" wird dauerhaft geloescht.</string>
+    <string name="plans_delete_text">Plan "%1$s" wird dauerhaft geloescht.</string>
     <string name="plans_exercise_count">%1$d Uebungen</string>
     <string name="plans_start_cd">Plan starten</string>
 
@@ -93,7 +97,7 @@
     <string name="exercises_empty">Keine Uebungen gefunden.</string>
     <string name="exercises_custom_badge">Custom</string>
     <string name="exercises_delete_title">Uebung loeschen?</string>
-    <string name="exercises_delete_text">\"%1$s\" wird dauerhaft entfernt.</string>
+    <string name="exercises_delete_text">"%1$s" wird dauerhaft entfernt.</string>
     <string name="exercises_new_title">Neue Uebung</string>
     <string name="exercises_name_label">Name</string>
     <string name="exercises_muscle_group_label">Muskelgruppe</string>
@@ -108,12 +112,25 @@
     <string name="stats_max_volume_label">Max Volumen</string>
     <string name="stats_progress_title">Verlauf</string>
     <string name="stats_chart_min_points">Mindestens 2 Eintraege fuer den Verlauf noetig.</string>
+    <string name="stats_metric_weight">Gewicht</string>
+    <string name="stats_metric_e1rm">Geschaetztes 1RM</string>
+    <string name="stats_metric_volume">Volumen</string>
 
     <string name="settings_title">Einstellungen</string>
+    <string name="settings_section_appearance">Darstellung</string>
     <string name="settings_section_preferences">App-Verhalten</string>
     <string name="settings_section_reminder">Reminder</string>
     <string name="settings_section_data">Datenkontrolle</string>
     <string name="settings_section_incident">Beta-Feedback</string>
+
+    <string name="settings_theme_mode_title">Theme-Modus</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_dynamic_color_title">Dynamic Color</string>
+    <string name="settings_dynamic_color_subtitle">Systemfarben als Akzentpalette verwenden</string>
+    <string name="settings_reduced_motion_title">Reduzierte Animationen</string>
+    <string name="settings_reduced_motion_subtitle">Weniger Bewegungen fuer ruhigere Interaktionen</string>
 
     <string name="settings_unit_system_title">Einheitensystem</string>
     <string name="settings_unit_system_subtitle">Gewichtsanzeige fuer Workouts und Statistiken</string>

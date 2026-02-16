@@ -1,9 +1,13 @@
-package com.ironlog.app.presentation.navigation
+﻿package com.ironlog.app.presentation.navigation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -11,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ironlog.app.presentation.theme.IronLogTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -141,4 +146,45 @@ class NavigationSmokeTest {
             assertEquals(Screen.Settings.route, navController.currentBackStackEntry?.destination?.route)
         }
     }
+
+    @Test
+    fun dashboard_has_primary_action_and_settings_accessibility_label() {
+        composeRule.setContent {
+            IronLogTheme {
+                val navController = rememberNavController()
+                IronLogNavHost(navController = navController)
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("Einstellungen").assertIsDisplayed()
+
+        val hasStart = composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+        val hasContinue = composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
+        assertTrue(hasStart || hasContinue)
+    }
+
+    @Test
+    fun settings_shows_appearance_controls() {
+        lateinit var navController: NavHostController
+
+        composeRule.setContent {
+            IronLogTheme {
+                navController = rememberNavController()
+                IronLogNavHost(navController = navController)
+            }
+        }
+
+        composeRule.runOnIdle {
+            navController.navigate(Screen.Settings.route)
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Darstellung").assertIsDisplayed()
+        composeRule.onNodeWithText("Theme-Modus").assertIsDisplayed()
+        composeRule.onNodeWithText("Dynamic Color").assertIsDisplayed()
+        composeRule.onNodeWithText("Reduzierte Animationen").assertIsDisplayed()
+    }
 }
+

@@ -1,4 +1,4 @@
-package com.ironlog.app.domain.model
+﻿package com.ironlog.app.domain.model
 
 import java.time.DayOfWeek
 
@@ -10,6 +10,12 @@ enum class UnitSystem {
 enum class WeekStart {
     MONDAY,
     SUNDAY
+}
+
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK
 }
 
 data class ReminderConfig(
@@ -26,6 +32,9 @@ data class ReminderConfig(
 data class AppPreferences(
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     val weekStart: WeekStart = WeekStart.MONDAY,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val useDynamicColor: Boolean = false,
+    val reducedMotion: Boolean = false,
     val defaultWarmupFlag: Boolean = false,
     val timerKeepScreenOn: Boolean = false,
     val betaDiagnosticsOptIn: Boolean = false,

@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.plans
+﻿package com.ironlog.app.presentation.plans
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -40,9 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -56,6 +57,7 @@ fun TrainingPlanListScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var deletePlanId by remember { mutableStateOf<Long?>(null) }
     var deletePlanName by remember { mutableStateOf("") }
+    val dims = ironLogDimens
 
     Scaffold(
         topBar = {
@@ -87,7 +89,7 @@ fun TrainingPlanListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(32.dp),
+                        .padding(dims.spacingXl),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -96,7 +98,7 @@ fun TrainingPlanListScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
                     Text(
                         text = stringResource(id = R.string.plans_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
@@ -110,8 +112,8 @@ fun TrainingPlanListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(dims.spacingMd),
+                    verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
                     items(state.plans, key = { it.plan.id }) { item ->
                         PlanCard(
@@ -128,7 +130,7 @@ fun TrainingPlanListScreen(
                             }
                         )
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
                 }
             }
         }
@@ -167,6 +169,9 @@ private fun PlanCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,10 +180,10 @@ private fun PlanCard(
                 onLongClick = onLongClick
             ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = surfaces.muted
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(dims.spacingMd)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -206,9 +211,9 @@ private fun PlanCard(
             }
 
             if (item.exerciseNames.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dims.spacingXs))
                 Text(
-                    text = item.exerciseNames.joinToString(" � "),
+                    text = item.exerciseNames.joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

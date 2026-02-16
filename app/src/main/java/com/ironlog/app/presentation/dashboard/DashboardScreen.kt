@@ -1,21 +1,21 @@
-package com.ironlog.app.presentation.dashboard
+﻿package com.ironlog.app.presentation.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,12 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.presentation.common.StatCard
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +54,7 @@ fun DashboardScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val dims = ironLogDimens
 
     LaunchedEffect(Unit) {
         viewModel.loadDashboard()
@@ -91,90 +92,32 @@ fun DashboardScreen(
             ) {
                 CircularProgressIndicator()
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (state.activeSession != null) {
-                    Button(
-                        onClick = { state.activeSession?.let { onContinueWorkout(it.id) } },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary
-                        )
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Text(
-                            text = stringResource(id = R.string.dashboard_continue_workout),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.startNewWorkout(onStartWorkout) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp)
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Text(
-                            text = stringResource(id = R.string.dashboard_start_workout),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
+            return@Scaffold
+        }
 
-                val isFirstTime = state.workoutsThisWeek == 0 &&
-                    state.workoutsThisMonth == 0 &&
-                    state.currentStreak == 0 &&
-                    state.lastWorkout == null
-
-                if (isFirstTime) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.dashboard_welcome_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = stringResource(id = R.string.dashboard_welcome_subtitle),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-
-                Text(
-                    text = stringResource(id = R.string.dashboard_quick_stats),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
+        ) {
+            item {
+                CommandCenterCard(
+                    hasActiveSession = state.activeSession != null,
+                    onStartWorkout = { viewModel.startNewWorkout(onStartWorkout) },
+                    onContinueWorkout = { state.activeSession?.let { onContinueWorkout(it.id) } }
                 )
+            }
 
+            item {
+                SectionTitle(text = stringResource(id = R.string.dashboard_quick_stats))
+            }
+
+            item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
                     StatCard(
                         label = stringResource(id = R.string.dashboard_this_week),
@@ -192,93 +135,185 @@ fun DashboardScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+            }
 
-                Text(
-                    text = stringResource(id = R.string.dashboard_recent_records),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            item {
+                SectionTitle(text = stringResource(id = R.string.dashboard_recent_records))
+            }
 
-                if (state.recentRecords.isNotEmpty()) {
-                    state.recentRecords.forEach { (record, exerciseName) ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(
-                                        text = exerciseName,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = record.type.displayName,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                                Text(
-                                    text = formatRecordValue(record.type.name, record.value),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                } else {
+            if (state.recentRecords.isEmpty()) {
+                item {
                     Text(
                         text = stringResource(id = R.string.dashboard_no_records),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
-                state.lastWorkout?.let { workout ->
-                    Text(
-                        text = stringResource(id = R.string.dashboard_last_workout),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+            } else {
+                items(state.recentRecords) { (record, exerciseName) ->
+                    RecordCard(
+                        exerciseName = exerciseName,
+                        recordType = record.type.displayName,
+                        recordValue = formatRecordValue(record.type.name, record.value)
                     )
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = workout.startTime.format(DateFormatting.DATE_TIME),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            val durationMin = workout.durationSeconds / 60
-                            Text(
-                                text = stringResource(
-                                    id = R.string.dashboard_last_workout_meta,
-                                    durationMin,
-                                    state.lastWorkoutExerciseCount
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(80.dp))
+            state.lastWorkout?.let { workout ->
+                item {
+                    SectionTitle(text = stringResource(id = R.string.dashboard_last_workout))
+                }
+                item {
+                    LastWorkoutCard(
+                        dateTime = workout.startTime.format(DateFormatting.DATE_TIME),
+                        durationMin = (workout.durationSeconds / 60).toInt(),
+                        exerciseCount = state.lastWorkoutExerciseCount
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(dims.spacingXl))
             }
         }
     }
+}
+
+@Composable
+private fun CommandCenterCard(
+    hasActiveSession: Boolean,
+    onStartWorkout: () -> Unit,
+    onContinueWorkout: () -> Unit
+) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingLg),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+        ) {
+            Text(
+                text = stringResource(id = R.string.dashboard_command_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (hasActiveSession) {
+                    stringResource(id = R.string.dashboard_command_subtitle_active)
+                } else {
+                    stringResource(id = R.string.dashboard_command_subtitle_idle)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Button(
+                onClick = if (hasActiveSession) onContinueWorkout else onStartWorkout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(dims.spacingXl + dims.spacingLg)
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Text(
+                    text = if (hasActiveSession) {
+                        stringResource(id = R.string.dashboard_continue_workout)
+                    } else {
+                        stringResource(id = R.string.dashboard_start_workout)
+                    },
+                    modifier = Modifier.padding(start = dims.spacingXs),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordCard(
+    exerciseName: String,
+    recordType: String,
+    recordValue: String
+) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = surfaces.muted)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingSm),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = exerciseName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = recordType,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = recordValue,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun LastWorkoutCard(
+    dateTime: String,
+    durationMin: Int,
+    exerciseCount: Int
+) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = surfaces.muted)
+    ) {
+        Column(modifier = Modifier.padding(dims.spacingSm)) {
+            Text(
+                text = dateTime,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    id = R.string.dashboard_last_workout_meta,
+                    durationMin,
+                    exerciseCount
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold
+    )
 }
 
 private fun formatRecordValue(type: String, value: Double): String {
@@ -290,3 +325,4 @@ private fun formatRecordValue(type: String, value: Double): String {
         else -> "$value"
     }
 }
+

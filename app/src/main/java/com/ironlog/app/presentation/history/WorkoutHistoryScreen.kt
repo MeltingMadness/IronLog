@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.history
+﻿package com.ironlog.app.presentation.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
 import com.ironlog.app.domain.model.AppPreferences
@@ -47,6 +46,8 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -62,6 +63,7 @@ fun WorkoutHistoryScreen(
     val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
         initialValue = AppPreferences()
     )
+    val dims = ironLogDimens
 
     Scaffold(
         topBar = {
@@ -85,7 +87,7 @@ fun WorkoutHistoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(32.dp),
+                        .padding(dims.spacingXl),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -94,7 +96,7 @@ fun WorkoutHistoryScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
                     Text(
                         text = stringResource(id = R.string.history_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
@@ -108,8 +110,8 @@ fun WorkoutHistoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(dims.spacingMd),
+                    verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
                     items(state.workouts, key = { it.session.id }) { item ->
                         SwipeToDeleteCard(
@@ -120,7 +122,7 @@ fun WorkoutHistoryScreen(
                         )
                     }
                     item {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(dims.spacingXl))
                     }
                 }
             }
@@ -177,7 +179,7 @@ private fun SwipeToDeleteCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(end = 24.dp),
+                    .padding(end = ironLogDimens.spacingLg),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
@@ -198,18 +200,21 @@ private fun WorkoutCard(
     unitSystem: UnitSystem,
     onClick: () -> Unit
 ) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = surfaces.muted
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(dims.spacingMd)
         ) {
             if (item.session.name.isNotBlank()) {
                 Text(
@@ -217,7 +222,7 @@ private fun WorkoutCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(dims.spacing2))
             }
             Text(
                 text = item.session.startTime.format(DateFormatting.DATE_FULL),
@@ -235,7 +240,7 @@ private fun WorkoutCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dims.spacing2))
             val durationMin = item.session.durationSeconds / 60
             Text(
                 text = stringResource(

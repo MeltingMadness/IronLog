@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.settings
+﻿package com.ironlog.app.presentation.settings
 
 import android.Manifest
 import android.app.TimePickerDialog
@@ -49,13 +49,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.content.ContextCompat
 import com.ironlog.app.BuildConfig
 import com.ironlog.app.R
+import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
+import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -69,6 +72,7 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val dims = ironLogDimens
 
     var incidentSummary by remember { mutableStateOf("") }
     var incidentDetails by remember { mutableStateOf("") }
@@ -154,9 +158,49 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
         ) {
+            item {
+                PreferenceCard(title = stringResource(id = R.string.settings_section_appearance)) {
+                    Text(
+                        text = stringResource(id = R.string.settings_theme_mode_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        FilterChip(
+                            selected = state.preferences.themeMode == ThemeMode.SYSTEM,
+                            onClick = { viewModel.updateThemeMode(ThemeMode.SYSTEM) },
+                            label = { Text(stringResource(id = R.string.settings_theme_system)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeMode == ThemeMode.LIGHT,
+                            onClick = { viewModel.updateThemeMode(ThemeMode.LIGHT) },
+                            label = { Text(stringResource(id = R.string.settings_theme_light)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeMode == ThemeMode.DARK,
+                            onClick = { viewModel.updateThemeMode(ThemeMode.DARK) },
+                            label = { Text(stringResource(id = R.string.settings_theme_dark)) }
+                        )
+                    }
+
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_dynamic_color_title),
+                        subtitle = stringResource(id = R.string.settings_dynamic_color_subtitle),
+                        checked = state.preferences.useDynamicColor,
+                        onCheckedChange = viewModel::updateUseDynamicColor
+                    )
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_reduced_motion_title),
+                        subtitle = stringResource(id = R.string.settings_reduced_motion_subtitle),
+                        checked = state.preferences.reducedMotion,
+                        onCheckedChange = viewModel::updateReducedMotion
+                    )
+                }
+            }
+
             item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_preferences)) {
                     ToggleRow(
@@ -172,14 +216,14 @@ fun SettingsScreen(
                         uncheckedLabel = stringResource(id = R.string.settings_unit_metric)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
 
                     Text(
                         text = stringResource(id = R.string.settings_week_start_title),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
                         FilterChip(
                             selected = state.preferences.weekStart == WeekStart.MONDAY,
                             onClick = { viewModel.updateWeekStart(WeekStart.MONDAY) },
@@ -192,7 +236,7 @@ fun SettingsScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
 
                     ToggleRow(
                         title = stringResource(id = R.string.settings_default_warmup_title),
@@ -268,7 +312,7 @@ fun SettingsScreen(
                                 ).show()
                             }
                         ) {
-                            Text(String.format("%02d:%02d", reminder.hour, reminder.minute))
+                            Text(DateFormatting.formatClock(reminder.hour, reminder.minute))
                         }
                     }
 
@@ -277,7 +321,7 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
                         DayOfWeek.entries.forEach { day ->
                             FilterChip(
                                 selected = day in reminder.daysOfWeek,
@@ -288,7 +332,7 @@ fun SettingsScreen(
                                     }
                                     viewModel.updateReminderConfig(reminder.copy(daysOfWeek = updated))
                                 },
-                                label = { Text(dayShortLabel(day)) }
+                                label = { Text(DateFormatting.dayShort(day)) }
                             )
                         }
                     }
@@ -297,7 +341,7 @@ fun SettingsScreen(
 
             item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_data)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
                         Button(
                             onClick = {
                                 val fileName = "ironlog-backup-${LocalDate.now()}.json"
@@ -338,7 +382,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
                     OutlinedTextField(
                         value = incidentDetails,
                         onValueChange = { incidentDetails = it },
@@ -346,7 +390,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
                     Button(
                         onClick = {
                             viewModel.createIncidentReport(
@@ -390,16 +434,19 @@ private fun PreferenceCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = surfaces.muted
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(dims.spacingSm),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
         ) {
             Text(
                 text = title,
@@ -446,14 +493,4 @@ private fun ToggleRow(
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
-}
-
-private fun dayShortLabel(day: DayOfWeek): String = when (day) {
-    DayOfWeek.MONDAY -> "Mo"
-    DayOfWeek.TUESDAY -> "Di"
-    DayOfWeek.WEDNESDAY -> "Mi"
-    DayOfWeek.THURSDAY -> "Do"
-    DayOfWeek.FRIDAY -> "Fr"
-    DayOfWeek.SATURDAY -> "Sa"
-    DayOfWeek.SUNDAY -> "So"
 }

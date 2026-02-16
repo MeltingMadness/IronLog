@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.common
+﻿package com.ironlog.app.presentation.common
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.Locale
 
 @Composable
 fun WorkoutTimer(
@@ -33,12 +34,14 @@ fun WorkoutTimer(
     val minutes = (elapsed % 3600) / 60
     val seconds = elapsed % 60
 
+    val timeText = if (hours > 0) {
+        String.format(Locale.GERMAN, "%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.GERMAN, "%02d:%02d", minutes, seconds)
+    }
+
     Text(
-        text = if (hours > 0) {
-            String.format("%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format("%02d:%02d", minutes, seconds)
-        },
+        text = timeText,
         style = MaterialTheme.typography.headlineLarge,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier

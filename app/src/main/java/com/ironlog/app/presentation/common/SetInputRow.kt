@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.common
+﻿package com.ironlog.app.presentation.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -34,7 +34,7 @@ fun SetInputRow(
             onValueChange = onWeightChange,
             label = { Text(stringResource(id = R.string.common_unit_kg)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(90.dp),
+            modifier = Modifier.width(96.dp),
             singleLine = true
         )
         OutlinedTextField(
@@ -42,7 +42,7 @@ fun SetInputRow(
             onValueChange = onRepsChange,
             label = { Text(stringResource(id = R.string.common_reps_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(80.dp),
+            modifier = Modifier.width(84.dp),
             singleLine = true
         )
         Button(onClick = onLog) {

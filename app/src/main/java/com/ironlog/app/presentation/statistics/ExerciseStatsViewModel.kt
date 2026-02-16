@@ -1,8 +1,10 @@
-package com.ironlog.app.presentation.statistics
+﻿package com.ironlog.app.presentation.statistics
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ironlog.app.R
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.PersonalRecord
@@ -17,10 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
-enum class ChartMetric(val displayName: String) {
-    WEIGHT("Gewicht"),
-    E1RM("Gesch. 1RM"),
-    VOLUME("Volumen")
+enum class ChartMetric(@StringRes val labelRes: Int) {
+    WEIGHT(R.string.stats_metric_weight),
+    E1RM(R.string.stats_metric_e1rm),
+    VOLUME(R.string.stats_metric_volume)
 }
 
 data class ChartDataPoint(

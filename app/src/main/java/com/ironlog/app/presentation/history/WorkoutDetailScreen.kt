@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.history
+﻿package com.ironlog.app.presentation.history
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,13 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -55,6 +56,7 @@ fun WorkoutDetailScreen(
     val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
         initialValue = AppPreferences()
     )
+    val dims = ironLogDimens
 
     Scaffold(
         topBar = {
@@ -85,8 +87,8 @@ fun WorkoutDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(dims.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
             ) {
                 item {
                     state.session?.let { session ->
@@ -117,18 +119,19 @@ fun WorkoutDetailScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+                item { Spacer(modifier = Modifier.height(dims.spacing2)) }
 
                 items(state.exercises) { exerciseDetail ->
+                    val surfaces = ironLogSurfaceRoles
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onExerciseClick(exerciseDetail.exercise.id) },
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = surfaces.muted
                         )
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(dims.spacingMd)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -145,7 +148,7 @@ fun WorkoutDetailScreen(
                                             imageVector = Icons.Default.Star,
                                             contentDescription = stringResource(id = R.string.workout_detail_record_cd),
                                             tint = MaterialTheme.colorScheme.tertiary,
-                                            modifier = Modifier.padding(end = 2.dp)
+                                            modifier = Modifier.padding(end = dims.spacing2)
                                         )
                                         Text(
                                             text = stringResource(id = R.string.workout_detail_pr_badge),
@@ -157,7 +160,7 @@ fun WorkoutDetailScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(dims.spacingXs))
 
                             exerciseDetail.sets.filter { it.reps > 0 }.forEach { set ->
                                 Row(
@@ -189,7 +192,7 @@ fun WorkoutDetailScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(dims.spacingMd)) }
             }
         }
     }
