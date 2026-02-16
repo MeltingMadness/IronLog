@@ -24,6 +24,11 @@ class ExerciseRepositoryImpl(
     override suspend fun getExerciseById(id: Long): Exercise? =
         exerciseDao.getExerciseById(id)?.toDomain()
 
+    override suspend fun getExercisesByIds(ids: List<Long>): List<Exercise> {
+        if (ids.isEmpty()) return emptyList()
+        return exerciseDao.getExercisesByIds(ids).map { it.toDomain() }
+    }
+
     override suspend fun addCustomExercise(exercise: Exercise): Long =
         exerciseDao.insert(ExerciseEntity.fromDomain(exercise.copy(isCustom = true)))
 

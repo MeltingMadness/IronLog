@@ -3,7 +3,6 @@ package com.ironlog.app.presentation.statistics
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,15 +23,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
+import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.StatCard
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
@@ -46,7 +51,7 @@ import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.runtime.LaunchedEffect
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +61,10 @@ fun ExerciseStatsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val modelProducer = remember { CartesianChartModelProducer() }
+    val appPreferencesRepository: AppPreferencesRepository = koinInject()
+    val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
+        initialValue = AppPreferences()
+    )
 
     LaunchedEffect(state.chartData) {
         if (state.chartData.isNotEmpty()) {
@@ -72,16 +81,22 @@ fun ExerciseStatsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.exercise?.name ?: "Statistik") },
+                title = {
+                    Text(
+                        state.exercise?.name ?: stringResource(id = R.string.stats_title_fallback)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.nav_back)
+                        )
                     }
                 }
             )
         }
     ) { padding ->
-        // M-01: Loading
         if (state.isLoading) {
             Box(
                 modifier = Modifier
@@ -99,35 +114,34 @@ fun ExerciseStatsScreen(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Exercise info
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = "${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}",
+                            text = "${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                // PR cards
                 item {
                     Text(
-                        text = "Persönliche Rekorde",
+                        text = stringResource(id = R.string.stats_records_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                // M-02: Leer-Hinweis wenn keine PRs
                 if (state.records.isEmpty()) {
                     item {
                         Text(
-                            text = "Noch keine Rekorde für diese Übung. Logge Sätze, um deine Bestleistungen zu tracken!",
+                            text = stringResource(id = R.string.stats_empty_records),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
                         )
                     }
                 } else {
@@ -140,12 +154,14 @@ fun ExerciseStatsScreen(
                             val maxReps = state.records.find { it.type == RecordType.MAX_REPS }
 
                             StatCard(
-                                label = "Max Gewicht",
-                                value = maxWeight?.let { "${it.value} kg" } ?: "-",
+                                label = stringResource(id = R.string.stats_max_weight_label),
+                                value = maxWeight?.let {
+                                    WeightFormatting.formatWeight(it.value, preferences.unitSystem)
+                                } ?: "-",
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
-                                label = "Max Wdh",
+                                label = stringResource(id = R.string.stats_max_reps_label),
                                 value = maxReps?.let { "${it.value.toInt()}" } ?: "-",
                                 modifier = Modifier.weight(1f)
                             )
@@ -161,23 +177,26 @@ fun ExerciseStatsScreen(
                             val maxVolume = state.records.find { it.type == RecordType.MAX_VOLUME }
 
                             StatCard(
-                                label = "Bester 1RM",
-                                value = maxE1rm?.let { "${"%.1f".format(it.value)} kg" } ?: "-",
+                                label = stringResource(id = R.string.stats_best_1rm_label),
+                                value = maxE1rm?.let {
+                                    WeightFormatting.formatWeight(it.value, preferences.unitSystem)
+                                } ?: "-",
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
-                                label = "Max Volumen",
-                                value = maxVolume?.let { "${it.value.toInt()} kg" } ?: "-",
+                                label = stringResource(id = R.string.stats_max_volume_label),
+                                value = maxVolume?.let {
+                                    WeightFormatting.formatVolume(it.value, preferences.unitSystem)
+                                } ?: "-",
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
                 }
 
-                // Chart section
                 item {
                     Text(
-                        text = "Fortschritt",
+                        text = stringResource(id = R.string.stats_progress_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -213,14 +232,15 @@ fun ExerciseStatsScreen(
                         )
                     }
                 } else {
-                    // M-07: Hinweistext bei weniger als 2 Datenpunkten
                     item {
                         Text(
-                            text = "Mindestens 2 Trainings nötig, um ein Fortschritts-Diagramm anzuzeigen.",
+                            text = stringResource(id = R.string.stats_chart_min_points),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
                         )
                     }
                 }

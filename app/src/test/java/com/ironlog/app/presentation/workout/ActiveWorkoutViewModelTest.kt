@@ -12,8 +12,6 @@ import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -36,7 +34,7 @@ class ActiveWorkoutViewModelTest {
 
     private val testExercise = Exercise(
         id = 1L,
-        name = "Bankdrücken",
+        name = "Bankdruecken",
         primaryMuscleGroup = MuscleGroup.BRUST,
         category = ExerciseCategory.LANGHANTEL
     )
@@ -125,6 +123,22 @@ class ActiveWorkoutViewModelTest {
 
         // No PR checks for warmup
         assertTrue(statsRepo.updatedRecords.isEmpty())
+    }
+
+    @Test
+    fun `Setnummer wird nach Delete monoton fortgesetzt`() = runTest {
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        vm.logSet(exerciseId = 1L, reps = 8, weightKg = 85.0)
+
+        val beforeDelete = workoutRepo.getSetsForSessionList(sessionId)
+        vm.deleteSet(beforeDelete.first { it.setNumber == 1 }.id)
+
+        vm.logSet(exerciseId = 1L, reps = 6, weightKg = 90.0)
+
+        val after = workoutRepo.getSetsForSessionList(sessionId).sortedBy { it.setNumber }
+        assertEquals(listOf(2, 3), after.map { it.setNumber })
     }
 
     // --- Finish Workout ---

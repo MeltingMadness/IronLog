@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,11 +37,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
+import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.util.WeightFormatting
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,14 +58,17 @@ fun WorkoutHistoryScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var deleteSessionId by remember { mutableStateOf<Long?>(null) }
+    val appPreferencesRepository: AppPreferencesRepository = koinInject()
+    val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
+        initialValue = AppPreferences()
+    )
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Verlauf") })
+            TopAppBar(title = { Text(stringResource(id = R.string.history_title)) })
         }
     ) { padding ->
         when {
-            // M-01: Loading
             state.isLoading -> {
                 Box(
                     modifier = Modifier
@@ -80,13 +90,13 @@ fun WorkoutHistoryScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Noch keine Trainings",
+                        text = stringResource(id = R.string.history_empty_title),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Starte dein erstes Training auf der Startseite!",
+                        text = stringResource(id = R.string.history_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -98,13 +108,13 @@ fun WorkoutHistoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.workouts, key = { it.session.id }) { item ->
-                        // N-08: Swipe-to-Delete
                         SwipeToDeleteCard(
                             item = item,
+                            unitSystem = preferences.unitSystem,
                             onClick = { onWorkoutClick(item.session.id) },
                             onDelete = { deleteSessionId = item.session.id }
                         )
@@ -116,23 +126,25 @@ fun WorkoutHistoryScreen(
             }
         }
 
-        // Delete confirmation
         deleteSessionId?.let { id ->
             AlertDialog(
                 onDismissRequest = { deleteSessionId = null },
-                title = { Text("Training löschen?") },
-                text = { Text("Dieses Training und alle Sätze werden unwiderruflich gelöscht.") },
+                title = { Text(stringResource(id = R.string.history_delete_dialog_title)) },
+                text = { Text(stringResource(id = R.string.history_delete_dialog_text)) },
                 confirmButton = {
                     TextButton(onClick = {
                         viewModel.deleteSession(id)
                         deleteSessionId = null
                     }) {
-                        Text("Löschen", color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = stringResource(id = R.string.common_delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { deleteSessionId = null }) {
-                        Text("Abbrechen")
+                        Text(stringResource(id = R.string.common_cancel))
                     }
                 }
             )
@@ -144,6 +156,7 @@ fun WorkoutHistoryScreen(
 @Composable
 private fun SwipeToDeleteCard(
     item: WorkoutHistoryItem,
+    unitSystem: UnitSystem,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -168,20 +181,21 @@ private fun SwipeToDeleteCard(
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Löschen",
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(id = R.string.history_delete_cd),
                     tint = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
         }
     ) {
-        WorkoutCard(item = item, onClick = onClick)
+        WorkoutCard(item = item, unitSystem = unitSystem, onClick = onClick)
     }
 }
 
 @Composable
 private fun WorkoutCard(
     item: WorkoutHistoryItem,
+    unitSystem: UnitSystem,
     onClick: () -> Unit
 ) {
     Card(
@@ -197,7 +211,6 @@ private fun WorkoutCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Show name if available
             if (item.session.name.isNotBlank()) {
                 Text(
                     text = item.session.name,
@@ -207,30 +220,39 @@ private fun WorkoutCard(
                 Spacer(modifier = Modifier.height(2.dp))
             }
             Text(
-                // M-03: Locale-aware
                 text = item.session.startTime.format(DateFormatting.DATE_FULL),
                 style = if (item.session.name.isNotBlank()) MaterialTheme.typography.bodyMedium
-                        else MaterialTheme.typography.titleMedium,
+                else MaterialTheme.typography.titleMedium,
                 fontWeight = if (item.session.name.isBlank()) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (item.session.name.isNotBlank()) MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface
             )
             Text(
-                // M-03: Locale-aware
-                text = item.session.startTime.format(DateFormatting.TIME_SHORT) + " Uhr",
+                text = stringResource(
+                    id = R.string.history_time,
+                    item.session.startTime.format(DateFormatting.TIME_SHORT)
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             val durationMin = item.session.durationSeconds / 60
             Text(
-                text = "${durationMin} min · ${item.exerciseCount} Übungen · ${item.setCount} Sätze",
+                text = stringResource(
+                    id = R.string.history_meta,
+                    durationMin,
+                    item.exerciseCount,
+                    item.setCount
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (item.totalVolume > 0) {
                 Text(
-                    text = "Volumen: ${"%.0f".format(item.totalVolume)} kg",
+                    text = stringResource(
+                        id = R.string.history_volume,
+                        WeightFormatting.formatVolume(item.totalVolume, unitSystem)
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )

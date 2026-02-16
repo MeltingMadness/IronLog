@@ -18,6 +18,9 @@ class WorkoutRepositoryImpl(
 ) : WorkoutRepository {
 
     override suspend fun startWorkout(name: String): Long {
+        // Invariant: there can only be one active session.
+        sessionDao.getActiveSession()?.let { return it.id }
+
         val now = LocalDateTime.now()
         val entity = WorkoutSessionEntity(
             startTime = EpochConverter.toLong(now),
@@ -56,6 +59,11 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet> =
         setDao.getSetsForSessionList(sessionId).map { it.toDomain() }
+
+    override suspend fun getSetsForSessionsList(sessionIds: List<Long>): List<WorkoutSet> {
+        if (sessionIds.isEmpty()) return emptyList()
+        return setDao.getSetsForSessions(sessionIds).map { it.toDomain() }
+    }
 
     override fun getAllCompletedSessions(): Flow<List<WorkoutSession>> =
         sessionDao.getAllCompletedSessions().map { list -> list.map { it.toDomain() } }

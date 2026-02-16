@@ -5,6 +5,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,10 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -55,11 +59,14 @@ fun TrainingPlanListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Trainingspläne") })
+            TopAppBar(title = { Text(stringResource(id = R.string.plans_title)) })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreatePlan) {
-                Icon(Icons.Default.Add, contentDescription = "Neuen Plan erstellen")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.plans_add_cd)
+                )
             }
         }
     ) { padding ->
@@ -85,13 +92,13 @@ fun TrainingPlanListScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Noch keine Trainingspläne",
+                        text = stringResource(id = R.string.plans_empty_title),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Erstelle deinen ersten Plan mit dem + Button!",
+                        text = stringResource(id = R.string.plans_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -103,7 +110,7 @@ fun TrainingPlanListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.plans, key = { it.plan.id }) { item ->
@@ -126,23 +133,25 @@ fun TrainingPlanListScreen(
             }
         }
 
-        // Delete confirmation
         deletePlanId?.let { id ->
             AlertDialog(
                 onDismissRequest = { deletePlanId = null },
-                title = { Text("Plan löschen?") },
-                text = { Text("\"${deletePlanName}\" wird unwiderruflich gelöscht.") },
+                title = { Text(stringResource(id = R.string.plans_delete_title)) },
+                text = { Text(stringResource(id = R.string.plans_delete_text, deletePlanName)) },
                 confirmButton = {
                     TextButton(onClick = {
                         viewModel.deletePlan(id)
                         deletePlanId = null
                     }) {
-                        Text("Löschen", color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = stringResource(id = R.string.common_delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { deletePlanId = null }) {
-                        Text("Abbrechen")
+                        Text(stringResource(id = R.string.common_cancel))
                     }
                 }
             )
@@ -170,8 +179,7 @@ private fun PlanCard(
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header row: name + start button
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -183,25 +191,24 @@ private fun PlanCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${item.plan.exercises.size} Übungen",
+                        text = stringResource(id = R.string.plans_exercise_count, item.plan.exercises.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(onClick = onStart) {
                     Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = "Plan starten",
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = stringResource(id = R.string.plans_start_cd),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            // Exercise list preview
             if (item.exerciseNames.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = item.exerciseNames.joinToString(" · "),
+                    text = item.exerciseNames.joinToString(" � "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

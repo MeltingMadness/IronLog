@@ -45,6 +45,11 @@ class FakeStatisticsRepository : StatisticsRepository {
     override fun getRecordsForExercise(exerciseId: Long): Flow<List<PersonalRecord>> =
         records.map { list -> list.filter { it.exerciseId == exerciseId } }
 
+    override suspend fun getRecordsForExercisesList(exerciseIds: List<Long>): List<PersonalRecord> {
+        val idSet = exerciseIds.toSet()
+        return records.value.filter { it.exerciseId in idSet }.sortedByDescending { it.achievedAt }
+    }
+
     override fun getRecentRecords(limit: Int): Flow<List<PersonalRecord>> =
         records.map { list -> list.sortedByDescending { it.achievedAt }.take(limit) }
 

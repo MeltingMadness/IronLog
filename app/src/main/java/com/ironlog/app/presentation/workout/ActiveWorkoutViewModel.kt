@@ -11,6 +11,7 @@ import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -179,10 +180,9 @@ class ActiveWorkoutViewModel(
     fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false) {
         viewModelScope.launch {
             try {
-                val currentSets = exercisesWithSets.value
-                    .find { it.exercise.id == exerciseId }
-                    ?.sets ?: emptyList()
-                val setNumber = currentSets.size + 1
+                val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
+                    .filter { it.exerciseId == exerciseId }
+                val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
 
                 val set = WorkoutSet(
                     sessionId = sessionId,
@@ -240,7 +240,7 @@ class ActiveWorkoutViewModel(
             }
         } catch (e: Exception) {
             // PR check failure should not crash the app, just log it
-            android.util.Log.w("ActiveWorkoutVM", "PR-Prüfung fehlgeschlagen: ${e.message}", e)
+            AppLogger.w("ActiveWorkoutVM", "PR-Pruefung fehlgeschlagen: ${e.message}", e)
         }
     }
 
@@ -269,3 +269,8 @@ class ActiveWorkoutViewModel(
         _error.value = null
     }
 }
+
+
+
+
+

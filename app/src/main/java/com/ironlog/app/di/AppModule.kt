@@ -1,11 +1,19 @@
 package com.ironlog.app.di
 
 import com.ironlog.app.data.local.IronLogDatabase
+import com.ironlog.app.data.preferences.AppPreferencesRepositoryImpl
+import com.ironlog.app.data.reminder.ReminderSchedulerImpl
+import com.ironlog.app.data.repository.BackupRepositoryImpl
 import com.ironlog.app.data.repository.ExerciseRepositoryImpl
+import com.ironlog.app.data.repository.IncidentReportRepositoryImpl
 import com.ironlog.app.data.repository.StatisticsRepositoryImpl
 import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
+import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.repository.IncidentReportRepository
+import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -15,6 +23,7 @@ import com.ironlog.app.presentation.history.WorkoutDetailViewModel
 import com.ironlog.app.presentation.history.WorkoutHistoryViewModel
 import com.ironlog.app.presentation.plans.PlanEditorViewModel
 import com.ironlog.app.presentation.plans.TrainingPlanListViewModel
+import com.ironlog.app.presentation.settings.SettingsViewModel
 import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
 import org.koin.android.ext.koin.androidContext
@@ -22,7 +31,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    // Database
     single { IronLogDatabase.create(androidContext()) }
     single { get<IronLogDatabase>().exerciseDao() }
     single { get<IronLogDatabase>().workoutSessionDao() }
@@ -30,19 +38,32 @@ val appModule = module {
     single { get<IronLogDatabase>().personalRecordDao() }
     single { get<IronLogDatabase>().trainingPlanDao() }
 
-    // Repositories
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
+    single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext()) }
+    single<ReminderScheduler> { ReminderSchedulerImpl(androidContext()) }
+    single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext()) }
+    single<BackupRepository> {
+        BackupRepositoryImpl(
+            context = androidContext(),
+            database = get(),
+            exerciseDao = get(),
+            workoutSessionDao = get(),
+            workoutSetDao = get(),
+            trainingPlanDao = get(),
+            personalRecordDao = get()
+        )
+    }
 
-    // ViewModels
     viewModel { ExerciseLibraryViewModel(get()) }
     viewModel { ActiveWorkoutViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DashboardViewModel(get(), get(), get()) }
+    viewModel { DashboardViewModel(get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get()) }
     viewModel { WorkoutDetailViewModel(get(), get(), get(), get()) }
     viewModel { ExerciseStatsViewModel(get(), get(), get()) }
     viewModel { TrainingPlanListViewModel(get(), get(), get()) }
     viewModel { PlanEditorViewModel(get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get()) }
 }

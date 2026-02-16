@@ -1,0 +1,82 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'sprint/**'
+  pull_request:
+
+jobs:
+  unit-lint-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Unit tests + lint + debug build
+        run: ./gradlew --no-daemon test lintDebug assembleDebug
+
+      - name: Upload unit/lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-unit-lint
+          path: |
+            app/build/reports/tests
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+
+  android-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: unit-lint-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run instrumentation smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          disable-animations: true
+          script: ./gradlew --no-daemon connectedDebugAndroidTest
+
+      - name: Upload androidTest reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-android-test
+          path: |
+            app/build/reports/androidTests
+            app/build/outputs/androidTest-results

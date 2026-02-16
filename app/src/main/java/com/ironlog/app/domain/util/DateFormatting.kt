@@ -19,6 +19,6 @@ object DateFormatting {
     /** z.B. "14:30" */
     val TIME_SHORT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", DE)
 
-    /** z.B. "10.02." — für automatische Trainingsnamen */
+    /** z.B. "10.02." fuer automatische Trainingsnamen */
     val DATE_SHORT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.", DE)
 }

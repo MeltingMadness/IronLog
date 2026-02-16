@@ -13,6 +13,7 @@ interface WorkoutRepository {
     suspend fun deleteSet(setId: Long)
     fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>>
     suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet>
+    suspend fun getSetsForSessionsList(sessionIds: List<Long>): List<WorkoutSet>
     fun getAllCompletedSessions(): Flow<List<WorkoutSession>>
     suspend fun getSessionById(id: Long): WorkoutSession?
     fun observeSessionById(id: Long): Flow<WorkoutSession?>

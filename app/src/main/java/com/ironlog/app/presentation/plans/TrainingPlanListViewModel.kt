@@ -2,12 +2,15 @@ package com.ironlog.app.presentation.plans
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 data class PlanListItem(
@@ -36,17 +39,22 @@ class TrainingPlanListViewModel(
 
     private fun loadPlans() {
         viewModelScope.launch {
-            planRepository.getAllPlans().collect { plans ->
-                val items = plans.map { plan ->
+            combine(
+                planRepository.getAllPlans(),
+                exerciseRepository.getAllExercises()
+            ) { plans, exercises ->
+                val exerciseNameById = exercises.associateBy({ it.id }, { it.name })
+                plans.map { plan ->
                     val names = plan.exercises.map { exercise ->
-                        val ex = exerciseRepository.getExerciseById(exercise.exerciseId)
-                        ex?.name ?: "Unbekannt"
+                        exerciseNameById[exercise.exerciseId] ?: "Unbekannt"
                     }
                     PlanListItem(plan = plan, exerciseNames = names)
                 }
-                _uiState.value = PlanListUiState(
+            }.collect { items ->
+                _uiState.value = _uiState.value.copy(
                     plans = items,
-                    isLoading = false
+                    isLoading = false,
+                    error = null
                 )
             }
         }
@@ -58,7 +66,7 @@ class TrainingPlanListViewModel(
                 planRepository.deletePlan(planId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Plan konnte nicht gelöscht werden: ${e.message}"
+                    error = e.toAppError().toUserMessage("Plan loeschen")
                 )
             }
         }
@@ -71,7 +79,7 @@ class TrainingPlanListViewModel(
                 onSessionCreated(sessionId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Training konnte nicht gestartet werden: ${e.message}"
+                    error = e.toAppError().toUserMessage("Training starten")
                 )
             }
         }

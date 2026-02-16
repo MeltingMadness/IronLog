@@ -1,6 +1,5 @@
 package com.ironlog.app.domain.util
 
-import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 
@@ -14,7 +13,7 @@ suspend fun <T> safeCall(tag: String = TAG, block: suspend () -> T): Result<T> =
     try {
         Result.success(block())
     } catch (e: Exception) {
-        Log.e(tag, "Fehler: ${e.message}", e)
+        AppLogger.e(tag, "Fehler: ${e.message}", e)
         Result.failure(e)
     }
 
@@ -24,5 +23,5 @@ suspend fun <T> safeCall(tag: String = TAG, block: suspend () -> T): Result<T> =
  */
 fun <T> Flow<T>.catchAndLog(tag: String = TAG): Flow<T> =
     catch { e ->
-        Log.e(tag, "Flow-Fehler: ${e.message}", e)
+        AppLogger.e(tag, "Flow-Fehler: ${e.message}", e)
     }

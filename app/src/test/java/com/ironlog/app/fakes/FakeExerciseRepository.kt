@@ -11,6 +11,7 @@ class FakeExerciseRepository : ExerciseRepository {
 
     private val exercises = MutableStateFlow<List<Exercise>>(emptyList())
     private var nextId = 1L
+    var getExerciseByIdCallCount = 0
 
     fun addExercise(exercise: Exercise) {
         val e = if (exercise.id == 0L) exercise.copy(id = nextId++) else exercise
@@ -25,8 +26,15 @@ class FakeExerciseRepository : ExerciseRepository {
     override fun searchExercises(query: String): Flow<List<Exercise>> =
         exercises.map { list -> list.filter { it.name.contains(query, ignoreCase = true) } }
 
-    override suspend fun getExerciseById(id: Long): Exercise? =
-        exercises.value.find { it.id == id }
+    override suspend fun getExerciseById(id: Long): Exercise? {
+        getExerciseByIdCallCount++
+        return exercises.value.find { it.id == id }
+    }
+
+    override suspend fun getExercisesByIds(ids: List<Long>): List<Exercise> {
+        val idSet = ids.toSet()
+        return exercises.value.filter { it.id in idSet }
+    }
 
     override suspend fun addCustomExercise(exercise: Exercise): Long {
         val id = nextId++

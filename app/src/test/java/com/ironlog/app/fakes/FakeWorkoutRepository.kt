@@ -14,6 +14,11 @@ class FakeWorkoutRepository : WorkoutRepository {
     private var nextSessionId = 1L
     private var nextSetId = 1L
 
+    var getExerciseIdsForSessionCallCount = 0
+    var getSetCountForSessionCallCount = 0
+    var getTotalVolumeForSessionCallCount = 0
+    var getSetsForSessionsListCallCount = 0
+
     data class WorkoutSessionData(
         val session: WorkoutSession,
         val isActive: Boolean = false
@@ -76,6 +81,12 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet> =
         sets.value.filter { it.sessionId == sessionId }
 
+    override suspend fun getSetsForSessionsList(sessionIds: List<Long>): List<WorkoutSet> {
+        getSetsForSessionsListCallCount++
+        val idSet = sessionIds.toSet()
+        return sets.value.filter { it.sessionId in idSet }
+    }
+
     override fun getAllCompletedSessions(): Flow<List<WorkoutSession>> =
         sessions.map { list -> list.filter { !it.isActive }.map { it.session } }
 
@@ -90,14 +101,20 @@ class FakeWorkoutRepository : WorkoutRepository {
         sets.value = sets.value.filter { it.sessionId != sessionId }
     }
 
-    override suspend fun getExerciseIdsForSession(sessionId: Long): List<Long> =
-        sets.value.filter { it.sessionId == sessionId }.map { it.exerciseId }.distinct()
+    override suspend fun getExerciseIdsForSession(sessionId: Long): List<Long> {
+        getExerciseIdsForSessionCallCount++
+        return sets.value.filter { it.sessionId == sessionId }.map { it.exerciseId }.distinct()
+    }
 
-    override suspend fun getSetCountForSession(sessionId: Long): Int =
-        sets.value.count { it.sessionId == sessionId }
+    override suspend fun getSetCountForSession(sessionId: Long): Int {
+        getSetCountForSessionCallCount++
+        return sets.value.count { it.sessionId == sessionId }
+    }
 
-    override suspend fun getTotalVolumeForSession(sessionId: Long): Double =
-        sets.value.filter { it.sessionId == sessionId }.sumOf { it.weightKg * it.reps }
+    override suspend fun getTotalVolumeForSession(sessionId: Long): Double {
+        getTotalVolumeForSessionCallCount++
+        return sets.value.filter { it.sessionId == sessionId }.sumOf { it.weightKg * it.reps }
+    }
 
     override suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int =
         sessions.value.count { !it.isActive }

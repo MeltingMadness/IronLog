@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -20,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,10 +34,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.presentation.common.StatCard
 import org.koin.androidx.compose.koinViewModel
@@ -45,6 +49,7 @@ import org.koin.androidx.compose.koinViewModel
 fun DashboardScreen(
     onStartWorkout: (Long) -> Unit,
     onContinueWorkout: (Long) -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -54,7 +59,6 @@ fun DashboardScreen(
         viewModel.loadDashboard()
     }
 
-    // Error Snackbar
     LaunchedEffect(state.error) {
         state.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -64,11 +68,20 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("IronLog") })
+            TopAppBar(
+                title = { Text(stringResource(id = R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(id = R.string.settings_title)
+                        )
+                    }
+                }
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        // M-01: Loading Indicator
         if (state.isLoading) {
             Box(
                 modifier = Modifier
@@ -87,7 +100,6 @@ fun DashboardScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Start/Continue button
                 if (state.activeSession != null) {
                     Button(
                         onClick = { state.activeSession?.let { onContinueWorkout(it.id) } },
@@ -100,8 +112,9 @@ fun DashboardScreen(
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Text(
-                            "  Training fortsetzen",
-                            style = MaterialTheme.typography.titleMedium
+                            text = stringResource(id = R.string.dashboard_continue_workout),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 } else {
@@ -113,17 +126,18 @@ fun DashboardScreen(
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Text(
-                            "  Training starten",
-                            style = MaterialTheme.typography.titleMedium
+                            text = stringResource(id = R.string.dashboard_start_workout),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
 
-                // M-02: Erststart-Hinweis
                 val isFirstTime = state.workoutsThisWeek == 0 &&
-                        state.workoutsThisMonth == 0 &&
-                        state.currentStreak == 0 &&
-                        state.lastWorkout == null
+                    state.workoutsThisMonth == 0 &&
+                    state.currentStreak == 0 &&
+                    state.lastWorkout == null
+
                 if (isFirstTime) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -137,13 +151,13 @@ fun DashboardScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Willkommen bei IronLog! 💪",
+                                text = stringResource(id = R.string.dashboard_welcome_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
                             Text(
-                                text = "Starte dein erstes Training und tracke deinen Fortschritt.",
+                                text = stringResource(id = R.string.dashboard_welcome_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 textAlign = TextAlign.Center
@@ -152,9 +166,8 @@ fun DashboardScreen(
                     }
                 }
 
-                // Quick stats
                 Text(
-                    text = "Schnellstatistik",
+                    text = stringResource(id = R.string.dashboard_quick_stats),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -164,25 +177,24 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     StatCard(
-                        label = "Diese Woche",
+                        label = stringResource(id = R.string.dashboard_this_week),
                         value = "${state.workoutsThisWeek}",
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
-                        label = "Diesen Monat",
+                        label = stringResource(id = R.string.dashboard_this_month),
                         value = "${state.workoutsThisMonth}",
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
-                        label = "Serie",
-                        value = "${state.currentStreak} T",
+                        label = stringResource(id = R.string.dashboard_streak),
+                        value = stringResource(id = R.string.dashboard_streak_value, state.currentStreak),
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                // Recent records
                 Text(
-                    text = "Letzte Rekorde",
+                    text = stringResource(id = R.string.dashboard_recent_records),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -223,18 +235,16 @@ fun DashboardScreen(
                         }
                     }
                 } else {
-                    // M-02: Leer-Hinweis
                     Text(
-                        text = "Noch keine Rekorde – logge dein erstes Training!",
+                        text = stringResource(id = R.string.dashboard_no_records),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Last workout
                 state.lastWorkout?.let { workout ->
                     Text(
-                        text = "Letztes Training",
+                        text = stringResource(id = R.string.dashboard_last_workout),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -247,14 +257,17 @@ fun DashboardScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                // M-03: Locale-aware
                                 text = workout.startTime.format(DateFormatting.DATE_TIME),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold
                             )
                             val durationMin = workout.durationSeconds / 60
                             Text(
-                                text = "Dauer: ${durationMin} min · ${state.lastWorkoutExerciseCount} Übungen",
+                                text = stringResource(
+                                    id = R.string.dashboard_last_workout_meta,
+                                    durationMin,
+                                    state.lastWorkoutExerciseCount
+                                ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -262,7 +275,7 @@ fun DashboardScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(80.dp)) // Space for bottom nav
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }

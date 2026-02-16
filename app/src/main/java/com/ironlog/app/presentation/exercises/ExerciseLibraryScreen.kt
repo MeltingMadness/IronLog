@@ -1,7 +1,6 @@
 package com.ironlog.app.presentation.exercises
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +39,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import org.koin.androidx.compose.koinViewModel
@@ -56,11 +57,14 @@ fun ExerciseLibraryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Übungen") })
+            TopAppBar(title = { Text(stringResource(id = R.string.exercises_title)) })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = viewModel::onShowAddDialog) {
-                Icon(Icons.Default.Add, contentDescription = "Übung erstellen")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(id = R.string.exercises_add_cd)
+                )
             }
         }
     ) { padding ->
@@ -69,11 +73,10 @@ fun ExerciseLibraryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Search
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
-                label = { Text("Suchen") },
+                label = { Text(stringResource(id = R.string.exercises_search_label)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -81,7 +84,6 @@ fun ExerciseLibraryScreen(
                 singleLine = true
             )
 
-            // Muscle group chips
             Row(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
@@ -91,7 +93,7 @@ fun ExerciseLibraryScreen(
                 FilterChip(
                     selected = state.selectedMuscleGroup == null,
                     onClick = { viewModel.onMuscleGroupSelected(null) },
-                    label = { Text("Alle") }
+                    label = { Text(stringResource(id = R.string.common_all)) }
                 )
                 MuscleGroup.entries.forEach { group ->
                     FilterChip(
@@ -104,7 +106,6 @@ fun ExerciseLibraryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Exercise list
             if (state.exercises.isEmpty()) {
                 Column(
                     modifier = Modifier
@@ -113,13 +114,12 @@ fun ExerciseLibraryScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Keine Übungen gefunden",
+                        text = stringResource(id = R.string.exercises_empty),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
-                // N-09: Delete custom exercise state
                 var deleteExerciseId by remember { mutableStateOf<Long?>(null) }
                 var deleteExerciseName by remember { mutableStateOf("") }
 
@@ -128,12 +128,12 @@ fun ExerciseLibraryScreen(
                         ListItem(
                             headlineContent = { Text(exercise.name) },
                             supportingContent = {
-                                Text("${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}")
+                                Text("${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}")
                             },
                             trailingContent = {
                                 if (exercise.isCustom) {
                                     Text(
-                                        "Eigene",
+                                        text = stringResource(id = R.string.exercises_custom_badge),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.tertiary
                                     )
@@ -153,23 +153,32 @@ fun ExerciseLibraryScreen(
                     }
                 }
 
-                // N-09: Delete confirmation dialog
                 deleteExerciseId?.let { id ->
                     AlertDialog(
                         onDismissRequest = { deleteExerciseId = null },
-                        title = { Text("Übung löschen?") },
-                        text = { Text("\"${deleteExerciseName}\" wird unwiderruflich gelöscht.") },
+                        title = { Text(stringResource(id = R.string.exercises_delete_title)) },
+                        text = {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.exercises_delete_text,
+                                    deleteExerciseName
+                                )
+                            )
+                        },
                         confirmButton = {
                             TextButton(onClick = {
                                 viewModel.deleteCustomExercise(id)
                                 deleteExerciseId = null
                             }) {
-                                Text("Löschen", color = MaterialTheme.colorScheme.error)
+                                Text(
+                                    text = stringResource(id = R.string.common_delete),
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { deleteExerciseId = null }) {
-                                Text("Abbrechen")
+                                Text(stringResource(id = R.string.common_cancel))
                             }
                         }
                     )
@@ -177,7 +186,6 @@ fun ExerciseLibraryScreen(
             }
         }
 
-        // Add exercise dialog
         if (state.showAddDialog) {
             AddExerciseDialog(
                 onDismiss = viewModel::onDismissAddDialog,
@@ -203,13 +211,13 @@ private fun AddExerciseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Neue Übung") },
+        title = { Text(stringResource(id = R.string.exercises_new_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(id = R.string.exercises_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -222,8 +230,10 @@ private fun AddExerciseDialog(
                         value = selectedGroup.displayName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Muskelgruppe") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupExpanded) },
+                        label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupExpanded)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -252,8 +262,10 @@ private fun AddExerciseDialog(
                         value = selectedCategory.displayName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Kategorie") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                        label = { Text(stringResource(id = R.string.exercises_category_label)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -277,15 +289,17 @@ private fun AddExerciseDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { if (name.isNotBlank()) onConfirm(name, selectedGroup, selectedCategory) },
+                onClick = {
+                    if (name.isNotBlank()) onConfirm(name, selectedGroup, selectedCategory)
+                },
                 enabled = name.isNotBlank()
             ) {
-                Text("Erstellen")
+                Text(stringResource(id = R.string.common_create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
+                Text(stringResource(id = R.string.common_cancel))
             }
         }
     )
