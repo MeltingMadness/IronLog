@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.plans
+﻿package com.ironlog.app.presentation.plans
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,10 +38,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import com.ironlog.app.presentation.workout.ExercisePickerSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -53,13 +57,12 @@ fun PlanEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val dims = ironLogDimens
 
-    // Navigate back after save
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) onBack()
     }
 
-    // Show errors
     LaunchedEffect(state.error) {
         state.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -70,15 +73,29 @@ fun PlanEditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (viewModel.isEditMode) "Plan bearbeiten" else "Neuer Plan") },
+                title = {
+                    Text(
+                        if (viewModel.isEditMode) {
+                            stringResource(id = R.string.plan_editor_title_edit)
+                        } else {
+                            stringResource(id = R.string.plan_editor_title_new)
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.nav_back)
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = viewModel::savePlan) {
-                        Icon(Icons.Default.Check, contentDescription = "Speichern")
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(id = R.string.plan_editor_save_cd)
+                        )
                     }
                 }
             )
@@ -89,33 +106,30 @@ fun PlanEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
         ) {
-            // Plan name
             item {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(dims.spacing2))
                 OutlinedTextField(
                     value = state.planName,
                     onValueChange = viewModel::updatePlanName,
-                    label = { Text("Plan-Name") },
+                    label = { Text(stringResource(id = R.string.plan_editor_name_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
             }
 
-            // Add exercise button
             item {
                 TextButton(
                     onClick = viewModel::showExercisePicker,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
-                    Text("  Übung hinzufügen")
+                    Text(stringResource(id = R.string.plan_editor_add_exercise))
                 }
             }
 
-            // Exercise list
             itemsIndexed(state.exercises) { index, item ->
                 PlanExerciseCard(
                     item = item,
@@ -131,10 +145,9 @@ fun PlanEditorScreen(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(80.dp)) }
+            item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
         }
 
-        // Exercise picker
         if (state.showExercisePicker) {
             ExercisePickerSheet(
                 onDismiss = viewModel::dismissExercisePicker,
@@ -159,21 +172,23 @@ private fun PlanExerciseCard(
     onRepsChange: (Int) -> Unit,
     onWeightChange: (Double) -> Unit
 ) {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = surfaces.muted
         )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Header: name + order buttons + delete
+        Column(modifier = Modifier.padding(dims.spacingSm)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${index + 1}. ${item.exercise.name}",
+                    text = stringResource(id = R.string.plan_editor_exercise_indexed, index + 1, item.exercise.name),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -181,36 +196,35 @@ private fun PlanExerciseCard(
                 Row {
                     IconButton(onClick = onMoveUp, enabled = !isFirst) {
                         Icon(
-                            Icons.Default.ArrowDropUp,
-                            contentDescription = "Nach oben"
+                            imageVector = Icons.Default.ArrowDropUp,
+                            contentDescription = stringResource(id = R.string.plan_editor_move_up_cd)
                         )
                     }
                     IconButton(onClick = onMoveDown, enabled = !isLast) {
                         Icon(
-                            Icons.Default.ArrowDropDown,
-                            contentDescription = "Nach unten"
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = stringResource(id = R.string.plan_editor_move_down_cd)
                         )
                     }
                     IconButton(onClick = onRemove) {
                         Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Entfernen",
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = stringResource(id = R.string.plan_editor_remove_cd),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
             }
 
-            // Target values
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
                     value = if (item.planExercise.targetSets > 0) item.planExercise.targetSets.toString() else "",
                     onValueChange = { it.toIntOrNull()?.let(onSetsChange) },
-                    label = { Text("Sätze") },
+                    label = { Text(stringResource(id = R.string.plan_editor_sets_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(80.dp),
                     singleLine = true
@@ -218,7 +232,7 @@ private fun PlanExerciseCard(
                 OutlinedTextField(
                     value = if (item.planExercise.targetReps > 0) item.planExercise.targetReps.toString() else "",
                     onValueChange = { it.toIntOrNull()?.let(onRepsChange) },
-                    label = { Text("Wdh") },
+                    label = { Text(stringResource(id = R.string.common_reps_short)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(80.dp),
                     singleLine = true
@@ -226,7 +240,7 @@ private fun PlanExerciseCard(
                 OutlinedTextField(
                     value = if (item.planExercise.targetWeightKg > 0) item.planExercise.targetWeightKg.toString() else "",
                     onValueChange = { it.toDoubleOrNull()?.let(onWeightChange) },
-                    label = { Text("kg") },
+                    label = { Text(stringResource(id = R.string.common_unit_kg)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.width(90.dp),
                     singleLine = true

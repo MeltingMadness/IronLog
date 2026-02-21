@@ -1,9 +1,10 @@
-package com.ironlog.app.presentation.history
+﻿package com.ironlog.app.presentation.history
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,12 +30,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
+import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,20 +52,27 @@ fun WorkoutDetailScreen(
     viewModel: WorkoutDetailViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val appPreferencesRepository: AppPreferencesRepository = koinInject()
+    val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
+        initialValue = AppPreferences()
+    )
+    val dims = ironLogDimens
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Training-Details") },
+                title = { Text(stringResource(id = R.string.workout_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(id = R.string.nav_back)
+                        )
                     }
                 }
             )
         }
     ) { padding ->
-        // M-01: Loading
         if (state.isLoading) {
             Box(
                 modifier = Modifier
@@ -72,26 +87,27 @@ fun WorkoutDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(dims.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
             ) {
-                // Header
                 item {
                     state.session?.let { session ->
                         Column {
                             Text(
-                                // M-03: Locale-aware
                                 text = session.startTime.format(DateFormatting.DATE_FULL),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             val durationMin = session.durationSeconds / 60
                             Text(
-                                text = "Dauer: ${durationMin} min · Volumen: ${"%.0f".format(state.totalVolume)} kg",
+                                text = stringResource(
+                                    id = R.string.workout_detail_meta,
+                                    durationMin,
+                                    WeightFormatting.formatVolume(state.totalVolume, preferences.unitSystem)
+                                ),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            // N-06: Notizen anzeigen
                             if (session.notes.isNotBlank()) {
                                 Text(
                                     text = session.notes,
@@ -103,19 +119,19 @@ fun WorkoutDetailScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+                item { Spacer(modifier = Modifier.height(dims.spacing2)) }
 
-                // Exercises
                 items(state.exercises) { exerciseDetail ->
+                    val surfaces = ironLogSurfaceRoles
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onExerciseClick(exerciseDetail.exercise.id) },
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = surfaces.muted
                         )
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(dims.spacingMd)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -126,17 +142,16 @@ fun WorkoutDetailScreen(
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
-                                // N-07: PR badge
                                 if (exerciseDetail.records.isNotEmpty()) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            Icons.Default.Star,
-                                            contentDescription = "Rekord",
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = stringResource(id = R.string.workout_detail_record_cd),
                                             tint = MaterialTheme.colorScheme.tertiary,
-                                            modifier = Modifier.padding(end = 2.dp)
+                                            modifier = Modifier.padding(end = dims.spacing2)
                                         )
                                         Text(
-                                            text = "PR",
+                                            text = stringResource(id = R.string.workout_detail_pr_badge),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.tertiary,
                                             fontWeight = FontWeight.Bold
@@ -144,7 +159,8 @@ fun WorkoutDetailScreen(
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Spacer(modifier = Modifier.height(dims.spacingXs))
 
                             exerciseDetail.sets.filter { it.reps > 0 }.forEach { set ->
                                 Row(
@@ -152,13 +168,21 @@ fun WorkoutDetailScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (set.isWarmup) "W Satz ${set.setNumber}" else "Satz ${set.setNumber}",
+                                        text = if (set.isWarmup) {
+                                            stringResource(id = R.string.workout_detail_set_warmup, set.setNumber)
+                                        } else {
+                                            stringResource(id = R.string.workout_detail_set_work, set.setNumber)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontStyle = if (set.isWarmup) FontStyle.Italic else FontStyle.Normal
                                     )
                                     Text(
-                                        text = "${set.weightKg} kg × ${set.reps}",
+                                        text = stringResource(
+                                            id = R.string.workout_detail_set_value,
+                                            WeightFormatting.formatWeight(set.weightKg, preferences.unitSystem),
+                                            set.reps
+                                        ),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -168,7 +192,7 @@ fun WorkoutDetailScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(dims.spacingMd)) }
             }
         }
     }

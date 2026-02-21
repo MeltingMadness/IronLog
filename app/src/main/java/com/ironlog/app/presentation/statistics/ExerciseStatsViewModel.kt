@@ -1,22 +1,28 @@
-package com.ironlog.app.presentation.statistics
+﻿package com.ironlog.app.presentation.statistics
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ironlog.app.R
+import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.util.WorkoutCalculations
 import com.ironlog.app.domain.util.catchAndLog
+import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
-enum class ChartMetric(val displayName: String) {
-    WEIGHT("Gewicht"),
-    E1RM("Gesch. 1RM"),
-    VOLUME("Volumen")
+enum class ChartMetric(@StringRes val labelRes: Int) {
+    WEIGHT(R.string.stats_metric_weight),
+    E1RM(R.string.stats_metric_e1rm),
+    VOLUME(R.string.stats_metric_volume)
 }
 
 data class ChartDataPoint(
@@ -67,7 +73,7 @@ class ExerciseStatsViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Statistiken konnten nicht geladen werden: ${e.message}"
+                    error = e.toAppError().toUserMessage("Statistiken laden")
                 )
             }
         }
@@ -92,7 +98,7 @@ class ExerciseStatsViewModel(
                 updateChartData(sets, metric)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Metrik konnte nicht gewechselt werden: ${e.message}"
+                    error = e.toAppError().toUserMessage("Metrikwechsel")
                 )
             }
         }
@@ -104,20 +110,20 @@ class ExerciseStatsViewModel(
             return
         }
 
-        // Group by session (date) and compute metric
         val grouped = sets.groupBy { it.sessionId }
         val dataPoints = grouped.map { (_, sessionSets) ->
-            val date = sessionSets.first().completedAt
+            val date = sessionSets.maxByOrNull { it.completedAt }?.completedAt ?: LocalDateTime.MIN
             val dateLabel = "${date.dayOfMonth}.${date.monthValue}"
             val value = when (metric) {
                 ChartMetric.WEIGHT -> sessionSets.maxOf { it.weightKg }.toFloat()
                 ChartMetric.E1RM -> sessionSets.maxOf { set ->
-                    com.ironlog.app.domain.util.WorkoutCalculations.calculateE1RM(set.weightKg, set.reps).toFloat()
+                    WorkoutCalculations.calculateE1RM(set.weightKg, set.reps).toFloat()
                 }
                 ChartMetric.VOLUME -> sessionSets.sumOf { it.weightKg * it.reps }.toFloat()
             }
-            ChartDataPoint(dateLabel, value)
-        }.sortedBy { it.dateLabel }
+            date to ChartDataPoint(dateLabel, value)
+        }.sortedBy { it.first }
+            .map { it.second }
 
         _uiState.value = _uiState.value.copy(chartData = dataPoints)
     }

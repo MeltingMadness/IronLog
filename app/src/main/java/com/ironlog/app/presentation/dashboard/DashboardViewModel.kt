@@ -3,17 +3,20 @@ package com.ironlog.app.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.time.temporal.TemporalAdjusters
 
 data class DashboardUiState(
@@ -21,7 +24,7 @@ data class DashboardUiState(
     val workoutsThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
     val currentStreak: Int = 0,
-    val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(), // record + exercise name
+    val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
     val isLoading: Boolean = true,
@@ -31,7 +34,8 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val workoutRepository: WorkoutRepository,
     private val statisticsRepository: StatisticsRepository,
-    private val exerciseRepository: ExerciseRepository
+    private val exerciseRepository: ExerciseRepository,
+    private val appPreferencesRepository: AppPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -57,29 +61,30 @@ class DashboardViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
             try {
+                val preferences = appPreferencesRepository.preferences.first()
                 val now = LocalDate.now()
 
-                // This week
-                val startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                val weekAnchor = when (preferences.weekStart) {
+                    WeekStart.MONDAY -> DayOfWeek.MONDAY
+                    WeekStart.SUNDAY -> DayOfWeek.SUNDAY
+                }
+
+                val startOfWeek = now.with(TemporalAdjusters.previousOrSame(weekAnchor))
                 val startOfWeekMillis = com.ironlog.app.data.local.entity.EpochConverter.toLong(startOfWeek.atStartOfDay())
                 val workoutsThisWeek = workoutRepository.getCompletedSessionCountSince(startOfWeekMillis)
 
-                // This month
                 val startOfMonth = now.withDayOfMonth(1)
                 val startOfMonthMillis = com.ironlog.app.data.local.entity.EpochConverter.toLong(startOfMonth.atStartOfDay())
                 val workoutsThisMonth = workoutRepository.getCompletedSessionCountSince(startOfMonthMillis)
 
-                // Streak
                 val streak = calculateStreak()
 
-                // Recent records
                 val records = statisticsRepository.getRecentRecordsList(5)
                 val recordsWithNames = records.map { record ->
                     val exercise = exerciseRepository.getExerciseById(record.exerciseId)
                     Pair(record, exercise?.name ?: "Unbekannt")
                 }
 
-                // Last workout
                 val lastWorkout = workoutRepository.getLastCompletedSession()
                 val lastWorkoutExerciseCount = if (lastWorkout != null) {
                     workoutRepository.getExerciseIdsForSession(lastWorkout.id).size
@@ -112,7 +117,6 @@ class DashboardViewModel(
         var streak = 0
         var expectedDate = LocalDate.now()
 
-        // If no workout today, start from yesterday
         if (workoutDates.firstOrNull() != expectedDate) {
             expectedDate = expectedDate.minusDays(1)
         }
@@ -132,7 +136,7 @@ class DashboardViewModel(
     fun startNewWorkout(onSessionCreated: (Long) -> Unit) {
         viewModelScope.launch {
             try {
-                val autoName = "Training ${java.time.LocalDate.now().format(com.ironlog.app.domain.util.DateFormatting.DATE_SHORT)}"
+                val autoName = "Training ${java.time.LocalDate.now().format(DateFormatting.DATE_SHORT)}"
                 val sessionId = workoutRepository.startWorkout(autoName)
                 onSessionCreated(sessionId)
             } catch (e: Exception) {

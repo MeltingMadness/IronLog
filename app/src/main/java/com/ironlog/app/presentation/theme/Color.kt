@@ -1,14 +1,14 @@
-package com.ironlog.app.presentation.theme
+﻿package com.ironlog.app.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary - kräftiges Orange/Amber für Kraft-Gefühl
+// Primary - warmes Amber als markanter Brand-Anker
 val Primary = Color(0xFFFF6D00)
 val OnPrimary = Color(0xFFFFFFFF)
 val PrimaryContainer = Color(0xFFFFD180)
 val OnPrimaryContainer = Color(0xFF3E2000)
 
-// Secondary - Dunkelblau als Kontrast
+// Secondary - neutral dunkles Slate fuer Struktur und Kontrast
 val Secondary = Color(0xFF37474F)
 val OnSecondary = Color(0xFFFFFFFF)
 val SecondaryContainer = Color(0xFFCFD8DC)
@@ -27,6 +27,14 @@ val Surface = Color(0xFFFFFBF5)
 val OnSurface = Color(0xFF1C1B1F)
 val SurfaceVariant = Color(0xFFF0E6D6)
 val OnSurfaceVariant = Color(0xFF49454F)
+
+// Extended surface roles
+val SurfaceElevated = Color(0xFFFFFFFF)
+val SurfaceMuted = Color(0xFFF7F1E8)
+
+// Accent roles
+val AccentSuccess = Color(0xFF2E7D32)
+val AccentWarning = Color(0xFFEF6C00)
 
 // Error
 val Error = Color(0xFFB3261E)
@@ -54,6 +62,12 @@ val DarkSurface = Color(0xFF1C1B1F)
 val DarkOnSurface = Color(0xFFE6E1E5)
 val DarkSurfaceVariant = Color(0xFF3A3540)
 val DarkOnSurfaceVariant = Color(0xFFCAC4D0)
+
+val DarkSurfaceElevated = Color(0xFF2A2830)
+val DarkSurfaceMuted = Color(0xFF232129)
+
+val DarkAccentSuccess = Color(0xFF81C784)
+val DarkAccentWarning = Color(0xFFFFB74D)
 
 val DarkError = Color(0xFFF2B8B5)
 val DarkOnError = Color(0xFF601410)

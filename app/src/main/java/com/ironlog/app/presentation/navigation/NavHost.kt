@@ -12,6 +12,7 @@ import com.ironlog.app.presentation.history.WorkoutDetailScreen
 import com.ironlog.app.presentation.history.WorkoutHistoryScreen
 import com.ironlog.app.presentation.plans.PlanEditorScreen
 import com.ironlog.app.presentation.plans.TrainingPlanListScreen
+import com.ironlog.app.presentation.settings.SettingsScreen
 import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
 import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
@@ -28,7 +29,16 @@ fun IronLogNavHost(navController: NavHostController) {
                 },
                 onContinueWorkout = { sessionId ->
                     navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
+                },
+                onOpenSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -83,7 +93,6 @@ fun IronLogNavHost(navController: NavHostController) {
             )
         }
 
-        // Training Plans
         composable(Screen.TrainingPlanList.route) {
             TrainingPlanListScreen(
                 onCreatePlan = {

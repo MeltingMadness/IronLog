@@ -37,6 +37,11 @@ class StatisticsRepositoryImpl(
     override fun getRecordsForExercise(exerciseId: Long): Flow<List<PersonalRecord>> =
         personalRecordDao.getRecordsForExercise(exerciseId).map { list -> list.map { it.toDomain() } }
 
+    override suspend fun getRecordsForExercisesList(exerciseIds: List<Long>): List<PersonalRecord> {
+        if (exerciseIds.isEmpty()) return emptyList()
+        return personalRecordDao.getRecordsForExercisesList(exerciseIds).map { it.toDomain() }
+    }
+
     override fun getRecentRecords(limit: Int): Flow<List<PersonalRecord>> =
         personalRecordDao.getRecentRecords(limit).map { list -> list.map { it.toDomain() } }
 

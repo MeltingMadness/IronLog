@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.common
+﻿package com.ironlog.app.presentation.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -10,8 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.R
 
 @Composable
 fun SetInputRow(
@@ -30,21 +32,21 @@ fun SetInputRow(
         OutlinedTextField(
             value = weight,
             onValueChange = onWeightChange,
-            label = { Text("kg") },
+            label = { Text(stringResource(id = R.string.common_unit_kg)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(90.dp),
+            modifier = Modifier.width(96.dp),
             singleLine = true
         )
         OutlinedTextField(
             value = reps,
             onValueChange = onRepsChange,
-            label = { Text("Wdh") },
+            label = { Text(stringResource(id = R.string.common_reps_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(80.dp),
+            modifier = Modifier.width(84.dp),
             singleLine = true
         )
         Button(onClick = onLog) {
-            Text("Loggen")
+            Text(stringResource(id = R.string.common_log))
         }
     }
 }

@@ -21,31 +21,25 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.R
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.compose.koinInject
 
-/**
- * T-05: Refactored ExercisePickerSheet.
- *
- * Vorher: queryFlow und groupFlow wurden bei jeder Recomposition von
- * außen überschrieben, was zu unnötigen Re-Subscriptions führte.
- *
- * Jetzt: MutableStateFlow wird korrekt als Compose-State behandelt
- * und die Flows koppeln Suche und Filter zuverlässig.
- */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun ExercisePickerSheet(
@@ -57,24 +51,27 @@ fun ExercisePickerSheet(
     var searchQuery by remember { mutableStateOf("") }
     var selectedGroup by remember { mutableStateOf<MuscleGroup?>(null) }
 
-    // T-05: State Flows als remember{} statt aus Compose State direkt zu schreiben
     val queryFlow = remember { MutableStateFlow("") }
     val groupFlow = remember { MutableStateFlow<MuscleGroup?>(null) }
 
-    // Sichere Updates der Flows
-    queryFlow.value = searchQuery
-    groupFlow.value = selectedGroup
+    LaunchedEffect(searchQuery) {
+        queryFlow.emit(searchQuery)
+    }
+    LaunchedEffect(selectedGroup) {
+        groupFlow.emit(selectedGroup)
+    }
 
-    val exercises by remember(queryFlow, groupFlow) {
-        combine(queryFlow, groupFlow) { q, g -> Pair(q, g) }
-            .flatMapLatest { (q, g) ->
+    val exercisesFlow = remember(exerciseRepository, queryFlow, groupFlow) {
+        combine(queryFlow, groupFlow) { query, group -> query to group }
+            .flatMapLatest { (query, group) ->
                 when {
-                    q.isNotBlank() -> exerciseRepository.searchExercises(q)
-                    g != null -> exerciseRepository.getExercisesByMuscleGroup(g)
+                    query.isNotBlank() -> exerciseRepository.searchExercises(query)
+                    group != null -> exerciseRepository.getExercisesByMuscleGroup(group)
                     else -> exerciseRepository.getAllExercises()
                 }
             }
-    }.collectAsStateWithLifecycle(initialValue = emptyList())
+    }
+    val exercises by exercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -84,7 +81,7 @@ fun ExercisePickerSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Übung suchen") },
+                label = { Text(stringResource(id = R.string.workout_picker_search)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,7 +98,7 @@ fun ExercisePickerSheet(
                 FilterChip(
                     selected = selectedGroup == null,
                     onClick = { selectedGroup = null },
-                    label = { Text("Alle") }
+                    label = { Text(stringResource(id = R.string.common_all)) }
                 )
                 MuscleGroup.entries.forEach { group ->
                     FilterChip(
@@ -117,7 +114,7 @@ fun ExercisePickerSheet(
                     ListItem(
                         headlineContent = { Text(exercise.name) },
                         supportingContent = {
-                            Text("${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}")
+                            Text("${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}")
                         },
                         modifier = Modifier.clickable { onExerciseSelected(exercise) }
                     )

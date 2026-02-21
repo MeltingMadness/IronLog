@@ -14,7 +14,7 @@ enum class RecordType(val displayName: String) {
     MAX_WEIGHT("Max Gewicht"),
     MAX_REPS("Max Wiederholungen"),
     MAX_VOLUME("Max Volumen"),
-    MAX_E1RM("Bester geschätzter 1RM");
+    MAX_E1RM("Bester geschaetzter 1RM");
 
     companion object {
         fun safeValueOf(name: String, fallback: RecordType = MAX_WEIGHT): RecordType =
