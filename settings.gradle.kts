@@ -20,4 +20,20 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "IronLog"
+
 include(":app")
+
+include(":core:model")
+include(":core:common")
+include(":core:database")
+include(":core:designsystem")
+
+include(":data")
+
+include(":feature:dashboard")
+include(":feature:workout")
+include(":feature:exercises")
+include(":feature:history")
+include(":feature:plans")
+include(":feature:statistics")
+include(":feature:settings")

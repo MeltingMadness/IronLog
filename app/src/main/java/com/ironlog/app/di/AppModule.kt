@@ -1,5 +1,7 @@
 package com.ironlog.app.di
 
+import com.ironlog.app.BuildConfig
+
 import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.preferences.AppPreferencesRepositoryImpl
 import com.ironlog.app.data.reminder.ReminderSchedulerImpl
@@ -17,6 +19,7 @@ import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.app.presentation.dashboard.DashboardViewModel
 import com.ironlog.app.presentation.exercises.ExerciseLibraryViewModel
 import com.ironlog.app.presentation.history.WorkoutDetailViewModel
@@ -31,6 +34,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
+    single { BuildInfo(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
     single { IronLogDatabase.create(androidContext()) }
     single { get<IronLogDatabase>().exerciseDao() }
     single { get<IronLogDatabase>().workoutSessionDao() }
@@ -44,7 +48,7 @@ val appModule = module {
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext()) }
     single<ReminderScheduler> { ReminderSchedulerImpl(androidContext()) }
-    single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext()) }
+    single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext(), get()) }
     single<BackupRepository> {
         BackupRepositoryImpl(
             context = androidContext(),
@@ -53,7 +57,8 @@ val appModule = module {
             workoutSessionDao = get(),
             workoutSetDao = get(),
             trainingPlanDao = get(),
-            personalRecordDao = get()
+            personalRecordDao = get(),
+            buildInfo = get()
         )
     }
 
@@ -65,5 +70,5 @@ val appModule = module {
     viewModel { ExerciseStatsViewModel(get(), get(), get()) }
     viewModel { TrainingPlanListViewModel(get(), get(), get()) }
     viewModel { PlanEditorViewModel(get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
 }

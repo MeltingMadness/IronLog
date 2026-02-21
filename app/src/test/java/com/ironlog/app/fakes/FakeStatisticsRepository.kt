@@ -67,4 +67,7 @@ class FakeStatisticsRepository : StatisticsRepository {
 
     override suspend fun getMaxRepsForExercise(exerciseId: Long): Int? =
         exerciseSets.value.filter { it.exerciseId == exerciseId }.maxByOrNull { it.reps }?.reps
+
+    override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> =
+        exerciseSets.value
 }

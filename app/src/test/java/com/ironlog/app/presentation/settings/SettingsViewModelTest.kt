@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.ReminderScheduler
+import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,7 +36,8 @@ class SettingsViewModelTest {
             appPreferencesRepository = preferencesRepository,
             backupRepository = NoopBackupRepository(),
             reminderScheduler = NoopReminderScheduler(),
-            incidentReportRepository = NoopIncidentReportRepository()
+            incidentReportRepository = NoopIncidentReportRepository(),
+            buildInfo = BuildInfo("1.0-test", 1)
         )
     }
 
