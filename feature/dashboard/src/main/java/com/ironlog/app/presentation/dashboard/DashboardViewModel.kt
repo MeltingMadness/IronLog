@@ -18,6 +18,7 @@ import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -61,7 +62,7 @@ class DashboardViewModel(
             workoutRepository.observeActiveSession()
                 .catchAndLog("DashboardVM")
                 .collect { session ->
-                    _uiState.value = _uiState.value.copy(activeSession = session)
+                    _uiState.update { it.copy(activeSession = session) }
                 }
         }
         
@@ -69,14 +70,14 @@ class DashboardViewModel(
             trainingPlanRepository.getAllPlans()
                 .catchAndLog("DashboardVM_Plans")
                 .collect { plans ->
-                    _uiState.value = _uiState.value.copy(trainingPlans = plans)
+                    _uiState.update { it.copy(trainingPlans = plans) }
                 }
         }
     }
 
     fun loadDashboard() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
             try {
                 val preferences = appPreferencesRepository.preferences.first()
@@ -145,8 +146,7 @@ class DashboardViewModel(
                         label to volume
                     }
 
-                _uiState.value = DashboardUiState(
-                    activeSession = _uiState.value.activeSession,
+                _uiState.update { it.copy(
                     workoutsThisWeek = workoutsThisWeek,
                     workoutsThisMonth = workoutsThisMonth,
                     currentStreak = streak,
@@ -156,12 +156,12 @@ class DashboardViewModel(
                     muscleHeatmap = heatmap,
                     weeklyVolume = volumeByWeek,
                     isLoading = false
-                )
+                ) }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     isLoading = false,
                     error = "Dashboard konnte nicht geladen werden: ${e.message}"
-                )
+                ) }
             }
         }
     }
@@ -191,11 +191,11 @@ class DashboardViewModel(
     }
 
     fun showPlanSelectionSheet() {
-        _uiState.value = _uiState.value.copy(showPlanSelectionSheet = true)
+        _uiState.update { it.copy(showPlanSelectionSheet = true) }
     }
 
     fun dismissPlanSelectionSheet() {
-        _uiState.value = _uiState.value.copy(showPlanSelectionSheet = false)
+        _uiState.update { it.copy(showPlanSelectionSheet = false) }
     }
 
     fun startNewWorkout(onSessionCreated: (Long, Long?) -> Unit) {
@@ -205,9 +205,9 @@ class DashboardViewModel(
                 val sessionId = workoutRepository.startWorkout(autoName)
                 onSessionCreated(sessionId, null)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     error = "Training konnte nicht gestartet werden: ${e.message}"
-                )
+                ) }
             }
         }
     }
@@ -218,14 +218,14 @@ class DashboardViewModel(
                 val sessionId = workoutRepository.startWorkout(plan.name)
                 onSessionCreated(sessionId, plan.id)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     error = "Training nach Plan konnte nicht gestartet werden: ${e.message}"
-                )
+                ) }
             }
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.update { it.copy(error = null) }
     }
 }
