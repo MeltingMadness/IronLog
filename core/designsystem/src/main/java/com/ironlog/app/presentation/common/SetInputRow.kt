@@ -21,6 +21,9 @@ fun SetInputRow(
     onRepsChange: (String) -> Unit,
     weight: String,
     onWeightChange: (String) -> Unit,
+    intensity: String,
+    onIntensityChange: (String) -> Unit,
+    intensityLabel: String,
     onLog: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -34,7 +37,7 @@ fun SetInputRow(
             onValueChange = onWeightChange,
             label = { Text(stringResource(id = R.string.common_unit_kg)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(96.dp),
+            modifier = Modifier.width(84.dp),
             singleLine = true
         )
         OutlinedTextField(
@@ -42,7 +45,15 @@ fun SetInputRow(
             onValueChange = onRepsChange,
             label = { Text(stringResource(id = R.string.common_reps_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(84.dp),
+            modifier = Modifier.width(76.dp),
+            singleLine = true
+        )
+        OutlinedTextField(
+            value = intensity,
+            onValueChange = onIntensityChange,
+            label = { Text(intensityLabel) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.width(76.dp),
             singleLine = true
         )
         Button(onClick = onLog) {

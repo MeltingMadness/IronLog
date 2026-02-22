@@ -280,6 +280,9 @@ private fun QuickLogComposer(
                 onRepsChange = { repsInput = it },
                 weight = weightInput,
                 onWeightChange = { weightInput = it },
+                intensity = "",
+                onIntensityChange = {},
+                intensityLabel = "RPE",
                 onLog = {
                     val reps = repsInput.toIntOrNull()
                     val weight = weightInput.toDoubleOrNull()
@@ -539,6 +542,9 @@ private fun ExtraSetInput(
             onRepsChange = { repsInput = it },
             weight = weightInput,
             onWeightChange = { weightInput = it },
+            intensity = "",
+            onIntensityChange = {},
+            intensityLabel = "RPE",
             onLog = {
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
