@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
@@ -177,12 +178,22 @@ fun WorkoutDetailScreen(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontStyle = if (set.isWarmup) FontStyle.Italic else FontStyle.Normal
                                     )
+                                    val rpe = set.rpe
+                                    val intensityString = if (rpe != null) {
+                                        if (preferences.intensitySystem == IntensitySystem.RPE) {
+                                            " @ RPE ${rpe}"
+                                        } else {
+                                            val rir = 10.0 - rpe
+                                            " @ ${if (rir % 1.0 == 0.0) rir.toInt() else rir} RIR"
+                                        }
+                                    } else ""
+
                                     Text(
                                         text = stringResource(
                                             id = R.string.workout_detail_set_value,
                                             WeightFormatting.formatWeight(set.weightKg, preferences.unitSystem),
                                             set.reps
-                                        ),
+                                        ) + intensityString,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
