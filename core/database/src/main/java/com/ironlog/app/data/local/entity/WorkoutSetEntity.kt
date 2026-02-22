@@ -35,7 +35,8 @@ data class WorkoutSetEntity(
     val reps: Int,
     val weightKg: Double,
     val isWarmup: Boolean = false,
-    val completedAt: Long // epoch millis
+    val completedAt: Long, // epoch millis
+    val rpe: Double? = null
 ) {
     fun toDomain(): WorkoutSet = WorkoutSet(
         id = id,
@@ -45,7 +46,8 @@ data class WorkoutSetEntity(
         reps = reps,
         weightKg = weightKg,
         isWarmup = isWarmup,
-        completedAt = EpochConverter.toLocalDateTime(completedAt)
+        completedAt = EpochConverter.toLocalDateTime(completedAt),
+        rpe = rpe
     )
 
     companion object {
@@ -57,7 +59,8 @@ data class WorkoutSetEntity(
             reps = set.reps,
             weightKg = set.weightKg,
             isWarmup = set.isWarmup,
-            completedAt = EpochConverter.toLong(set.completedAt)
+            completedAt = EpochConverter.toLong(set.completedAt),
+            rpe = set.rpe
         )
     }
 }

@@ -10,5 +10,6 @@ data class WorkoutSet(
     val reps: Int,
     val weightKg: Double,
     val isWarmup: Boolean = false,
-    val completedAt: LocalDateTime = LocalDateTime.now()
+    val completedAt: LocalDateTime = LocalDateTime.now(),
+    val rpe: Double? = null
 )
