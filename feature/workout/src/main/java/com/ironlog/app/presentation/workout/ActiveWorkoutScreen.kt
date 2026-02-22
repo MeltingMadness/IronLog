@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.SetInputRow
 import com.ironlog.app.presentation.common.WorkoutTimer
@@ -164,8 +165,9 @@ fun ActiveWorkoutScreen(
                     ExerciseCard(
                         exerciseWithSets = exerciseWithSets,
                         defaultWarmupFlag = preferences.defaultWarmupFlag,
-                        onLogSet = { reps, weight, isWarmup ->
-                            viewModel.logSet(exerciseWithSets.exercise.id, reps, weight, isWarmup)
+                        intensitySystem = preferences.intensitySystem,
+                        onLogSet = { reps, weight, isWarmup, intensity ->
+                            viewModel.logSet(exerciseWithSets.exercise.id, reps, weight, isWarmup, intensity)
                         },
                         onDeleteSet = viewModel::deleteSet
                     )
@@ -177,8 +179,9 @@ fun ActiveWorkoutScreen(
                 selectedExerciseId = quickSelectedExerciseId,
                 onSelectExercise = { quickSelectedExerciseId = it },
                 defaultWarmupFlag = preferences.defaultWarmupFlag,
-                onLogSet = { exerciseId, reps, weight, isWarmup ->
-                    viewModel.logSet(exerciseId, reps, weight, isWarmup)
+                intensitySystem = preferences.intensitySystem,
+                onLogSet = { exerciseId, reps, weight, isWarmup, intensity ->
+                    viewModel.logSet(exerciseId, reps, weight, isWarmup, intensity)
                 }
             )
         }
@@ -219,7 +222,8 @@ private fun QuickLogComposer(
     selectedExerciseId: Long?,
     onSelectExercise: (Long) -> Unit,
     defaultWarmupFlag: Boolean,
-    onLogSet: (Long, Int, Double, Boolean) -> Unit
+    intensitySystem: IntensitySystem,
+    onLogSet: (Long, Int, Double, Boolean, String) -> Unit
 ) {
     if (exercisesWithSets.isEmpty() || selectedExerciseId == null) return
 
@@ -228,6 +232,7 @@ private fun QuickLogComposer(
 
     var repsInput by remember(selectedExerciseId) { mutableStateOf("") }
     var weightInput by remember(selectedExerciseId) { mutableStateOf("") }
+    var intensityInput by remember(selectedExerciseId) { mutableStateOf("") }
     var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
 
     Card(
@@ -280,16 +285,17 @@ private fun QuickLogComposer(
                 onRepsChange = { repsInput = it },
                 weight = weightInput,
                 onWeightChange = { weightInput = it },
-                intensity = "",
-                onIntensityChange = {},
-                intensityLabel = "RPE",
+                intensity = intensityInput,
+                onIntensityChange = { intensityInput = it },
+                intensityLabel = intensitySystem.displayName,
                 onLog = {
                     val reps = repsInput.toIntOrNull()
                     val weight = weightInput.toDoubleOrNull()
                     if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                        onLogSet(selectedExerciseId, reps, weight, isWarmup)
+                        onLogSet(selectedExerciseId, reps, weight, isWarmup, intensityInput)
                         repsInput = ""
                         weightInput = ""
+                        intensityInput = ""
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -302,7 +308,8 @@ private fun QuickLogComposer(
 private fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
     defaultWarmupFlag: Boolean,
-    onLogSet: (Int, Double, Boolean) -> Unit,
+    intensitySystem: IntensitySystem,
+    onLogSet: (Int, Double, Boolean, String) -> Unit,
     onDeleteSet: (Long) -> Unit
 ) {
     val dims = ironLogDimens
@@ -370,7 +377,8 @@ private fun ExerciseCard(
                             } else {
                                 ""
                             },
-                            onLog = { reps, weight -> onLogSet(reps, weight, false) }
+                            intensitySystem = intensitySystem,
+                            onLog = { reps, weight, intensity -> onLogSet(reps, weight, false, intensity) }
                         )
                     }
                 }
@@ -390,6 +398,7 @@ private fun ExerciseCard(
                     ExtraSetInput(
                         planTarget = planTarget,
                         defaultWarmupFlag = defaultWarmupFlag,
+                        intensitySystem = intensitySystem,
                         onLogSet = onLogSet
                     )
                 }
@@ -408,6 +417,7 @@ private fun ExerciseCard(
                 ExtraSetInput(
                     planTarget = null,
                     defaultWarmupFlag = defaultWarmupFlag,
+                    intensitySystem = intensitySystem,
                     onLogSet = onLogSet
                 )
             }
@@ -453,10 +463,12 @@ private fun PendingSetRow(
     setNumber: Int,
     defaultReps: String,
     defaultWeight: String,
-    onLog: (Int, Double) -> Unit
+    intensitySystem: IntensitySystem,
+    onLog: (Int, Double, String) -> Unit
 ) {
     var repsInput by remember { mutableStateOf(defaultReps) }
     var weightInput by remember { mutableStateOf(defaultWeight) }
+    var intensityInput by remember { mutableStateOf("") }
 
     Row(
         modifier = Modifier
@@ -476,7 +488,7 @@ private fun PendingSetRow(
             onValueChange = { weightInput = it },
             label = { Text(stringResource(id = R.string.common_unit_kg)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(80.dp),
+            modifier = Modifier.width(76.dp),
             singleLine = true
         )
         OutlinedTextField(
@@ -484,7 +496,15 @@ private fun PendingSetRow(
             onValueChange = { repsInput = it },
             label = { Text(stringResource(id = R.string.common_reps_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(72.dp),
+            modifier = Modifier.width(64.dp),
+            singleLine = true
+        )
+        OutlinedTextField(
+            value = intensityInput,
+            onValueChange = { intensityInput = it },
+            label = { Text(intensitySystem.displayName) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.width(64.dp),
             singleLine = true
         )
         Button(
@@ -492,7 +512,7 @@ private fun PendingSetRow(
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    onLog(reps, weight)
+                    onLog(reps, weight, intensityInput)
                 }
             }
         ) {
@@ -505,7 +525,8 @@ private fun PendingSetRow(
 private fun ExtraSetInput(
     planTarget: PlanTarget?,
     defaultWarmupFlag: Boolean,
-    onLogSet: (Int, Double, Boolean) -> Unit
+    intensitySystem: IntensitySystem,
+    onLogSet: (Int, Double, Boolean, String) -> Unit
 ) {
     var repsInput by remember {
         mutableStateOf(
@@ -521,6 +542,7 @@ private fun ExtraSetInput(
             } ?: ""
         )
     }
+    var intensityInput by remember { mutableStateOf("") }
     var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
 
     Column {
@@ -542,16 +564,17 @@ private fun ExtraSetInput(
             onRepsChange = { repsInput = it },
             weight = weightInput,
             onWeightChange = { weightInput = it },
-            intensity = "",
-            onIntensityChange = {},
-            intensityLabel = "RPE",
+            intensity = intensityInput,
+            onIntensityChange = { intensityInput = it },
+            intensityLabel = intensitySystem.displayName,
             onLog = {
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    onLogSet(reps, weight, isWarmup)
+                    onLogSet(reps, weight, isWarmup, intensityInput)
                     repsInput = ""
                     weightInput = ""
+                    intensityInput = ""
                 }
             }
         )

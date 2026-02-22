@@ -1,6 +1,7 @@
 ﻿package com.ironlog.app.fakes
 
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
@@ -56,6 +57,10 @@ class FakeAppPreferencesRepository(
 
     override suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean) {
         state.value = state.value.copy(betaDiagnosticsOptIn = enabled)
+    }
+
+    override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) {
+        state.value = state.value.copy(intensitySystem = intensitySystem)
     }
 
     override suspend fun updateReminderConfig(config: ReminderConfig) {

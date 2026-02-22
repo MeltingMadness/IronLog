@@ -6,6 +6,8 @@ import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
@@ -31,6 +33,7 @@ class ActiveWorkoutViewModelTest {
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statsRepo: FakeStatisticsRepository
     private lateinit var planRepo: FakeTrainingPlanRepository
+    private lateinit var prefsRepo: FakeAppPreferencesRepository
 
     private val testExercise = Exercise(
         id = 1L,
@@ -48,6 +51,7 @@ class ActiveWorkoutViewModelTest {
         exerciseRepo = FakeExerciseRepository()
         statsRepo = FakeStatisticsRepository()
         planRepo = FakeTrainingPlanRepository()
+        prefsRepo = FakeAppPreferencesRepository()
 
         exerciseRepo.addExercise(testExercise)
         workoutRepo.addSession(
@@ -63,10 +67,44 @@ class ActiveWorkoutViewModelTest {
 
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
     }
 
     // --- Log Set ---
+
+    @Test
+    fun `logSet speichert rpe korrekt wenn IntensitySystem ist RPE`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(8.5, sets[0].rpe)
+    }
+
+    @Test
+    fun `logSet rechnet rir um in rpe wenn IntensitySystem ist RIR`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RIR)
+        val vm = createViewModel()
+
+        // 1.5 RIR = 8.5 RPE
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "1.5")
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(8.5, sets[0].rpe)
+    }
+
+    @Test
+    fun `logSet ignoriert ungueltige intensitaet`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "abc")
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(null, sets[0].rpe)
+    }
 
     @Test
     fun `logSet erstellt Satz korrekt`() = runTest {

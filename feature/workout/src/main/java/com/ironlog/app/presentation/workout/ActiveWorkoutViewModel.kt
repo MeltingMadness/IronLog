@@ -4,9 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -52,7 +55,8 @@ class ActiveWorkoutViewModel(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
-    private val trainingPlanRepository: TrainingPlanRepository
+    private val trainingPlanRepository: TrainingPlanRepository,
+    private val appPreferencesRepository: AppPreferencesRepository
 ) : ViewModel() {
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
@@ -177,12 +181,25 @@ class ActiveWorkoutViewModel(
         showFinishDialog.value = false
     }
 
-    fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false) {
+    fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false, intensity: String = "") {
         viewModelScope.launch {
             try {
                 val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
                     .filter { it.exerciseId == exerciseId }
                 val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
+
+                var parsedRpe: Double? = null
+                if (intensity.isNotBlank()) {
+                    val rawVal = intensity.toDoubleOrNull()
+                    if (rawVal != null) {
+                        val prefs = appPreferencesRepository.preferences.first()
+                        parsedRpe = if (prefs.intensitySystem == IntensitySystem.RIR) {
+                            10.0 - rawVal
+                        } else {
+                            rawVal
+                        }
+                    }
+                }
 
                 val set = WorkoutSet(
                     sessionId = sessionId,
@@ -191,7 +208,8 @@ class ActiveWorkoutViewModel(
                     reps = reps,
                     weightKg = weightKg,
                     isWarmup = isWarmup,
-                    completedAt = LocalDateTime.now()
+                    completedAt = LocalDateTime.now(),
+                    rpe = parsedRpe
                 )
                 workoutRepository.addSet(set)
 
