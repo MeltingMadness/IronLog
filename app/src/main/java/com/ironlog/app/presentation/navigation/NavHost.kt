@@ -24,8 +24,8 @@ fun IronLogNavHost(navController: NavHostController) {
     ) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onStartWorkout = { sessionId ->
-                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
+                onStartWorkout = { sessionId, planId ->
+                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId, planId ?: 0L))
                 },
                 onContinueWorkout = { sessionId ->
                     navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))

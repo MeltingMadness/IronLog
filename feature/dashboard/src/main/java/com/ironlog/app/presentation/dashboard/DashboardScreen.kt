@@ -56,7 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onStartWorkout: (Long) -> Unit,
+    onStartWorkout: (Long, Long?) -> Unit,
     onContinueWorkout: (Long) -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()

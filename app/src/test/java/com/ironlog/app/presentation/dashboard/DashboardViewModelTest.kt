@@ -1,9 +1,11 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
+import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +32,7 @@ class DashboardViewModelTest {
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statsRepo: FakeStatisticsRepository
     private lateinit var preferencesRepo: FakeAppPreferencesRepository
+    private lateinit var planRepo: FakeTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -38,6 +41,7 @@ class DashboardViewModelTest {
         exerciseRepo = FakeExerciseRepository()
         statsRepo = FakeStatisticsRepository()
         preferencesRepo = FakeAppPreferencesRepository()
+        planRepo = FakeTrainingPlanRepository()
     }
 
     @After
@@ -49,7 +53,8 @@ class DashboardViewModelTest {
         workoutRepo,
         statsRepo,
         exerciseRepo,
-        preferencesRepo
+        preferencesRepo,
+        planRepo
     )
 
     @Test
@@ -182,9 +187,30 @@ class DashboardViewModelTest {
         val vm = createViewModel()
         var receivedId: Long? = null
 
-        vm.startNewWorkout { receivedId = it }
+        vm.startNewWorkout { id, planId -> receivedId = id }
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(receivedId != null && receivedId!! > 0)
+    }
+
+    @Test
+    fun `startNewWorkoutWithPlan creates session with plan name`() = runTest {
+        val vm = createViewModel()
+        var createdSessionId: Long? = null
+        var planIdPass: Long? = null
+        
+        val testPlan = TrainingPlan(id = 99L, name = "My Test Plan", exercises = emptyList())
+        
+        vm.startNewWorkoutWithPlan(testPlan) { sessionId, planId ->
+            createdSessionId = sessionId
+            planIdPass = planId
+        }
+        
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        assertTrue(createdSessionId != null)
+        assertEquals(99L, planIdPass)
+        val session = workoutRepo.getSessionById(createdSessionId!!)
+        assertEquals("My Test Plan", session?.name)
     }
 }

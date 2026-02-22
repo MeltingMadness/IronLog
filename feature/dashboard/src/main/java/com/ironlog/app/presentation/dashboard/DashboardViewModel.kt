@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.catchAndLog
@@ -24,6 +26,8 @@ import java.time.temporal.WeekFields
 
 data class DashboardUiState(
     val activeSession: WorkoutSession? = null,
+    val trainingPlans: List<TrainingPlan> = emptyList(),
+    val showPlanSelectionSheet: Boolean = false,
     val workoutsThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
     val currentStreak: Int = 0,
@@ -40,7 +44,8 @@ class DashboardViewModel(
     private val workoutRepository: WorkoutRepository,
     private val statisticsRepository: StatisticsRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    private val trainingPlanRepository: TrainingPlanRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -57,6 +62,14 @@ class DashboardViewModel(
                 .catchAndLog("DashboardVM")
                 .collect { session ->
                     _uiState.value = _uiState.value.copy(activeSession = session)
+                }
+        }
+        
+        viewModelScope.launch {
+            trainingPlanRepository.getAllPlans()
+                .catchAndLog("DashboardVM_Plans")
+                .collect { plans ->
+                    _uiState.value = _uiState.value.copy(trainingPlans = plans)
                 }
         }
     }
@@ -177,15 +190,36 @@ class DashboardViewModel(
         return streak
     }
 
-    fun startNewWorkout(onSessionCreated: (Long) -> Unit) {
+    fun showPlanSelectionSheet() {
+        _uiState.value = _uiState.value.copy(showPlanSelectionSheet = true)
+    }
+
+    fun dismissPlanSelectionSheet() {
+        _uiState.value = _uiState.value.copy(showPlanSelectionSheet = false)
+    }
+
+    fun startNewWorkout(onSessionCreated: (Long, Long?) -> Unit) {
         viewModelScope.launch {
             try {
                 val autoName = "Training ${java.time.LocalDate.now().format(DateFormatting.DATE_SHORT)}"
                 val sessionId = workoutRepository.startWorkout(autoName)
-                onSessionCreated(sessionId)
+                onSessionCreated(sessionId, null)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Training konnte nicht gestartet werden: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun startNewWorkoutWithPlan(plan: TrainingPlan, onSessionCreated: (Long, Long?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val sessionId = workoutRepository.startWorkout(plan.name)
+                onSessionCreated(sessionId, plan.id)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Training nach Plan konnte nicht gestartet werden: ${e.message}"
                 )
             }
         }
