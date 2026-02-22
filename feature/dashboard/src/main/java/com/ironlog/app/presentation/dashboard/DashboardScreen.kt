@@ -116,7 +116,7 @@ fun DashboardScreen(
                 CommandCenterCard(
                     hasActiveSession = state.activeSession != null,
                     isFirstTimeUser = isFirstTimeUser,
-                    onStartWorkout = { viewModel.startNewWorkout(onStartWorkout) },
+                    onStartWorkout = { viewModel.showPlanSelectionSheet() },
                     onContinueWorkout = { state.activeSession?.let { onContinueWorkout(it.id) } }
                 )
             }
@@ -200,6 +200,21 @@ fun DashboardScreen(
             item {
                 Spacer(modifier = Modifier.height(dims.spacingXl))
             }
+        }
+
+        if (state.showPlanSelectionSheet) {
+            PlanSelectionSheet(
+                plans = state.trainingPlans,
+                onDismiss = viewModel::dismissPlanSelectionSheet,
+                onPlanSelected = { plan -> 
+                    viewModel.dismissPlanSelectionSheet()
+                    viewModel.startNewWorkoutWithPlan(plan, onStartWorkout) 
+                },
+                onFreeWorkoutSelected = { 
+                    viewModel.dismissPlanSelectionSheet()
+                    viewModel.startNewWorkout(onStartWorkout) 
+                }
+            )
         }
     }
 }
