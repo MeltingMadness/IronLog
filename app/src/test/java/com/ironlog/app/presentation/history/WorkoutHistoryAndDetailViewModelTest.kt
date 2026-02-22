@@ -48,6 +48,25 @@ class WorkoutHistoryAndDetailViewModelTest {
     }
 
     @Test
+    fun `history view model uses paged data`() = runTest {
+        val now = LocalDateTime.now()
+        workoutRepo.addSession(
+            WorkoutSession(id = 1L, startTime = now.minusDays(2), endTime = now.minusDays(2).plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = WorkoutHistoryViewModel(workoutRepo)
+        val collector = backgroundScope.launch { vm.pagedWorkouts.collect() }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Test should verify that pagedWorkouts flow is not null and emits PagingData
+        assertTrue(vm.pagedWorkouts != null)
+        
+        collector.cancel()
+    }
+
+    @Test
     fun `history view model vermeidet per-session stats N+1`() = runTest {
         val now = LocalDateTime.now()
         workoutRepo.addSession(

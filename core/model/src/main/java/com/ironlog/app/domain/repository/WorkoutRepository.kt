@@ -1,5 +1,6 @@
 package com.ironlog.app.domain.repository
 
+import androidx.paging.PagingData
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,7 @@ interface WorkoutRepository {
     suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet>
     suspend fun getSetsForSessionsList(sessionIds: List<Long>): List<WorkoutSet>
     fun getAllCompletedSessions(): Flow<List<WorkoutSession>>
+    fun getPagedCompletedSessions(): Flow<PagingData<WorkoutSession>>
     suspend fun getSessionById(id: Long): WorkoutSession?
     fun observeSessionById(id: Long): Flow<WorkoutSession?>
     suspend fun deleteSession(sessionId: Long)

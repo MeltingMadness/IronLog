@@ -2,15 +2,20 @@ package com.ironlog.app.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.map
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.catchAndLog
 import com.ironlog.app.presentation.common.toUserMessage
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -38,6 +43,20 @@ class WorkoutHistoryViewModel(
     val uiState: StateFlow<WorkoutHistoryUiState> = combine(_items, _isLoading, _error) { items, loading, error ->
         WorkoutHistoryUiState(workouts = items, isLoading = loading, error = error)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WorkoutHistoryUiState())
+
+    val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = workoutRepository.getPagedCompletedSessions().map { pagingData ->
+        pagingData.map { session ->
+            val exerciseCount = 0
+            val setCount = 0
+            val totalVolume = 0.0
+            WorkoutHistoryItem(
+                session = session,
+                exerciseCount = exerciseCount,
+                setCount = setCount,
+                totalVolume = totalVolume
+            )
+        }
+    }.cachedIn(viewModelScope)
 
     init {
         observeHistory()

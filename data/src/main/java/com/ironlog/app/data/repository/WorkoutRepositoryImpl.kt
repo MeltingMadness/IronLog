@@ -1,5 +1,9 @@
 package com.ironlog.app.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.map
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
@@ -67,6 +71,15 @@ class WorkoutRepositoryImpl(
 
     override fun getAllCompletedSessions(): Flow<List<WorkoutSession>> =
         sessionDao.getAllCompletedSessions().map { list -> list.map { it.toDomain() } }
+
+    override fun getPagedCompletedSessions(): Flow<PagingData<WorkoutSession>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+            pagingSourceFactory = { sessionDao.getPagedCompletedSessions() }
+        ).flow.map { pagingData ->
+            pagingData.map { it.toDomain() }
+        }
+    }
 
     override suspend fun getSessionById(id: Long): WorkoutSession? =
         sessionDao.getSessionById(id)?.toDomain()

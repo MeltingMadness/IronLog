@@ -40,4 +40,5 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.serialization.json)
+    implementation(libs.paging.common)
 }

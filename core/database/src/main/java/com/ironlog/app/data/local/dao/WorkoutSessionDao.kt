@@ -1,5 +1,6 @@
 package com.ironlog.app.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -28,6 +29,9 @@ interface WorkoutSessionDao {
 
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     fun getAllCompletedSessions(): Flow<List<WorkoutSessionEntity>>
+
+    @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
+    fun getPagedCompletedSessions(): PagingSource<Int, WorkoutSessionEntity>
 
     @Query("SELECT * FROM workout_sessions ORDER BY id ASC")
     suspend fun getAllSessionsList(): List<WorkoutSessionEntity>

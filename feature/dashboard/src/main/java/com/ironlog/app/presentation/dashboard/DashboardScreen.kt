@@ -112,73 +112,79 @@ fun DashboardScreen(
                 )
             }
 
-            item {
-                SectionTitle(text = stringResource(id = R.string.dashboard_quick_stats))
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                ) {
-                    StatCard(
-                        label = stringResource(id = R.string.dashboard_this_week),
-                        value = "${state.workoutsThisWeek}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label = stringResource(id = R.string.dashboard_this_month),
-                        value = "${state.workoutsThisMonth}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label = stringResource(id = R.string.dashboard_streak),
-                        value = stringResource(id = R.string.dashboard_streak_value, state.currentStreak),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            item {
-                MuscleHeatmapCard(heatmap = state.muscleHeatmap)
-            }
-
-            item {
-                SectionTitle(text = stringResource(id = R.string.dashboard_recent_records))
-            }
-
-            if (state.recentRecords.isEmpty()) {
+            if (state.lastWorkout == null && state.recentRecords.isEmpty()) {
                 item {
-                    Text(
-                        text = stringResource(id = R.string.dashboard_no_records),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    OnboardingCard()
                 }
             } else {
-                items(state.recentRecords) { (record, exerciseName) ->
-                    RecordCard(
-                        exerciseName = exerciseName,
-                        recordType = record.type.displayName,
-                        recordValue = formatRecordValue(record.type.name, record.value)
-                    )
-                }
-            }
-
-            item {
-                WeeklyVolumeCard(weeklyVolume = state.weeklyVolume)
-            }
-
-            state.lastWorkout?.let { workout ->
                 item {
-                    SectionTitle(text = stringResource(id = R.string.dashboard_last_workout))
+                    SectionTitle(text = stringResource(id = R.string.dashboard_quick_stats))
                 }
+
                 item {
-                    LastWorkoutCard(
-                        dateTime = workout.startTime.format(DateFormatting.DATE_TIME),
-                        durationMin = (workout.durationSeconds / 60).toInt(),
-                        exerciseCount = state.lastWorkoutExerciseCount
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                    ) {
+                        StatCard(
+                            label = stringResource(id = R.string.dashboard_this_week),
+                            value = "${state.workoutsThisWeek}",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            label = stringResource(id = R.string.dashboard_this_month),
+                            value = "${state.workoutsThisMonth}",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            label = stringResource(id = R.string.dashboard_streak),
+                            value = stringResource(id = R.string.dashboard_streak_value, state.currentStreak),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                item {
+                    MuscleHeatmapCard(heatmap = state.muscleHeatmap)
+                }
+
+                item {
+                    SectionTitle(text = stringResource(id = R.string.dashboard_recent_records))
+                }
+
+                if (state.recentRecords.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(id = R.string.dashboard_no_records),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    items(state.recentRecords) { (record, exerciseName) ->
+                        RecordCard(
+                            exerciseName = exerciseName,
+                            recordType = record.type.displayName,
+                            recordValue = formatRecordValue(record.type.name, record.value)
+                        )
+                    }
+                }
+
+                item {
+                    WeeklyVolumeCard(weeklyVolume = state.weeklyVolume)
+                }
+
+                state.lastWorkout?.let { workout ->
+                    item {
+                        SectionTitle(text = stringResource(id = R.string.dashboard_last_workout))
+                    }
+                    item {
+                        LastWorkoutCard(
+                            dateTime = workout.startTime.format(DateFormatting.DATE_TIME),
+                            durationMin = (workout.durationSeconds / 60).toInt(),
+                            exerciseCount = state.lastWorkoutExerciseCount
+                        )
+                    }
                 }
             }
 
@@ -338,6 +344,37 @@ private fun formatRecordValue(type: String, value: Double): String {
         "MAX_VOLUME" -> "${value.toInt()} kg"
         "MAX_E1RM" -> "${"%.1f".format(value)} kg"
         else -> "$value"
+    }
+}
+
+@Composable
+private fun OnboardingCard() {
+    val dims = ironLogDimens
+    val surfaces = ironLogSurfaceRoles
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassmorphism(backgroundColor = surfaces.elevated.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingLg),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
+        ) {
+            Text(
+                text = "Willkommen bei IronLog! \uD83D\uDE80",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, Heatmaps und Statistiken.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

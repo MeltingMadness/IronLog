@@ -50,6 +50,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.UnitSystem
@@ -68,7 +71,7 @@ fun WorkoutHistoryScreen(
     onWorkoutClick: (Long) -> Unit,
     viewModel: WorkoutHistoryViewModel = koinViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pagedWorkouts = viewModel.pagedWorkouts.collectAsLazyPagingItems()
     var deleteSessionId by remember { mutableStateOf<Long?>(null) }
     val appPreferencesRepository: AppPreferencesRepository = koinInject()
     val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
@@ -82,7 +85,7 @@ fun WorkoutHistoryScreen(
         }
     ) { padding ->
         when {
-            state.isLoading -> {
+            pagedWorkouts.loadState.refresh is LoadState.Loading && pagedWorkouts.itemCount == 0 -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -93,7 +96,7 @@ fun WorkoutHistoryScreen(
                 }
             }
 
-            state.workouts.isEmpty() -> {
+            pagedWorkouts.loadState.refresh !is LoadState.Loading && pagedWorkouts.itemCount == 0 -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -124,13 +127,19 @@ fun WorkoutHistoryScreen(
                     contentPadding = PaddingValues(dims.spacingMd),
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
-                    items(state.workouts, key = { it.session.id }) { item ->
-                        SwipeToDeleteCard(
-                            item = item,
-                            unitSystem = preferences.unitSystem,
-                            onClick = { onWorkoutClick(item.session.id) },
-                            onDelete = { deleteSessionId = item.session.id }
-                        )
+                    items(
+                        count = pagedWorkouts.itemCount,
+                        key = pagedWorkouts.itemKey { it.session.id }
+                    ) { index ->
+                        val item = pagedWorkouts[index]
+                        if (item != null) {
+                            SwipeToDeleteCard(
+                                item = item,
+                                unitSystem = preferences.unitSystem,
+                                onClick = { onWorkoutClick(item.session.id) },
+                                onDelete = { deleteSessionId = item.session.id }
+                            )
+                        }
                     }
                     item {
                         Spacer(modifier = Modifier.height(dims.spacingXl))

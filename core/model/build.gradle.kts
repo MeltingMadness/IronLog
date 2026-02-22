@@ -24,4 +24,5 @@ kotlin {
 
 dependencies {
     implementation(libs.core.ktx)
+    implementation(libs.paging.common)
 }
