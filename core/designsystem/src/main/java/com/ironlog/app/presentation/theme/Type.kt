@@ -6,34 +6,51 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-private val DisplayFamily = FontFamily.Serif
+private val DisplayFamily = FontFamily.SansSerif
 private val BodyFamily = FontFamily.SansSerif
 
 val Typography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 48.sp,
+        lineHeight = 52.sp,
+        letterSpacing = (-1.5).sp
+    ),
+    displayMedium = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 36.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-1.0).sp
+    ),
     displaySmall = TextStyle(
         fontFamily = DisplayFamily,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 30.sp,
         lineHeight = 36.sp,
-        letterSpacing = 0.2.sp
+        letterSpacing = (-0.5).sp
     ),
     headlineLarge = TextStyle(
         fontFamily = DisplayFamily,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 28.sp,
-        lineHeight = 34.sp
+        lineHeight = 34.sp,
+        letterSpacing = (-0.25).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = DisplayFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
-        lineHeight = 30.sp
+        lineHeight = 30.sp,
+        letterSpacing = 0.sp
     ),
     titleLarge = TextStyle(
         fontFamily = BodyFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
-        lineHeight = 28.sp
+        lineHeight = 28.sp,
+        letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(
         fontFamily = BodyFamily,

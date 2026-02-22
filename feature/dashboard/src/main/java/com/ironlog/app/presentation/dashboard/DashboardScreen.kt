@@ -40,6 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.presentation.common.StatCard
+import com.ironlog.app.presentation.theme.glassmorphism
+import com.ironlog.app.presentation.theme.glow
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
@@ -197,7 +199,10 @@ private fun CommandCenterCard(
     val surfaces = ironLogSurfaceRoles
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        modifier = Modifier.glassmorphism(
+            backgroundColor = surfaces.elevated.copy(alpha = 0.5f)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -251,8 +256,9 @@ private fun RecordCard(
     val surfaces = ironLogSurfaceRoles
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = surfaces.muted)
+        modifier = Modifier.fillMaxWidth()
+            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.4f)),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
     ) {
         Row(
             modifier = Modifier
@@ -293,8 +299,9 @@ private fun LastWorkoutCard(
     val surfaces = ironLogSurfaceRoles
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = surfaces.muted)
+        modifier = Modifier.fillMaxWidth()
+            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.4f)),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
     ) {
         Column(modifier = Modifier.padding(dims.spacingSm)) {
             Text(

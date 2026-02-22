@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
             IronLogTheme(
                 themeMode = preferences.themeMode,
+                themeScheme = preferences.themeScheme,
                 useDynamicColor = preferences.useDynamicColor,
                 reducedMotion = preferences.reducedMotion
             ) {

@@ -11,8 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import com.ironlog.app.domain.model.ThemeMode
-
-private val LightColorScheme = lightColorScheme(
+import com.ironlog.app.domain.model.ThemeScheme
+private val AmberLightColorScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
     primaryContainer = PrimaryContainer,
@@ -35,7 +35,53 @@ private val LightColorScheme = lightColorScheme(
     onError = OnError,
 )
 
-private val DarkColorScheme = darkColorScheme(
+private val CyanLightColorScheme = lightColorScheme(
+    primary = CyanPrimary,
+    onPrimary = CyanOnPrimary,
+    primaryContainer = CyanPrimaryContainer,
+    onPrimaryContainer = CyanOnPrimaryContainer,
+    secondary = CyanSecondary,
+    onSecondary = CyanOnSecondary,
+    secondaryContainer = CyanSecondaryContainer,
+    onSecondaryContainer = CyanOnSecondaryContainer,
+    tertiary = CyanTertiary,
+    onTertiary = CyanOnTertiary,
+    tertiaryContainer = CyanTertiaryContainer,
+    onTertiaryContainer = CyanOnTertiaryContainer,
+    background = Background,
+    onBackground = OnBackground,
+    surface = Surface,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    error = Error,
+    onError = OnError,
+)
+
+private val RedLightColorScheme = lightColorScheme(
+    primary = RedPrimary,
+    onPrimary = RedOnPrimary,
+    primaryContainer = RedPrimaryContainer,
+    onPrimaryContainer = RedOnPrimaryContainer,
+    secondary = RedSecondary,
+    onSecondary = RedOnSecondary,
+    secondaryContainer = RedSecondaryContainer,
+    onSecondaryContainer = RedOnSecondaryContainer,
+    tertiary = RedTertiary,
+    onTertiary = RedOnTertiary,
+    tertiaryContainer = RedTertiaryContainer,
+    onTertiaryContainer = RedOnTertiaryContainer,
+    background = Background,
+    onBackground = OnBackground,
+    surface = Surface,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    error = Error,
+    onError = OnError,
+)
+
+private val AmberDarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
     onPrimary = DarkOnPrimary,
     primaryContainer = DarkPrimaryContainer,
@@ -58,9 +104,56 @@ private val DarkColorScheme = darkColorScheme(
     onError = DarkOnError,
 )
 
+private val CyanDarkColorScheme = darkColorScheme(
+    primary = DarkCyanPrimary,
+    onPrimary = DarkCyanOnPrimary,
+    primaryContainer = DarkCyanPrimaryContainer,
+    onPrimaryContainer = DarkCyanOnPrimaryContainer,
+    secondary = DarkCyanSecondary,
+    onSecondary = DarkCyanOnSecondary,
+    secondaryContainer = DarkCyanSecondaryContainer,
+    onSecondaryContainer = DarkCyanOnSecondaryContainer,
+    tertiary = DarkCyanTertiary,
+    onTertiary = DarkCyanOnTertiary,
+    tertiaryContainer = DarkCyanTertiaryContainer,
+    onTertiaryContainer = DarkCyanOnTertiaryContainer,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    error = DarkError,
+    onError = DarkOnError,
+)
+
+private val RedDarkColorScheme = darkColorScheme(
+    primary = DarkRedPrimary,
+    onPrimary = DarkRedOnPrimary,
+    primaryContainer = DarkRedPrimaryContainer,
+    onPrimaryContainer = DarkRedOnPrimaryContainer,
+    secondary = DarkRedSecondary,
+    onSecondary = DarkRedOnSecondary,
+    secondaryContainer = DarkRedSecondaryContainer,
+    onSecondaryContainer = DarkRedOnSecondaryContainer,
+    tertiary = DarkRedTertiary,
+    onTertiary = DarkRedOnTertiary,
+    tertiaryContainer = DarkRedTertiaryContainer,
+    onTertiaryContainer = DarkRedOnTertiaryContainer,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    error = DarkError,
+    onError = DarkOnError,
+)
+
 @Composable
 fun IronLogTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeScheme: ThemeScheme = ThemeScheme.AMBER,
     useDynamicColor: Boolean = false,
     reducedMotion: Boolean = false,
     content: @Composable () -> Unit
@@ -76,8 +169,16 @@ fun IronLogTheme(
         useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        isDarkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        isDarkTheme -> when (themeScheme) {
+            ThemeScheme.AMBER -> AmberDarkColorScheme
+            ThemeScheme.DEEP_CYAN -> CyanDarkColorScheme
+            ThemeScheme.NEON_RED -> RedDarkColorScheme
+        }
+        else -> when (themeScheme) {
+            ThemeScheme.AMBER -> AmberLightColorScheme
+            ThemeScheme.DEEP_CYAN -> CyanLightColorScheme
+            ThemeScheme.NEON_RED -> RedLightColorScheme
+        }
     }
 
     val surfaceRoles = if (isDarkTheme) {

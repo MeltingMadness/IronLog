@@ -1,7 +1,10 @@
 ﻿package com.ironlog.app.presentation.navigation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -48,8 +51,10 @@ class NavigationSmokeTest {
                             BottomNavBar(navController)
                         }
                     }
-                ) {
-                    IronLogNavHost(navController = navController)
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        IronLogNavHost(navController = navController)
+                    }
                 }
             }
         }

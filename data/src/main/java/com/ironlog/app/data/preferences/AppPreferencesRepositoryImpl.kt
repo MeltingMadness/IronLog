@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -28,6 +29,10 @@ class AppPreferencesRepositoryImpl(
             ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
             ?: ThemeMode.SYSTEM
 
+        val themeScheme = prefs[AppPreferenceKeys.THEME_SCHEME]
+            ?.let { runCatching { ThemeScheme.valueOf(it) }.getOrNull() }
+            ?: ThemeScheme.AMBER
+
         val reminderConfig = ReminderConfig(
             enabled = prefs[AppPreferenceKeys.REMINDER_ENABLED] ?: false,
             hour = (prefs[AppPreferenceKeys.REMINDER_HOUR] ?: ReminderConfig().hour).coerceIn(0, 23),
@@ -39,6 +44,7 @@ class AppPreferencesRepositoryImpl(
             unitSystem = unitSystem,
             weekStart = weekStart,
             themeMode = themeMode,
+            themeScheme = themeScheme,
             useDynamicColor = prefs[AppPreferenceKeys.USE_DYNAMIC_COLOR] ?: false,
             reducedMotion = prefs[AppPreferenceKeys.REDUCED_MOTION] ?: false,
             defaultWarmupFlag = prefs[AppPreferenceKeys.DEFAULT_WARMUP_FLAG] ?: false,
@@ -63,6 +69,12 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateThemeMode(themeMode: ThemeMode) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.THEME_MODE] = themeMode.name
+        }
+    }
+
+    override suspend fun updateThemeScheme(themeScheme: ThemeScheme) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.THEME_SCHEME] = themeScheme.name
         }
     }
 

@@ -7,6 +7,7 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IncidentReport
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -77,6 +78,12 @@ class SettingsViewModel(
     fun updateThemeMode(themeMode: ThemeMode) {
         viewModelScope.launch {
             appPreferencesRepository.updateThemeMode(themeMode)
+        }
+    }
+
+    fun updateThemeScheme(themeScheme: ThemeScheme) {
+        viewModelScope.launch {
+            appPreferencesRepository.updateThemeScheme(themeScheme)
         }
     }
 

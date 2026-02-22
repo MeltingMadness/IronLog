@@ -6,15 +6,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,8 +45,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
@@ -46,6 +56,7 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
@@ -206,62 +217,113 @@ private fun WorkoutCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(dims.radiusLg)) // Extracted glassmorphism radius
+            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.5f))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = surfaces.muted
+            containerColor = androidx.compose.ui.graphics.Color.Transparent
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dims.spacingMd)
+                .padding(dims.spacingLg)
         ) {
-            if (item.session.name.isNotBlank()) {
-                Text(
-                    text = item.session.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    if (item.session.name.isNotBlank()) {
+                        Text(
+                            text = item.session.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black
+                        )
+                        Spacer(modifier = Modifier.height(dims.spacing2))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(dims.spacingXs))
+                        Text(
+                            text = item.session.startTime.format(DateFormatting.DATE_FULL),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(dims.spacing2))
             }
-            Text(
-                text = item.session.startTime.format(DateFormatting.DATE_FULL),
-                style = if (item.session.name.isNotBlank()) MaterialTheme.typography.bodyMedium
-                else MaterialTheme.typography.titleMedium,
-                fontWeight = if (item.session.name.isBlank()) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (item.session.name.isNotBlank()) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = stringResource(
-                    id = R.string.history_time,
-                    item.session.startTime.format(DateFormatting.TIME_SHORT)
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(dims.spacing2))
-            val durationMin = item.session.durationSeconds / 60
-            Text(
-                text = stringResource(
-                    id = R.string.history_meta,
-                    durationMin,
-                    item.exerciseCount,
-                    item.setCount
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            
+            Spacer(modifier = Modifier.height(dims.spacingMd))
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val durationMin = item.session.durationSeconds / 60
+                
+                BadgeStat(
+                    icon = Icons.Default.Timer,
+                    text = "$durationMin min"
+                )
+                
+                BadgeStat(
+                    icon = Icons.Default.FitnessCenter,
+                    text = "${item.exerciseCount} Übungen / ${item.setCount} Sätze"
+                )
+            }
+            
             if (item.totalVolume > 0) {
-                Text(
-                    text = stringResource(
-                        id = R.string.history_volume,
-                        WeightFormatting.formatVolume(item.totalVolume, unitSystem)
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                Spacer(modifier = Modifier.height(dims.spacingSm))
+                BadgeStat(
+                    icon = Icons.Default.FitnessCenter, // Or something suited for kg/lbs
+                    text = "Volumen: ${WeightFormatting.formatVolume(item.totalVolume, unitSystem)}",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun BadgeStat(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
+    val dims = ironLogDimens
+    Row(
+        modifier = Modifier
+            .background(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                shape = RoundedCornerShape(dims.radiusSm)
+            )
+            .padding(horizontal = dims.spacingSm, vertical = dims.spacing2),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(dims.spacingXs))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = tint,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

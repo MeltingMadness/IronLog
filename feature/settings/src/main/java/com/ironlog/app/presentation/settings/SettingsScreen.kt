@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.util.DateFormatting
@@ -182,6 +183,31 @@ fun SettingsScreen(
                             selected = state.preferences.themeMode == ThemeMode.DARK,
                             onClick = { viewModel.updateThemeMode(ThemeMode.DARK) },
                             label = { Text(stringResource(id = R.string.settings_theme_dark)) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                    Text(
+                        text = "Farbschema", // stringResource(id = R.string.settings_theme_scheme_title)
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.AMBER,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
+                            label = { Text("Amber") }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.DEEP_CYAN,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.DEEP_CYAN) },
+                            label = { Text("Deep Cyan") }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.NEON_RED,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.NEON_RED) },
+                            label = { Text("Neon Red") }
                         )
                     }
 

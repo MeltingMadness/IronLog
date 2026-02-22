@@ -18,6 +18,12 @@ enum class ThemeMode {
     DARK
 }
 
+enum class ThemeScheme {
+    AMBER,
+    DEEP_CYAN,
+    NEON_RED
+}
+
 data class ReminderConfig(
     val enabled: Boolean = false,
     val hour: Int = 19,
@@ -33,6 +39,7 @@ data class AppPreferences(
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     val weekStart: WeekStart = WeekStart.MONDAY,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeScheme: ThemeScheme = ThemeScheme.AMBER,
     val useDynamicColor: Boolean = false,
     val reducedMotion: Boolean = false,
     val defaultWarmupFlag: Boolean = false,

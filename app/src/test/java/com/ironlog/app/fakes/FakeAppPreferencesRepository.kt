@@ -3,6 +3,7 @@
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -31,6 +32,10 @@ class FakeAppPreferencesRepository(
 
     override suspend fun updateThemeMode(themeMode: ThemeMode) {
         state.value = state.value.copy(themeMode = themeMode)
+    }
+
+    override suspend fun updateThemeScheme(themeScheme: ThemeScheme) {
+        state.value = state.value.copy(themeScheme = themeScheme)
     }
 
     override suspend fun updateUseDynamicColor(enabled: Boolean) {

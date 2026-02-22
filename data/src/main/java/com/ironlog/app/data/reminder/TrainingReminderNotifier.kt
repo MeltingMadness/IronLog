@@ -64,7 +64,12 @@ object TrainingReminderNotifier {
             builder.setContentIntent(pendingIntent)
         }
 
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+        try {
+            @Suppress("MissingPermission")
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
+        } catch (e: SecurityException) {
+            // Permission checked above, but fallback catch just in case
+        }
     }
 
     private const val NOTIFICATION_ID = 1001
