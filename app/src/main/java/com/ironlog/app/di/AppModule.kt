@@ -31,6 +31,7 @@ import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val appModule = module {
@@ -62,13 +63,17 @@ val appModule = module {
         )
     }
 
-    viewModel { ExerciseLibraryViewModel(get()) }
-    viewModel { ActiveWorkoutViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DashboardViewModel(get(), get(), get(), get()) }
-    viewModel { WorkoutHistoryViewModel(get()) }
-    viewModel { WorkoutDetailViewModel(get(), get(), get(), get()) }
-    viewModel { ExerciseStatsViewModel(get(), get(), get()) }
-    viewModel { TrainingPlanListViewModel(get(), get(), get()) }
-    viewModel { PlanEditorViewModel(get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get(), get(), get()) }
+    // ViewModels WITH SavedStateHandle — must use viewModelOf() so Koin
+    // automatically provides SavedStateHandle from Navigation's CreationExtras
+    viewModelOf(::ActiveWorkoutViewModel)
+    viewModelOf(::WorkoutDetailViewModel)
+    viewModelOf(::ExerciseStatsViewModel)
+    viewModelOf(::PlanEditorViewModel)
+
+    // ViewModels WITHOUT SavedStateHandle — viewModelOf() for consistency
+    viewModelOf(::ExerciseLibraryViewModel)
+    viewModelOf(::DashboardViewModel)
+    viewModelOf(::WorkoutHistoryViewModel)
+    viewModelOf(::TrainingPlanListViewModel)
+    viewModelOf(::SettingsViewModel)
 }
