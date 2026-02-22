@@ -12,6 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.scale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -105,8 +112,10 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
         ) {
             item {
+                val isFirstTimeUser = state.lastWorkout == null && state.recentRecords.isEmpty()
                 CommandCenterCard(
                     hasActiveSession = state.activeSession != null,
+                    isFirstTimeUser = isFirstTimeUser,
                     onStartWorkout = { viewModel.startNewWorkout(onStartWorkout) },
                     onContinueWorkout = { state.activeSession?.let { onContinueWorkout(it.id) } }
                 )
@@ -198,11 +207,23 @@ fun DashboardScreen(
 @Composable
 private fun CommandCenterCard(
     hasActiveSession: Boolean,
+    isFirstTimeUser: Boolean,
     onStartWorkout: () -> Unit,
     onContinueWorkout: () -> Unit
 ) {
     val dims = ironLogDimens
     val surfaces = ironLogSurfaceRoles
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isFirstTimeUser && !hasActiveSession) 1.05f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
 
     Card(
         colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
@@ -236,6 +257,7 @@ private fun CommandCenterCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(dims.spacingXl + dims.spacingLg)
+                    .scale(scale)
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Text(
