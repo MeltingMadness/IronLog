@@ -214,16 +214,21 @@ private fun CommandCenterCard(
     val dims = ironLogDimens
     val surfaces = ironLogSurfaceRoles
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isFirstTimeUser && !hasActiveSession) 1.05f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
+    val scale = if (isFirstTimeUser && !hasActiveSession) {
+        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+        val animatedScale by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.05f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scale"
+        )
+        animatedScale
+    } else {
+        1f
+    }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
