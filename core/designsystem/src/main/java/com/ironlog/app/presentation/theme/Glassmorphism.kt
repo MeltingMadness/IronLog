@@ -18,14 +18,12 @@ import androidx.compose.ui.unit.dp
 
 fun Modifier.glassmorphism(
     shape: Shape = RoundedCornerShape(16.dp),
-    blurRadius: Dp = 16.dp,
-    backgroundColor: Color = Color.White.copy(alpha = 0.1f),
+    backgroundColor: Color = Color.White.copy(alpha = 0.3f),
     borderColor: Color = Color.White.copy(alpha = 0.2f),
     borderWidth: Dp = 1.dp
 ): Modifier = this.then(
     Modifier
         .clip(shape)
-        .blur(radius = blurRadius, edgeTreatment = BlurredEdgeTreatment.Unbounded)
         .background(backgroundColor, shape)
         .border(
             width = borderWidth,
