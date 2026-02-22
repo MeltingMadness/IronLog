@@ -25,6 +25,7 @@ internal object AppPreferenceKeys {
     val REMINDER_HOUR = intPreferencesKey("reminder_hour")
     val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
     val REMINDER_DAYS = stringPreferencesKey("reminder_days")
+    val INTENSITY_SYSTEM = stringPreferencesKey("intensity_system")
 }
 
 internal fun parseReminderDays(raw: String?): Set<DayOfWeek> {

@@ -3,6 +3,7 @@
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
@@ -33,6 +34,10 @@ class AppPreferencesRepositoryImpl(
             ?.let { runCatching { ThemeScheme.valueOf(it) }.getOrNull() }
             ?: ThemeScheme.AMBER
 
+        val intensitySystem = prefs[AppPreferenceKeys.INTENSITY_SYSTEM]
+            ?.let { runCatching { IntensitySystem.valueOf(it) }.getOrNull() }
+            ?: IntensitySystem.RPE
+
         val reminderConfig = ReminderConfig(
             enabled = prefs[AppPreferenceKeys.REMINDER_ENABLED] ?: false,
             hour = (prefs[AppPreferenceKeys.REMINDER_HOUR] ?: ReminderConfig().hour).coerceIn(0, 23),
@@ -50,7 +55,8 @@ class AppPreferencesRepositoryImpl(
             defaultWarmupFlag = prefs[AppPreferenceKeys.DEFAULT_WARMUP_FLAG] ?: false,
             timerKeepScreenOn = prefs[AppPreferenceKeys.TIMER_KEEP_SCREEN_ON] ?: false,
             betaDiagnosticsOptIn = prefs[AppPreferenceKeys.BETA_DIAGNOSTICS_OPT_IN] ?: false,
-            reminderConfig = reminderConfig
+            reminderConfig = reminderConfig,
+            intensitySystem = intensitySystem
         )
     }
 
@@ -114,6 +120,12 @@ class AppPreferencesRepositoryImpl(
             prefs[AppPreferenceKeys.REMINDER_HOUR] = config.hour.coerceIn(0, 23)
             prefs[AppPreferenceKeys.REMINDER_MINUTE] = config.minute.coerceIn(0, 59)
             prefs[AppPreferenceKeys.REMINDER_DAYS] = encodeReminderDays(config.daysOfWeek)
+        }
+    }
+
+    override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.INTENSITY_SYSTEM] = intensitySystem.name
         }
     }
 }

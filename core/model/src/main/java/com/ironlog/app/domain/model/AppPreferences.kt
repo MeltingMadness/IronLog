@@ -45,5 +45,6 @@ data class AppPreferences(
     val defaultWarmupFlag: Boolean = false,
     val timerKeepScreenOn: Boolean = false,
     val betaDiagnosticsOptIn: Boolean = false,
-    val reminderConfig: ReminderConfig = ReminderConfig()
+    val reminderConfig: ReminderConfig = ReminderConfig(),
+    val intensitySystem: IntensitySystem = IntensitySystem.RPE
 )

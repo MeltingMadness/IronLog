@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IncidentReport
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
@@ -114,6 +115,12 @@ class SettingsViewModel(
     fun updateBetaDiagnosticsOptIn(enabled: Boolean) {
         viewModelScope.launch {
             appPreferencesRepository.updateBetaDiagnosticsOptIn(enabled)
+        }
+    }
+
+    fun updateIntensitySystem(system: IntensitySystem) {
+        viewModelScope.launch {
+            appPreferencesRepository.updateIntensitySystem(system)
         }
     }
 

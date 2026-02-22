@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
@@ -281,6 +282,26 @@ fun SettingsScreen(
                         checked = state.preferences.betaDiagnosticsOptIn,
                         onCheckedChange = viewModel::updateBetaDiagnosticsOptIn
                     )
+
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                    Text(
+                        text = "Intensitäts-System", // stringResource(id = R.string.settings_intensity_system_title)
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        FilterChip(
+                            selected = state.preferences.intensitySystem == IntensitySystem.RPE,
+                            onClick = { viewModel.updateIntensitySystem(IntensitySystem.RPE) },
+                            label = { Text("RPE") }
+                        )
+                        FilterChip(
+                            selected = state.preferences.intensitySystem == IntensitySystem.RIR,
+                            onClick = { viewModel.updateIntensitySystem(IntensitySystem.RIR) },
+                            label = { Text("RIR") }
+                        )
+                    }
                 }
             }
 

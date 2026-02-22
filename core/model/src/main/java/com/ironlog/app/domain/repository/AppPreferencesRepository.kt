@@ -1,6 +1,7 @@
 ﻿package com.ironlog.app.domain.repository
 
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
@@ -21,4 +22,5 @@ interface AppPreferencesRepository {
     suspend fun updateTimerKeepScreenOn(enabled: Boolean)
     suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean)
     suspend fun updateReminderConfig(config: ReminderConfig)
+    suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
 }
