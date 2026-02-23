@@ -107,7 +107,14 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is SettingsEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is SettingsEvent.Message -> {
+                        val message = if (event.args.isEmpty()) {
+                            context.getString(event.textRes)
+                        } else {
+                            context.getString(event.textRes, *event.args.toTypedArray())
+                        }
+                        snackbarHostState.showSnackbar(message)
+                    }
                 is SettingsEvent.ShareIncident -> {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "application/json"
@@ -190,7 +197,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(dims.spacingXs))
 
                     Text(
-                        text = "Farbschema", // stringResource(id = R.string.settings_theme_scheme_title)
+                        text = stringResource(id = R.string.settings_theme_scheme_title),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -198,17 +205,17 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.AMBER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
-                            label = { Text("Amber") }
+                            label = { Text(stringResource(id = R.string.settings_scheme_amber)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.DEEP_CYAN,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.DEEP_CYAN) },
-                            label = { Text("Deep Cyan") }
+                            label = { Text(stringResource(id = R.string.settings_scheme_deep_cyan)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.NEON_RED,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.NEON_RED) },
-                            label = { Text("Neon Red") }
+                            label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) }
                         )
                     }
 
@@ -286,7 +293,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(dims.spacingXs))
 
                     Text(
-                        text = "Intensitäts-System", // stringResource(id = R.string.settings_intensity_system_title)
+                        text = stringResource(id = R.string.settings_intensity_system_title),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )

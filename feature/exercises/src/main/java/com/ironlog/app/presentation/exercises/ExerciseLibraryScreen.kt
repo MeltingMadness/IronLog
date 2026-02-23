@@ -1,9 +1,11 @@
 ﻿package com.ironlog.app.presentation.exercises
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,21 +34,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
+import com.ironlog.app.presentation.common.EmptyStateScreen
+import com.ironlog.app.presentation.common.LoadingScreen
+import com.ironlog.app.presentation.theme.ironLogDimens
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -54,6 +65,7 @@ fun ExerciseLibraryScreen(
     viewModel: ExerciseLibraryViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val dims = ironLogDimens
 
     Scaffold(
         topBar = {
@@ -68,6 +80,11 @@ fun ExerciseLibraryScreen(
             }
         }
     ) { padding ->
+        if (state.isLoading) {
+            LoadingScreen(modifier = Modifier.padding(padding))
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,15 +97,15 @@ fun ExerciseLibraryScreen(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 singleLine = true
             )
 
             Row(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = dims.spacingMd),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
                 FilterChip(
                     selected = state.selectedMuscleGroup == null,
@@ -104,52 +121,40 @@ fun ExerciseLibraryScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dims.spacingXs))
 
             if (state.exercises.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.exercises_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                EmptyStateScreen(
+                    title = stringResource(id = R.string.exercises_empty),
+                    subtitle = "",
+                    icon = Icons.Default.SearchOff
+                )
             } else {
                 var deleteExerciseId by remember { mutableStateOf<Long?>(null) }
                 var deleteExerciseName by remember { mutableStateOf("") }
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(state.exercises, key = { it.id }) { exercise ->
-                        ListItem(
-                            headlineContent = { Text(exercise.name) },
-                            supportingContent = {
-                                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
-                            },
-                            trailingContent = {
-                                if (exercise.isCustom) {
-                                    Text(
-                                        text = stringResource(id = R.string.exercises_custom_badge),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.tertiary
-                                    )
+                        if (exercise.isCustom) {
+                            SwipeToDeleteExerciseItem(
+                                exercise = exercise,
+                                onClick = { onExerciseClick(exercise.id) },
+                                onDelete = {
+                                    deleteExerciseId = exercise.id
+                                    deleteExerciseName = exercise.name
                                 }
-                            },
-                            modifier = Modifier
-                                .combinedClickable(
-                                    onClick = { onExerciseClick(exercise.id) },
-                                    onLongClick = {
-                                        if (exercise.isCustom) {
-                                            deleteExerciseId = exercise.id
-                                            deleteExerciseName = exercise.name
-                                        }
-                                    }
+                            )
+                        } else {
+                            ListItem(
+                                headlineContent = { Text(exercise.name) },
+                                supportingContent = {
+                                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+                                },
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { onExerciseClick(exercise.id) }
                                 )
-                        )
+                            )
+                        }
                     }
                 }
 
@@ -197,12 +202,69 @@ fun ExerciseLibraryScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+private fun SwipeToDeleteExerciseItem(
+    exercise: com.ironlog.app.domain.model.Exercise,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val dims = ironLogDimens
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDelete()
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(end = dims.spacingLg),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(id = R.string.common_delete),
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    ) {
+        ListItem(
+            headlineContent = { Text(exercise.name) },
+            supportingContent = {
+                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+            },
+            trailingContent = {
+                Text(
+                    text = stringResource(id = R.string.exercises_custom_badge),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            },
+            modifier = Modifier.combinedClickable(
+                onClick = onClick,
+                onLongClick = onDelete
+            )
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddExerciseDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, MuscleGroup, ExerciseCategory) -> Unit
 ) {
+    val dims = ironLogDimens
     var name by remember { mutableStateOf("") }
     var selectedGroup by remember { mutableStateOf(MuscleGroup.BRUST) }
     var selectedCategory by remember { mutableStateOf(ExerciseCategory.LANGHANTEL) }
@@ -213,7 +275,7 @@ private fun AddExerciseDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(id = R.string.exercises_new_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

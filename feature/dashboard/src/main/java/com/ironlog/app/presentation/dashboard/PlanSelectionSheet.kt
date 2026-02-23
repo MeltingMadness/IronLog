@@ -18,8 +18,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.TrainingPlan
+import com.ironlog.app.presentation.theme.ironLogDimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,16 +31,17 @@ fun PlanSelectionSheet(
     onPlanSelected: (TrainingPlan) -> Unit,
     onFreeWorkoutSelected: () -> Unit
 ) {
+    val dims = ironLogDimens
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp)
+                .padding(bottom = dims.spacingXl)
         ) {
             Text(
-                text = "Training starten",
+                text = stringResource(id = R.string.plan_selection_title),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
             )
             
             LazyColumn {
@@ -51,13 +54,13 @@ fun PlanSelectionSheet(
                 }
                 
                 if (plans.isNotEmpty()) {
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+                    item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
                 }
                 
                 item {
                     ListItem(
-                        headlineContent = { Text("Freies Training") },
-                        supportingContent = { Text("Ohne Vorlage trainieren") },
+                        headlineContent = { Text(stringResource(id = R.string.plan_selection_free_workout)) },
+                        supportingContent = { Text(stringResource(id = R.string.plan_selection_free_workout_subtitle)) },
                         leadingContent = { 
                             Icon(
                                 Icons.Default.Add, 

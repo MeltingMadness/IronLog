@@ -177,4 +177,27 @@
 
     <string name="reminder_notification_title">Zeit fuers Training</string>
     <string name="reminder_notification_body">Dein geplanter Trainingstag wartet auf dich.</string>
+
+    <string name="dashboard_onboarding_title">Willkommen bei IronLog!</string>
+    <string name="dashboard_onboarding_body">Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout ueber den Button oben. Sobald du Saetze loggst, findest du hier deine persoenlichen Rekorde, Heatmaps und Statistiken.</string>
+    <string name="plan_selection_title">Training starten</string>
+    <string name="plan_selection_free_workout">Freies Training</string>
+    <string name="plan_selection_free_workout_subtitle">Ohne Vorlage trainieren</string>
+    <string name="settings_theme_scheme_title">Farbschema</string>
+    <string name="settings_scheme_amber">Amber</string>
+    <string name="settings_scheme_deep_cyan">Deep Cyan</string>
+    <string name="settings_scheme_neon_red">Neon Red</string>
+    <string name="settings_intensity_system_title">Intensitaets-System</string>
+    <string name="common_unknown">Unbekannt</string>
+    <string name="common_calendar_week">KW%1$d</string>
+    <string name="common_record_weight">%1$.1f kg</string>
+    <string name="common_record_reps">%1$d Wdh</string>
+    <string name="common_record_volume">%1$d kg</string>
+    <string name="common_record_e1rm">%1$.1f kg</string>
+    <string name="settings_msg_backup_exported">Backup wurde exportiert.</string>
+    <string name="settings_msg_backup_imported">Backup wurde importiert.</string>
+    <string name="settings_msg_data_reset">Nutzerdaten wurden zurueckgesetzt.</string>
+    <string name="settings_msg_incident_created">Incident-Report wurde erstellt.</string>
+    <string name="settings_msg_notification_denied">Benachrichtigungsberechtigung wurde nicht erteilt.</string>
+    <string name="common_error_action_failed">Aktion fehlgeschlagen: %1$s</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.ironlog.app.presentation.plans
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -27,10 +29,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -116,7 +122,7 @@ fun TrainingPlanListScreen(
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
                     items(state.plans, key = { it.plan.id }) { item ->
-                        PlanCard(
+                        SwipeToDeletePlanCard(
                             item = item,
                             onStart = {
                                 viewModel.startPlanWorkout(item.plan) { sessionId ->
@@ -124,7 +130,7 @@ fun TrainingPlanListScreen(
                                 }
                             },
                             onClick = { onEditPlan(item.plan.id) },
-                            onLongClick = {
+                            onDelete = {
                                 deletePlanId = item.plan.id
                                 deletePlanName = item.plan.name
                             }
@@ -158,6 +164,46 @@ fun TrainingPlanListScreen(
                 }
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDeletePlanCard(
+    item: PlanListItem,
+    onStart: () -> Unit,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDelete()
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(end = ironLogDimens.spacingLg),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(id = R.string.common_delete),
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    ) {
+        PlanCard(item = item, onStart = onStart, onClick = onClick, onLongClick = onDelete)
     }
 }
 
@@ -213,7 +259,7 @@ private fun PlanCard(
             if (item.exerciseNames.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(dims.spacingXs))
                 Text(
-                    text = item.exerciseNames.joinToString(" · "),
+                    text = item.exerciseNames.joinToString(" ï¿½ "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

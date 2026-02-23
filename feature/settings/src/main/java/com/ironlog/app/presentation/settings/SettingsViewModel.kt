@@ -3,6 +3,7 @@
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.annotation.StringRes
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IncidentReport
 import com.ironlog.app.domain.model.IntensitySystem
@@ -33,7 +34,7 @@ data class SettingsUiState(
 )
 
 sealed interface SettingsEvent {
-    data class Message(val text: String) : SettingsEvent
+    data class Message(val textRes: Int, val args: List<Any> = emptyList()) : SettingsEvent
     data class ShareIncident(val report: IncidentReport) : SettingsEvent
 }
 
@@ -135,7 +136,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             runBusyAction(
                 action = { backupRepository.exportBackup(uri) },
-                successMessage = "Backup wurde exportiert."
+                successMessageRes = com.ironlog.core.designsystem.R.string.settings_msg_backup_exported
             )
         }
     }
@@ -147,7 +148,7 @@ class SettingsViewModel(
                     backupRepository.importBackup(uri)
                     reminderScheduler.sync(uiState.value.preferences.reminderConfig)
                 },
-                successMessage = "Backup wurde importiert."
+                successMessageRes = com.ironlog.core.designsystem.R.string.settings_msg_backup_imported
             )
         }
     }
@@ -165,7 +166,7 @@ class SettingsViewModel(
             showResetDialog.value = false
             runBusyAction(
                 action = { backupRepository.resetUserData() },
-                successMessage = "Nutzerdaten wurden zurueckgesetzt."
+                successMessageRes = com.ironlog.core.designsystem.R.string.settings_msg_data_reset
             )
         }
     }
@@ -182,20 +183,20 @@ class SettingsViewModel(
                     )
                     _events.emit(SettingsEvent.ShareIncident(report))
                 },
-                successMessage = "Incident-Report wurde erstellt."
+                successMessageRes = com.ironlog.core.designsystem.R.string.settings_msg_incident_created
             )
         }
     }
 
     fun onNotificationPermissionDenied() {
         viewModelScope.launch {
-            _events.emit(SettingsEvent.Message("Benachrichtigungsberechtigung wurde nicht erteilt."))
+            _events.emit(SettingsEvent.Message(com.ironlog.core.designsystem.R.string.settings_msg_notification_denied))
         }
     }
 
     private suspend fun runBusyAction(
         action: suspend () -> Unit,
-        successMessage: String
+        @StringRes successMessageRes: Int
     ) {
         isBusy.value = true
         val result = runCatching { action() }
@@ -203,12 +204,13 @@ class SettingsViewModel(
 
         result
             .onSuccess {
-                _events.emit(SettingsEvent.Message(successMessage))
+                _events.emit(SettingsEvent.Message(successMessageRes))
             }
             .onFailure { error ->
                 _events.emit(
                     SettingsEvent.Message(
-                        "Aktion fehlgeschlagen: ${error.message ?: "unbekannter Fehler"}"
+                        com.ironlog.core.designsystem.R.string.common_error_action_failed,
+                        listOf(error.message ?: "unbekannter Fehler")
                     )
                 )
             }

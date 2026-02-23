@@ -28,11 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.MuscleGroup
+import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.domain.repository.ExerciseRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +47,7 @@ fun ExercisePickerSheet(
     onExerciseSelected: (Exercise) -> Unit,
     exerciseRepository: ExerciseRepository = koinInject()
 ) {
+    val dims = ironLogDimens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var searchQuery by remember { mutableStateOf("") }
     var selectedGroup by remember { mutableStateOf<MuscleGroup?>(null) }
@@ -77,7 +78,7 @@ fun ExercisePickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
-        Column(modifier = Modifier.padding(bottom = 16.dp)) {
+        Column(modifier = Modifier.padding(bottom = dims.spacingMd)) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -85,15 +86,15 @@ fun ExercisePickerSheet(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = dims.spacingMd),
                 singleLine = true
             )
 
             Row(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
                 FilterChip(
                     selected = selectedGroup == null,
@@ -114,7 +115,7 @@ fun ExercisePickerSheet(
                     ListItem(
                         headlineContent = { Text(exercise.name) },
                         supportingContent = {
-                            Text("${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}")
+                            Text("${exercise.primaryMuscleGroup.displayName} ï¿½ ${exercise.category.displayName}")
                         },
                         modifier = Modifier.clickable { onExerciseSelected(exercise) }
                     )

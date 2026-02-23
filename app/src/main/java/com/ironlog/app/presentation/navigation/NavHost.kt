@@ -1,5 +1,13 @@
 package com.ironlog.app.presentation.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -14,13 +22,56 @@ import com.ironlog.app.presentation.plans.PlanEditorScreen
 import com.ironlog.app.presentation.plans.TrainingPlanListScreen
 import com.ironlog.app.presentation.settings.SettingsScreen
 import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
+import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
 @Composable
 fun IronLogNavHost(navController: NavHostController) {
+    val motion = ironLogMotion
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route
+        startDestination = Screen.Dashboard.route,
+        enterTransition = {
+            if (motion.reduced) {
+                fadeIn(animationSpec = snap())
+            } else {
+                fadeIn(animationSpec = tween(motion.normalMillis)) +
+                    slideInHorizontally(
+                        animationSpec = tween(motion.normalMillis),
+                        initialOffsetX = { fullWidth -> fullWidth / 4 }
+                    )
+            }
+        },
+        exitTransition = {
+            if (motion.reduced) {
+                fadeOut(animationSpec = snap())
+            } else {
+                fadeOut(animationSpec = tween(motion.fastMillis))
+            }
+        },
+        popEnterTransition = {
+            if (motion.reduced) {
+                fadeIn(animationSpec = snap())
+            } else {
+                fadeIn(animationSpec = tween(motion.normalMillis)) +
+                    slideInHorizontally(
+                        animationSpec = tween(motion.normalMillis),
+                        initialOffsetX = { fullWidth -> -fullWidth / 4 }
+                    )
+            }
+        },
+        popExitTransition = {
+            if (motion.reduced) {
+                fadeOut(animationSpec = snap())
+            } else {
+                fadeOut(animationSpec = tween(motion.fastMillis)) +
+                    slideOutHorizontally(
+                        animationSpec = tween(motion.fastMillis),
+                        targetOffsetX = { fullWidth -> fullWidth / 4 }
+                    )
+            }
+        }
     ) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(

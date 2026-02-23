@@ -407,12 +407,12 @@ private fun OnboardingCard() {
             verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
         ) {
             Text(
-                text = "Willkommen bei IronLog! \uD83D\uDE80",
+                text = stringResource(id = R.string.dashboard_onboarding_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, Heatmaps und Statistiken.",
+                text = stringResource(id = R.string.dashboard_onboarding_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

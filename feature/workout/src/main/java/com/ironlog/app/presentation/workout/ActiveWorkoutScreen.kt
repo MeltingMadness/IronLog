@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -54,9 +55,13 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.presentation.common.HapticFeedbackHelper
+import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.SetInputRow
 import com.ironlog.app.presentation.common.WorkoutTimer
+import com.ironlog.app.presentation.common.rememberHapticFeedback
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -75,6 +80,8 @@ fun ActiveWorkoutScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val dims = ironLogDimens
+    val haptic = rememberHapticFeedback()
+    val motion = ironLogMotion
 
     var quickSelectedExerciseId by remember { mutableStateOf<Long?>(null) }
 
@@ -89,6 +96,7 @@ fun ActiveWorkoutScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is WorkoutEvent.NewRecord -> {
+                    haptic.confirm()
                     snackbarHostState.showSnackbar(
                         message = context.getString(
                             R.string.workout_new_record_message,
@@ -127,6 +135,11 @@ fun ActiveWorkoutScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
+        if (state.session == null && state.error == null) {
+            LoadingScreen(modifier = Modifier.padding(padding))
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -169,7 +182,8 @@ fun ActiveWorkoutScreen(
                         onLogSet = { reps, weight, isWarmup, intensity ->
                             viewModel.logSet(exerciseWithSets.exercise.id, reps, weight, isWarmup, intensity)
                         },
-                        onDeleteSet = viewModel::deleteSet
+                        onDeleteSet = viewModel::deleteSet,
+                        haptic = haptic
                     )
                 }
             }
@@ -182,7 +196,8 @@ fun ActiveWorkoutScreen(
                 intensitySystem = preferences.intensitySystem,
                 onLogSet = { exerciseId, reps, weight, isWarmup, intensity ->
                     viewModel.logSet(exerciseId, reps, weight, isWarmup, intensity)
-                }
+                },
+                haptic = haptic
             )
         }
 
@@ -223,7 +238,8 @@ private fun QuickLogComposer(
     onSelectExercise: (Long) -> Unit,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
-    onLogSet: (Long, Int, Double, Boolean, String) -> Unit
+    onLogSet: (Long, Int, Double, Boolean, String) -> Unit,
+    haptic: HapticFeedbackHelper
 ) {
     if (exercisesWithSets.isEmpty() || selectedExerciseId == null) return
 
@@ -293,6 +309,7 @@ private fun QuickLogComposer(
                     val weight = weightInput.toDoubleOrNull()
                     if (reps != null && reps > 0 && weight != null && weight >= 0) {
                         onLogSet(selectedExerciseId, reps, weight, isWarmup, intensityInput)
+                        haptic.confirm()
                         repsInput = ""
                         weightInput = ""
                         intensityInput = ""
@@ -310,7 +327,8 @@ private fun ExerciseCard(
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     onLogSet: (Int, Double, Boolean, String) -> Unit,
-    onDeleteSet: (Long) -> Unit
+    onDeleteSet: (Long) -> Unit,
+    haptic: HapticFeedbackHelper
 ) {
     val dims = ironLogDimens
     val planTarget = exerciseWithSets.planTarget
@@ -321,7 +339,7 @@ private fun ExerciseCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = ironLogSurfaceRoles.muted
         )
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
@@ -367,7 +385,7 @@ private fun ExerciseCard(
                 for (setIndex in 1..targetSetCount) {
                     val matchingSet = loggedSets.filter { !it.isWarmup }.getOrNull(setIndex - 1)
                     if (matchingSet != null) {
-                        LoggedSetRow(set = matchingSet, onDeleteSet = onDeleteSet)
+                        LoggedSetRow(set = matchingSet, onDeleteSet = onDeleteSet, haptic = haptic)
                     } else {
                         PendingSetRow(
                             setNumber = setIndex,
@@ -384,11 +402,11 @@ private fun ExerciseCard(
                 }
 
                 loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
-                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet)
+                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 loggedSets.filter { it.isWarmup }.forEach { set ->
-                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet)
+                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -399,7 +417,8 @@ private fun ExerciseCard(
                         planTarget = planTarget,
                         defaultWarmupFlag = defaultWarmupFlag,
                         intensitySystem = intensitySystem,
-                        onLogSet = onLogSet
+                        onLogSet = onLogSet,
+                        haptic = haptic
                     )
                 }
                 if (!showExtraInput) {
@@ -409,7 +428,7 @@ private fun ExerciseCard(
                 }
             } else {
                 loggedSets.forEach { set ->
-                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet)
+                    LoggedSetRow(set = set, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -418,7 +437,8 @@ private fun ExerciseCard(
                     planTarget = null,
                     defaultWarmupFlag = defaultWarmupFlag,
                     intensitySystem = intensitySystem,
-                    onLogSet = onLogSet
+                    onLogSet = onLogSet,
+                    haptic = haptic
                 )
             }
         }
@@ -428,12 +448,14 @@ private fun ExerciseCard(
 @Composable
 private fun LoggedSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
-    onDeleteSet: (Long) -> Unit
+    onDeleteSet: (Long) -> Unit,
+    haptic: HapticFeedbackHelper
 ) {
+    val dims = ironLogDimens
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = dims.spacing2),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -448,7 +470,7 @@ private fun LoggedSetRow(
             color = if (set.isWarmup) MaterialTheme.colorScheme.onSurfaceVariant
             else MaterialTheme.colorScheme.onSurface
         )
-        IconButton(onClick = { onDeleteSet(set.id) }) {
+        IconButton(onClick = { haptic.reject(); onDeleteSet(set.id) }) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = stringResource(id = R.string.workout_delete_set_cd),
@@ -466,6 +488,7 @@ private fun PendingSetRow(
     intensitySystem: IntensitySystem,
     onLog: (Int, Double, String) -> Unit
 ) {
+    val dims = ironLogDimens
     var repsInput by remember { mutableStateOf(defaultReps) }
     var weightInput by remember { mutableStateOf(defaultWeight) }
     var intensityInput by remember { mutableStateOf("") }
@@ -473,8 +496,8 @@ private fun PendingSetRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(vertical = dims.spacing2),
+        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -488,7 +511,7 @@ private fun PendingSetRow(
             onValueChange = { weightInput = it },
             label = { Text(stringResource(id = R.string.common_unit_kg)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(76.dp),
+            modifier = Modifier.weight(1.1f),
             singleLine = true
         )
         OutlinedTextField(
@@ -496,7 +519,7 @@ private fun PendingSetRow(
             onValueChange = { repsInput = it },
             label = { Text(stringResource(id = R.string.common_reps_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.width(64.dp),
+            modifier = Modifier.weight(1f),
             singleLine = true
         )
         OutlinedTextField(
@@ -504,19 +527,26 @@ private fun PendingSetRow(
             onValueChange = { intensityInput = it },
             label = { Text(intensitySystem.displayName) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.width(64.dp),
+            modifier = Modifier.weight(1f),
             singleLine = true
         )
-        Button(
+        IconButton(
             onClick = {
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
                     onLog(reps, weight, intensityInput)
                 }
-            }
+            },
+            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
-            Text(stringResource(id = R.string.common_log))
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = stringResource(id = R.string.common_log)
+            )
         }
     }
 }
@@ -526,8 +556,10 @@ private fun ExtraSetInput(
     planTarget: PlanTarget?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
-    onLogSet: (Int, Double, Boolean, String) -> Unit
+    onLogSet: (Int, Double, Boolean, String) -> Unit,
+    haptic: HapticFeedbackHelper
 ) {
+    val dims = ironLogDimens
     var repsInput by remember {
         mutableStateOf(
             planTarget?.let {
@@ -557,7 +589,7 @@ private fun ExtraSetInput(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(dims.spacing2))
 
         SetInputRow(
             reps = repsInput,
@@ -572,6 +604,7 @@ private fun ExtraSetInput(
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
                     onLogSet(reps, weight, isWarmup, intensityInput)
+                    haptic.confirm()
                     repsInput = ""
                     weightInput = ""
                     intensityInput = ""

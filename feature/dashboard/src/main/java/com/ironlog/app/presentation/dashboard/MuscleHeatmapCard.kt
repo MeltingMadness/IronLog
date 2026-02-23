@@ -83,6 +83,7 @@ private fun MuscleChip(
     sets: Int,
     intensity: Float
 ) {
+    val dims = ironLogDimens
     val primaryColor = MaterialTheme.colorScheme.primary
     val backgroundColor = if (intensity > 0f) {
         primaryColor.copy(alpha = intensity * 0.6f)
@@ -97,9 +98,9 @@ private fun MuscleChip(
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(dims.radiusSm))
             .background(backgroundColor)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = dims.spacingSm, vertical = 6.dp)
     ) {
         Text(
             text = if (sets > 0) "$label ($sets)" else label,

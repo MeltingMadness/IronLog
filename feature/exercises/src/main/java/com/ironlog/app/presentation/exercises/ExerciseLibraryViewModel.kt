@@ -21,7 +21,8 @@ data class ExerciseLibraryUiState(
     val searchQuery: String = "",
     val selectedMuscleGroup: MuscleGroup? = null,
     val showAddDialog: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isLoading: Boolean = true
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -53,7 +54,8 @@ class ExerciseLibraryViewModel(
             searchQuery = args[1] as String,
             selectedMuscleGroup = args[2] as MuscleGroup?,
             showAddDialog = args[3] as Boolean,
-            error = args[4] as String?
+            error = args[4] as String?,
+            isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseLibraryUiState())
 
