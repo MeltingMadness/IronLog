@@ -2,16 +2,22 @@
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
+
 private val AmberLightColorScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
@@ -46,7 +52,7 @@ private val CyanLightColorScheme = lightColorScheme(
     onSecondaryContainer = CyanOnSecondaryContainer,
     tertiary = CyanTertiary,
     onTertiary = CyanOnTertiary,
-    tertiaryContainer = CyanTertiaryContainer,
+    tertiaryContainer = TertiaryContainer,
     onTertiaryContainer = CyanOnTertiaryContainer,
     background = Background,
     onBackground = OnBackground,
@@ -150,6 +156,36 @@ private val RedDarkColorScheme = darkColorScheme(
     onError = DarkOnError,
 )
 
+/**
+ * Derives [IronLogSurfaceRoles] from any [ColorScheme], so surface roles
+ * stay visually consistent with dynamic or static themes.
+ */
+private fun deriveSurfaceRoles(
+    colorScheme: ColorScheme,
+    isDark: Boolean
+): IronLogSurfaceRoles {
+    // "elevated" = surface tinted slightly by primary (like elevation tone 2)
+    val elevated = colorScheme.primary.copy(alpha = if (isDark) 0.08f else 0.05f)
+        .compositeOver(colorScheme.surface)
+
+    // "muted" = surface with subtle tint (like elevation tone 1)
+    val muted = colorScheme.primary.copy(alpha = if (isDark) 0.05f else 0.04f)
+        .compositeOver(colorScheme.surface)
+
+    // "accentSuccess" = tertiary color serves as success semantic
+    val accentSuccess = colorScheme.tertiary
+
+    // "accentWarning" = primary serves as the attention/warning semantic
+    val accentWarning = colorScheme.primary
+
+    return IronLogSurfaceRoles(
+        elevated = elevated,
+        muted = muted,
+        accentSuccess = accentSuccess,
+        accentWarning = accentWarning
+    )
+}
+
 @Composable
 fun IronLogTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -165,8 +201,9 @@ fun IronLogTheme(
     }
 
     val context = LocalContext.current
+    val isDynamic = useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
-        useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        isDynamic -> {
             if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         isDarkTheme -> when (themeScheme) {
@@ -181,7 +218,11 @@ fun IronLogTheme(
         }
     }
 
-    val surfaceRoles = if (isDarkTheme) {
+    val surfaceRoles = if (isDynamic) {
+        // Derive surface roles from the dynamic color scheme so everything
+        // stays visually harmonious with the wallpaper-based palette.
+        deriveSurfaceRoles(colorScheme, isDarkTheme)
+    } else if (isDarkTheme) {
         IronLogSurfaceRoles(
             elevated = DarkSurfaceElevated,
             muted = DarkSurfaceMuted,

@@ -1,6 +1,7 @@
 ﻿package com.ironlog.app.presentation.navigation
 
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -20,7 +21,9 @@ fun BottomNavBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
     val surfaces = ironLogSurfaceRoles
 
-    NavigationBar {
+    NavigationBar(
+        containerColor = surfaces.elevated
+    ) {
         BottomNavItem.entries.forEach { item ->
             val label = stringResource(id = item.labelRes)
             NavigationBarItem(
@@ -46,3 +49,4 @@ fun BottomNavBar(navController: NavController) {
         }
     }
 }
+
