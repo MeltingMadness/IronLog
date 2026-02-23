@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import com.ironlog.app.data.local.relation.SessionWithSets
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,6 +33,10 @@ interface WorkoutSessionDao {
 
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     fun getPagedCompletedSessions(): PagingSource<Int, WorkoutSessionEntity>
+
+    @androidx.room.Transaction
+    @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
+    fun getPagedCompletedSessionsWithSets(): PagingSource<Int, SessionWithSets>
 
     @Query("SELECT * FROM workout_sessions ORDER BY id ASC")
     suspend fun getAllSessionsList(): List<WorkoutSessionEntity>

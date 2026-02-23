@@ -1,4 +1,4 @@
-package com.ironlog.app.presentation.exercises
+﻿package com.ironlog.app.presentation.exercises
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -128,7 +128,7 @@ fun ExerciseLibraryScreen(
                         ListItem(
                             headlineContent = { Text(exercise.name) },
                             supportingContent = {
-                                Text("${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}")
+                                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
                             },
                             trailingContent = {
                                 if (exercise.isCustom) {

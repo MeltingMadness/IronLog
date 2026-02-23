@@ -8,15 +8,12 @@ import androidx.paging.map
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.WorkoutRepository
-import com.ironlog.app.domain.util.catchAndLog
 import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class WorkoutHistoryItem(
@@ -27,8 +24,6 @@ data class WorkoutHistoryItem(
 )
 
 data class WorkoutHistoryUiState(
-    val workouts: List<WorkoutHistoryItem> = emptyList(),
-    val isLoading: Boolean = true,
     val error: String? = null
 )
 
@@ -36,75 +31,32 @@ class WorkoutHistoryViewModel(
     private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
 
-    private val _items = MutableStateFlow<List<WorkoutHistoryItem>>(emptyList())
-    private val _isLoading = MutableStateFlow(true)
-    private val _error = MutableStateFlow<String?>(null)
+    private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
+    val uiState: StateFlow<WorkoutHistoryUiState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<WorkoutHistoryUiState> = combine(_items, _isLoading, _error) { items, loading, error ->
-        WorkoutHistoryUiState(workouts = items, isLoading = loading, error = error)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WorkoutHistoryUiState())
-
-    val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = workoutRepository.getPagedCompletedSessions().map { pagingData ->
-        pagingData.map { session ->
-            val exerciseCount = 0
-            val setCount = 0
-            val totalVolume = 0.0
-            WorkoutHistoryItem(
-                session = session,
-                exerciseCount = exerciseCount,
-                setCount = setCount,
-                totalVolume = totalVolume
-            )
-        }
-    }.cachedIn(viewModelScope)
-
-    init {
-        observeHistory()
-    }
-
-    private fun observeHistory() {
-        viewModelScope.launch {
-            workoutRepository.getAllCompletedSessions()
-                .catchAndLog("WorkoutHistoryVM")
-                .collect { sessions ->
-                    try {
-                        val limitedSessions = sessions.take(50)
-                        val sessionIds = limitedSessions.map { it.id }
-                        val setsBySession = workoutRepository
-                            .getSetsForSessionsList(sessionIds)
-                            .groupBy { it.sessionId }
-
-                        val items = limitedSessions.map { session ->
-                            val sessionSets = setsBySession[session.id].orEmpty()
-                            WorkoutHistoryItem(
-                                session = session,
-                                exerciseCount = sessionSets.map { it.exerciseId }.distinct().size,
-                                setCount = sessionSets.size,
-                                totalVolume = sessionSets.filter { !it.isWarmup }.sumOf { it.weightKg * it.reps }
-                            )
-                        }
-                        _items.value = items
-                        _isLoading.value = false
-                        _error.value = null
-                    } catch (e: Exception) {
-                        _isLoading.value = false
-                        _error.value = e.toAppError().toUserMessage("Verlauf laden")
-                    }
-                }
-        }
-    }
+    val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = workoutRepository.getPagedCompletedWorkoutSummaries()
+        .map { pagingData ->
+            pagingData.map { summary ->
+                WorkoutHistoryItem(
+                    session = summary.session,
+                    exerciseCount = summary.exerciseCount,
+                    setCount = summary.setCount,
+                    totalVolume = summary.totalVolume
+                )
+            }
+        }.cachedIn(viewModelScope)
 
     fun deleteSession(sessionId: Long) {
         viewModelScope.launch {
             try {
                 workoutRepository.deleteSession(sessionId)
             } catch (e: Exception) {
-                _error.value = e.toAppError().toUserMessage("Training loeschen")
+                _uiState.value = _uiState.value.copy(error = e.toAppError().toUserMessage("Training löschen"))
             }
         }
     }
 
     fun clearError() {
-        _error.value = null
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

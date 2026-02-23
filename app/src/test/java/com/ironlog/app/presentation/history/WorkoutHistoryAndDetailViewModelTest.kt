@@ -48,56 +48,6 @@ class WorkoutHistoryAndDetailViewModelTest {
     }
 
     @Test
-    fun `history view model uses paged data`() = runTest {
-        val now = LocalDateTime.now()
-        workoutRepo.addSession(
-            WorkoutSession(id = 1L, startTime = now.minusDays(2), endTime = now.minusDays(2).plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = WorkoutHistoryViewModel(workoutRepo)
-        val collector = backgroundScope.launch { vm.pagedWorkouts.collect() }
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Test should verify that pagedWorkouts flow is not null and emits PagingData
-        assertTrue(vm.pagedWorkouts != null)
-        
-        collector.cancel()
-    }
-
-    @Test
-    fun `history view model vermeidet per-session stats N+1`() = runTest {
-        val now = LocalDateTime.now()
-        workoutRepo.addSession(
-            WorkoutSession(id = 1L, startTime = now.minusDays(2), endTime = now.minusDays(2).plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-        workoutRepo.addSession(
-            WorkoutSession(id = 2L, startTime = now.minusDays(1), endTime = now.minusDays(1).plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-        workoutRepo.addSetDirectly(
-            WorkoutSet(id = 1L, sessionId = 1L, exerciseId = 10L, setNumber = 1, reps = 8, weightKg = 80.0, completedAt = now.minusDays(2))
-        )
-        workoutRepo.addSetDirectly(
-            WorkoutSet(id = 2L, sessionId = 2L, exerciseId = 11L, setNumber = 1, reps = 6, weightKg = 100.0, completedAt = now.minusDays(1))
-        )
-
-        val vm = WorkoutHistoryViewModel(workoutRepo)
-        val collector = backgroundScope.launch { vm.uiState.collect() }
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(2, vm.uiState.value.workouts.size)
-        assertEquals(0, workoutRepo.getExerciseIdsForSessionCallCount)
-        assertEquals(0, workoutRepo.getSetCountForSessionCallCount)
-        assertEquals(0, workoutRepo.getTotalVolumeForSessionCallCount)
-
-        collector.cancel()
-    }
-
-    @Test
     fun `workout detail nutzt records nicht ueber globales Limit abgeschnitten`() = runTest {
         val now = LocalDateTime.now()
 

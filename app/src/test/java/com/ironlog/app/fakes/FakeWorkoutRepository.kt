@@ -2,6 +2,7 @@ package com.ironlog.app.fakes
 
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
+import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -94,6 +95,18 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override fun getPagedCompletedSessions(): Flow<PagingData<WorkoutSession>> {
         val completed = sessions.value.filter { !it.isActive }.map { it.session }
+        return kotlinx.coroutines.flow.flowOf(PagingData.from(completed))
+    }
+
+    override fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>> {
+        val completed = sessions.value.filter { !it.isActive }.map {
+            CompletedWorkoutSummary(
+                session = it.session,
+                exerciseCount = 0,
+                setCount = 0,
+                totalVolume = 0.0
+            )
+        }
         return kotlinx.coroutines.flow.flowOf(PagingData.from(completed))
     }
 

@@ -9,6 +9,7 @@ import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -78,6 +79,23 @@ class WorkoutRepositoryImpl(
             pagingSourceFactory = { sessionDao.getPagedCompletedSessions() }
         ).flow.map { pagingData ->
             pagingData.map { it.toDomain() }
+        }
+    }
+
+    override fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+            pagingSourceFactory = { sessionDao.getPagedCompletedSessionsWithSets() }
+        ).flow.map { pagingData ->
+            pagingData.map { relation ->
+                val sets = relation.sets
+                CompletedWorkoutSummary(
+                    session = relation.session.toDomain(),
+                    exerciseCount = sets.map { it.exerciseId }.distinct().size,
+                    setCount = sets.size,
+                    totalVolume = sets.filter { !it.isWarmup }.sumOf { it.weightKg * it.reps }
+                )
+            }
         }
     }
 

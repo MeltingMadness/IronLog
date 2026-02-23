@@ -14,6 +14,8 @@ import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -206,5 +208,41 @@ class ActiveWorkoutViewModelTest {
 
         val setsAfter = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(0, setsAfter.size)
+    }
+
+    @Test
+    fun `init loads exercises from plan when planId is provided`() = runTest {
+        // Setup a training plan
+        val planId = 99L
+        val exercise1 = Exercise(id = 10L, name = "Kniebeugen", primaryMuscleGroup = MuscleGroup.BEINE, category = ExerciseCategory.LANGHANTEL)
+        val exercise2 = Exercise(id = 20L, name = "Beinpresse", primaryMuscleGroup = MuscleGroup.BEINE, category = ExerciseCategory.MASCHINE)
+        exerciseRepo.addExercise(exercise1)
+        exerciseRepo.addExercise(exercise2)
+
+        val plan = com.ironlog.app.domain.model.TrainingPlan(
+            id = planId,
+            name = "Leg Day",
+            exercises = listOf(
+                com.ironlog.app.domain.model.PlanExercise(exerciseId = 10L, orderIndex = 0, targetSets = 3, targetReps = 10, targetWeightKg = 100.0),
+                com.ironlog.app.domain.model.PlanExercise(exerciseId = 20L, orderIndex = 1, targetSets = 3, targetReps = 12, targetWeightKg = 150.0)
+            )
+        )
+        planRepo.savePlan(plan)
+
+        // Create ViewModel with planId
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+
+        val collector = backgroundScope.launch { vm.uiState.collect() }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Check if exercises are loaded
+        val state = vm.uiState.value
+        assertEquals(2, state.exercisesWithSets.size)
+        assertEquals("Kniebeugen", state.exercisesWithSets[0].exercise.name)
+        assertEquals(3, state.exercisesWithSets[0].planTarget?.targetSets)
+        assertEquals("Beinpresse", state.exercisesWithSets[1].exercise.name)
+        
+        collector.cancel()
     }
 }
