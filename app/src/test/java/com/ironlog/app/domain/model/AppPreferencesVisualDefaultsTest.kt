@@ -10,7 +10,7 @@ class AppPreferencesVisualDefaultsTest {
     fun `visual defaults are brand first`() {
         val preferences = AppPreferences()
 
-        assertEquals(ThemeMode.SYSTEM, preferences.themeMode)
+        assertEquals(ThemeMode.DARK, preferences.themeMode)
         assertFalse(preferences.useDynamicColor)
         assertFalse(preferences.reducedMotion)
     }

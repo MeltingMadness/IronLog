@@ -38,7 +38,7 @@ data class ReminderConfig(
 data class AppPreferences(
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     val weekStart: WeekStart = WeekStart.MONDAY,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeMode: ThemeMode = ThemeMode.DARK,
     val themeScheme: ThemeScheme = ThemeScheme.AMBER,
     val useDynamicColor: Boolean = false,
     val reducedMotion: Boolean = false,

@@ -110,7 +110,7 @@ fun ExerciseStatsScreen(
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = "${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}",
+                            text = "${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

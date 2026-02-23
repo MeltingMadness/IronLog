@@ -115,7 +115,7 @@ fun ExercisePickerSheet(
                     ListItem(
                         headlineContent = { Text(exercise.name) },
                         supportingContent = {
-                            Text("${exercise.primaryMuscleGroup.displayName} � ${exercise.category.displayName}")
+                            Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
                         },
                         modifier = Modifier.clickable { onExerciseSelected(exercise) }
                     )

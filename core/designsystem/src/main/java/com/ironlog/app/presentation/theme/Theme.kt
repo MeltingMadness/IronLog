@@ -188,7 +188,7 @@ private fun deriveSurfaceRoles(
 
 @Composable
 fun IronLogTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.DARK,
     themeScheme: ThemeScheme = ThemeScheme.AMBER,
     useDynamicColor: Boolean = false,
     reducedMotion: Boolean = false,

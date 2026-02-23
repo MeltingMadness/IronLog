@@ -28,7 +28,7 @@ class AppPreferencesRepositoryImpl(
 
         val themeMode = prefs[AppPreferenceKeys.THEME_MODE]
             ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
-            ?: ThemeMode.SYSTEM
+            ?: ThemeMode.DARK
 
         val themeScheme = prefs[AppPreferenceKeys.THEME_SCHEME]
             ?.let { runCatching { ThemeScheme.valueOf(it) }.getOrNull() }
