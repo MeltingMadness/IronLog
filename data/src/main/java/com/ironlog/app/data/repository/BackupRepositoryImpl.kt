@@ -277,6 +277,6 @@ class BackupRepositoryImpl(
 
     companion object {
         private const val BACKUP_FORMAT_VERSION = 1
-        private const val SCHEMA_VERSION = 7
+        private const val SCHEMA_VERSION = 8
     }
 }

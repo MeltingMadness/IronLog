@@ -7,7 +7,7 @@ import org.junit.Test
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 7
+        const val CURRENT_SCHEMA_VERSION = 8
     }
 
     @Test

@@ -1,12 +1,16 @@
 package com.ironlog.app.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 
-@Entity(tableName = "exercises")
+@Entity(
+    tableName = "exercises",
+    indices = [Index("isArchived")]
+)
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

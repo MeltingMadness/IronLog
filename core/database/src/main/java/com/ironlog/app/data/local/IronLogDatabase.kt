@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
         MetaTrainingPlanEntity::class,
         MetaPlanItemEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -149,11 +149,21 @@ abstract class IronLogDatabase : RoomDatabase() {
             }
         }
 
+        /** Migration 7 -> 8: Normalize archive index for exercises */
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercises_isArchived` ON `exercises` (`isArchived`)")
+            }
+        }
+
         @VisibleForTesting
         fun migration5To6ForTests(): Migration = MIGRATION_5_6
 
         @VisibleForTesting
         fun migration6To7ForTests(): Migration = MIGRATION_6_7
+
+        @VisibleForTesting
+        fun migration7To8ForTests(): Migration = MIGRATION_7_8
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -220,7 +230,15 @@ abstract class IronLogDatabase : RoomDatabase() {
                 IronLogDatabase::class.java,
                 "ironlog.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6,
+                    MIGRATION_6_7,
+                    MIGRATION_7_8
+                )
                 .addCallback(SeedCallback())
                 .build()
         }

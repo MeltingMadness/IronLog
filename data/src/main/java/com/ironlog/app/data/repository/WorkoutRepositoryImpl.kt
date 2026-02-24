@@ -15,12 +15,15 @@ import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 
 class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
     private val setDao: WorkoutSetDao
 ) : WorkoutRepository {
+    private val startWorkoutMutex = Mutex()
 
     suspend fun startWorkout(name: String = ""): Long =
         startWorkout(name = name, planId = null, metaPlanId = null)
@@ -30,17 +33,19 @@ class WorkoutRepositoryImpl(
         planId: Long?,
         metaPlanId: Long?
     ): Long {
-        // Invariant: there can only be one active session.
-        sessionDao.getActiveSession()?.let { return it.id }
+        return startWorkoutMutex.withLock {
+            // Invariant: there can only be one active session.
+            sessionDao.getActiveSession()?.let { return@withLock it.id }
 
-        val now = LocalDateTime.now()
-        val entity = WorkoutSessionEntity(
-            startTime = EpochConverter.toLong(now),
-            name = name,
-            planId = planId,
-            metaPlanId = metaPlanId
-        )
-        return sessionDao.insert(entity)
+            val now = LocalDateTime.now()
+            val entity = WorkoutSessionEntity(
+                startTime = EpochConverter.toLong(now),
+                name = name,
+                planId = planId,
+                metaPlanId = metaPlanId
+            )
+            sessionDao.insert(entity)
+        }
     }
 
     override suspend fun finishWorkout(sessionId: Long) {

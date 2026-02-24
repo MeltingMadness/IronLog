@@ -7,11 +7,13 @@ import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.AppLogger
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -79,13 +81,22 @@ class MetaPlanListViewModel(
                             ?.toRelativeDaysAgo()
                     )
                 }
-            }.collect { items ->
-                _uiState.value = MetaPlanListUiState(
-                    items = items,
-                    isLoading = false,
-                    error = null
-                )
             }
+                .catch { error ->
+                    AppLogger.e("MetaPlanListVM", "Flow-Fehler: ${error.message}", error)
+                    _uiState.value = MetaPlanListUiState(
+                        items = emptyList(),
+                        isLoading = false,
+                        error = "Meta-Plaene konnten nicht geladen werden: ${error.message}"
+                    )
+                }
+                .collect { items ->
+                    _uiState.value = MetaPlanListUiState(
+                        items = items,
+                        isLoading = false,
+                        error = null
+                    )
+                }
         }
     }
 

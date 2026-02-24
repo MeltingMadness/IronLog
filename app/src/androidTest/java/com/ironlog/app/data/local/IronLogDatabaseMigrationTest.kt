@@ -7,6 +7,7 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,6 +85,33 @@ class IronLogDatabaseMigrationTest {
                 assertEquals("", cursor.getString(0))
                 assertEquals(0, cursor.getInt(1))
             }
+        }
+
+        migratedHelper.close()
+        context.deleteDatabase(dbName)
+    }
+
+    @Test
+    fun migration7To8_addsArchivedIndexOnExercises() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dbName = "ironlog-migration-7-8-test.db"
+        context.deleteDatabase(dbName)
+
+        val legacyHelper = createLegacyV7Helper(context, dbName)
+        legacyHelper.writableDatabase.use { db ->
+            db.execSQL(
+                """
+                INSERT INTO exercises (id, name, primaryMuscleGroup, secondaryMuscleGroups, category, isCustom, notes, isArchived)
+                VALUES (1, 'Index Test', 'BRUST', '', 'EIGENGEWICHT', 1, '', 0)
+                """.trimIndent()
+            )
+            assertFalse(hasIndex(db, "exercises", "index_exercises_isArchived"))
+        }
+        legacyHelper.close()
+
+        val migratedHelper = createMigratingV8Helper(context, dbName)
+        migratedHelper.writableDatabase.use { db ->
+            assertTrue(hasIndex(db, "exercises", "index_exercises_isArchived"))
         }
 
         migratedHelper.close()
@@ -205,6 +233,61 @@ class IronLogDatabaseMigrationTest {
         )
     }
 
+    private fun createLegacyV7Helper(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(7) {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS exercises (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        primaryMuscleGroup TEXT NOT NULL,
+                        secondaryMuscleGroups TEXT NOT NULL,
+                        category TEXT NOT NULL,
+                        isCustom INTEGER NOT NULL,
+                        notes TEXT NOT NULL,
+                        isArchived INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
+    private fun createMigratingV8Helper(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(8) {
+            override fun onCreate(db: SupportSQLiteDatabase) = Unit
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertEquals(7, oldVersion)
+                assertEquals(8, newVersion)
+                IronLogDatabase.migration7To8ForTests().migrate(db)
+            }
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
     private fun hasColumn(db: SupportSQLiteDatabase, table: String, columnName: String): Boolean {
         db.query("PRAGMA table_info($table)").use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
@@ -222,5 +305,15 @@ class IronLogDatabaseMigrationTest {
         ).use { cursor ->
             return cursor.moveToFirst()
         }
+    }
+
+    private fun hasIndex(db: SupportSQLiteDatabase, table: String, indexName: String): Boolean {
+        db.query("PRAGMA index_list($table)").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            while (cursor.moveToNext()) {
+                if (cursor.getString(nameIndex) == indexName) return true
+            }
+        }
+        return false
     }
 }
