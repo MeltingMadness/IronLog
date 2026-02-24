@@ -128,7 +128,7 @@ fun MetaPlanEditorScreen(
                 )
             }
 
-            itemsIndexed(state.availablePlans, key = { _, plan -> plan.id }) { _, plan ->
+            itemsIndexed(state.availablePlans, key = { index, plan -> "available-${plan.id}-$index" }) { _, plan ->
                 val selected = plan.id in state.selectedPlanIds
                 Card(
                     modifier = Modifier
@@ -180,7 +180,7 @@ fun MetaPlanEditorScreen(
                     )
                 }
             } else {
-                itemsIndexed(state.selectedPlanIds, key = { _, id -> id }) { index, planId ->
+                itemsIndexed(state.selectedPlanIds, key = { index, id -> "selected-$id-$index" }) { index, planId ->
                     val planName = state.availablePlans
                         .firstOrNull { it.id == planId }
                         ?.name

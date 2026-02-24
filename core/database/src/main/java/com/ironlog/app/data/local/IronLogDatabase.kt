@@ -224,6 +224,111 @@ abstract class IronLogDatabase : RoomDatabase() {
             )
         }
 
+        /**
+         * Defensively repairs legacy schemas from early pre-release builds that were
+         * version-bumped without all expected tables/columns.
+         */
+        private fun ensureRuntimeSchemaCompatibility(db: SupportSQLiteDatabase) {
+            addColumnIfMissing(
+                db = db,
+                table = "plan_exercises",
+                column = "supersetGroupId",
+                alterSql = "ALTER TABLE `plan_exercises` ADD COLUMN `supersetGroupId` INTEGER"
+            )
+            addColumnIfMissing(
+                db = db,
+                table = "workout_sessions",
+                column = "planId",
+                alterSql = "ALTER TABLE `workout_sessions` ADD COLUMN `planId` INTEGER"
+            )
+            addColumnIfMissing(
+                db = db,
+                table = "workout_sessions",
+                column = "metaPlanId",
+                alterSql = "ALTER TABLE `workout_sessions` ADD COLUMN `metaPlanId` INTEGER"
+            )
+            addColumnIfMissing(
+                db = db,
+                table = "exercises",
+                column = "notes",
+                alterSql = "ALTER TABLE `exercises` ADD COLUMN `notes` TEXT NOT NULL DEFAULT ''"
+            )
+            addColumnIfMissing(
+                db = db,
+                table = "exercises",
+                column = "isArchived",
+                alterSql = "ALTER TABLE `exercises` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0"
+            )
+
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `meta_training_plans` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `createdAt` INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `meta_plan_items` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `metaPlanId` INTEGER NOT NULL,
+                    `trainingPlanId` INTEGER NOT NULL,
+                    `orderIndex` INTEGER NOT NULL,
+                    FOREIGN KEY(`metaPlanId`) REFERENCES `meta_training_plans`(`id`) ON DELETE CASCADE,
+                    FOREIGN KEY(`trainingPlanId`) REFERENCES `training_plans`(`id`) ON DELETE CASCADE
+                )
+                """.trimIndent()
+            )
+
+            if (hasColumn(db, "workout_sessions", "planId")) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sessions_planId` ON `workout_sessions` (`planId`)")
+            }
+            if (hasColumn(db, "workout_sessions", "metaPlanId")) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sessions_metaPlanId` ON `workout_sessions` (`metaPlanId`)")
+            }
+            if (hasColumn(db, "exercises", "isArchived")) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercises_isArchived` ON `exercises` (`isArchived`)")
+            }
+            if (hasTable(db, "meta_plan_items")) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_items_metaPlanId` ON `meta_plan_items` (`metaPlanId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_items_trainingPlanId` ON `meta_plan_items` (`trainingPlanId`)")
+            }
+        }
+
+        private fun addColumnIfMissing(
+            db: SupportSQLiteDatabase,
+            table: String,
+            column: String,
+            alterSql: String
+        ) {
+            if (!hasTable(db, table)) return
+            if (hasColumn(db, table, column)) return
+            db.execSQL(alterSql)
+        }
+
+        private fun hasTable(db: SupportSQLiteDatabase, table: String): Boolean {
+            db.query(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+                arrayOf(table)
+            ).use { cursor ->
+                return cursor.moveToFirst()
+            }
+        }
+
+        private fun hasColumn(db: SupportSQLiteDatabase, table: String, column: String): Boolean {
+            if (!hasTable(db, table)) return false
+            db.query("PRAGMA table_info(`$table`)").use { cursor ->
+                val nameIndex = cursor.getColumnIndex("name")
+                if (nameIndex < 0) return false
+                while (cursor.moveToNext()) {
+                    if (cursor.getString(nameIndex) == column) return true
+                }
+            }
+            return false
+        }
+
         fun create(context: Context): IronLogDatabase {
             return Room.databaseBuilder(
                 context.applicationContext,
@@ -269,6 +374,12 @@ abstract class IronLogDatabase : RoomDatabase() {
                     )
                 }
             }
+        }
+
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            ensureRuntimeSchemaCompatibility(db)
+            createSingleActiveSessionTriggers(db)
         }
     }
 }

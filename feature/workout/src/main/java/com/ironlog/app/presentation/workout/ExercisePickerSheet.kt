@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.workout
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,17 +13,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -46,6 +46,7 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.core.designsystem.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -87,7 +88,7 @@ fun ExercisePickerSheet(
         groupFlow.emit(selectedGroup)
     }
 
-    val exercisesFlow = remember(exerciseRepository, queryFlow, groupFlow) {
+    val exercisesFlow = remember(exerciseRepository, queryFlow, groupFlow, onCreationError) {
         combine(queryFlow, groupFlow) { query, group -> query to group }
             .flatMapLatest { (query, group) ->
                 when {
@@ -97,6 +98,11 @@ fun ExercisePickerSheet(
                 }
             }.map { exercises ->
                 exercises.filterNot { it.isArchived }
+            }.catch { throwable ->
+                onCreationError?.invoke(
+                    "Uebungen konnten nicht geladen werden: ${throwable.message ?: "Unbekannter Fehler"}"
+                )
+                emit(emptyList())
             }
     }
     val exercises by exercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -235,23 +241,23 @@ private fun CreateExerciseDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = groupExpanded,
-                    onExpandedChange = { groupExpanded = it }
-                ) {
+                Box {
                     OutlinedTextField(
                         value = state.primaryMuscleGroup.displayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
                         trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupExpanded)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .clickable { groupExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = groupExpanded,
                         onDismissRequest = { groupExpanded = false }
                     ) {
@@ -305,23 +311,23 @@ private fun CreateExerciseDialog(
                     )
                 }
 
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = it }
-                ) {
+                Box {
                     OutlinedTextField(
                         value = state.category.displayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_category_label)) },
                         trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .clickable { categoryExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }
                     ) {

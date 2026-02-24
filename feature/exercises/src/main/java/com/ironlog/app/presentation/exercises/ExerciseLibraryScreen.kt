@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.exercises
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -18,22 +19,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -336,23 +336,23 @@ internal fun CustomExerciseDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = groupExpanded,
-                    onExpandedChange = { groupExpanded = it }
-                ) {
+                Box {
                     OutlinedTextField(
                         value = selectedPrimary.displayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
                         trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = groupExpanded)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .clickable { groupExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = groupExpanded,
                         onDismissRequest = { groupExpanded = false }
                     ) {
@@ -402,23 +402,23 @@ internal fun CustomExerciseDialog(
                     )
                 }
 
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = it }
-                ) {
+                Box {
                     OutlinedTextField(
                         value = selectedCategory.displayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_category_label)) },
                         trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .clickable { categoryExpanded = true }
                     )
-                    ExposedDropdownMenu(
+                    DropdownMenu(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }
                     ) {

@@ -7,6 +7,7 @@ import com.ironlog.app.domain.model.MetaTrainingPlanItem
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -63,7 +64,8 @@ class MetaPlanEditorViewModel(
                         metaPlanId = metaPlan.id,
                         name = metaPlan.name,
                         selectedPlanIds = metaPlan.items.sortedBy { item -> item.orderIndex }
-                            .map { item -> item.trainingPlanId },
+                            .map { item -> item.trainingPlanId }
+                            .distinct(),
                         isLoading = false
                     )
                 }
@@ -80,16 +82,27 @@ class MetaPlanEditorViewModel(
 
     private fun observeAvailablePlans() {
         viewModelScope.launch {
-            trainingPlanRepository.getAllPlans().collect { plans ->
-                _uiState.update { current ->
-                    val availableIds = plans.map { it.id }.toSet()
-                    current.copy(
-                        availablePlans = plans,
-                        selectedPlanIds = current.selectedPlanIds.filter { it in availableIds },
-                        isLoading = false
-                    )
+            trainingPlanRepository.getAllPlans()
+                .catch { error ->
+                    _uiState.update { current ->
+                        current.copy(
+                            isLoading = false,
+                            error = "Unterplaene konnten nicht geladen werden: ${error.message}"
+                        )
+                    }
                 }
-            }
+                .collect { plans ->
+                    _uiState.update { current ->
+                        val availableIds = plans.map { it.id }.toSet()
+                        current.copy(
+                            availablePlans = plans,
+                            selectedPlanIds = current.selectedPlanIds
+                                .filter { it in availableIds }
+                                .distinct(),
+                            isLoading = false
+                        )
+                    }
+                }
         }
     }
 
@@ -111,6 +124,7 @@ class MetaPlanEditorViewModel(
     fun moveSelectedPlanUp(index: Int) {
         if (index <= 0) return
         _uiState.update { current ->
+            if (index !in current.selectedPlanIds.indices) return@update current
             val mutable = current.selectedPlanIds.toMutableList()
             val item = mutable.removeAt(index)
             mutable.add(index - 1, item)
@@ -136,7 +150,7 @@ class MetaPlanEditorViewModel(
 
     fun saveMetaPlan() {
         val name = _uiState.value.name.trim()
-        val selectedPlans = _uiState.value.selectedPlanIds
+        val selectedPlans = _uiState.value.selectedPlanIds.distinct()
 
         if (name.isBlank()) {
             _uiState.update { it.copy(error = "Bitte gib einen Namen ein.") }
