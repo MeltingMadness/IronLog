@@ -49,4 +49,6 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.paging.compose)
     implementation(libs.paging.common)
+
+    testImplementation(libs.junit)
 }

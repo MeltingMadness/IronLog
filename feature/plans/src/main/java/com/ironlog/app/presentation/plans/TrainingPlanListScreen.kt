@@ -259,7 +259,7 @@ private fun PlanCard(
             if (item.exerciseNames.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(dims.spacingXs))
                 Text(
-                    text = item.exerciseNames.joinToString(" � "),
+                    text = item.exerciseNames.joinToString(" • "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,

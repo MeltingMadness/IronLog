@@ -12,6 +12,7 @@
     <string name="common_create">Erstellen</string>
     <string name="common_delete">Loeschen</string>
     <string name="common_cancel">Abbrechen</string>
+    <string name="common_retry">Erneut versuchen</string>
     <string name="common_log">Loggen</string>
     <string name="common_reps_short">Wdh</string>
     <string name="common_unit_kg">kg</string>
@@ -61,6 +62,8 @@
     <string name="history_title">Trainingsverlauf</string>
     <string name="history_empty_title">Noch keine Trainings</string>
     <string name="history_empty_subtitle">Starte ein Training, um deinen Verlauf zu fuellen.</string>
+    <string name="history_error_title">Verlauf konnte nicht geladen werden</string>
+    <string name="history_error_subtitle">Pruefe die Datenbank und versuche es erneut.</string>
     <string name="history_delete_dialog_title">Training loeschen?</string>
     <string name="history_delete_dialog_text">Diese Session wird dauerhaft entfernt.</string>
     <string name="history_delete_cd">Session loeschen</string>

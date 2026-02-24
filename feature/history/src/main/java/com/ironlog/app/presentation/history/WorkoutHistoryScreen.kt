@@ -61,11 +61,31 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+
+internal enum class HistoryListContentState {
+    Loading,
+    Empty,
+    Error,
+    Content
+}
+
+internal fun resolveHistoryContentState(
+    refreshLoadState: LoadState,
+    itemCount: Int
+): HistoryListContentState {
+    if (itemCount > 0) return HistoryListContentState.Content
+    return when (refreshLoadState) {
+        is LoadState.Loading -> HistoryListContentState.Loading
+        is LoadState.Error -> HistoryListContentState.Error
+        is LoadState.NotLoading -> HistoryListContentState.Empty
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,8 +116,8 @@ fun WorkoutHistoryScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        when {
-            pagedWorkouts.loadState.refresh is LoadState.Loading && pagedWorkouts.itemCount == 0 -> {
+        when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
+            HistoryListContentState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -108,30 +128,32 @@ fun WorkoutHistoryScreen(
                 }
             }
 
-            pagedWorkouts.loadState.refresh !is LoadState.Loading && pagedWorkouts.itemCount == 0 -> {
-                Column(
+            HistoryListContentState.Empty -> {
+                EmptyStateScreen(
+                    title = stringResource(id = R.string.history_empty_title),
+                    subtitle = stringResource(id = R.string.history_empty_subtitle),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(dims.spacingXl),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.history_empty_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(dims.spacingXs))
-                    Text(
-                        text = stringResource(id = R.string.history_empty_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                )
             }
 
-            else -> {
+            HistoryListContentState.Error -> {
+                EmptyStateScreen(
+                    title = stringResource(id = R.string.history_error_title),
+                    subtitle = stringResource(id = R.string.history_error_subtitle),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    action = {
+                        TextButton(onClick = { pagedWorkouts.retry() }) {
+                            Text(text = stringResource(id = R.string.common_retry))
+                        }
+                    }
+                )
+            }
+
+            HistoryListContentState.Content -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
