@@ -72,11 +72,27 @@ class TrainingPlanListViewModel(
         }
     }
 
-    fun startPlanWorkout(plan: TrainingPlan, onSessionCreated: (Long) -> Unit) {
+    fun startPlanWorkout(plan: TrainingPlan, onSessionCreated: (Long, Long) -> Unit) {
         viewModelScope.launch {
             try {
-                val sessionId = workoutRepository.startWorkout(plan.name)
-                onSessionCreated(sessionId)
+                val activeSession = workoutRepository.getActiveSession()
+                if (activeSession != null) {
+                    if (activeSession.planId == plan.id) {
+                        onSessionCreated(activeSession.id, plan.id)
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst."
+                        )
+                    }
+                    return@launch
+                }
+
+                val sessionId = workoutRepository.startWorkout(
+                    name = plan.name,
+                    planId = plan.id,
+                    metaPlanId = null
+                )
+                onSessionCreated(sessionId, plan.id)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = e.toAppError().toUserMessage("Training starten")

@@ -13,7 +13,9 @@ data class BackupPayloadV1(
     val workoutSets: List<BackupWorkoutSet>,
     val trainingPlans: List<BackupTrainingPlan>,
     val planExercises: List<BackupPlanExercise>,
-    val personalRecords: List<BackupPersonalRecord>
+    val personalRecords: List<BackupPersonalRecord>,
+    val metaTrainingPlans: List<BackupMetaTrainingPlan> = emptyList(),
+    val metaPlanItems: List<BackupMetaPlanItem> = emptyList()
 )
 
 @Serializable
@@ -23,7 +25,9 @@ data class BackupExercise(
     val primaryMuscleGroup: String,
     val secondaryMuscleGroups: String,
     val category: String,
-    val isCustom: Boolean
+    val isCustom: Boolean,
+    val notes: String = "",
+    val isArchived: Boolean = false
 )
 
 @Serializable
@@ -33,7 +37,9 @@ data class BackupWorkoutSession(
     val endTime: Long?,
     val durationSeconds: Long,
     val name: String,
-    val notes: String
+    val notes: String,
+    val planId: Long? = null,
+    val metaPlanId: Long? = null
 )
 
 @Serializable
@@ -61,6 +67,7 @@ data class BackupPlanExercise(
     val planId: Long,
     val exerciseId: Long,
     val orderIndex: Int,
+    val supersetGroupId: Int? = null,
     val targetSets: Int,
     val targetReps: Int,
     val targetWeightKg: Double
@@ -73,4 +80,19 @@ data class BackupPersonalRecord(
     val type: String,
     val value: Double,
     val achievedAt: Long
+)
+
+@Serializable
+data class BackupMetaTrainingPlan(
+    val id: Long,
+    val name: String,
+    val createdAt: Long
+)
+
+@Serializable
+data class BackupMetaPlanItem(
+    val id: Long,
+    val metaPlanId: Long,
+    val trainingPlanId: Long,
+    val orderIndex: Int
 )

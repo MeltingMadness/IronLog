@@ -1,17 +1,21 @@
 package com.ironlog.app.data.local
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ironlog.app.data.local.dao.ExerciseDao
+import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
+import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
@@ -29,9 +33,11 @@ import kotlinx.coroutines.launch
         WorkoutSetEntity::class,
         PersonalRecordEntity::class,
         TrainingPlanEntity::class,
-        PlanExerciseEntity::class
+        PlanExerciseEntity::class,
+        MetaTrainingPlanEntity::class,
+        MetaPlanItemEntity::class
     ],
-    version = 4,
+    version = 7,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -40,6 +46,7 @@ abstract class IronLogDatabase : RoomDatabase() {
     abstract fun workoutSetDao(): WorkoutSetDao
     abstract fun personalRecordDao(): PersonalRecordDao
     abstract fun trainingPlanDao(): TrainingPlanDao
+    abstract fun metaTrainingPlanDao(): MetaTrainingPlanDao
 
     companion object {
         /** Migration 1 -> 2: Training Plans feature */
@@ -90,6 +97,63 @@ abstract class IronLogDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `workout_sets` ADD COLUMN `rpe` REAL DEFAULT NULL")
             }
         }
+
+        /** Migration 4 -> 5: Add supersetGroupId to plan_exercises */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `supersetGroupId` INTEGER")
+            }
+        }
+
+        /** Migration 5 -> 6: Meta plans and workout session plan references */
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `workout_sessions` ADD COLUMN `planId` INTEGER")
+                db.execSQL("ALTER TABLE `workout_sessions` ADD COLUMN `metaPlanId` INTEGER")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sessions_planId` ON `workout_sessions` (`planId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sessions_metaPlanId` ON `workout_sessions` (`metaPlanId`)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `meta_training_plans` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `meta_plan_items` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `metaPlanId` INTEGER NOT NULL,
+                        `trainingPlanId` INTEGER NOT NULL,
+                        `orderIndex` INTEGER NOT NULL,
+                        FOREIGN KEY(`metaPlanId`) REFERENCES `meta_training_plans`(`id`) ON DELETE CASCADE,
+                        FOREIGN KEY(`trainingPlanId`) REFERENCES `training_plans`(`id`) ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_items_metaPlanId` ON `meta_plan_items` (`metaPlanId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_items_trainingPlanId` ON `meta_plan_items` (`trainingPlanId`)")
+            }
+        }
+
+        /** Migration 6 -> 7: Exercise notes + archive state */
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `exercises` ADD COLUMN `notes` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `exercises` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercises_isArchived` ON `exercises` (`isArchived`)")
+            }
+        }
+
+        @VisibleForTesting
+        fun migration5To6ForTests(): Migration = MIGRATION_5_6
+
+        @VisibleForTesting
+        fun migration6To7ForTests(): Migration = MIGRATION_6_7
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -156,7 +220,7 @@ abstract class IronLogDatabase : RoomDatabase() {
                 IronLogDatabase::class.java,
                 "ironlog.db"
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .addCallback(SeedCallback())
                 .build()
         }
@@ -174,13 +238,15 @@ abstract class IronLogDatabase : RoomDatabase() {
                 val exercises = ExerciseSeedData.getAll()
                 for (exercise in exercises) {
                     db.execSQL(
-                        "INSERT OR IGNORE INTO exercises (name, primaryMuscleGroup, secondaryMuscleGroups, category, isCustom) VALUES (?, ?, ?, ?, ?)",
+                        "INSERT OR IGNORE INTO exercises (name, primaryMuscleGroup, secondaryMuscleGroups, category, isCustom, notes, isArchived) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         arrayOf<Any>(
                             exercise.name,
                             exercise.primaryMuscleGroup,
                             exercise.secondaryMuscleGroups,
                             exercise.category,
-                            if (exercise.isCustom) 1 else 0
+                            if (exercise.isCustom) 1 else 0,
+                            exercise.notes,
+                            if (exercise.isArchived) 1 else 0
                         )
                     )
                 }

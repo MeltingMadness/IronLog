@@ -13,7 +13,9 @@ data class ExerciseEntity(
     val primaryMuscleGroup: String,
     val secondaryMuscleGroups: String, // comma-separated
     val category: String,
-    val isCustom: Boolean = false
+    val isCustom: Boolean = false,
+    val notes: String = "",
+    val isArchived: Boolean = false
 ) {
     fun toDomain(): Exercise = Exercise(
         id = id,
@@ -26,7 +28,9 @@ data class ExerciseEntity(
                 else MuscleGroup.safeValueOf(trimmed)
             },
         category = ExerciseCategory.safeValueOf(category),
-        isCustom = isCustom
+        isCustom = isCustom,
+        notes = notes,
+        isArchived = isArchived
     )
 
     companion object {
@@ -36,7 +40,9 @@ data class ExerciseEntity(
             primaryMuscleGroup = exercise.primaryMuscleGroup.name,
             secondaryMuscleGroups = exercise.secondaryMuscleGroups.joinToString(",") { it.name },
             category = exercise.category.name,
-            isCustom = exercise.isCustom
+            isCustom = exercise.isCustom,
+            notes = exercise.notes,
+            isArchived = exercise.isArchived
         )
     }
 }

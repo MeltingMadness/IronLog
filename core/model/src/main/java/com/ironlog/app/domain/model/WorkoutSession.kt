@@ -8,5 +8,7 @@ data class WorkoutSession(
     val endTime: LocalDateTime? = null,
     val durationSeconds: Long = 0,
     val name: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val planId: Long? = null,
+    val metaPlanId: Long? = null
 )

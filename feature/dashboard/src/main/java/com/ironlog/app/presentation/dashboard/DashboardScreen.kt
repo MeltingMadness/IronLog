@@ -56,7 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onStartWorkout: (Long, Long?) -> Unit,
+    onStartWorkout: (Long, Long?, Long?) -> Unit,
     onContinueWorkout: (Long) -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
@@ -64,10 +64,6 @@ fun DashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = ironLogDimens
-
-    LaunchedEffect(Unit) {
-        viewModel.loadDashboard()
-    }
 
     LaunchedEffect(state.error) {
         state.error?.let {
@@ -205,14 +201,23 @@ fun DashboardScreen(
         if (state.showPlanSelectionSheet) {
             PlanSelectionSheet(
                 plans = state.trainingPlans,
+                metaPlanOptions = state.metaPlanOptions,
                 onDismiss = viewModel::dismissPlanSelectionSheet,
                 onPlanSelected = { plan -> 
                     viewModel.dismissPlanSelectionSheet()
-                    viewModel.startNewWorkoutWithPlan(plan, onStartWorkout) 
+                    viewModel.startNewWorkoutWithPlan(plan) { sessionId, planId ->
+                        onStartWorkout(sessionId, planId, null)
+                    }
+                },
+                onMetaPlanSelected = { metaPlanId ->
+                    viewModel.dismissPlanSelectionSheet()
+                    viewModel.startNewWorkoutWithMetaPlan(metaPlanId, onStartWorkout)
                 },
                 onFreeWorkoutSelected = { 
                     viewModel.dismissPlanSelectionSheet()
-                    viewModel.startNewWorkout(onStartWorkout) 
+                    viewModel.startNewWorkout { sessionId, planId ->
+                        onStartWorkout(sessionId, planId, null)
+                    }
                 }
             )
         }

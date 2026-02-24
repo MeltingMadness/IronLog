@@ -20,6 +20,7 @@ object BackupPayloadValidator {
         val exerciseIds = payload.exercises.map { it.id }.toSet()
         val sessionIds = payload.workoutSessions.map { it.id }.toSet()
         val planIds = payload.trainingPlans.map { it.id }.toSet()
+        val metaPlanIds = payload.metaTrainingPlans.map { it.id }.toSet()
 
         val activeSessions = payload.workoutSessions.count { it.endTime == null }
         if (activeSessions > 1) {
@@ -35,6 +36,15 @@ object BackupPayloadValidator {
             }
         }
 
+        payload.workoutSessions.forEach { session ->
+            if (session.planId != null && session.planId !in planIds) {
+                errors += "Workout session ${session.id} references missing plan ${session.planId}"
+            }
+            if (session.metaPlanId != null && session.metaPlanId !in metaPlanIds) {
+                errors += "Workout session ${session.id} references missing meta plan ${session.metaPlanId}"
+            }
+        }
+
         payload.planExercises.forEach { planExercise ->
             if (planExercise.planId !in planIds) {
                 errors += "Plan exercise ${planExercise.id} references missing plan ${planExercise.planId}"
@@ -47,6 +57,15 @@ object BackupPayloadValidator {
         payload.personalRecords.forEach { record ->
             if (record.exerciseId !in exerciseIds) {
                 errors += "Personal record ${record.id} references missing exercise ${record.exerciseId}"
+            }
+        }
+
+        payload.metaPlanItems.forEach { item ->
+            if (item.metaPlanId !in metaPlanIds) {
+                errors += "Meta plan item ${item.id} references missing meta plan ${item.metaPlanId}"
+            }
+            if (item.trainingPlanId !in planIds) {
+                errors += "Meta plan item ${item.id} references missing training plan ${item.trainingPlanId}"
             }
         }
 

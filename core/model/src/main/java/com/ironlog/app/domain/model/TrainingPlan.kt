@@ -11,6 +11,7 @@ data class PlanExercise(
     val exerciseId: Long,
     val exerciseName: String = "",
     val orderIndex: Int,
+    val supersetGroupId: Int? = null,
     val targetSets: Int = 3,
     val targetReps: Int = 10,
     val targetWeightKg: Double = 0.0

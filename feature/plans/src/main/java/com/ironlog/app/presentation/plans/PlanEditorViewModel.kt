@@ -62,9 +62,10 @@ class PlanEditorViewModel(
                             )
                         )
                     }
+                    val normalizedExercises = normalizeExercises(exerciseUis)
                     _uiState.value = PlanEditorUiState(
                         planName = plan.name,
-                        exercises = exerciseUis,
+                        exercises = normalizedExercises,
                         isLoading = false
                     )
                 }
@@ -96,21 +97,20 @@ class PlanEditorViewModel(
             exerciseId = exercise.id,
             exerciseName = exercise.name,
             orderIndex = newIndex,
+            supersetGroupId = null,
             targetSets = 3,
             targetReps = 10,
             targetWeightKg = 0.0
         )
-        _uiState.value = _uiState.value.copy(
-            exercises = current + PlanExerciseUi(planExercise = planExercise, exercise = exercise),
-            showExercisePicker = false
-        )
+        _uiState.value = _uiState.value.copy(showExercisePicker = false)
+        setExercises(current + PlanExerciseUi(planExercise = planExercise, exercise = exercise))
     }
 
     fun removeExercise(index: Int) {
         val current = _uiState.value.exercises.toMutableList()
         if (index in current.indices) {
             current.removeAt(index)
-            _uiState.value = _uiState.value.copy(exercises = current)
+            setExercises(current)
         }
     }
 
@@ -119,7 +119,7 @@ class PlanEditorViewModel(
         val current = _uiState.value.exercises.toMutableList()
         val item = current.removeAt(index)
         current.add(index - 1, item)
-        _uiState.value = _uiState.value.copy(exercises = current)
+        setExercises(current)
     }
 
     fun moveDown(index: Int) {
@@ -127,7 +127,48 @@ class PlanEditorViewModel(
         if (index >= current.size - 1) return
         val item = current.removeAt(index)
         current.add(index + 1, item)
-        _uiState.value = _uiState.value.copy(exercises = current)
+        setExercises(current)
+    }
+
+    fun groupWithPrevious(index: Int) {
+        val current = _uiState.value.exercises
+        if (index <= 0 || index >= current.size) return
+
+        val previousGroup = current[index - 1].planExercise.supersetGroupId
+        val currentGroup = current[index].planExercise.supersetGroupId
+        val nextGroupId = (current.maxOfOrNull { it.planExercise.supersetGroupId ?: 0 } ?: 0) + 1
+        val targetGroupId = previousGroup ?: currentGroup ?: nextGroupId
+
+        val grouped = current.mapIndexed { itemIndex, item ->
+            val belongsToPreviousGroup = previousGroup != null && item.planExercise.supersetGroupId == previousGroup
+            val belongsToCurrentGroup = currentGroup != null && item.planExercise.supersetGroupId == currentGroup
+            val shouldGroup = itemIndex == index - 1 ||
+                itemIndex == index ||
+                belongsToPreviousGroup ||
+                belongsToCurrentGroup
+
+            if (shouldGroup) {
+                item.copy(planExercise = item.planExercise.copy(supersetGroupId = targetGroupId))
+            } else {
+                item
+            }
+        }
+
+        setExercises(grouped)
+    }
+
+    fun ungroup(index: Int) {
+        val current = _uiState.value.exercises
+        if (index !in current.indices) return
+
+        val ungrouped = current.mapIndexed { itemIndex, item ->
+            if (itemIndex == index) {
+                item.copy(planExercise = item.planExercise.copy(supersetGroupId = null))
+            } else {
+                item
+            }
+        }
+        setExercises(ungrouped)
     }
 
     fun updateTargetSets(index: Int, sets: Int) {
@@ -147,7 +188,7 @@ class PlanEditorViewModel(
         if (index in current.indices) {
             val item = current[index]
             current[index] = item.copy(planExercise = transform(item.planExercise))
-            _uiState.value = _uiState.value.copy(exercises = current)
+            setExercises(current)
         }
     }
 
@@ -160,16 +201,18 @@ class PlanEditorViewModel(
 
         viewModelScope.launch {
             try {
-                val exercises = _uiState.value.exercises.mapIndexed { i, item ->
-                    item.planExercise.copy(orderIndex = i)
-                }
+                val normalizedExercises = normalizeExercises(_uiState.value.exercises)
+                val exercises = normalizedExercises.map { it.planExercise }
                 val plan = TrainingPlan(
                     id = planId,
                     name = name,
                     exercises = exercises
                 )
                 planRepository.savePlan(plan)
-                _uiState.value = _uiState.value.copy(isSaved = true)
+                _uiState.value = _uiState.value.copy(
+                    exercises = normalizedExercises,
+                    isSaved = true
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Plan konnte nicht gespeichert werden: ${e.message}"
@@ -178,7 +221,79 @@ class PlanEditorViewModel(
         }
     }
 
+    private fun setExercises(exercises: List<PlanExerciseUi>) {
+        _uiState.value = _uiState.value.copy(exercises = normalizeExercises(exercises))
+    }
+
+    private fun normalizeExercises(exercises: List<PlanExerciseUi>): List<PlanExerciseUi> {
+        if (exercises.isEmpty()) return emptyList()
+
+        val reindexed = exercises
+            .mapIndexed { index, item ->
+                item.copy(planExercise = item.planExercise.copy(orderIndex = index))
+            }
+            .toMutableList()
+
+        // Collapse singleton runs and split reused non-contiguous IDs into independent runs.
+        var cursor = 0
+        while (cursor < reindexed.size) {
+            val runGroupId = reindexed[cursor].planExercise.supersetGroupId
+            if (runGroupId == null) {
+                cursor++
+                continue
+            }
+            var endExclusive = cursor + 1
+            while (
+                endExclusive < reindexed.size &&
+                reindexed[endExclusive].planExercise.supersetGroupId == runGroupId
+            ) {
+                endExclusive++
+            }
+            if (endExclusive - cursor < 2) {
+                for (index in cursor until endExclusive) {
+                    val item = reindexed[index]
+                    reindexed[index] = item.copy(
+                        planExercise = item.planExercise.copy(supersetGroupId = null)
+                    )
+                }
+            }
+            cursor = endExclusive
+        }
+
+        // Reassign visible runs to compact IDs (S1..Sn).
+        var nextGroupId = 1
+        cursor = 0
+        while (cursor < reindexed.size) {
+            val runGroupId = reindexed[cursor].planExercise.supersetGroupId
+            if (runGroupId == null) {
+                cursor++
+                continue
+            }
+            var endExclusive = cursor + 1
+            while (
+                endExclusive < reindexed.size &&
+                reindexed[endExclusive].planExercise.supersetGroupId == runGroupId
+            ) {
+                endExclusive++
+            }
+            val normalizedGroupId = nextGroupId++
+            for (index in cursor until endExclusive) {
+                val item = reindexed[index]
+                reindexed[index] = item.copy(
+                    planExercise = item.planExercise.copy(supersetGroupId = normalizedGroupId)
+                )
+            }
+            cursor = endExclusive
+        }
+
+        return reindexed
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun onPickerError(message: String) {
+        _uiState.value = _uiState.value.copy(error = message)
     }
 }

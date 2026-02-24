@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.presentation.exercises
+package com.ironlog.app.presentation.exercises
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.AlertDialog
@@ -29,11 +30,14 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -50,12 +54,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ironlog.core.designsystem.R
+import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.core.designsystem.R
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -66,6 +71,14 @@ fun ExerciseLibraryScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val dims = ironLogDimens
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -78,7 +91,8 @@ fun ExerciseLibraryScreen(
                     contentDescription = stringResource(id = R.string.exercises_add_cd)
                 )
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         if (state.isLoading) {
             LoadingScreen(modifier = Modifier.padding(padding))
@@ -139,6 +153,7 @@ fun ExerciseLibraryScreen(
                             SwipeToDeleteExerciseItem(
                                 exercise = exercise,
                                 onClick = { onExerciseClick(exercise.id) },
+                                onEdit = { viewModel.onShowEditDialog(exercise) },
                                 onDelete = {
                                     deleteExerciseId = exercise.id
                                     deleteExerciseName = exercise.name
@@ -191,11 +206,19 @@ fun ExerciseLibraryScreen(
             }
         }
 
-        if (state.showAddDialog) {
-            AddExerciseDialog(
-                onDismiss = viewModel::onDismissAddDialog,
-                onConfirm = { name, group, category ->
-                    viewModel.addCustomExercise(name, group, category)
+        state.editor?.let { editor ->
+            CustomExerciseDialog(
+                initial = editor,
+                onDismiss = viewModel::onDismissExerciseDialog,
+                onConfirm = { name, primary, secondary, category, notes ->
+                    viewModel.saveCustomExercise(
+                        id = editor.id,
+                        name = name,
+                        primaryMuscleGroup = primary,
+                        secondaryMuscleGroups = secondary,
+                        category = category,
+                        notes = notes
+                    )
                 }
             )
         }
@@ -205,8 +228,9 @@ fun ExerciseLibraryScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun SwipeToDeleteExerciseItem(
-    exercise: com.ironlog.app.domain.model.Exercise,
+    exercise: Exercise,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val dims = ironLogDimens
@@ -241,14 +265,27 @@ private fun SwipeToDeleteExerciseItem(
         ListItem(
             headlineContent = { Text(exercise.name) },
             supportingContent = {
-                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+                val notesText = exercise.notes.takeIf { it.isNotBlank() }
+                if (notesText == null) {
+                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+                } else {
+                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName} • $notesText")
+                }
             },
             trailingContent = {
-                Text(
-                    text = stringResource(id = R.string.exercises_custom_badge),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(id = R.string.exercises_custom_badge),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = stringResource(id = R.string.exercises_edit_cd)
+                        )
+                    }
+                }
             },
             modifier = Modifier.combinedClickable(
                 onClick = onClick,
@@ -260,20 +297,35 @@ private fun SwipeToDeleteExerciseItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddExerciseDialog(
+internal fun CustomExerciseDialog(
+    initial: ExerciseEditorState,
     onDismiss: () -> Unit,
-    onConfirm: (String, MuscleGroup, ExerciseCategory) -> Unit
+    onConfirm: (name: String, primary: MuscleGroup, secondary: List<MuscleGroup>, category: ExerciseCategory, notes: String) -> Unit
 ) {
     val dims = ironLogDimens
-    var name by remember { mutableStateOf("") }
-    var selectedGroup by remember { mutableStateOf(MuscleGroup.BRUST) }
-    var selectedCategory by remember { mutableStateOf(ExerciseCategory.LANGHANTEL) }
+    var name by remember(initial.id, initial.name) { mutableStateOf(initial.name) }
+    var selectedPrimary by remember(initial.id, initial.primaryMuscleGroup) {
+        mutableStateOf(initial.primaryMuscleGroup)
+    }
+    var selectedSecondary by remember(initial.id, initial.secondaryMuscleGroups) {
+        mutableStateOf(initial.secondaryMuscleGroups - initial.primaryMuscleGroup)
+    }
+    var selectedCategory by remember(initial.id, initial.category) { mutableStateOf(initial.category) }
+    var notes by remember(initial.id, initial.notes) { mutableStateOf(initial.notes) }
     var groupExpanded by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(id = R.string.exercises_new_title)) },
+        title = {
+            Text(
+                if (initial.isEditMode) {
+                    stringResource(id = R.string.exercises_edit_title)
+                } else {
+                    stringResource(id = R.string.exercises_new_title)
+                }
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
                 OutlinedTextField(
@@ -289,7 +341,7 @@ private fun AddExerciseDialog(
                     onExpandedChange = { groupExpanded = it }
                 ) {
                     OutlinedTextField(
-                        value = selectedGroup.displayName,
+                        value = selectedPrimary.displayName,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
@@ -308,12 +360,46 @@ private fun AddExerciseDialog(
                             DropdownMenuItem(
                                 text = { Text(group.displayName) },
                                 onClick = {
-                                    selectedGroup = group
+                                    selectedPrimary = group
+                                    selectedSecondary = selectedSecondary - group
                                     groupExpanded = false
                                 }
                             )
                         }
                     }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Text(
+                        text = stringResource(id = R.string.exercises_secondary_muscle_groups_label),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
+                        MuscleGroup.entries
+                            .filter { it != selectedPrimary }
+                            .forEach { group ->
+                                val isSelected = group in selectedSecondary
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedSecondary = when {
+                                            isSelected -> selectedSecondary - group
+                                            selectedSecondary.size < 3 -> selectedSecondary + group
+                                            else -> selectedSecondary
+                                        }
+                                    },
+                                    label = { Text(group.displayName) }
+                                )
+                            }
+                    }
+                    Text(
+                        text = stringResource(id = R.string.exercises_secondary_muscle_groups_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 ExposedDropdownMenuBox(
@@ -347,16 +433,37 @@ private fun AddExerciseDialog(
                         }
                     }
                 }
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text(stringResource(id = R.string.exercises_notes_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4
+                )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (name.isNotBlank()) onConfirm(name, selectedGroup, selectedCategory)
+                    onConfirm(
+                        name.trim(),
+                        selectedPrimary,
+                        selectedSecondary.toList(),
+                        selectedCategory,
+                        notes.trim()
+                    )
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text(stringResource(id = R.string.common_create))
+                Text(
+                    if (initial.isEditMode) {
+                        stringResource(id = R.string.exercises_save_cd)
+                    } else {
+                        stringResource(id = R.string.common_create)
+                    }
+                )
             }
         },
         dismissButton = {

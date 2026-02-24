@@ -1,6 +1,7 @@
 package com.ironlog.app.presentation.workout
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
@@ -65,6 +67,12 @@ import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+
+private data class ExerciseRenderGroup(
+    val key: String,
+    val supersetGroupId: Int?,
+    val exercises: List<ExerciseWithSets>
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +92,9 @@ fun ActiveWorkoutScreen(
     val motion = ironLogMotion
 
     var quickSelectedExerciseId by remember { mutableStateOf<Long?>(null) }
+    val exerciseGroups = remember(state.exercisesWithSets) {
+        buildExerciseRenderGroups(state.exercisesWithSets)
+    }
 
     LaunchedEffect(state.exercisesWithSets) {
         val currentIds = state.exercisesWithSets.map { it.exercise.id }.toSet()
@@ -174,17 +185,36 @@ fun ActiveWorkoutScreen(
                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
                 contentPadding = PaddingValues(dims.spacingMd)
             ) {
-                items(state.exercisesWithSets, key = { it.exercise.id }) { exerciseWithSets ->
-                    ExerciseCard(
-                        exerciseWithSets = exerciseWithSets,
-                        defaultWarmupFlag = preferences.defaultWarmupFlag,
-                        intensitySystem = preferences.intensitySystem,
-                        onLogSet = { reps, weight, isWarmup, intensity ->
-                            viewModel.logSet(exerciseWithSets.exercise.id, reps, weight, isWarmup, intensity)
-                        },
-                        onDeleteSet = viewModel::deleteSet,
-                        haptic = haptic
-                    )
+                items(exerciseGroups, key = { it.key }) { group ->
+                    Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        group.supersetGroupId?.let { supersetGroupId ->
+                            SupersetHeader(
+                                groupId = supersetGroupId,
+                                exerciseCount = group.exercises.size,
+                                exerciseNames = group.exercises.joinToString(separator = " • ") {
+                                    it.exercise.name
+                                }
+                            )
+                        }
+                        group.exercises.forEach { exerciseWithSets ->
+                            ExerciseCard(
+                                exerciseWithSets = exerciseWithSets,
+                                defaultWarmupFlag = preferences.defaultWarmupFlag,
+                                intensitySystem = preferences.intensitySystem,
+                                onLogSet = { reps, weight, isWarmup, intensity ->
+                                    viewModel.logSet(
+                                        exerciseWithSets.exercise.id,
+                                        reps,
+                                        weight,
+                                        isWarmup,
+                                        intensity
+                                    )
+                                },
+                                onDeleteSet = viewModel::deleteSet,
+                                haptic = haptic
+                            )
+                        }
+                    }
                 }
             }
 
@@ -226,6 +256,87 @@ fun ActiveWorkoutScreen(
                         Text(stringResource(id = R.string.workout_finish_dialog_cancel))
                     }
                 }
+            )
+        }
+    }
+}
+
+private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<ExerciseRenderGroup> {
+    if (exercises.isEmpty()) return emptyList()
+
+    val groups = mutableListOf<ExerciseRenderGroup>()
+    var cursor = 0
+    while (cursor < exercises.size) {
+        val groupId = exercises[cursor].supersetGroupId
+        if (groupId == null) {
+            val item = exercises[cursor]
+            groups += ExerciseRenderGroup(
+                key = "single-${item.exercise.id}-$cursor",
+                supersetGroupId = null,
+                exercises = listOf(item)
+            )
+            cursor++
+            continue
+        }
+
+        var endExclusive = cursor + 1
+        while (
+            endExclusive < exercises.size &&
+            exercises[endExclusive].supersetGroupId == groupId
+        ) {
+            endExclusive++
+        }
+
+        val run = exercises.subList(cursor, endExclusive)
+        if (run.size < 2) {
+            val item = exercises[cursor]
+            groups += ExerciseRenderGroup(
+                key = "single-${item.exercise.id}-$cursor",
+                supersetGroupId = null,
+                exercises = listOf(item)
+            )
+        } else {
+            groups += ExerciseRenderGroup(
+                key = "superset-$groupId-$cursor",
+                supersetGroupId = groupId,
+                exercises = run
+            )
+        }
+
+        cursor = endExclusive
+    }
+
+    return groups
+}
+
+@Composable
+private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: String) {
+    val dims = ironLogDimens
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dims.spacingSm, vertical = dims.spacingXs),
+            verticalArrangement = Arrangement.spacedBy(dims.spacing2)
+        ) {
+            Text(
+                text = stringResource(id = R.string.workout_superset_header, groupId, exerciseCount),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = exerciseNames,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

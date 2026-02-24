@@ -35,7 +35,8 @@ data class PlanTarget(
 data class ExerciseWithSets(
     val exercise: Exercise,
     val sets: List<WorkoutSet>,
-    val planTarget: PlanTarget? = null
+    val planTarget: PlanTarget? = null,
+    val supersetGroupId: Int? = null
 )
 
 data class ActiveWorkoutUiState(
@@ -68,6 +69,7 @@ class ActiveWorkoutViewModel(
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<String?>(null)
     private val planTargets = mutableMapOf<Long, PlanTarget>()
+    private val planSupersetGroups = mutableMapOf<Long, Int?>()
 
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()
@@ -111,6 +113,7 @@ class ActiveWorkoutViewModel(
                             targetReps = planExercise.targetReps,
                             targetWeightKg = planExercise.targetWeightKg
                         )
+                        planSupersetGroups[exercise.id] = planExercise.supersetGroupId
                         addExercise(exercise)
                     }
                 }
@@ -136,14 +139,22 @@ class ActiveWorkoutViewModel(
                                 category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                             ),
                             sets = exerciseSets.sortedBy { it.setNumber },
-                            planTarget = planTargets[exerciseId]
+                            planTarget = planTargets[exerciseId],
+                            supersetGroupId = planSupersetGroups[exerciseId]
                         )
                     }
                     // Merge with added exercises that have no sets yet
                     val existingIds = fromSets.map { it.exercise.id }.toSet()
                     val emptyExercises = addedExercises.value
                         .filter { it.id !in existingIds }
-                        .map { ExerciseWithSets(exercise = it, sets = emptyList(), planTarget = planTargets[it.id]) }
+                        .map {
+                            ExerciseWithSets(
+                                exercise = it,
+                                sets = emptyList(),
+                                planTarget = planTargets[it.id],
+                                supersetGroupId = planSupersetGroups[it.id]
+                            )
+                        }
                     exercisesWithSets.value = fromSets + emptyExercises
                 }
         }
@@ -159,7 +170,8 @@ class ActiveWorkoutViewModel(
                 exercisesWithSets.value = existing + ExerciseWithSets(
                 exercise = exercise,
                 sets = emptyList(),
-                planTarget = planTargets[exercise.id]
+                planTarget = planTargets[exercise.id],
+                supersetGroupId = planSupersetGroups[exercise.id]
             )
             }
         }

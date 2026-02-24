@@ -11,5 +11,6 @@ interface ExerciseRepository {
     suspend fun getExerciseById(id: Long): Exercise?
     suspend fun getExercisesByIds(ids: List<Long>): List<Exercise>
     suspend fun addCustomExercise(exercise: Exercise): Long
+    suspend fun updateCustomExercise(exercise: Exercise)
     suspend fun deleteCustomExercise(id: Long)
 }

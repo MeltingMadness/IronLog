@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -27,8 +28,10 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 @Composable
 fun PlanSelectionSheet(
     plans: List<TrainingPlan>,
+    metaPlanOptions: List<DashboardMetaPlanOption>,
     onDismiss: () -> Unit,
     onPlanSelected: (TrainingPlan) -> Unit,
+    onMetaPlanSelected: (Long) -> Unit,
     onFreeWorkoutSelected: () -> Unit
 ) {
     val dims = ironLogDimens
@@ -56,6 +59,59 @@ fun PlanSelectionSheet(
                 if (plans.isNotEmpty()) {
                     item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
                 }
+
+                item {
+                    Text(
+                        text = stringResource(id = R.string.plan_selection_meta_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
+                    )
+                }
+
+                if (metaPlanOptions.isEmpty()) {
+                    item {
+                        ListItem(
+                            headlineContent = { Text(stringResource(id = R.string.plan_selection_meta_empty)) }
+                        )
+                    }
+                } else {
+                    items(metaPlanOptions, key = { it.metaPlanId }) { option ->
+                        val nextPlanName = option.nextPlan?.name ?: stringResource(id = R.string.common_unknown)
+                        ListItem(
+                            headlineContent = { Text(option.metaPlanName) },
+                            supportingContent = {
+                                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(dims.spacing2)) {
+                                    Text(
+                                        text = stringResource(
+                                            id = R.string.plan_selection_meta_continue_with,
+                                            nextPlanName
+                                        )
+                                    )
+                                    option.rotationPlans.forEach { subPlan ->
+                                        Text(
+                                            text = stringResource(
+                                                id = R.string.plan_selection_meta_subplan_last_done,
+                                                subPlan.plan.name,
+                                                lastDoneLabel(subPlan.lastDoneDaysAgo)
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                            },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = Icons.Default.Layers,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            modifier = Modifier.clickable { onMetaPlanSelected(option.metaPlanId) }
+                        )
+                    }
+                }
+
+                item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
                 
                 item {
                     ListItem(
@@ -73,5 +129,15 @@ fun PlanSelectionSheet(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun lastDoneLabel(daysAgo: Long?): String {
+    return when (daysAgo) {
+        null -> stringResource(id = R.string.plan_selection_meta_last_done_never)
+        0L -> stringResource(id = R.string.plan_selection_meta_last_done_today)
+        1L -> stringResource(id = R.string.plan_selection_meta_last_done_yesterday)
+        else -> stringResource(id = R.string.plan_selection_meta_last_done_days_ago, daysAgo.toInt())
     }
 }

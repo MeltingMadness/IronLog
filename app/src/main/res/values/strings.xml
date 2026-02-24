@@ -40,6 +40,7 @@
     <string name="dashboard_volume_trend_empty">Mindestens 2 Trainingswochen fuer den Trend noetig.</string>
 
     <string name="workout_picker_search">Uebung suchen</string>
+    <string name="workout_picker_create_custom">Eigene Uebung erstellen</string>
     <string name="workout_title_default">Aktives Training</string>
     <string name="workout_finish_action">Beenden</string>
     <string name="workout_add_exercise">Uebung hinzufuegen</string>
@@ -58,6 +59,7 @@
     <string name="workout_delete_set_cd">Satz loeschen</string>
     <string name="workout_set_number">%1$d.</string>
     <string name="workout_warmup_chip">Aufwaermen</string>
+    <string name="workout_superset_header">Supersatz S%1$d (%2$d Uebungen)</string>
 
     <string name="history_title">Trainingsverlauf</string>
     <string name="history_empty_title">Noch keine Trainings</string>
@@ -87,6 +89,7 @@
     <string name="plans_delete_text">Plan "%1$s" wird dauerhaft geloescht.</string>
     <string name="plans_exercise_count">%1$d Uebungen</string>
     <string name="plans_start_cd">Plan starten</string>
+    <string name="plans_open_meta_plans_cd">Meta-Trainingsplaene</string>
 
     <string name="plan_editor_title_edit">Plan bearbeiten</string>
     <string name="plan_editor_title_new">Neuer Plan</string>
@@ -98,18 +101,28 @@
     <string name="plan_editor_move_down_cd">Nach unten</string>
     <string name="plan_editor_remove_cd">Uebung entfernen</string>
     <string name="plan_editor_sets_label">Saetze</string>
+    <string name="plan_editor_superset_none">Kein Supersatz</string>
+    <string name="plan_editor_superset_label">Supersatz S%1$d</string>
+    <string name="plan_editor_group_with_previous">Mit vorheriger gruppieren</string>
+    <string name="plan_editor_ungroup">Aus Supersatz loesen</string>
 
     <string name="exercises_title">Uebungsbibliothek</string>
     <string name="exercises_add_cd">Uebung erstellen</string>
     <string name="exercises_search_label">Suche</string>
     <string name="exercises_empty">Keine Uebungen gefunden.</string>
     <string name="exercises_custom_badge">Custom</string>
+    <string name="exercises_edit_cd">Uebung bearbeiten</string>
     <string name="exercises_delete_title">Uebung loeschen?</string>
     <string name="exercises_delete_text">"%1$s" wird dauerhaft entfernt.</string>
     <string name="exercises_new_title">Neue Uebung</string>
+    <string name="exercises_edit_title">Uebung bearbeiten</string>
     <string name="exercises_name_label">Name</string>
     <string name="exercises_muscle_group_label">Muskelgruppe</string>
+    <string name="exercises_secondary_muscle_groups_label">Sekundaere Muskelgruppen</string>
+    <string name="exercises_secondary_muscle_groups_hint">Optional, maximal 3</string>
     <string name="exercises_category_label">Kategorie</string>
+    <string name="exercises_notes_label">Notiz (optional)</string>
+    <string name="exercises_save_cd">Speichern</string>
 
     <string name="stats_title_fallback">Statistik</string>
     <string name="stats_records_title">Rekorde</string>
@@ -186,6 +199,31 @@
     <string name="plan_selection_title">Training starten</string>
     <string name="plan_selection_free_workout">Freies Training</string>
     <string name="plan_selection_free_workout_subtitle">Ohne Vorlage trainieren</string>
+    <string name="plan_selection_meta_title">Meta-Trainingsplaene</string>
+    <string name="plan_selection_meta_empty">Noch keine Meta-Trainingsplaene.</string>
+    <string name="plan_selection_meta_continue_with">Weiter mit: %1$s</string>
+    <string name="plan_selection_meta_rotation">Rotation: %1$s</string>
+    <string name="plan_selection_meta_last_done">Zuletzt: %1$s</string>
+    <string name="plan_selection_meta_subplan_last_done">%1$s - %2$s</string>
+    <string name="plan_selection_meta_last_done_today">Heute</string>
+    <string name="plan_selection_meta_last_done_yesterday">Gestern</string>
+    <string name="plan_selection_meta_last_done_days_ago">vor %1$d Tagen</string>
+    <string name="plan_selection_meta_last_done_never">Noch nie</string>
+    <string name="meta_plans_title">Meta-Trainingsplaene</string>
+    <string name="meta_plans_add_cd">Meta-Plan erstellen</string>
+    <string name="meta_plans_edit_cd">Meta-Plan bearbeiten</string>
+    <string name="meta_plans_empty_title">Keine Meta-Trainingsplaene</string>
+    <string name="meta_plans_empty_subtitle">Fasse mehrere Unterplaene zu einer Rotation zusammen.</string>
+    <string name="meta_plans_delete_title">Meta-Plan loeschen?</string>
+    <string name="meta_plans_delete_text">Meta-Plan "%1$s" wird entfernt.</string>
+    <string name="meta_plans_subplan_count">%1$d Unterplaene</string>
+    <string name="meta_plan_editor_title_new">Neuer Meta-Plan</string>
+    <string name="meta_plan_editor_title_edit">Meta-Plan bearbeiten</string>
+    <string name="meta_plan_editor_save_cd">Meta-Plan speichern</string>
+    <string name="meta_plan_editor_name_label">Meta-Planname</string>
+    <string name="meta_plan_editor_available_subplans">Unterplaene auswaehlen</string>
+    <string name="meta_plan_editor_subplan_order">Reihenfolge</string>
+    <string name="meta_plan_editor_subplan_order_empty">Keine Unterplaene ausgewaehlt.</string>
     <string name="settings_theme_scheme_title">Farbschema</string>
     <string name="settings_scheme_amber">Amber</string>
     <string name="settings_scheme_deep_cyan">Deep Cyan</string>

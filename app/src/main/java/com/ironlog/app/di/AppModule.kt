@@ -8,6 +8,7 @@ import com.ironlog.app.data.reminder.ReminderSchedulerImpl
 import com.ironlog.app.data.repository.BackupRepositoryImpl
 import com.ironlog.app.data.repository.ExerciseRepositoryImpl
 import com.ironlog.app.data.repository.IncidentReportRepositoryImpl
+import com.ironlog.app.data.repository.MetaTrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.StatisticsRepositoryImpl
 import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
@@ -15,6 +16,7 @@ import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
+import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
@@ -24,6 +26,8 @@ import com.ironlog.app.presentation.dashboard.DashboardViewModel
 import com.ironlog.app.presentation.exercises.ExerciseLibraryViewModel
 import com.ironlog.app.presentation.history.WorkoutDetailViewModel
 import com.ironlog.app.presentation.history.WorkoutHistoryViewModel
+import com.ironlog.app.presentation.plans.MetaPlanEditorViewModel
+import com.ironlog.app.presentation.plans.MetaPlanListViewModel
 import com.ironlog.app.presentation.plans.PlanEditorViewModel
 import com.ironlog.app.presentation.plans.TrainingPlanListViewModel
 import com.ironlog.app.presentation.settings.SettingsViewModel
@@ -42,11 +46,13 @@ val appModule = module {
     single { get<IronLogDatabase>().workoutSetDao() }
     single { get<IronLogDatabase>().personalRecordDao() }
     single { get<IronLogDatabase>().trainingPlanDao() }
+    single { get<IronLogDatabase>().metaTrainingPlanDao() }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
+    single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
     single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext()) }
     single<ReminderScheduler> { ReminderSchedulerImpl(androidContext()) }
     single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext(), get()) }
@@ -58,6 +64,7 @@ val appModule = module {
             workoutSessionDao = get(),
             workoutSetDao = get(),
             trainingPlanDao = get(),
+            metaTrainingPlanDao = get(),
             personalRecordDao = get(),
             buildInfo = get()
         )
@@ -75,5 +82,7 @@ val appModule = module {
     viewModelOf(::DashboardViewModel)
     viewModelOf(::WorkoutHistoryViewModel)
     viewModelOf(::TrainingPlanListViewModel)
+    viewModelOf(::MetaPlanListViewModel)
+    viewModelOf(::MetaPlanEditorViewModel)
     viewModelOf(::SettingsViewModel)
 }

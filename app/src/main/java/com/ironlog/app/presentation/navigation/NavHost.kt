@@ -18,6 +18,8 @@ import com.ironlog.app.presentation.dashboard.DashboardScreen
 import com.ironlog.app.presentation.exercises.ExerciseLibraryScreen
 import com.ironlog.app.presentation.history.WorkoutDetailScreen
 import com.ironlog.app.presentation.history.WorkoutHistoryScreen
+import com.ironlog.app.presentation.plans.MetaPlanEditorScreen
+import com.ironlog.app.presentation.plans.MetaPlanListScreen
 import com.ironlog.app.presentation.plans.PlanEditorScreen
 import com.ironlog.app.presentation.plans.TrainingPlanListScreen
 import com.ironlog.app.presentation.settings.SettingsScreen
@@ -75,8 +77,14 @@ fun IronLogNavHost(navController: NavHostController) {
     ) {
         composable(Screen.Dashboard.route) {
             DashboardScreen(
-                onStartWorkout = { sessionId, planId ->
-                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId, planId ?: 0L))
+                onStartWorkout = { sessionId, planId, metaPlanId ->
+                    navController.navigate(
+                        Screen.ActiveWorkout.createRoute(
+                            sessionId = sessionId,
+                            planId = planId ?: 0L,
+                            metaPlanId = metaPlanId ?: 0L
+                        )
+                    )
                 },
                 onContinueWorkout = { sessionId ->
                     navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
@@ -97,7 +105,8 @@ fun IronLogNavHost(navController: NavHostController) {
             route = Screen.ActiveWorkout.route,
             arguments = listOf(
                 navArgument("sessionId") { type = NavType.LongType },
-                navArgument("planId") { type = NavType.LongType; defaultValue = 0L }
+                navArgument("planId") { type = NavType.LongType; defaultValue = 0L },
+                navArgument("metaPlanId") { type = NavType.LongType; defaultValue = 0L }
             )
         ) {
             ActiveWorkoutScreen(
@@ -154,6 +163,9 @@ fun IronLogNavHost(navController: NavHostController) {
                 },
                 onStartWorkout = { sessionId, planId ->
                     navController.navigate(Screen.ActiveWorkout.createRoute(sessionId, planId))
+                },
+                onOpenMetaPlans = {
+                    navController.navigate(Screen.MetaPlanList.route)
                 }
             )
         }
@@ -169,6 +181,33 @@ fun IronLogNavHost(navController: NavHostController) {
             arguments = listOf(navArgument("planId") { type = NavType.LongType })
         ) {
             PlanEditorScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MetaPlanList.route) {
+            MetaPlanListScreen(
+                onBack = { navController.popBackStack() },
+                onCreateMetaPlan = { navController.navigate(Screen.MetaPlanEditorNew.route) },
+                onEditMetaPlan = { metaPlanId ->
+                    navController.navigate(Screen.MetaPlanEditor.createRoute(metaPlanId))
+                }
+            )
+        }
+
+        composable(Screen.MetaPlanEditorNew.route) {
+            MetaPlanEditorScreen(
+                metaPlanId = null,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.MetaPlanEditor.route,
+            arguments = listOf(navArgument("metaPlanId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            MetaPlanEditorScreen(
+                metaPlanId = backStackEntry.arguments?.getLong("metaPlanId"),
                 onBack = { navController.popBackStack() }
             )
         }

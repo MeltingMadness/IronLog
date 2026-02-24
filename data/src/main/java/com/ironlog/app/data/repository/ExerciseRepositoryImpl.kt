@@ -29,9 +29,62 @@ class ExerciseRepositoryImpl(
         return exerciseDao.getExercisesByIds(ids).map { it.toDomain() }
     }
 
-    override suspend fun addCustomExercise(exercise: Exercise): Long =
-        exerciseDao.insert(ExerciseEntity.fromDomain(exercise.copy(isCustom = true)))
+    override suspend fun addCustomExercise(exercise: Exercise): Long {
+        val sanitized = sanitizeAndValidate(exercise.copy(id = 0L, isCustom = true, isArchived = false))
+        validateUniqueName(name = sanitized.name, excludeId = null)
+        return exerciseDao.insert(ExerciseEntity.fromDomain(sanitized))
+    }
 
-    override suspend fun deleteCustomExercise(id: Long) =
-        exerciseDao.deleteCustomExercise(id)
+    override suspend fun updateCustomExercise(exercise: Exercise) {
+        require(exercise.id > 0L) { "Nur gespeicherte Uebungen koennen bearbeitet werden" }
+        val existing = exerciseDao.getExerciseById(exercise.id)
+            ?: throw IllegalArgumentException("Uebung wurde nicht gefunden")
+        require(existing.isCustom) { "Nur eigene Uebungen koennen bearbeitet werden" }
+
+        val sanitized = sanitizeAndValidate(
+            exercise.copy(
+                isCustom = true,
+                isArchived = existing.isArchived
+            )
+        )
+        validateUniqueName(name = sanitized.name, excludeId = sanitized.id)
+        exerciseDao.updateExercise(ExerciseEntity.fromDomain(sanitized))
+    }
+
+    override suspend fun deleteCustomExercise(id: Long) {
+        val existing = exerciseDao.getExerciseById(id)
+            ?: throw IllegalArgumentException("Uebung wurde nicht gefunden")
+        require(existing.isCustom) { "Nur eigene Uebungen koennen geloescht werden" }
+
+        if (exerciseDao.isExerciseReferenced(id)) {
+            exerciseDao.archiveCustomExercise(id)
+        } else {
+            exerciseDao.deleteCustomExercise(id)
+        }
+    }
+
+    private suspend fun validateUniqueName(name: String, excludeId: Long?) {
+        val duplicates = exerciseDao.countExercisesWithNormalizedName(name = name, excludeId = excludeId)
+        require(duplicates == 0) { "Eine aktive Uebung mit diesem Namen existiert bereits" }
+    }
+
+    private fun sanitizeAndValidate(exercise: Exercise): Exercise {
+        val name = exercise.name.trim()
+        require(name.length in 3..60) { "Name muss zwischen 3 und 60 Zeichen haben" }
+
+        val notes = exercise.notes.trim()
+        require(notes.length <= 240) { "Notiz darf maximal 240 Zeichen enthalten" }
+
+        val secondary = exercise.secondaryMuscleGroups.distinct()
+        require(secondary.size <= 3) { "Maximal drei sekundaere Muskelgruppen erlaubt" }
+        require(exercise.primaryMuscleGroup !in secondary) {
+            "Primaere Muskelgruppe darf nicht gleichzeitig sekundaer sein"
+        }
+
+        return exercise.copy(
+            name = name,
+            notes = notes,
+            secondaryMuscleGroups = secondary
+        )
+    }
 }

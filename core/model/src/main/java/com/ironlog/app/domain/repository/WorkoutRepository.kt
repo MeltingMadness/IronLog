@@ -7,7 +7,11 @@ import com.ironlog.app.domain.model.WorkoutSet
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
-    suspend fun startWorkout(name: String = ""): Long
+    suspend fun startWorkout(
+        name: String = "",
+        planId: Long? = null,
+        metaPlanId: Long? = null
+    ): Long
     suspend fun finishWorkout(sessionId: Long)
     suspend fun getActiveSession(): WorkoutSession?
     fun observeActiveSession(): Flow<WorkoutSession?>

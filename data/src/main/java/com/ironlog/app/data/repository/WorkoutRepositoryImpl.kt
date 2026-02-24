@@ -22,14 +22,23 @@ class WorkoutRepositoryImpl(
     private val setDao: WorkoutSetDao
 ) : WorkoutRepository {
 
-    override suspend fun startWorkout(name: String): Long {
+    suspend fun startWorkout(name: String = ""): Long =
+        startWorkout(name = name, planId = null, metaPlanId = null)
+
+    override suspend fun startWorkout(
+        name: String,
+        planId: Long?,
+        metaPlanId: Long?
+    ): Long {
         // Invariant: there can only be one active session.
         sessionDao.getActiveSession()?.let { return it.id }
 
         val now = LocalDateTime.now()
         val entity = WorkoutSessionEntity(
             startTime = EpochConverter.toLong(now),
-            name = name
+            name = name,
+            planId = planId,
+            metaPlanId = metaPlanId
         )
         return sessionDao.insert(entity)
     }

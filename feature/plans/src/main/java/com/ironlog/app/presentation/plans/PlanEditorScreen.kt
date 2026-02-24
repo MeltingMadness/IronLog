@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -136,6 +138,8 @@ fun PlanEditorScreen(
                     index = index,
                     isFirst = index == 0,
                     isLast = index == state.exercises.size - 1,
+                    onGroupWithPrevious = { viewModel.groupWithPrevious(index) },
+                    onUngroup = { viewModel.ungroup(index) },
                     onMoveUp = { viewModel.moveUp(index) },
                     onMoveDown = { viewModel.moveDown(index) },
                     onRemove = { viewModel.removeExercise(index) },
@@ -153,7 +157,9 @@ fun PlanEditorScreen(
                 onDismiss = viewModel::dismissExercisePicker,
                 onExerciseSelected = { exercise ->
                     viewModel.addExercise(exercise)
-                }
+                },
+                allowCreateCustomExercise = true,
+                onCreationError = viewModel::onPickerError
             )
         }
     }
@@ -165,6 +171,8 @@ private fun PlanExerciseCard(
     index: Int,
     isFirst: Boolean,
     isLast: Boolean,
+    onGroupWithPrevious: () -> Unit,
+    onUngroup: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onRemove: () -> Unit,
@@ -174,9 +182,15 @@ private fun PlanExerciseCard(
 ) {
     val dims = ironLogDimens
     val surfaces = ironLogSurfaceRoles
+    val supersetGroupId = item.planExercise.supersetGroupId
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        border = if (supersetGroupId != null) {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
+        } else {
+            null
+        },
         colors = CardDefaults.cardColors(
             containerColor = surfaces.muted
         )
@@ -216,6 +230,37 @@ private fun PlanExerciseCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(dims.spacing2))
+
+            SupersetStatusBadge(supersetGroupId = supersetGroupId)
+
+            Spacer(modifier = Modifier.height(dims.spacing2))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
+                TextButton(
+                    onClick = onGroupWithPrevious,
+                    enabled = !isFirst
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(dims.spacing2))
+                    Text(stringResource(id = R.string.plan_editor_group_with_previous))
+                }
+                if (supersetGroupId != null) {
+                    TextButton(onClick = onUngroup) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(dims.spacing2))
+                        Text(stringResource(id = R.string.plan_editor_ungroup))
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
@@ -247,5 +292,35 @@ private fun PlanExerciseCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SupersetStatusBadge(supersetGroupId: Int?) {
+    val dims = ironLogDimens
+    val isGrouped = supersetGroupId != null
+    Surface(
+        color = if (isGrouped) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = if (isGrouped) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        shape = MaterialTheme.shapes.large
+    ) {
+        Text(
+            text = if (supersetGroupId == null) {
+                stringResource(id = R.string.plan_editor_superset_none)
+            } else {
+                stringResource(id = R.string.plan_editor_superset_label, supersetGroupId)
+            },
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = dims.spacingSm, vertical = dims.spacing2)
+        )
     }
 }

@@ -29,6 +29,7 @@ data class PlanExerciseEntity(
     val planId: Long,
     val exerciseId: Long,
     val orderIndex: Int,
+    val supersetGroupId: Int? = null,
     val targetSets: Int = 3,
     val targetReps: Int = 10,
     val targetWeightKg: Double = 0.0
@@ -37,6 +38,7 @@ data class PlanExerciseEntity(
         id = id,
         exerciseId = exerciseId,
         orderIndex = orderIndex,
+        supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg
@@ -49,6 +51,7 @@ data class PlanExerciseEntity(
                 planId = planId,
                 exerciseId = exercise.exerciseId,
                 orderIndex = exercise.orderIndex,
+                supersetGroupId = exercise.supersetGroupId,
                 targetSets = exercise.targetSets,
                 targetReps = exercise.targetReps,
                 targetWeightKg = exercise.targetWeightKg

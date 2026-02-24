@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.ironlog.app.data.local.entity.ExerciseEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -37,8 +38,34 @@ interface ExerciseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun replaceAll(exercises: List<ExerciseEntity>)
 
+    @Update
+    suspend fun updateExercise(exercise: ExerciseEntity)
+
+    @Query("UPDATE exercises SET isArchived = 1 WHERE id = :id AND isCustom = 1")
+    suspend fun archiveCustomExercise(id: Long)
+
     @Query("DELETE FROM exercises WHERE id = :id AND isCustom = 1")
     suspend fun deleteCustomExercise(id: Long)
+
+    @Query(
+        """
+        SELECT CASE WHEN EXISTS(SELECT 1 FROM plan_exercises WHERE exerciseId = :exerciseId)
+            OR EXISTS(SELECT 1 FROM workout_sets WHERE exerciseId = :exerciseId)
+            OR EXISTS(SELECT 1 FROM personal_records WHERE exerciseId = :exerciseId)
+        THEN 1 ELSE 0 END
+        """
+    )
+    suspend fun isExerciseReferenced(exerciseId: Long): Boolean
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM exercises
+        WHERE isArchived = 0
+          AND lower(trim(name)) = lower(trim(:name))
+          AND (:excludeId IS NULL OR id != :excludeId)
+        """
+    )
+    suspend fun countExercisesWithNormalizedName(name: String, excludeId: Long?): Int
 
     @Query("DELETE FROM exercises WHERE isCustom = 1")
     suspend fun deleteAllCustomExercises()

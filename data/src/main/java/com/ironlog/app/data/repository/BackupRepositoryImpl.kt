@@ -8,17 +8,22 @@ import com.ironlog.app.data.backup.BackupExercise
 import com.ironlog.app.data.backup.BackupPayloadV1
 import com.ironlog.app.data.backup.BackupPayloadValidator
 import com.ironlog.app.data.backup.BackupPersonalRecord
+import com.ironlog.app.data.backup.BackupMetaPlanItem
+import com.ironlog.app.data.backup.BackupMetaTrainingPlan
 import com.ironlog.app.data.backup.BackupPlanExercise
 import com.ironlog.app.data.backup.BackupTrainingPlan
 import com.ironlog.app.data.backup.BackupWorkoutSession
 import com.ironlog.app.data.backup.BackupWorkoutSet
 import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.local.dao.ExerciseDao
+import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
+import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
@@ -35,6 +40,7 @@ class BackupRepositoryImpl(
     private val workoutSessionDao: WorkoutSessionDao,
     private val workoutSetDao: WorkoutSetDao,
     private val trainingPlanDao: TrainingPlanDao,
+    private val metaTrainingPlanDao: MetaTrainingPlanDao,
     private val personalRecordDao: PersonalRecordDao,
     private val buildInfo: BuildInfo
 ) : BackupRepository {
@@ -56,7 +62,9 @@ class BackupRepositoryImpl(
             workoutSets = workoutSetDao.getAllSetsList().map { it.toBackup() },
             trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
             planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
-            personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() }
+            personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
+            metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
+            metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() }
         )
 
         val output = context.contentResolver.openOutputStream(uri)
@@ -87,21 +95,27 @@ class BackupRepositoryImpl(
         val sets = payload.workoutSets.distinctBy { it.id }.map { it.toEntity() }
         val plans = payload.trainingPlans.distinctBy { it.id }.map { it.toEntity() }
         val planExercises = payload.planExercises.distinctBy { it.id }.map { it.toEntity() }
+        val metaPlans = payload.metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() }
+        val metaPlanItems = payload.metaPlanItems.distinctBy { it.id }.map { it.toEntity() }
         val records = payload.personalRecords.distinctBy { it.id }.map { it.toEntity() }
 
         database.withTransaction {
             personalRecordDao.deleteAll()
             workoutSetDao.deleteAll()
+            metaTrainingPlanDao.deleteAllMetaPlanItems()
             trainingPlanDao.deleteAllPlanExercises()
             workoutSessionDao.deleteAll()
+            metaTrainingPlanDao.deleteAllMetaPlans()
             trainingPlanDao.deleteAllPlans()
             exerciseDao.deleteAll()
 
             if (exercises.isNotEmpty()) exerciseDao.replaceAll(exercises)
             if (sessions.isNotEmpty()) workoutSessionDao.replaceAll(sessions)
             if (plans.isNotEmpty()) trainingPlanDao.replaceAllPlans(plans)
+            if (metaPlans.isNotEmpty()) metaTrainingPlanDao.replaceAllMetaPlans(metaPlans)
             if (sets.isNotEmpty()) workoutSetDao.replaceAll(sets)
             if (planExercises.isNotEmpty()) trainingPlanDao.replaceAllExercises(planExercises)
+            if (metaPlanItems.isNotEmpty()) metaTrainingPlanDao.replaceAllItems(metaPlanItems)
             if (records.isNotEmpty()) personalRecordDao.replaceAll(records)
         }
     }
@@ -110,8 +124,10 @@ class BackupRepositoryImpl(
         database.withTransaction {
             personalRecordDao.deleteAll()
             workoutSetDao.deleteAll()
+            metaTrainingPlanDao.deleteAllMetaPlanItems()
             trainingPlanDao.deleteAllPlanExercises()
             workoutSessionDao.deleteAll()
+            metaTrainingPlanDao.deleteAllMetaPlans()
             trainingPlanDao.deleteAllPlans()
             exerciseDao.deleteAllCustomExercises()
         }
@@ -123,7 +139,9 @@ class BackupRepositoryImpl(
         primaryMuscleGroup = primaryMuscleGroup,
         secondaryMuscleGroups = secondaryMuscleGroups,
         category = category,
-        isCustom = isCustom
+        isCustom = isCustom,
+        notes = notes,
+        isArchived = isArchived
     )
 
     private fun WorkoutSessionEntity.toBackup(): BackupWorkoutSession = BackupWorkoutSession(
@@ -132,7 +150,9 @@ class BackupRepositoryImpl(
         endTime = endTime,
         durationSeconds = durationSeconds,
         name = name,
-        notes = notes
+        notes = notes,
+        planId = planId,
+        metaPlanId = metaPlanId
     )
 
     private fun WorkoutSetEntity.toBackup(): BackupWorkoutSet = BackupWorkoutSet(
@@ -157,6 +177,7 @@ class BackupRepositoryImpl(
         planId = planId,
         exerciseId = exerciseId,
         orderIndex = orderIndex,
+        supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg
@@ -170,13 +191,28 @@ class BackupRepositoryImpl(
         achievedAt = achievedAt
     )
 
+    private fun MetaTrainingPlanEntity.toBackup(): BackupMetaTrainingPlan = BackupMetaTrainingPlan(
+        id = id,
+        name = name,
+        createdAt = createdAt
+    )
+
+    private fun MetaPlanItemEntity.toBackup(): BackupMetaPlanItem = BackupMetaPlanItem(
+        id = id,
+        metaPlanId = metaPlanId,
+        trainingPlanId = trainingPlanId,
+        orderIndex = orderIndex
+    )
+
     private fun BackupExercise.toEntity(): ExerciseEntity = ExerciseEntity(
         id = id,
         name = name,
         primaryMuscleGroup = primaryMuscleGroup,
         secondaryMuscleGroups = secondaryMuscleGroups,
         category = category,
-        isCustom = isCustom
+        isCustom = isCustom,
+        notes = notes,
+        isArchived = isArchived
     )
 
     private fun BackupWorkoutSession.toEntity(): WorkoutSessionEntity = WorkoutSessionEntity(
@@ -185,7 +221,9 @@ class BackupRepositoryImpl(
         endTime = endTime,
         durationSeconds = durationSeconds,
         name = name,
-        notes = notes
+        notes = notes,
+        planId = planId,
+        metaPlanId = metaPlanId
     )
 
     private fun BackupWorkoutSet.toEntity(): WorkoutSetEntity = WorkoutSetEntity(
@@ -210,6 +248,7 @@ class BackupRepositoryImpl(
         planId = planId,
         exerciseId = exerciseId,
         orderIndex = orderIndex,
+        supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg
@@ -223,8 +262,21 @@ class BackupRepositoryImpl(
         achievedAt = achievedAt
     )
 
+    private fun BackupMetaTrainingPlan.toEntity(): MetaTrainingPlanEntity = MetaTrainingPlanEntity(
+        id = id,
+        name = name,
+        createdAt = createdAt
+    )
+
+    private fun BackupMetaPlanItem.toEntity(): MetaPlanItemEntity = MetaPlanItemEntity(
+        id = id,
+        metaPlanId = metaPlanId,
+        trainingPlanId = trainingPlanId,
+        orderIndex = orderIndex
+    )
+
     companion object {
         private const val BACKUP_FORMAT_VERSION = 1
-        private const val SCHEMA_VERSION = 3
+        private const val SCHEMA_VERSION = 7
     }
 }
