@@ -38,11 +38,26 @@ class FakeExerciseRepository : ExerciseRepository {
 
     override suspend fun addCustomExercise(exercise: Exercise): Long {
         val id = nextId++
-        exercises.value = exercises.value + exercise.copy(id = id, isCustom = true)
+        exercises.value = exercises.value + exercise.copy(id = id, isCustom = true, isArchived = false)
         return id
     }
 
+    override suspend fun updateCustomExercise(exercise: Exercise) {
+        exercises.value = exercises.value.map { current ->
+            if (current.id == exercise.id) {
+                exercise.copy(isCustom = true, isArchived = current.isArchived)
+            } else {
+                current
+            }
+        }
+    }
+
     override suspend fun deleteCustomExercise(id: Long) {
-        exercises.value = exercises.value.filter { it.id != id }
+        val isReferenced = false
+        exercises.value = exercises.value.mapNotNull { current ->
+            if (current.id != id) return@mapNotNull current
+            if (!current.isCustom) return@mapNotNull current
+            if (isReferenced) current.copy(isArchived = true) else null
+        }
     }
 }

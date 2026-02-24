@@ -6,11 +6,15 @@ import org.junit.Test
 
 class BackupPayloadValidatorTest {
 
+    private companion object {
+        const val CURRENT_SCHEMA_VERSION = 7
+    }
+
     @Test
     fun validPayload_passesValidation() {
         val payload = BackupPayloadV1(
             formatVersion = 1,
-            schemaVersion = 3,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
             appVersion = "1.0",
             exportedAtEpochMillis = 1000L,
             exercises = listOf(
@@ -45,12 +49,33 @@ class BackupPayloadValidatorTest {
                     completedAt = 1200L
                 )
             ),
-            trainingPlans = emptyList(),
+            trainingPlans = listOf(
+                BackupTrainingPlan(
+                    id = 5L,
+                    name = "Push",
+                    createdAt = 1000L
+                )
+            ),
             planExercises = emptyList(),
-            personalRecords = emptyList()
+            personalRecords = emptyList(),
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(
+                    id = 7L,
+                    name = "Meta 1",
+                    createdAt = 1000L
+                )
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(
+                    id = 11L,
+                    metaPlanId = 7L,
+                    trainingPlanId = 5L,
+                    orderIndex = 0
+                )
+            )
         )
 
-        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = 3)
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
 
         assertTrue(result.errors.joinToString(), result.isValid)
     }
@@ -59,7 +84,7 @@ class BackupPayloadValidatorTest {
     fun multipleActiveSessions_failValidation() {
         val payload = BackupPayloadV1(
             formatVersion = 1,
-            schemaVersion = 3,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
             appVersion = "1.0",
             exportedAtEpochMillis = 1000L,
             exercises = listOf(
@@ -82,7 +107,7 @@ class BackupPayloadValidatorTest {
             personalRecords = emptyList()
         )
 
-        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = 3)
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
 
         assertFalse(result.isValid)
         assertTrue(result.errors.any { it.contains("active session", ignoreCase = true) })
@@ -92,7 +117,7 @@ class BackupPayloadValidatorTest {
     fun danglingForeignKey_failsValidation() {
         val payload = BackupPayloadV1(
             formatVersion = 1,
-            schemaVersion = 3,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
             appVersion = "1.0",
             exportedAtEpochMillis = 1000L,
             exercises = emptyList(),
@@ -107,9 +132,45 @@ class BackupPayloadValidatorTest {
             personalRecords = emptyList()
         )
 
-        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = 3)
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
 
         assertFalse(result.isValid)
         assertTrue(result.errors.any { it.contains("exercise", ignoreCase = true) })
+    }
+
+    @Test
+    fun metaPlanItem_withMissingTrainingPlan_failsValidation() {
+        val payload = BackupPayloadV1(
+            formatVersion = 1,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
+            appVersion = "1.0",
+            exportedAtEpochMillis = 1000L,
+            exercises = emptyList(),
+            workoutSessions = emptyList(),
+            workoutSets = emptyList(),
+            trainingPlans = emptyList(),
+            planExercises = emptyList(),
+            personalRecords = emptyList(),
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(
+                    id = 1L,
+                    name = "Meta",
+                    createdAt = 1000L
+                )
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(
+                    id = 2L,
+                    metaPlanId = 1L,
+                    trainingPlanId = 99L,
+                    orderIndex = 0
+                )
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("missing training plan", ignoreCase = true) })
     }
 }

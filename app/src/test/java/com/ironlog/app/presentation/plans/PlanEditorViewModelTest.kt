@@ -121,6 +121,54 @@ class PlanEditorViewModelTest {
     }
 
     @Test
+    fun `groupWithPrevious groups adjacent exercises into same superset`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.addExercise(mockExercise1)
+        viewModel.addExercise(mockExercise2)
+
+        viewModel.groupWithPrevious(1)
+
+        val exercises = viewModel.uiState.value.exercises
+        val firstGroupId = exercises[0].planExercise.supersetGroupId
+        assertNotNull(firstGroupId)
+        assertEquals(firstGroupId, exercises[1].planExercise.supersetGroupId)
+    }
+
+    @Test
+    fun `ungroup removes element and normalizes invalid supersets`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.addExercise(mockExercise1)
+        viewModel.addExercise(mockExercise2)
+        viewModel.addExercise(mockExercise1)
+
+        viewModel.groupWithPrevious(1)
+        viewModel.groupWithPrevious(2)
+        viewModel.ungroup(1)
+
+        val groups = viewModel.uiState.value.exercises.map { it.planExercise.supersetGroupId }
+        assertEquals(listOf(null, null, null), groups)
+    }
+
+    @Test
+    fun `savePlan persists compact superset group ids`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.updatePlanName("Superset Plan")
+        viewModel.addExercise(mockExercise1)
+        viewModel.addExercise(mockExercise2)
+        viewModel.addExercise(mockExercise1)
+        viewModel.addExercise(mockExercise2)
+
+        viewModel.groupWithPrevious(1)
+        viewModel.groupWithPrevious(3)
+        viewModel.savePlan()
+        advanceUntilIdle()
+
+        val savedPlan = fakePlanRepo.getAllPlans().first().first()
+        val savedGroupIds = savedPlan.exercises.map { it.supersetGroupId }
+        assertEquals(listOf(1, 1, 2, 2), savedGroupIds)
+    }
+
+    @Test
     fun `savePlan stores the plan in repository and updates state`() = runTest {
         val viewModel = createViewModel()
         viewModel.updatePlanName("Mein Plan")

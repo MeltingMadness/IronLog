@@ -234,8 +234,22 @@ class ActiveWorkoutViewModelTest {
             id = planId,
             name = "Leg Day",
             exercises = listOf(
-                com.ironlog.app.domain.model.PlanExercise(exerciseId = 10L, orderIndex = 0, targetSets = 3, targetReps = 10, targetWeightKg = 100.0),
-                com.ironlog.app.domain.model.PlanExercise(exerciseId = 20L, orderIndex = 1, targetSets = 3, targetReps = 12, targetWeightKg = 150.0)
+                com.ironlog.app.domain.model.PlanExercise(
+                    exerciseId = 10L,
+                    orderIndex = 0,
+                    supersetGroupId = 1,
+                    targetSets = 3,
+                    targetReps = 10,
+                    targetWeightKg = 100.0
+                ),
+                com.ironlog.app.domain.model.PlanExercise(
+                    exerciseId = 20L,
+                    orderIndex = 1,
+                    supersetGroupId = 1,
+                    targetSets = 3,
+                    targetReps = 12,
+                    targetWeightKg = 150.0
+                )
             )
         )
         planRepo.savePlan(plan)
@@ -252,7 +266,9 @@ class ActiveWorkoutViewModelTest {
         assertEquals(2, state.exercisesWithSets.size)
         assertEquals("Kniebeugen", state.exercisesWithSets[0].exercise.name)
         assertEquals(3, state.exercisesWithSets[0].planTarget?.targetSets)
+        assertEquals(1, state.exercisesWithSets[0].supersetGroupId)
         assertEquals("Beinpresse", state.exercisesWithSets[1].exercise.name)
+        assertEquals(1, state.exercisesWithSets[1].supersetGroupId)
         
         collector.cancel()
     }

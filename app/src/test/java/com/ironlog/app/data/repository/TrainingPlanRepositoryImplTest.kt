@@ -68,6 +68,30 @@ class TrainingPlanRepositoryImplTest {
         assertTrue(dao.plans.getValue(1L).name == "Legs")
     }
 
+    @Test
+    fun `savePlan normalizes supersets to compact contiguous groups`() = runTest {
+        val dao = FakeTrainingPlanDao()
+        val repository = TrainingPlanRepositoryImpl(dao)
+
+        val planId = repository.savePlan(
+            TrainingPlan(
+                name = "Supersets",
+                exercises = listOf(
+                    PlanExercise(exerciseId = 1001L, orderIndex = 0, supersetGroupId = 7),
+                    PlanExercise(exerciseId = 1002L, orderIndex = 1, supersetGroupId = 7),
+                    PlanExercise(exerciseId = 1003L, orderIndex = 2, supersetGroupId = 7),
+                    PlanExercise(exerciseId = 1004L, orderIndex = 3, supersetGroupId = 42),
+                    PlanExercise(exerciseId = 1005L, orderIndex = 4, supersetGroupId = 42),
+                    PlanExercise(exerciseId = 1006L, orderIndex = 5, supersetGroupId = 7)
+                )
+            )
+        )
+
+        val stored = repository.getPlanById(planId) ?: error("plan missing")
+        assertEquals(listOf(1, 1, 1, 2, 2, null), stored.exercises.map { it.supersetGroupId })
+        assertEquals(listOf(0, 1, 2, 3, 4, 5), stored.exercises.map { it.orderIndex })
+    }
+
     private class FakeTrainingPlanDao : TrainingPlanDao {
         val plans = linkedMapOf<Long, TrainingPlanEntity>()
         val exercisesByPlan = linkedMapOf<Long, MutableList<PlanExerciseEntity>>()

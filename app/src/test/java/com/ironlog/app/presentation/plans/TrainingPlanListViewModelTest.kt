@@ -16,8 +16,12 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TrainingPlanListViewModelTest {
@@ -72,5 +76,51 @@ class TrainingPlanListViewModelTest {
 
         assertEquals(2, vm.uiState.value.plans.size)
         assertEquals(0, exerciseRepo.getExerciseByIdCallCount)
+    }
+
+    @Test
+    fun `startPlanWorkout startet neue Session wenn keine aktive Session existiert`() = runTest {
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
+        var createdSessionId: Long? = null
+        var createdPlanId: Long? = null
+
+        vm.startPlanWorkout(plan) { sessionId, planId ->
+            createdSessionId = sessionId
+            createdPlanId = planId
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNotNull(createdSessionId)
+        assertEquals(101L, createdPlanId)
+        val session = workoutRepo.getSessionById(createdSessionId!!)
+        assertEquals(101L, session?.planId)
+    }
+
+    @Test
+    fun `startPlanWorkout blockiert wenn anderes aktives Training existiert`() = runTest {
+        workoutRepo.addSession(
+            com.ironlog.app.domain.model.WorkoutSession(
+                id = 7L,
+                startTime = LocalDateTime.now(),
+                name = "Active Session",
+                planId = 999L
+            ),
+            isActive = true
+        )
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
+        var callbackCalled = false
+
+        vm.startPlanWorkout(plan) { _, _ ->
+            callbackCalled = true
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(callbackCalled)
+        assertTrue(vm.uiState.value.error?.contains("anderes Training aktiv") == true)
+        assertEquals(7L, workoutRepo.getActiveSession()?.id)
     }
 }

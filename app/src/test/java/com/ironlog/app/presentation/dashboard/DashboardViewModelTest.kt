@@ -1,9 +1,12 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.app.domain.model.MetaTrainingPlan
+import com.ironlog.app.domain.model.MetaTrainingPlanItem
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
+import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
@@ -16,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,6 +37,7 @@ class DashboardViewModelTest {
     private lateinit var statsRepo: FakeStatisticsRepository
     private lateinit var preferencesRepo: FakeAppPreferencesRepository
     private lateinit var planRepo: FakeTrainingPlanRepository
+    private lateinit var metaPlanRepo: FakeMetaTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -42,6 +47,7 @@ class DashboardViewModelTest {
         statsRepo = FakeStatisticsRepository()
         preferencesRepo = FakeAppPreferencesRepository()
         planRepo = FakeTrainingPlanRepository()
+        metaPlanRepo = FakeMetaTrainingPlanRepository()
     }
 
     @After
@@ -54,7 +60,8 @@ class DashboardViewModelTest {
         statsRepo,
         exerciseRepo,
         preferencesRepo,
-        planRepo
+        planRepo,
+        metaPlanRepo
     )
 
     @Test
@@ -212,5 +219,172 @@ class DashboardViewModelTest {
         assertEquals(99L, planIdPass)
         val session = workoutRepo.getSessionById(createdSessionId!!)
         assertEquals("My Test Plan", session?.name)
+    }
+
+    @Test
+    fun `startNewWorkoutWithMetaPlan startet Session mit plan und meta ids`() = runTest {
+        val planId = planRepo.savePlan(TrainingPlan(name = "Meta Subplan"))
+        val metaPlanId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta 1",
+                items = listOf(MetaTrainingPlanItem(trainingPlanId = planId, orderIndex = 0))
+            )
+        )
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        var createdSessionId: Long? = null
+        var callbackPlanId: Long? = null
+        var callbackMetaPlanId: Long? = null
+
+        vm.startNewWorkoutWithMetaPlan(metaPlanId) { sessionId, planFromCallback, metaFromCallback ->
+            createdSessionId = sessionId
+            callbackPlanId = planFromCallback
+            callbackMetaPlanId = metaFromCallback
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNotNull(createdSessionId)
+        assertEquals(planId, callbackPlanId)
+        assertEquals(metaPlanId, callbackMetaPlanId)
+        val session = workoutRepo.getSessionById(createdSessionId!!)
+        assertEquals(planId, session?.planId)
+        assertEquals(metaPlanId, session?.metaPlanId)
+    }
+
+    @Test
+    fun `startNewWorkoutWithMetaPlan setzt Fehler wenn kein gueltiger Unterplan vorhanden ist`() = runTest {
+        val metaPlanId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Broken Meta",
+                items = listOf(MetaTrainingPlanItem(trainingPlanId = 9999L, orderIndex = 0))
+            )
+        )
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        var callbackCalled = false
+
+        vm.startNewWorkoutWithMetaPlan(metaPlanId) { _, _, _ ->
+            callbackCalled = true
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(callbackCalled)
+        assertTrue(vm.uiState.value.error?.contains("Meta-Plan ist unvollstaendig") == true)
+        assertNull(workoutRepo.getActiveSession())
+    }
+
+    @Test
+    fun `dashboard reloads stats when active workout is finished`() = runTest {
+        val start = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 123L,
+                startTime = start,
+                endTime = null,
+                durationSeconds = 0,
+                name = "Active"
+            ),
+            isActive = true
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(vm.uiState.value.activeSession)
+        assertEquals(0, vm.uiState.value.workoutsThisWeek)
+
+        workoutRepo.finishWorkout(123L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.uiState.value.activeSession)
+        assertEquals(1, vm.uiState.value.workoutsThisWeek)
+        assertNotNull(vm.uiState.value.lastWorkout)
+    }
+
+    @Test
+    fun `meta plan rotation uses last completed subplan as anchor`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val planCId = planRepo.savePlan(TrainingPlan(name = "Plan C"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta 1",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planCId, orderIndex = 2)
+                )
+            )
+        )
+
+        val twoDaysAgo = LocalDateTime.of(LocalDate.now().minusDays(2), LocalTime.of(9, 0))
+        val oneDayAgo = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(9, 0))
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 1,
+                startTime = twoDaysAgo,
+                endTime = twoDaysAgo.plusHours(1),
+                durationSeconds = 3600,
+                planId = planAId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 2,
+                startTime = oneDayAgo,
+                endTime = oneDayAgo.plusHours(1),
+                durationSeconds = 3600,
+                planId = planBId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val option = vm.uiState.value.metaPlanOptions.firstOrNull { it.metaPlanId == metaId }
+        assertNotNull(option)
+        assertEquals(planCId, option?.nextPlan?.id)
+        assertEquals(listOf(planCId, planAId, planBId), option?.rotationPlans?.map { it.plan.id })
+    }
+
+    @Test
+    fun `meta plan rotation exposes per-subplan last done days`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta 2",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val threeDaysAgo = LocalDateTime.of(LocalDate.now().minusDays(3), LocalTime.of(9, 0))
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 10,
+                startTime = threeDaysAgo,
+                endTime = threeDaysAgo.plusHours(1),
+                durationSeconds = 3600,
+                planId = planAId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val option = vm.uiState.value.metaPlanOptions.firstOrNull { it.metaPlanId == metaId }
+        assertNotNull(option)
+        val statusByPlan = option!!.rotationPlans.associateBy({ it.plan.id }, { it.lastDoneDaysAgo })
+        assertEquals(3L, statusByPlan[planAId])
+        assertNull(statusByPlan[planBId])
     }
 }

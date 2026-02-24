@@ -39,12 +39,21 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     // --- WorkoutRepository ---
 
-    override suspend fun startWorkout(name: String): Long {
+    suspend fun startWorkout(name: String = ""): Long =
+        startWorkout(name = name, planId = null, metaPlanId = null)
+
+    override suspend fun startWorkout(
+        name: String,
+        planId: Long?,
+        metaPlanId: Long?
+    ): Long {
         val id = nextSessionId++
         val session = WorkoutSession(
             id = id,
             startTime = java.time.LocalDateTime.now(),
-            name = name
+            name = name,
+            planId = planId,
+            metaPlanId = metaPlanId
         )
         sessions.value = sessions.value + WorkoutSessionData(session, isActive = true)
         return id
