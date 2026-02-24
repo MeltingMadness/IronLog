@@ -86,8 +86,14 @@ fun IronLogNavHost(navController: NavHostController) {
                         )
                     )
                 },
-                onContinueWorkout = { sessionId ->
-                    navController.navigate(Screen.ActiveWorkout.createRoute(sessionId))
+                onContinueWorkout = { sessionId, planId, metaPlanId ->
+                    navController.navigate(
+                        Screen.ActiveWorkout.createRoute(
+                            sessionId = sessionId,
+                            planId = planId ?: 0L,
+                            metaPlanId = metaPlanId ?: 0L
+                        )
+                    )
                 },
                 onOpenSettings = {
                     navController.navigate(Screen.Settings.route)

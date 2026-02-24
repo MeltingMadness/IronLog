@@ -57,7 +57,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun DashboardScreen(
     onStartWorkout: (Long, Long?, Long?) -> Unit,
-    onContinueWorkout: (Long) -> Unit,
+    onContinueWorkout: (Long, Long?, Long?) -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
 ) {
@@ -113,7 +113,11 @@ fun DashboardScreen(
                     hasActiveSession = state.activeSession != null,
                     isFirstTimeUser = isFirstTimeUser,
                     onStartWorkout = { viewModel.showPlanSelectionSheet() },
-                    onContinueWorkout = { state.activeSession?.let { onContinueWorkout(it.id) } }
+                    onContinueWorkout = {
+                        state.activeSession?.let { session ->
+                            onContinueWorkout(session.id, session.planId, session.metaPlanId)
+                        }
+                    }
                 )
             }
 
