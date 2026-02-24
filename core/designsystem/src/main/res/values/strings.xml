@@ -191,6 +191,7 @@
     <string name="settings_scheme_deep_cyan">Deep Cyan</string>
     <string name="settings_scheme_neon_red">Neon Red</string>
     <string name="settings_intensity_system_title">Intensitaets-System</string>
+    <string name="settings_intensity_off">Aus</string>
     <string name="common_unknown">Unbekannt</string>
     <string name="common_calendar_week">KW%1$d</string>
     <string name="common_record_weight">%1$.1f kg</string>

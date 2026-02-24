@@ -299,6 +299,11 @@ fun SettingsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
                         FilterChip(
+                            selected = state.preferences.intensitySystem == IntensitySystem.OFF,
+                            onClick = { viewModel.updateIntensitySystem(IntensitySystem.OFF) },
+                            label = { Text(stringResource(id = R.string.settings_intensity_off)) }
+                        )
+                        FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.RPE,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RPE) },
                             label = { Text("RPE") }

@@ -2,12 +2,9 @@ package com.ironlog.app.presentation.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -31,6 +28,7 @@ fun SetInputRow(
     intensity: String,
     onIntensityChange: (String) -> Unit,
     intensityLabel: String,
+    showIntensityField: Boolean = true,
     onLog: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,14 +54,16 @@ fun SetInputRow(
             modifier = Modifier.weight(1f),
             singleLine = true
         )
-        OutlinedTextField(
-            value = intensity,
-            onValueChange = onIntensityChange,
-            label = { Text(intensityLabel) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
+        if (showIntensityField) {
+            OutlinedTextField(
+                value = intensity,
+                onValueChange = onIntensityChange,
+                label = { Text(intensityLabel) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f),
+                singleLine = true
+            )
+        }
         IconButton(
             onClick = onLog,
             colors = IconButtonDefaults.filledIconButtonColors(

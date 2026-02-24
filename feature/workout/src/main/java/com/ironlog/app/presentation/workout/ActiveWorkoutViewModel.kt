@@ -193,10 +193,10 @@ class ActiveWorkoutViewModel(
                     val rawVal = intensity.toDoubleOrNull()
                     if (rawVal != null) {
                         val prefs = appPreferencesRepository.preferences.first()
-                        parsedRpe = if (prefs.intensitySystem == IntensitySystem.RIR) {
-                            10.0 - rawVal
-                        } else {
-                            rawVal
+                        parsedRpe = when (prefs.intensitySystem) {
+                            IntensitySystem.OFF -> null
+                            IntensitySystem.RPE -> rawVal
+                            IntensitySystem.RIR -> 10.0 - rawVal
                         }
                     }
                 }

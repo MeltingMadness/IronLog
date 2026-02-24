@@ -245,6 +245,7 @@ private fun QuickLogComposer(
 
     val dims = ironLogDimens
     val surfaces = ironLogSurfaceRoles
+    val tracksIntensity = intensitySystem != IntensitySystem.OFF
 
     var repsInput by remember(selectedExerciseId) { mutableStateOf("") }
     var weightInput by remember(selectedExerciseId) { mutableStateOf("") }
@@ -304,11 +305,18 @@ private fun QuickLogComposer(
                 intensity = intensityInput,
                 onIntensityChange = { intensityInput = it },
                 intensityLabel = intensitySystem.displayName,
+                showIntensityField = tracksIntensity,
                 onLog = {
                     val reps = repsInput.toIntOrNull()
                     val weight = weightInput.toDoubleOrNull()
                     if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                        onLogSet(selectedExerciseId, reps, weight, isWarmup, intensityInput)
+                        onLogSet(
+                            selectedExerciseId,
+                            reps,
+                            weight,
+                            isWarmup,
+                            if (tracksIntensity) intensityInput else ""
+                        )
                         haptic.confirm()
                         repsInput = ""
                         weightInput = ""
@@ -489,6 +497,7 @@ private fun PendingSetRow(
     onLog: (Int, Double, String) -> Unit
 ) {
     val dims = ironLogDimens
+    val tracksIntensity = intensitySystem != IntensitySystem.OFF
     var repsInput by remember { mutableStateOf(defaultReps) }
     var weightInput by remember { mutableStateOf(defaultWeight) }
     var intensityInput by remember { mutableStateOf("") }
@@ -522,20 +531,22 @@ private fun PendingSetRow(
             modifier = Modifier.weight(1f),
             singleLine = true
         )
-        OutlinedTextField(
-            value = intensityInput,
-            onValueChange = { intensityInput = it },
-            label = { Text(intensitySystem.displayName) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
+        if (tracksIntensity) {
+            OutlinedTextField(
+                value = intensityInput,
+                onValueChange = { intensityInput = it },
+                label = { Text(intensitySystem.displayName) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.weight(1f),
+                singleLine = true
+            )
+        }
         IconButton(
             onClick = {
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    onLog(reps, weight, intensityInput)
+                    onLog(reps, weight, if (tracksIntensity) intensityInput else "")
                 }
             },
             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
@@ -560,6 +571,7 @@ private fun ExtraSetInput(
     haptic: HapticFeedbackHelper
 ) {
     val dims = ironLogDimens
+    val tracksIntensity = intensitySystem != IntensitySystem.OFF
     var repsInput by remember {
         mutableStateOf(
             planTarget?.let {
@@ -599,11 +611,12 @@ private fun ExtraSetInput(
             intensity = intensityInput,
             onIntensityChange = { intensityInput = it },
             intensityLabel = intensitySystem.displayName,
+            showIntensityField = tracksIntensity,
             onLog = {
                 val reps = repsInput.toIntOrNull()
                 val weight = weightInput.toDoubleOrNull()
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    onLogSet(reps, weight, isWarmup, intensityInput)
+                    onLogSet(reps, weight, isWarmup, if (tracksIntensity) intensityInput else "")
                     haptic.confirm()
                     repsInput = ""
                     weightInput = ""

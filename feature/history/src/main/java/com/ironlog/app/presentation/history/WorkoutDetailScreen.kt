@@ -171,14 +171,18 @@ fun WorkoutDetailScreen(
                                         fontStyle = if (set.isWarmup) FontStyle.Italic else FontStyle.Normal
                                     )
                                     val rpe = set.rpe
-                                    val intensityString = if (rpe != null) {
-                                        if (preferences.intensitySystem == IntensitySystem.RPE) {
-                                            " @ RPE ${rpe}"
-                                        } else {
-                                            val rir = 10.0 - rpe
-                                            " @ ${if (rir % 1.0 == 0.0) rir.toInt() else rir} RIR"
+                                    val intensityString = if (rpe == null) {
+                                        ""
+                                    } else {
+                                        when (preferences.intensitySystem) {
+                                            IntensitySystem.OFF -> ""
+                                            IntensitySystem.RPE -> " @ RPE ${rpe}"
+                                            IntensitySystem.RIR -> {
+                                                val rir = 10.0 - rpe
+                                                " @ ${if (rir % 1.0 == 0.0) rir.toInt() else rir} RIR"
+                                            }
                                         }
-                                    } else ""
+                                    }
 
                                     Text(
                                         text = stringResource(

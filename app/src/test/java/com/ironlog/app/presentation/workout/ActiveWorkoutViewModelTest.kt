@@ -109,6 +109,17 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `logSet ignoriert intensitaet wenn IntensitySystem aus ist`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.OFF)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(null, sets[0].rpe)
+    }
+
+    @Test
     fun `logSet erstellt Satz korrekt`() = runTest {
         val vm = createViewModel()
 
