@@ -1,7 +1,6 @@
 package com.ironlog.app.presentation.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,7 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import com.ironlog.app.presentation.common.DashboardSkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +49,8 @@ import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.common.StatCardVariant
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogMotion
+import com.ironlog.app.presentation.theme.pressScale
+import com.ironlog.app.presentation.theme.staggeredEntrance
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,14 +89,7 @@ fun DashboardScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         if (state.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            DashboardSkeleton(modifier = Modifier.padding(padding))
             return@IronLogScreenScaffold
         }
 
@@ -172,11 +166,13 @@ fun DashboardScreen(
                         )
                     }
                 } else {
-                    items(state.recentRecords) { (record, exerciseName) ->
+                    items(state.recentRecords.size) { index ->
+                        val (record, exerciseName) = state.recentRecords[index]
                         RecordCard(
                             exerciseName = exerciseName,
                             recordType = record.type.displayName,
-                            recordValue = formatRecordValue(record.type.name, record.value)
+                            recordValue = formatRecordValue(record.type.name, record.value),
+                            modifier = Modifier.staggeredEntrance(index)
                         )
                     }
                 }
@@ -281,12 +277,14 @@ private fun CommandCenterCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            val buttonAction = if (hasActiveSession) onContinueWorkout else onStartWorkout
             Button(
-                onClick = if (hasActiveSession) onContinueWorkout else onStartWorkout,
+                onClick = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(dims.spacingXl + dims.spacingLg)
                     .scale(scale)
+                    .pressScale(onClick = buttonAction)
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Text(
@@ -307,12 +305,13 @@ private fun CommandCenterCard(
 private fun RecordCard(
     exerciseName: String,
     recordType: String,
-    recordValue: String
+    recordValue: String,
+    modifier: Modifier = Modifier
 ) {
     val dims = ironLogDimens
 
     IronLogSurfaceCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         tone = IronLogSurfaceTone.MUTED
     ) {
         Row(

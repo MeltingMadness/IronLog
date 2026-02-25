@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
+import com.ironlog.app.presentation.common.HistorySkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +63,7 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.staggeredEntrance
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -116,14 +117,7 @@ fun WorkoutHistoryScreen(
     ) { padding ->
         when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
             HistoryListContentState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                HistorySkeleton(modifier = Modifier.padding(padding))
             }
 
             HistoryListContentState.Empty -> {
@@ -165,11 +159,13 @@ fun WorkoutHistoryScreen(
                     ) { index ->
                         val item = pagedWorkouts[index]
                         if (item != null) {
+                            val entranceModifier = if (index < 8) Modifier.staggeredEntrance(index) else Modifier
                             SwipeToDeleteCard(
                                 item = item,
                                 unitSystem = preferences.unitSystem,
                                 onClick = { onWorkoutClick(item.session.id) },
-                                onDelete = { deleteSessionId = item.session.id }
+                                onDelete = { deleteSessionId = item.session.id },
+                                modifier = entranceModifier
                             )
                         }
                     }
@@ -213,7 +209,8 @@ private fun SwipeToDeleteCard(
     item: WorkoutHistoryItem,
     unitSystem: UnitSystem,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
 
@@ -225,6 +222,7 @@ private fun SwipeToDeleteCard(
     }
 
     SwipeToDismissBox(
+        modifier = modifier,
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
