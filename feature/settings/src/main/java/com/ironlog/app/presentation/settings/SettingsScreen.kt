@@ -24,7 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import com.ironlog.app.presentation.common.LoadingSkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -61,6 +61,7 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -151,15 +152,7 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         if (state.isBusy) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            LoadingSkeleton(lineCount = 6, modifier = Modifier.padding(padding))
             return@IronLogScreenScaffold
         }
 
@@ -168,7 +161,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(dims.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+            verticalArrangement = Arrangement.spacedBy(dims.spacingLg)
         ) {
             item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_appearance)) {
@@ -448,7 +441,10 @@ fun SettingsScreen(
             }
 
             item {
-                PreferenceCard(title = stringResource(id = R.string.settings_section_incident)) {
+                PreferenceCard(
+                    title = stringResource(id = R.string.settings_section_incident),
+                    tone = IronLogSurfaceTone.MUTED
+                ) {
                     OutlinedTextField(
                         value = incidentSummary,
                         onValueChange = { incidentSummary = it },
@@ -507,26 +503,30 @@ fun SettingsScreen(
 @Composable
 private fun PreferenceCard(
     title: String,
+    tone: IronLogSurfaceTone = IronLogSurfaceTone.ELEVATED,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val dims = ironLogDimens
 
-    IronLogSurfaceCard(
-        modifier = Modifier,
-        tone = IronLogSurfaceTone.ELEVATED
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dims.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+    Column {
+        Text(
+            text = title.uppercase(java.util.Locale.getDefault()),
+            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = dims.spacingMd, end = dims.spacingMd, bottom = dims.spacingXs)
+        )
+        IronLogSurfaceCard(
+            modifier = Modifier,
+            tone = tone
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            content()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(dims.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
+                content()
+            }
         }
     }
 }

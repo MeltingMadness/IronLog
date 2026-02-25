@@ -2,12 +2,29 @@
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.ironlog.core.designsystem.R
 
-private val DisplayFamily = FontFamily.SansSerif
-private val BodyFamily = FontFamily.SansSerif
+// Plus Jakarta Sans — Display / Headline family (variable font, covers wght 200–800)
+private val DisplayFamily = FontFamily(
+    Font(R.font.plus_jakarta_sans, FontWeight.Normal),
+    Font(R.font.plus_jakarta_sans, FontWeight.Medium),
+    Font(R.font.plus_jakarta_sans, FontWeight.SemiBold),
+    Font(R.font.plus_jakarta_sans, FontWeight.Bold),
+    Font(R.font.plus_jakarta_sans, FontWeight.ExtraBold),
+    Font(R.font.plus_jakarta_sans, FontWeight.Black),
+)
+
+// DM Sans — Body / Label family (variable font, covers wght 100–700, opsz 9–40)
+private val BodyFamily = FontFamily(
+    Font(R.font.dm_sans, FontWeight.Normal),
+    Font(R.font.dm_sans, FontWeight.Medium),
+    Font(R.font.dm_sans, FontWeight.SemiBold),
+    Font(R.font.dm_sans, FontWeight.Bold),
+)
 
 val Typography = Typography(
     displayLarge = TextStyle(

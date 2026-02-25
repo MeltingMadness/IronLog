@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.pressScale
 
 @Composable
 fun SetInputRow(
@@ -65,7 +66,8 @@ fun SetInputRow(
             )
         }
         IconButton(
-            onClick = onLog,
+            onClick = {},
+            modifier = Modifier.pressScale(onClick = onLog),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
