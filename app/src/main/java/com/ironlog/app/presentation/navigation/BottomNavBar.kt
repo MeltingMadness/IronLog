@@ -30,11 +30,11 @@ fun BottomNavBar(navController: NavController) {
 
     NavigationBar(
         modifier = Modifier
-            .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
+            .padding(horizontal = dims.spacingMd, vertical = dims.spacing2)
             .clip(MaterialTheme.shapes.extraLarge)
             .glassmorphism(
                 shape = MaterialTheme.shapes.extraLarge,
-                backgroundColor = surfaces.elevated.copy(alpha = 0.72f)
+                backgroundColor = surfaces.elevated.copy(alpha = 0.76f)
             ),
         tonalElevation = 0.dp,
         containerColor = Color.Transparent
@@ -47,11 +47,11 @@ fun BottomNavBar(navController: NavController) {
                 label = { Text(label) },
                 selected = currentRoute == item.screen.route,
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = surfaces.accentWarning.copy(alpha = 0.2f),
+                    indicatorColor = surfaces.accentWarning.copy(alpha = 0.26f),
                     selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    selectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
                 ),
                 onClick = {
                     if (currentRoute != item.screen.route) {

@@ -15,21 +15,31 @@ import androidx.compose.ui.unit.dp
 
 fun Modifier.glassmorphism(
     shape: Shape = RoundedCornerShape(20.dp),
-    backgroundColor: Color = Color.White.copy(alpha = 0.58f),
-    borderColor: Color = Color.White.copy(alpha = 0.34f),
+    backgroundColor: Color = Color.White.copy(alpha = 0.56f),
+    borderColor: Color = Color.White.copy(alpha = 0.28f),
     borderWidth: Dp = 1.dp
 ): Modifier = this.then(
     Modifier
         .clip(shape)
         .background(backgroundColor, shape)
+        .background(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = 0.08f),
+                    Color.Transparent,
+                    Color.Black.copy(alpha = 0.04f)
+                )
+            ),
+            shape = shape
+        )
         .border(
             width = borderWidth,
             brush = Brush.linearGradient(
                 colors = listOf(
                     borderColor,
-                    borderColor.copy(alpha = 0.16f),
+                    borderColor.copy(alpha = 0.12f),
                     Color.Transparent,
-                    borderColor.copy(alpha = 0.24f)
+                    borderColor.copy(alpha = 0.18f)
                 )
             ),
             shape = shape

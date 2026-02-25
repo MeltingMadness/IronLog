@@ -23,8 +23,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -312,12 +310,10 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
 @Composable
 private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: String) {
     val dims = ironLogDimens
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.ELEVATED,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        )
     ) {
         Column(
             modifier = Modifier
@@ -329,12 +325,12 @@ private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: Stri
                 text = stringResource(id = R.string.workout_superset_header, groupId, exerciseCount),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = exerciseNames,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )

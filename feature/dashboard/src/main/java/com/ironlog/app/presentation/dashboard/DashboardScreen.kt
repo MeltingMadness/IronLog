@@ -23,8 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,10 +44,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.StatCard
-import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -235,15 +233,14 @@ private fun CommandCenterCard(
     onContinueWorkout: () -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
     val scale = if (isFirstTimeUser && !hasActiveSession) {
         val infiniteTransition = rememberInfiniteTransition(label = "pulse")
         val animatedScale by infiniteTransition.animateFloat(
             initialValue = 1f,
-            targetValue = 1.05f,
+            targetValue = 1.03f,
             animationSpec = infiniteRepeatable(
-                animation = tween(1000, easing = LinearEasing),
+                animation = tween(1200, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
             ),
             label = "scale"
@@ -253,11 +250,9 @@ private fun CommandCenterCard(
         1f
     }
 
-    Card(
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-        modifier = Modifier.glassmorphism(
-            backgroundColor = surfaces.elevated.copy(alpha = 0.5f)
-        )
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.ELEVATED
     ) {
         Column(
             modifier = Modifier
@@ -309,12 +304,10 @@ private fun RecordCard(
     recordValue: String
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
-        modifier = Modifier.fillMaxWidth()
-            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.4f)),
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED
     ) {
         Row(
             modifier = Modifier
@@ -352,12 +345,10 @@ private fun LastWorkoutCard(
     exerciseCount: Int
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
-        modifier = Modifier.fillMaxWidth()
-            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.4f)),
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED
     ) {
         Column(modifier = Modifier.padding(dims.spacingSm)) {
             Text(
@@ -383,7 +374,8 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold
+        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.SemiBold
     )
 }
 
@@ -400,13 +392,10 @@ private fun formatRecordValue(type: String, value: Double): String {
 @Composable
 private fun OnboardingCard() {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .glassmorphism(backgroundColor = surfaces.elevated.copy(alpha = 0.5f)),
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.ELEVATED
     ) {
         Column(
             modifier = Modifier

@@ -86,7 +86,8 @@ class MainActivity : ComponentActivity() {
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
                                         MaterialTheme.colorScheme.background,
-                                        surfaces.muted.copy(alpha = 0.5f),
+                                        surfaces.muted.copy(alpha = 0.42f),
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.26f),
                                         MaterialTheme.colorScheme.background
                                     )
                                 )

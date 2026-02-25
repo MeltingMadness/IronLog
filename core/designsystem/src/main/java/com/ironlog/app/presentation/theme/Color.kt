@@ -97,15 +97,15 @@ val DarkRedOnTertiaryContainer = Color(0xFFFFF59D)
 
 
 // Universal Background / Surface
-val Background = Color(0xFFF4F5F7)
+val Background = Color(0xFFF2F4F8)
 val OnBackground = Color(0xFF17181C)
-val Surface = Color(0xFFF8F9FB)
+val Surface = Color(0xFFF7F9FC)
 val OnSurface = Color(0xFF17181C)
-val SurfaceVariant = Color(0xFFE7EAF0)
-val OnSurfaceVariant = Color(0xFF444A56)
+val SurfaceVariant = Color(0xFFE3E8F0)
+val OnSurfaceVariant = Color(0xFF404754)
 
-val SurfaceElevated = Color(0xFFFBFCFF)
-val SurfaceMuted = Color(0xFFEFF2F8)
+val SurfaceElevated = Color(0xFFFCFDFF)
+val SurfaceMuted = Color(0xFFECF1F8)
 
 val AccentSuccess = Color(0xFF2E7D32)
 val AccentWarning = Color(0xFFEF6C00)
@@ -114,15 +114,15 @@ val Error = Color(0xFFB3261E)
 val OnError = Color(0xFFFFFFFF)
 
 // Universal Dark Background / Surface
-val DarkBackground = Color(0xFF0F1115)
+val DarkBackground = Color(0xFF0E1117)
 val DarkOnBackground = Color(0xFFE5E8EF)
-val DarkSurface = Color(0xFF13161D)
+val DarkSurface = Color(0xFF12161E)
 val DarkOnSurface = Color(0xFFE5E8EF)
-val DarkSurfaceVariant = Color(0xFF2B303A)
-val DarkOnSurfaceVariant = Color(0xFFBCC3CF)
+val DarkSurfaceVariant = Color(0xFF2A303B)
+val DarkOnSurfaceVariant = Color(0xFFB7BFCC)
 
-val DarkSurfaceElevated = Color(0xFF1A1F29)
-val DarkSurfaceMuted = Color(0xFF171B23)
+val DarkSurfaceElevated = Color(0xFF1A202A)
+val DarkSurfaceMuted = Color(0xFF161B24)
 
 val DarkAccentSuccess = Color(0xFF81C784)
 val DarkAccentWarning = Color(0xFFFFB74D)

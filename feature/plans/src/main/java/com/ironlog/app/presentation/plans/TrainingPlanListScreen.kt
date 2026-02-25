@@ -117,21 +117,33 @@ fun TrainingPlanListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(dims.spacingXl),
+                        .padding(horizontal = dims.spacingLg),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.plans_empty_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(dims.spacingXs))
-                    Text(
-                        text = stringResource(id = R.string.plans_empty_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    IronLogSurfaceCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        tone = IronLogSurfaceTone.ELEVATED
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(dims.spacingLg),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.plans_empty_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(dims.spacingXs))
+                            Text(
+                                text = stringResource(id = R.string.plans_empty_subtitle),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 
@@ -247,8 +259,7 @@ private fun PlanCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        tone = IronLogSurfaceTone.MUTED,
-        alpha = 0.68f
+        tone = IronLogSurfaceTone.ELEVATED
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
             Row(

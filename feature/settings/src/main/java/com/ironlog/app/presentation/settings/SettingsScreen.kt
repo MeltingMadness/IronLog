@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -175,7 +177,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
                         FilterChip(
                             selected = state.preferences.themeMode == ThemeMode.SYSTEM,
                             onClick = { viewModel.updateThemeMode(ThemeMode.SYSTEM) },
@@ -200,7 +205,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.AMBER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
@@ -255,7 +263,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
                         FilterChip(
                             selected = state.preferences.weekStart == WeekStart.MONDAY,
                             onClick = { viewModel.updateWeekStart(WeekStart.MONDAY) },
@@ -296,7 +307,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.OFF,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.OFF) },
@@ -378,7 +392,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
                         DayOfWeek.entries.forEach { day ->
                             FilterChip(
                                 selected = day in reminder.daysOfWeek,
@@ -496,13 +513,12 @@ private fun PreferenceCard(
 
     IronLogSurfaceCard(
         modifier = Modifier,
-        tone = IronLogSurfaceTone.MUTED,
-        alpha = 0.68f
+        tone = IronLogSurfaceTone.ELEVATED
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dims.spacingSm),
+                .padding(dims.spacingMd),
             verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
         ) {
             Text(
