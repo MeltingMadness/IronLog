@@ -47,6 +47,7 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.StatCard
+import com.ironlog.app.presentation.common.StatCardVariant
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogMotion
 import org.koin.androidx.compose.koinViewModel
@@ -134,19 +135,22 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(dims.spacingSm)
                     ) {
                         StatCard(
+                            label = stringResource(id = R.string.dashboard_streak),
+                            value = stringResource(id = R.string.dashboard_streak_value, state.currentStreak),
+                            modifier = Modifier.weight(1f),
+                            variant = StatCardVariant.PRIMARY
+                        )
+                        StatCard(
                             label = stringResource(id = R.string.dashboard_this_week),
                             value = "${state.workoutsThisWeek}",
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            variant = StatCardVariant.SECONDARY
                         )
                         StatCard(
                             label = stringResource(id = R.string.dashboard_this_month),
                             value = "${state.workoutsThisMonth}",
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            label = stringResource(id = R.string.dashboard_streak),
-                            value = stringResource(id = R.string.dashboard_streak_value, state.currentStreak),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            variant = StatCardVariant.TERTIARY
                         )
                     }
                 }

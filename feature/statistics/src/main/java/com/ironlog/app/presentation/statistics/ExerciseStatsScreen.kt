@@ -37,6 +37,7 @@ import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
+import com.ironlog.app.presentation.common.StatCardVariant
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
@@ -151,12 +152,14 @@ fun ExerciseStatsScreen(
                                 value = maxWeight?.let {
                                     WeightFormatting.formatWeight(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.PRIMARY
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_max_reps_label),
                                 value = maxReps?.let { "${it.value.toInt()}" } ?: "-",
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.TERTIARY
                             )
                         }
                     }
@@ -174,14 +177,16 @@ fun ExerciseStatsScreen(
                                 value = maxE1rm?.let {
                                     WeightFormatting.formatWeight(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.SECONDARY
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_max_volume_label),
                                 value = maxVolume?.let {
                                     WeightFormatting.formatVolume(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.TERTIARY
                             )
                         }
                     }

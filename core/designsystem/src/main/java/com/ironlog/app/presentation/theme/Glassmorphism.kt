@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -17,7 +19,8 @@ fun Modifier.glassmorphism(
     shape: Shape = RoundedCornerShape(20.dp),
     backgroundColor: Color = Color.White.copy(alpha = 0.56f),
     borderColor: Color = Color.White.copy(alpha = 0.28f),
-    borderWidth: Dp = 1.dp
+    borderWidth: Dp = 1.dp,
+    specularHighlight: Boolean = true
 ): Modifier = this.then(
     Modifier
         .clip(shape)
@@ -27,7 +30,7 @@ fun Modifier.glassmorphism(
                 colors = listOf(
                     Color.White.copy(alpha = 0.08f),
                     Color.Transparent,
-                    Color.Black.copy(alpha = 0.04f)
+                    Color.Black.copy(alpha = 0.08f)
                 )
             ),
             shape = shape
@@ -44,6 +47,21 @@ fun Modifier.glassmorphism(
             ),
             shape = shape
         )
+        .drawWithContent {
+            drawContent()
+            if (specularHighlight) {
+                val specularBrush = Brush.linearGradient(
+                    colorStops = arrayOf(
+                        0f to Color.White.copy(alpha = 0.12f),
+                        0.4f to Color.White.copy(alpha = 0.04f),
+                        1f to Color.Transparent
+                    ),
+                    start = Offset.Zero,
+                    end = Offset(size.width * 0.6f, size.height * 0.3f)
+                )
+                drawRect(specularBrush)
+            }
+        }
 )
 
 fun Modifier.glow(
