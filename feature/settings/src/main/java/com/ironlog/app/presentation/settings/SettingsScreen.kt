@@ -513,7 +513,7 @@ private fun PreferenceCard(
             text = title.uppercase(java.util.Locale.getDefault()),
             style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp),
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = dims.spacingMd, bottom = dims.spacingXs)
+            modifier = Modifier.padding(start = dims.spacingMd, end = dims.spacingMd, bottom = dims.spacingXs)
         )
         IronLogSurfaceCard(
             modifier = Modifier,
