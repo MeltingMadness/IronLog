@@ -302,6 +302,34 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `dashboard reloads stats when completed sessions are deleted without active-session transition`() = runTest {
+        val completed = LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0))
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 900L,
+                startTime = completed,
+                endTime = completed.plusHours(1),
+                durationSeconds = 3600,
+                name = "Done"
+            ),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.workoutsThisWeek)
+        assertNotNull(vm.uiState.value.lastWorkout)
+
+        workoutRepo.deleteSession(900L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, vm.uiState.value.workoutsThisWeek)
+        assertEquals(0, vm.uiState.value.workoutsThisMonth)
+        assertEquals(0, vm.uiState.value.currentStreak)
+        assertNull(vm.uiState.value.lastWorkout)
+    }
+
+    @Test
     fun `meta plan rotation uses last completed subplan as anchor`() = runTest {
         val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
         val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))

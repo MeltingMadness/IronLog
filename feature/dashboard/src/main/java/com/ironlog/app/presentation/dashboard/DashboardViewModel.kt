@@ -26,6 +26,7 @@ import java.time.temporal.WeekFields
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -74,6 +75,7 @@ class DashboardViewModel(
     init {
         loadDashboard()
         observeActiveSession()
+        observeDashboardRefreshSignals()
     }
 
     private fun observeActiveSession() {
@@ -117,8 +119,16 @@ class DashboardViewModel(
     }
 
     fun loadDashboard() {
+        loadDashboard(showLoadingIndicator = true)
+    }
+
+    private fun loadDashboard(showLoadingIndicator: Boolean) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            if (showLoadingIndicator) {
+                _uiState.update { it.copy(isLoading = true, error = null) }
+            } else {
+                _uiState.update { it.copy(error = null) }
+            }
 
             try {
                 val preferences = appPreferencesRepository.preferences.first()
@@ -206,6 +216,21 @@ class DashboardViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun observeDashboardRefreshSignals() {
+        viewModelScope.launch {
+            combine(
+                workoutRepository.getAllCompletedSessions(),
+                statisticsRepository.getRecentRecords(limit = 1),
+                appPreferencesRepository.preferences
+            ) { _, _, _ -> Unit }
+                .drop(1)
+                .catchAndLog("DashboardVM_Refresh")
+                .collect {
+                    loadDashboard(showLoadingIndicator = false)
+                }
         }
     }
 
