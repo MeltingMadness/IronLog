@@ -4,8 +4,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -36,13 +39,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.core.designsystem.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -114,12 +123,21 @@ fun ExercisePickerSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         tonalElevation = 0.dp
     ) {
-        Column(modifier = Modifier.padding(bottom = dims.spacingMd)) {
+        Column(
+            modifier = Modifier
+                .navigationBarsPadding()
+                .padding(bottom = dims.spacingMd)
+        ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text(stringResource(id = R.string.workout_picker_search)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = stringResource(id = R.string.workout_picker_search)
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dims.spacingMd),
@@ -134,7 +152,10 @@ fun ExercisePickerSheet(
                     },
                     modifier = Modifier.padding(horizontal = dims.spacingMd)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(id = R.string.workout_picker_create_custom)
+                    )
                     Text(
                         text = stringResource(id = R.string.workout_picker_create_custom),
                         modifier = Modifier.padding(start = dims.spacingXs)
@@ -162,17 +183,27 @@ fun ExercisePickerSheet(
                 }
             }
 
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
                 items(exercises, key = { it.id }) { exercise ->
-                    ListItem(
-                        headlineContent = { Text(exercise.name) },
-                        supportingContent = {
-                            Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
-                        },
+                    IronLogSurfaceCard(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .clickable { onExerciseSelected(exercise) }
-                            .padding(horizontal = dims.spacing2)
-                    )
+                            .semantics { role = Role.Button },
+                        tone = IronLogSurfaceTone.MUTED
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(exercise.name) },
+                            supportingContent = {
+                                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
                 }
             }
         }

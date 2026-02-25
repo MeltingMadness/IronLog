@@ -48,6 +48,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.ironLogMotion
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -233,8 +234,9 @@ private fun CommandCenterCard(
     onContinueWorkout: () -> Unit
 ) {
     val dims = ironLogDimens
+    val motion = ironLogMotion
 
-    val scale = if (isFirstTimeUser && !hasActiveSession) {
+    val scale = if (isFirstTimeUser && !hasActiveSession && !motion.reduced) {
         val infiniteTransition = rememberInfiniteTransition(label = "pulse")
         val animatedScale by infiniteTransition.animateFloat(
             initialValue = 1f,

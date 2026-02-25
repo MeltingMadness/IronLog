@@ -1,6 +1,7 @@
 ﻿package com.ironlog.app.presentation.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -30,6 +31,7 @@ fun BottomNavBar(navController: NavController) {
 
     NavigationBar(
         modifier = Modifier
+            .navigationBarsPadding()
             .padding(horizontal = dims.spacingMd, vertical = dims.spacing2)
             .clip(MaterialTheme.shapes.extraLarge)
             .glassmorphism(
