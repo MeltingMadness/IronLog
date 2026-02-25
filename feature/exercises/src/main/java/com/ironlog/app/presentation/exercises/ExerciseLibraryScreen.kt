@@ -35,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
@@ -58,6 +57,7 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.presentation.common.EmptyStateScreen
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.core.designsystem.R
@@ -80,7 +80,7 @@ fun ExerciseLibraryScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(id = R.string.exercises_title)) })
         },
@@ -96,7 +96,7 @@ fun ExerciseLibraryScreen(
     ) { padding ->
         if (state.isLoading) {
             LoadingScreen(modifier = Modifier.padding(padding))
-            return@Scaffold
+            return@IronLogScreenScaffold
         }
 
         Column(
@@ -176,6 +176,7 @@ fun ExerciseLibraryScreen(
                 deleteExerciseId?.let { id ->
                     AlertDialog(
                         onDismissRequest = { deleteExerciseId = null },
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         title = { Text(stringResource(id = R.string.exercises_delete_title)) },
                         text = {
                             Text(
@@ -317,6 +318,7 @@ internal fun CustomExerciseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         title = {
             Text(
                 if (initial.isEditMode) {

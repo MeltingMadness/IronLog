@@ -21,15 +21,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
@@ -51,8 +48,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -77,7 +76,7 @@ fun TrainingPlanListScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.plans_title)) },
@@ -167,6 +166,7 @@ fun TrainingPlanListScreen(
         deletePlanId?.let { id ->
             AlertDialog(
                 onDismissRequest = { deletePlanId = null },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.plans_delete_title)) },
                 text = { Text(stringResource(id = R.string.plans_delete_text, deletePlanName)) },
                 confirmButton = {
@@ -239,18 +239,16 @@ private fun PlanCard(
     onLongClick: () -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = surfaces.muted
-        )
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.68f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
             Row(

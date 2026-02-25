@@ -31,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -58,13 +57,14 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.HapticFeedbackHelper
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.SetInputRow
 import com.ironlog.app.presentation.common.WorkoutTimer
 import com.ironlog.app.presentation.common.rememberHapticFeedback
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogMotion
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -89,7 +89,6 @@ fun ActiveWorkoutScreen(
     val context = LocalContext.current
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
-    val motion = ironLogMotion
 
     var quickSelectedExerciseId by remember { mutableStateOf<Long?>(null) }
     val exerciseGroups = remember(state.exercisesWithSets) {
@@ -126,7 +125,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -148,7 +147,7 @@ fun ActiveWorkoutScreen(
     ) { padding ->
         if (state.session == null && state.error == null) {
             LoadingScreen(modifier = Modifier.padding(padding))
-            return@Scaffold
+            return@IronLogScreenScaffold
         }
 
         Column(
@@ -244,6 +243,7 @@ fun ActiveWorkoutScreen(
         if (state.showFinishDialog) {
             AlertDialog(
                 onDismissRequest = viewModel::dismissFinishDialog,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.workout_finish_dialog_title)) },
                 text = { Text(stringResource(id = R.string.workout_finish_dialog_text)) },
                 confirmButton = {
@@ -355,7 +355,6 @@ private fun QuickLogComposer(
     if (exercisesWithSets.isEmpty() || selectedExerciseId == null) return
 
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
 
     var repsInput by remember(selectedExerciseId) { mutableStateOf("") }
@@ -363,11 +362,12 @@ private fun QuickLogComposer(
     var intensityInput by remember(selectedExerciseId) { mutableStateOf("") }
     var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
 
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
-        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+        tone = IronLogSurfaceTone.ELEVATED,
+        alpha = 0.7f
     ) {
         Column(
             modifier = Modifier
@@ -455,11 +455,10 @@ private fun ExerciseCard(
     val completedWorkSets = loggedSets.count { !it.isWarmup }
     val targetSetCount = planTarget?.targetSets ?: 0
 
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = ironLogSurfaceRoles.muted
-        )
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.68f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
             Text(

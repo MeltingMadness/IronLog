@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.presentation.theme.ironLogDimens
@@ -35,7 +36,11 @@ fun PlanSelectionSheet(
     onFreeWorkoutSelected: () -> Unit
 ) {
     val dims = ironLogDimens
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        tonalElevation = 0.dp
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

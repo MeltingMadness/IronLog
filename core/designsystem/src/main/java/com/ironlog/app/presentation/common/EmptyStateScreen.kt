@@ -38,14 +38,14 @@ fun EmptyStateScreen(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(dims.spacingXl + dims.spacingMd),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(dims.spacingMd))
         }
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(dims.spacingXs))

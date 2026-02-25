@@ -9,21 +9,21 @@ import androidx.compose.ui.unit.dp
 data class IronLogDimens(
     val spacing2: Dp = 4.dp,
     val spacingXs: Dp = 8.dp,
-    val spacingSm: Dp = 12.dp,
-    val spacingMd: Dp = 16.dp,
-    val spacingLg: Dp = 24.dp,
-    val spacingXl: Dp = 32.dp,
+    val spacingSm: Dp = 14.dp,
+    val spacingMd: Dp = 18.dp,
+    val spacingLg: Dp = 28.dp,
+    val spacingXl: Dp = 36.dp,
     val radiusSm: Dp = 8.dp,
-    val radiusMd: Dp = 12.dp,
-    val radiusLg: Dp = 16.dp,
-    val radiusXl: Dp = 24.dp
+    val radiusMd: Dp = 14.dp,
+    val radiusLg: Dp = 20.dp,
+    val radiusXl: Dp = 28.dp
 )
 
 @Immutable
 data class IronLogMotion(
-    val fastMillis: Int = 120,
-    val normalMillis: Int = 220,
-    val emphasisMillis: Int = 320,
+    val fastMillis: Int = 140,
+    val normalMillis: Int = 240,
+    val emphasisMillis: Int = 360,
     val reduced: Boolean = false
 )
 

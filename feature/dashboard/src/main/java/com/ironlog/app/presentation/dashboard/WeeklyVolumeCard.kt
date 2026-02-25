@@ -13,10 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -56,8 +58,10 @@ fun WeeklyVolumeCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+        modifier = modifier
+            .fillMaxWidth()
+            .glassmorphism(backgroundColor = surfaces.elevated.copy(alpha = 0.72f)),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
             modifier = Modifier.padding(dims.spacingMd),

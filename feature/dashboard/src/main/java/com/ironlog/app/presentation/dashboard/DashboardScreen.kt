@@ -30,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -46,9 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.theme.glassmorphism
-import com.ironlog.app.presentation.theme.glow
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
@@ -72,7 +71,7 @@ fun DashboardScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.app_name)) },
@@ -97,7 +96,7 @@ fun DashboardScreen(
             ) {
                 CircularProgressIndicator()
             }
-            return@Scaffold
+            return@IronLogScreenScaffold
         }
 
         LazyColumn(

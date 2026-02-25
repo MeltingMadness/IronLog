@@ -16,10 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
@@ -39,8 +41,10 @@ fun MuscleHeatmapCard(
     val maxSets = heatmap.values.maxOrNull() ?: 1
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = surfaces.elevated)
+        modifier = modifier
+            .fillMaxWidth()
+            .glassmorphism(backgroundColor = surfaces.elevated.copy(alpha = 0.72f)),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
             modifier = Modifier.padding(dims.spacingMd),

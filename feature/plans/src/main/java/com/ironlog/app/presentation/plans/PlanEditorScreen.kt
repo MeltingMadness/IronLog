@@ -20,14 +20,11 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -46,8 +43,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import com.ironlog.app.presentation.workout.ExercisePickerSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -72,7 +71,7 @@ fun PlanEditorScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -181,19 +180,17 @@ private fun PlanExerciseCard(
     onWeightChange: (Double) -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
     val supersetGroupId = item.planExercise.supersetGroupId
 
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.68f,
         border = if (supersetGroupId != null) {
             BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
         } else {
             null
-        },
-        colors = CardDefaults.cardColors(
-            containerColor = surfaces.muted
-        )
+        }
     ) {
         Column(modifier = Modifier.padding(dims.spacingSm)) {
             Row(

@@ -17,7 +17,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.theme.ironLogDimens
@@ -78,7 +78,7 @@ fun ExerciseStatsScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = {

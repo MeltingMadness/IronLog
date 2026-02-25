@@ -5,13 +5,18 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -22,6 +27,7 @@ import com.ironlog.app.presentation.navigation.BottomNavBar
 import com.ironlog.app.presentation.navigation.IronLogNavHost
 import com.ironlog.app.presentation.navigation.Screen
 import com.ironlog.app.presentation.theme.IronLogTheme
+import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
@@ -65,14 +71,26 @@ class MainActivity : ComponentActivity() {
                 )
 
                 Scaffold(
+                    containerColor = Color.Transparent,
                     bottomBar = {
                         if (showBottomBar) {
                             BottomNavBar(navController)
                         }
                     }
                 ) { innerPadding ->
+                    val surfaces = ironLogSurfaceRoles
                     Box(
                         modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.background,
+                                        surfaces.muted.copy(alpha = 0.5f),
+                                        MaterialTheme.colorScheme.background
+                                    )
+                                )
+                            )
                             .padding(innerPadding)
                             .consumeWindowInsets(innerPadding)
                     ) {

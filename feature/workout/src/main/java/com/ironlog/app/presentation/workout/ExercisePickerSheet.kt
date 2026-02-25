@@ -37,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
@@ -109,7 +110,9 @@ fun ExercisePickerSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        tonalElevation = 0.dp
     ) {
         Column(modifier = Modifier.padding(bottom = dims.spacingMd)) {
             OutlinedTextField(
@@ -230,6 +233,7 @@ private fun CreateExerciseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         title = { Text(stringResource(id = R.string.exercises_new_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {

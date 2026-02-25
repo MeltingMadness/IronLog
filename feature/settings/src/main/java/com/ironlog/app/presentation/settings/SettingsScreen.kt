@@ -22,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -31,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -58,8 +55,10 @@ import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -133,7 +132,7 @@ fun SettingsScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.settings_title)) },
@@ -159,7 +158,7 @@ fun SettingsScreen(
             ) {
                 CircularProgressIndicator()
             }
-            return@Scaffold
+            return@IronLogScreenScaffold
         }
 
         LazyColumn(
@@ -470,6 +469,7 @@ fun SettingsScreen(
         if (state.showResetDialog) {
             AlertDialog(
                 onDismissRequest = viewModel::dismissResetDialog,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.settings_reset_dialog_title)) },
                 text = { Text(stringResource(id = R.string.settings_reset_dialog_text)) },
                 confirmButton = {
@@ -493,12 +493,11 @@ private fun PreferenceCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = surfaces.muted
-        )
+    IronLogSurfaceCard(
+        modifier = Modifier,
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.68f
     ) {
         Column(
             modifier = Modifier

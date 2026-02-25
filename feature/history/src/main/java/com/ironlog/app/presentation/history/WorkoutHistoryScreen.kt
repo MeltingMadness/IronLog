@@ -24,13 +24,10 @@ import androidx.compose.material.icons.filled.FitnessCenter
 
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
@@ -62,9 +59,10 @@ import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.EmptyStateScreen
-import com.ironlog.app.presentation.theme.glassmorphism
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -110,7 +108,7 @@ fun WorkoutHistoryScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(id = R.string.history_title)) })
         },
@@ -185,6 +183,7 @@ fun WorkoutHistoryScreen(
         deleteSessionId?.let { id ->
             AlertDialog(
                 onDismissRequest = { deleteSessionId = null },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.history_delete_dialog_title)) },
                 text = { Text(stringResource(id = R.string.history_delete_dialog_text)) },
                 confirmButton = {
@@ -255,17 +254,14 @@ private fun WorkoutCard(
     onClick: () -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
 
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(dims.radiusLg)) // Extracted glassmorphism radius
-            .glassmorphism(backgroundColor = surfaces.muted.copy(alpha = 0.5f))
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = androidx.compose.ui.graphics.Color.Transparent
-        )
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.5f
     ) {
         Column(
             modifier = Modifier

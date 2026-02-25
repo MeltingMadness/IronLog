@@ -19,14 +19,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -44,8 +41,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +67,7 @@ fun MetaPlanListScreen(
         }
     }
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.meta_plans_title)) },
@@ -150,6 +149,7 @@ fun MetaPlanListScreen(
         deleteTarget?.let { item ->
             AlertDialog(
                 onDismissRequest = { deleteTarget = null },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.meta_plans_delete_title)) },
                 text = { Text(stringResource(id = R.string.meta_plans_delete_text, item.metaPlan.name)) },
                 confirmButton = {
@@ -182,12 +182,12 @@ private fun MetaPlanListCard(
     onDelete: () -> Unit
 ) {
     val dims = ironLogDimens
-    val surfaces = ironLogSurfaceRoles
-    Card(
+    IronLogSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        colors = CardDefaults.cardColors(containerColor = surfaces.muted)
+        tone = IronLogSurfaceTone.MUTED,
+        alpha = 0.68f
     ) {
         Column(
             modifier = Modifier

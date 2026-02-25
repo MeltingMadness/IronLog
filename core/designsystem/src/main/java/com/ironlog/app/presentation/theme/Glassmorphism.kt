@@ -1,11 +1,8 @@
 package com.ironlog.app.presentation.theme
 
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
@@ -17,9 +14,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 fun Modifier.glassmorphism(
-    shape: Shape = RoundedCornerShape(16.dp),
-    backgroundColor: Color = Color.White.copy(alpha = 0.3f),
-    borderColor: Color = Color.White.copy(alpha = 0.2f),
+    shape: Shape = RoundedCornerShape(20.dp),
+    backgroundColor: Color = Color.White.copy(alpha = 0.58f),
+    borderColor: Color = Color.White.copy(alpha = 0.34f),
     borderWidth: Dp = 1.dp
 ): Modifier = this.then(
     Modifier
@@ -30,8 +27,9 @@ fun Modifier.glassmorphism(
             brush = Brush.linearGradient(
                 colors = listOf(
                     borderColor,
+                    borderColor.copy(alpha = 0.16f),
                     Color.Transparent,
-                    borderColor.copy(alpha = 0.05f)
+                    borderColor.copy(alpha = 0.24f)
                 )
             ),
             shape = shape

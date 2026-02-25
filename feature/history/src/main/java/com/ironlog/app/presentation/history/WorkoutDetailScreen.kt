@@ -15,13 +15,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -37,10 +34,12 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.LoadingScreen
+import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
@@ -58,7 +57,7 @@ fun WorkoutDetailScreen(
     )
     val dims = ironLogDimens
 
-    Scaffold(
+    IronLogScreenScaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.workout_detail_title)) },
@@ -115,14 +114,12 @@ fun WorkoutDetailScreen(
                 item { Spacer(modifier = Modifier.height(dims.spacing2)) }
 
                 items(state.exercises) { exerciseDetail ->
-                    val surfaces = ironLogSurfaceRoles
-                    Card(
+                    IronLogSurfaceCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onExerciseClick(exerciseDetail.exercise.id) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = surfaces.muted
-                        )
+                        tone = IronLogSurfaceTone.MUTED,
+                        alpha = 0.68f
                     ) {
                         Column(modifier = Modifier.padding(dims.spacingMd)) {
                             Row(
