@@ -21,6 +21,10 @@ class FakeWorkoutRepository : WorkoutRepository {
     var getSetCountForSessionCallCount = 0
     var getTotalVolumeForSessionCallCount = 0
     var getSetsForSessionsListCallCount = 0
+    var getAllCompletedSessionsListCallCount = 0
+
+    private fun java.time.LocalDateTime.toEpochMillis(): Long =
+        atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     data class WorkoutSessionData(
         val session: WorkoutSession,
@@ -151,6 +155,27 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun getLastCompletedSession(): WorkoutSession? =
         sessions.value.filter { !it.isActive }.maxByOrNull { it.session.startTime }?.session
 
-    override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
-        sessions.value.filter { !it.isActive }.map { it.session }
+    override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> {
+        getAllCompletedSessionsListCallCount++
+        return sessions.value.filter { !it.isActive }.map { it.session }
+    }
+
+    override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
+        sessions.value
+            .filter { !it.isActive }
+            .map { it.session.startTime.toEpochMillis() }
+            .sortedDescending()
+
+    override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
+        sessions.map { list ->
+            list.filter { !it.isActive && it.session.metaPlanId != null && it.session.planId != null }
+                .groupBy { it.session.planId!! to it.session.metaPlanId!! }
+                .map { (key, entries) ->
+                    com.ironlog.app.domain.model.LastMetaPlanSession(
+                        planId = key.first,
+                        metaPlanId = key.second,
+                        lastStartTime = entries.maxOf { it.session.startTime.toEpochMillis() }
+                    )
+                }
+        }
 }

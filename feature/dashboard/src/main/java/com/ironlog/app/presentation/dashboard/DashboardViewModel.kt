@@ -102,12 +102,12 @@ class DashboardViewModel(
         viewModelScope.launch {
             combine(
                 trainingPlanRepository.getAllPlans(),
-                workoutRepository.getAllCompletedSessions(),
+                workoutRepository.observeLastSessionPerMetaPlanSubPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
-            ) { plans, completedSessions, metaPlans ->
+            ) { plans, lastSessions, metaPlans ->
                 buildMetaPlanOptions(
                     plans = plans,
-                    completedSessions = completedSessions,
+                    lastSessionsPerSubPlan = lastSessions,
                     metaPlans = metaPlans
                 )
             }
@@ -150,9 +150,10 @@ class DashboardViewModel(
                 val streak = calculateStreak()
 
                 val records = statisticsRepository.getRecentRecordsList(5)
+                val recordExerciseMap = exerciseRepository.getExercisesByIds(records.map { it.exerciseId })
+                    .associateBy { it.id }
                 val recordsWithNames = records.map { record ->
-                    val exercise = exerciseRepository.getExerciseById(record.exerciseId)
-                    Pair(record, exercise?.name ?: "Unbekannt")
+                    Pair(record, recordExerciseMap[record.exerciseId]?.name ?: "Unbekannt")
                 }
 
                 val lastWorkout = workoutRepository.getLastCompletedSession()
@@ -161,10 +162,9 @@ class DashboardViewModel(
                 } else 0
 
                 val weekSets = statisticsRepository.getWorkSetsCompletedSince(startOfWeekMillis)
-                val exerciseIds = weekSets.map { it.exerciseId }.distinct()
-                val exerciseMap = exerciseIds.mapNotNull { id ->
-                    exerciseRepository.getExerciseById(id)?.let { id to it }
-                }.toMap()
+                val exerciseMap = exerciseRepository
+                    .getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
+                    .associateBy { it.id }
 
                 val heatmap = mutableMapOf<MuscleGroup, Int>()
                 for (set in weekSets) {
@@ -235,10 +235,21 @@ class DashboardViewModel(
     }
 
     suspend fun calculateStreak(): Int {
-        val sessions = workoutRepository.getAllCompletedSessionsList()
-        if (sessions.isEmpty()) return 0
+        val startTimesDesc = workoutRepository.getCompletedWorkoutStartTimesDesc()
+        if (startTimesDesc.isEmpty()) return 0
 
-        val workoutDates = sessions.map { it.startTime.toLocalDate() }.distinct().sortedDescending()
+        // Timezone note: epoch-millis from Room are stored as system-local wall-clock time
+        // (see EpochConverter). Conversion back uses systemDefault() to match insertion semantics.
+        // DST transitions are handled correctly because toLocalDate() operates on the shifted
+        // local time, not UTC midnight.
+        val workoutDates = startTimesDesc
+            .map { millis ->
+                java.time.Instant.ofEpochMilli(millis)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate()
+            }
+            .distinct()  // Already sorted descending from DAO
+
         var streak = 0
         var expectedDate = LocalDate.now()
 
@@ -334,12 +345,17 @@ class DashboardViewModel(
 
     private fun buildMetaPlanOptions(
         plans: List<TrainingPlan>,
-        completedSessions: List<WorkoutSession>,
+        lastSessionsPerSubPlan: List<com.ironlog.app.domain.model.LastMetaPlanSession>,
         metaPlans: List<MetaTrainingPlan>
     ): List<DashboardMetaPlanOption> {
         if (metaPlans.isEmpty()) return emptyList()
 
         val plansById = plans.associateBy { it.id }
+        val lastTimeIndex = lastSessionsPerSubPlan.associateBy(
+            keySelector = { it.planId to it.metaPlanId },
+            valueTransform = { it.lastStartTime }
+        )
+
         return metaPlans.map { metaPlan ->
             val orderedSubPlans = metaPlan.items
                 .sortedBy { it.orderIndex }
@@ -354,16 +370,12 @@ class DashboardViewModel(
                 )
             }
 
-            val completedForMeta = completedSessions
-                .filter { session ->
-                    session.metaPlanId == metaPlan.id &&
-                        session.planId != null &&
-                        session.endTime != null
-                }
+            val latestPlanId = orderedSubPlans
+                .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id]?.let { plan.id to it } }
+                .maxByOrNull { it.second }?.first
 
-            val lastCompleted = completedForMeta.maxByOrNull { it.endTime ?: it.startTime }
-            val nextIndex = lastCompleted?.planId?.let { lastPlanId ->
-                val lastIndex = orderedSubPlans.indexOfFirst { it.id == lastPlanId }
+            val nextIndex = latestPlanId?.let { lastId ->
+                val lastIndex = orderedSubPlans.indexOfFirst { it.id == lastId }
                 if (lastIndex >= 0) (lastIndex + 1) % orderedSubPlans.size else 0
             } ?: 0
 
@@ -371,20 +383,21 @@ class DashboardViewModel(
                 orderedSubPlans[(nextIndex + offset) % orderedSubPlans.size]
             }
 
-            val lastDoneByPlanId = completedForMeta
-                .groupBy { it.planId }
-                .mapValues { (_, sessions) ->
-                    sessions.maxByOrNull { it.endTime ?: it.startTime }?.startTime
-                }
-
             DashboardMetaPlanOption(
                 metaPlanId = metaPlan.id,
                 metaPlanName = metaPlan.name,
                 nextPlan = rotatedPlans.firstOrNull(),
                 rotationPlans = rotatedPlans.map { plan ->
+                    val lastMillis = lastTimeIndex[plan.id to metaPlan.id]
                     DashboardMetaSubPlanStatus(
                         plan = plan,
-                        lastDoneDaysAgo = lastDoneByPlanId[plan.id]?.toRelativeDaysAgo()
+                        lastDoneDaysAgo = lastMillis?.let { millis ->
+                            java.time.temporal.ChronoUnit.DAYS.between(
+                                java.time.Instant.ofEpochMilli(millis)
+                                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate(),
+                                LocalDate.now()
+                            )
+                        }
                     )
                 }
             )

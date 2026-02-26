@@ -67,14 +67,16 @@ fun MuscleHeatmapCard(
                     horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
                     verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
                 ) {
-                    MuscleGroup.entries.forEach { muscle ->
-                        val sets = heatmap[muscle] ?: 0
-                        MuscleChip(
-                            label = muscle.displayName,
-                            sets = sets,
-                            intensity = if (sets > 0) (sets.toFloat() / maxSets).coerceIn(0.2f, 1f) else 0f
-                        )
-                    }
+                    heatmap.entries
+                        .filter { (_, count) -> count > 0 }
+                        .sortedByDescending { (_, count) -> count }
+                        .forEach { (muscle, sets) ->
+                            MuscleChip(
+                                label = muscle.displayName,
+                                sets = sets,
+                                intensity = (sets.toFloat() / maxSets).coerceIn(0.2f, 1f)
+                            )
+                        }
                 }
             }
         }

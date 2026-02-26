@@ -39,6 +39,41 @@ class ExerciseStatsViewModelTest {
     }
 
     @Test
+    fun `updateChartData single-pass produziert korrekte Ergebnisse fuer alle Metriken`() = runTest {
+        val exercise = Exercise(id = 1L, name = "Kniebeuge", primaryMuscleGroup = MuscleGroup.BEINE, category = ExerciseCategory.LANGHANTEL)
+        exerciseRepo.addExercise(exercise)
+        val targetExerciseId = exercise.id
+
+        // Session 1: two sets (base date)
+        val base = LocalDateTime.of(2026, 1, 1, 10, 0)
+        statisticsRepo.addExerciseSet(WorkoutSet(id = 1L, sessionId = 1L, exerciseId = targetExerciseId,
+            setNumber = 1, reps = 5, weightKg = 80.0, isWarmup = false, completedAt = base))
+        statisticsRepo.addExerciseSet(WorkoutSet(id = 2L, sessionId = 1L, exerciseId = targetExerciseId,
+            setNumber = 2, reps = 8, weightKg = 70.0, isWarmup = false, completedAt = base.plusMinutes(5)))
+        // Session 2: one heavier set, later date
+        statisticsRepo.addExerciseSet(WorkoutSet(id = 3L, sessionId = 2L, exerciseId = targetExerciseId,
+            setNumber = 1, reps = 3, weightKg = 90.0, isWarmup = false, completedAt = base.plusDays(3)))
+
+        val vm = ExerciseStatsViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("exerciseId" to targetExerciseId)),
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // WEIGHT metric: max per session, sorted chronologically
+        assertEquals(2, vm.uiState.value.chartData.size)
+        assertEquals(80f, vm.uiState.value.chartData[0].value)
+        assertEquals(90f, vm.uiState.value.chartData[1].value)
+
+        // VOLUME metric: sum per session
+        vm.onMetricSelected(ChartMetric.VOLUME)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(960f, vm.uiState.value.chartData[0].value) // 80*5 + 70*8
+        assertEquals(270f, vm.uiState.value.chartData[1].value) // 90*3
+    }
+
+    @Test
     fun `chart data wird ueber Jahreswechsel chronologisch statt nach Label sortiert`() = runTest {
         val exercise = Exercise(
             id = 1L,

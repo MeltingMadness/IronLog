@@ -72,6 +72,33 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `calculateStreak laedt nicht alle Sessions sondern nur Timestamps`() = runTest {
+        val today = LocalDate.now()
+        for (i in 0L..2L) {
+            val dt = LocalDateTime.of(today.minusDays(i), LocalTime.of(10, 0))
+            workoutRepo.addSession(WorkoutSession(id = i + 100L, startTime = dt,
+                endTime = dt.plusHours(1), durationSeconds = 3600), isActive = false)
+        }
+        val vm = createViewModel()
+        assertEquals(3, vm.calculateStreak())
+        assertEquals(0, workoutRepo.getAllCompletedSessionsListCallCount) // heavyweight path not used
+    }
+
+    @Test
+    fun `calculateStreak zaehlt Session kurz vor Mitternacht korrekt zum selben Tag`() = runTest {
+        val today = LocalDate.now()
+        // Session at 23:59 local time today — must count as today, not tomorrow
+        val lateNight = LocalDateTime.of(today, LocalTime.of(23, 59))
+        workoutRepo.addSession(
+            WorkoutSession(id = 200L, startTime = lateNight,
+                endTime = lateNight.plusMinutes(60), durationSeconds = 3600),
+            isActive = false
+        )
+        val vm = createViewModel()
+        assertEquals(1, vm.calculateStreak())
+    }
+
+    @Test
     fun `Streak ist 1 bei Training heute`() = runTest {
         val today = LocalDateTime.of(LocalDate.now(), LocalTime.of(10, 0))
         workoutRepo.addSession(
@@ -175,6 +202,21 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `loadDashboard nutzt Batch-Query statt N einzelne getExerciseById Calls`() = runTest {
+        exerciseRepo.addExercise(com.ironlog.app.domain.model.Exercise(id = 1L, name = "Kniebeuge", primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BEINE, category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL))
+        exerciseRepo.addExercise(com.ironlog.app.domain.model.Exercise(id = 2L, name = "Bankdrücken", primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST, category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL))
+        val now = LocalDateTime.now()
+        statsRepo.addRecord(com.ironlog.app.domain.model.PersonalRecord(id = 1L, exerciseId = 1L, type = com.ironlog.app.domain.model.RecordType.MAX_WEIGHT, value = 100.0, achievedAt = now.minusHours(1)))
+        statsRepo.addRecord(com.ironlog.app.domain.model.PersonalRecord(id = 2L, exerciseId = 2L, type = com.ironlog.app.domain.model.RecordType.MAX_WEIGHT, value = 80.0, achievedAt = now.minusHours(2)))
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, exerciseRepo.getExerciseByIdCallCount) // Must be 0 — batch used instead
+        assertEquals(2, vm.uiState.value.recentRecords.size)
+    }
+
+    @Test
     fun `Dashboard laedt initial mit isLoading true`() = runTest {
         val vm = createViewModel()
         assertTrue(vm.uiState.value.isLoading)
@@ -187,6 +229,23 @@ class DashboardViewModelTest {
 
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.error)
+    }
+
+    @Test
+    fun `metaplan combine streamt keine vollen Sessions sondern Aggregate`() = runTest {
+        val planId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val metaId = metaPlanRepo.saveMetaPlan(MetaTrainingPlan(name = "Meta",
+            items = listOf(MetaTrainingPlanItem(trainingPlanId = planId, orderIndex = 0))))
+        val yesterday = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(9, 0))
+        workoutRepo.addSession(WorkoutSession(id = 99L, startTime = yesterday,
+            endTime = yesterday.plusHours(1), durationSeconds = 3600,
+            planId = planId, metaPlanId = metaId), isActive = false)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.getAllCompletedSessionsListCallCount)
+        assertNotNull(vm.uiState.value.metaPlanOptions.firstOrNull { it.metaPlanId == metaId })
     }
 
     @Test

@@ -31,12 +31,18 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,6 +82,10 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(id = R.string.app_name)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent
+                ),
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(
@@ -166,8 +176,8 @@ fun DashboardScreen(
                         )
                     }
                 } else {
-                    items(state.recentRecords.size) { index ->
-                        val (record, exerciseName) = state.recentRecords[index]
+                    items(items = state.recentRecords, key = { (record, _) -> record.id }) { (record, exerciseName) ->
+                        val index = state.recentRecords.indexOfFirst { it.first.id == record.id }
                         RecordCard(
                             exerciseName = exerciseName,
                             recordType = record.type.displayName,
@@ -279,12 +289,12 @@ private fun CommandCenterCard(
 
             val buttonAction = if (hasActiveSession) onContinueWorkout else onStartWorkout
             Button(
-                onClick = {},
+                onClick = buttonAction,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(dims.spacingXl + dims.spacingLg)
+                    .height(44.dp)
                     .scale(scale)
-                    .pressScale(onClick = buttonAction)
+                    .pressScale(onClick = {})
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Text(

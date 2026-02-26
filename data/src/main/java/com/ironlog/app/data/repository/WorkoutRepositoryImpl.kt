@@ -139,4 +139,12 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
         sessionDao.getAllCompletedSessionsList().map { it.toDomain() }
+
+    override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
+        sessionDao.getCompletedWorkoutStartTimesDesc()
+
+    override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
+        sessionDao.observeLastSessionPerMetaPlanSubPlan().map { rows ->
+            rows.map { com.ironlog.app.domain.model.LastMetaPlanSession(it.planId, it.metaPlanId, it.lastStartTime) }
+        }
 }
