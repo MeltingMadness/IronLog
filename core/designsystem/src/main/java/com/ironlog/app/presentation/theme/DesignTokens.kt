@@ -7,16 +7,16 @@ import androidx.compose.ui.unit.dp
 
 @Immutable
 data class IronLogDimens(
-    val spacing2: Dp = 4.dp,
-    val spacingXs: Dp = 8.dp,
-    val spacingSm: Dp = 12.dp,
-    val spacingMd: Dp = 16.dp,
-    val spacingLg: Dp = 24.dp,
-    val spacingXl: Dp = 32.dp,
-    val radiusSm: Dp = 10.dp,
-    val radiusMd: Dp = 16.dp,
-    val radiusLg: Dp = 22.dp,
-    val radiusXl: Dp = 30.dp
+    val spacing2: Dp = 2.dp,
+    val spacingXs: Dp = 4.dp,
+    val spacingSm: Dp = 8.dp,
+    val spacingMd: Dp = 12.dp,
+    val spacingLg: Dp = 16.dp,
+    val spacingXl: Dp = 24.dp,
+    val radiusSm: Dp = 8.dp,
+    val radiusMd: Dp = 12.dp,
+    val radiusLg: Dp = 16.dp,
+    val radiusXl: Dp = 24.dp
 )
 
 @Immutable

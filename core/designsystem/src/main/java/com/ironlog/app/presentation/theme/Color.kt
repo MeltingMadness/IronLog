@@ -119,7 +119,7 @@ val DarkOnBackground = Color(0xFFE5E8EF)
 val DarkSurface = Color(0xFF12161E)
 val DarkOnSurface = Color(0xFFE5E8EF)
 val DarkSurfaceVariant = Color(0xFF2A303B)
-val DarkOnSurfaceVariant = Color(0xFFB7BFCC)
+val DarkOnSurfaceVariant = Color(0xFFE2E8F0) // Brighter for better readability
 
 val DarkSurfaceElevated = Color(0xFF1A202A)
 val DarkSurfaceMuted = Color(0xFF161B24)

@@ -30,13 +30,14 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -138,6 +139,7 @@ fun SettingsScreen(
     IronLogScreenScaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(stringResource(id = R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -445,7 +447,7 @@ fun SettingsScreen(
                     title = stringResource(id = R.string.settings_section_incident),
                     tone = IronLogSurfaceTone.MUTED
                 ) {
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = incidentSummary,
                         onValueChange = { incidentSummary = it },
                         label = { Text(stringResource(id = R.string.settings_incident_summary_label)) },
@@ -453,7 +455,7 @@ fun SettingsScreen(
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(dims.spacingXs))
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = incidentDetails,
                         onValueChange = { incidentDetails = it },
                         label = { Text(stringResource(id = R.string.settings_incident_details_label)) },
@@ -567,3 +569,5 @@ private fun ToggleRow(
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
+
+

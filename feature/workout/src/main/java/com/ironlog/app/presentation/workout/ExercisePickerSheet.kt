@@ -27,7 +27,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -128,7 +127,7 @@ fun ExercisePickerSheet(
                 .navigationBarsPadding()
                 .padding(bottom = dims.spacingMd)
         ) {
-            OutlinedTextField(
+            com.ironlog.app.presentation.common.IronLogTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text(stringResource(id = R.string.workout_picker_search)) },
@@ -268,7 +267,7 @@ private fun CreateExerciseDialog(
         title = { Text(stringResource(id = R.string.exercises_new_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = state.name,
                     onValueChange = { onStateChange(state.copy(name = it)) },
                     label = { Text(stringResource(id = R.string.exercises_name_label)) },
@@ -277,7 +276,7 @@ private fun CreateExerciseDialog(
                 )
 
                 Box {
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = state.primaryMuscleGroup.displayName,
                         onValueChange = {},
                         readOnly = true,
@@ -347,7 +346,7 @@ private fun CreateExerciseDialog(
                 }
 
                 Box {
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = state.category.displayName,
                         onValueChange = {},
                         readOnly = true,
@@ -378,7 +377,7 @@ private fun CreateExerciseDialog(
                     }
                 }
 
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = state.notes,
                     onValueChange = { onStateChange(state.copy(notes = it)) },
                     label = { Text(stringResource(id = R.string.exercises_notes_label)) },
@@ -403,3 +402,4 @@ private fun CreateExerciseDialog(
         }
     )
 }
+

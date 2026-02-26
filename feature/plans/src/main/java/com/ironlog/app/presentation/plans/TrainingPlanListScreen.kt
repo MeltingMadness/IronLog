@@ -20,6 +20,8 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,9 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +84,7 @@ fun TrainingPlanListScreen(
     IronLogScreenScaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(stringResource(id = R.string.plans_title)) },
                 actions = {
                     IconButton(onClick = onOpenMetaPlans) {
@@ -223,18 +229,22 @@ private fun SwipeToDeletePlanCard(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(end = ironLogDimens.spacingLg),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(id = R.string.common_delete),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
+            if (dismissState.targetValue == SwipeToDismissBoxValue.Settled && dismissState.currentValue == SwipeToDismissBoxValue.Settled) {
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large)
+                        .padding(end = ironLogDimens.spacingLg),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(id = R.string.common_delete),
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
             }
         }
     ) {
@@ -261,43 +271,48 @@ private fun PlanCard(
             ),
         tone = IronLogSurfaceTone.ELEVATED
     ) {
-        Column(modifier = Modifier.padding(dims.spacingMd)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.plan.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(id = R.string.plans_exercise_count, item.plan.exercises.size),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                IconButton(onClick = onStart) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = stringResource(id = R.string.plans_start_cd),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+        Column(modifier = Modifier.padding(dims.spacingLg)) {
+            Text(
+                text = item.plan.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(dims.spacingXs))
+            
+            Text(
+                text = stringResource(id = R.string.plans_exercise_count, item.plan.exercises.size),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
 
             if (item.exerciseNames.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(dims.spacingXs))
+                Spacer(modifier = Modifier.height(dims.spacingSm))
                 Text(
                     text = item.exerciseNames.joinToString(" • "),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            
+            Spacer(modifier = Modifier.height(dims.spacingLg))
+            
+            Button(
+                onClick = onStart,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp) // Large touch target
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Spacer(modifier = Modifier.width(dims.spacingXs))
+                Text(
+                    text = stringResource(id = R.string.dashboard_start_workout),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
 }
+

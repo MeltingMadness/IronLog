@@ -34,7 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
@@ -42,6 +41,8 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,7 +83,9 @@ fun ExerciseLibraryScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(id = R.string.exercises_title)) })
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                title = { Text(stringResource(id = R.string.exercises_title)) })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = viewModel::onShowAddDialog) {
@@ -104,7 +107,7 @@ fun ExerciseLibraryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            OutlinedTextField(
+            com.ironlog.app.presentation.common.IronLogTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
                 label = { Text(stringResource(id = R.string.exercises_search_label)) },
@@ -330,7 +333,7 @@ internal fun CustomExerciseDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(dims.spacingSm)) {
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(id = R.string.exercises_name_label)) },
@@ -339,7 +342,7 @@ internal fun CustomExerciseDialog(
                 )
 
                 Box {
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = selectedPrimary.displayName,
                         onValueChange = {},
                         readOnly = true,
@@ -405,7 +408,7 @@ internal fun CustomExerciseDialog(
                 }
 
                 Box {
-                    OutlinedTextField(
+                    com.ironlog.app.presentation.common.IronLogTextField(
                         value = selectedCategory.displayName,
                         onValueChange = {},
                         readOnly = true,
@@ -436,7 +439,7 @@ internal fun CustomExerciseDialog(
                     }
                 }
 
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text(stringResource(id = R.string.exercises_notes_label)) },
@@ -475,3 +478,5 @@ internal fun CustomExerciseDialog(
         }
     )
 }
+
+

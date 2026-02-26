@@ -24,13 +24,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ fun PlanEditorScreen(
     IronLogScreenScaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
                     Text(
                         if (viewModel.isEditMode) {
@@ -112,7 +114,7 @@ fun PlanEditorScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(dims.spacing2))
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = state.planName,
                     onValueChange = viewModel::updatePlanName,
                     label = { Text(stringResource(id = R.string.plan_editor_name_label)) },
@@ -263,7 +265,7 @@ private fun PlanExerciseCard(
                 horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = if (item.planExercise.targetSets > 0) item.planExercise.targetSets.toString() else "",
                     onValueChange = { it.toIntOrNull()?.let(onSetsChange) },
                     label = { Text(stringResource(id = R.string.plan_editor_sets_label)) },
@@ -271,7 +273,7 @@ private fun PlanExerciseCard(
                     modifier = Modifier.width(80.dp),
                     singleLine = true
                 )
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = if (item.planExercise.targetReps > 0) item.planExercise.targetReps.toString() else "",
                     onValueChange = { it.toIntOrNull()?.let(onRepsChange) },
                     label = { Text(stringResource(id = R.string.common_reps_short)) },
@@ -279,7 +281,7 @@ private fun PlanExerciseCard(
                     modifier = Modifier.width(80.dp),
                     singleLine = true
                 )
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = if (item.planExercise.targetWeightKg > 0) item.planExercise.targetWeightKg.toString() else "",
                     onValueChange = { it.toDoubleOrNull()?.let(onWeightChange) },
                     label = { Text(stringResource(id = R.string.common_unit_kg)) },
@@ -321,3 +323,5 @@ private fun SupersetStatusBadge(supersetGroupId: Int?) {
         )
     }
 }
+
+

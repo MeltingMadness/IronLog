@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -9,25 +10,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.pressScale
 
 @Composable
 fun SetInputRow(
-    reps: String,
-    onRepsChange: (String) -> Unit,
-    weight: String,
-    onWeightChange: (String) -> Unit,
-    intensity: String,
-    onIntensityChange: (String) -> Unit,
+    reps: TextFieldValue,
+    onRepsChange: (TextFieldValue) -> Unit,
+    weight: TextFieldValue,
+    onWeightChange: (TextFieldValue) -> Unit,
+    intensity: TextFieldValue,
+    onIntensityChange: (TextFieldValue) -> Unit,
     intensityLabel: String,
     showIntensityField: Boolean = true,
     onLog: () -> Unit,
@@ -36,38 +38,37 @@ fun SetInputRow(
     val dims = ironLogDimens
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
+        horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedTextField(
+        CompactTextField(
             value = weight,
             onValueChange = onWeightChange,
-            label = { Text(stringResource(id = R.string.common_unit_kg)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.weight(1.1f),
-            singleLine = true
+            suffix = stringResource(id = R.string.common_unit_kg),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+            modifier = Modifier.weight(1.2f)
         )
-        OutlinedTextField(
+        CompactTextField(
             value = reps,
             onValueChange = onRepsChange,
-            label = { Text(stringResource(id = R.string.common_reps_short)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.weight(1f),
-            singleLine = true
+            suffix = stringResource(id = R.string.common_reps_short),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (showIntensityField) ImeAction.Next else ImeAction.Done),
+            modifier = Modifier.weight(1f)
         )
         if (showIntensityField) {
-            OutlinedTextField(
+            CompactTextField(
                 value = intensity,
                 onValueChange = onIntensityChange,
-                label = { Text(intensityLabel) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                suffix = intensityLabel,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                modifier = Modifier.weight(1f)
             )
         }
         IconButton(
             onClick = {},
-            modifier = Modifier.pressScale(onClick = onLog),
+            modifier = Modifier
+                .size(40.dp)
+                .pressScale(onClick = onLog),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -75,7 +76,8 @@ fun SetInputRow(
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = stringResource(id = R.string.common_log)
+                contentDescription = stringResource(id = R.string.common_log),
+                modifier = Modifier.size(20.dp)
             )
         }
     }

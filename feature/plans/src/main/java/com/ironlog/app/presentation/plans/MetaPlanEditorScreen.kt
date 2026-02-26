@@ -23,11 +23,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ fun MetaPlanEditorScreen(
     IronLogScreenScaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
                     Text(
                         text = if (state.metaPlanId != null) {
@@ -112,7 +114,7 @@ fun MetaPlanEditorScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(dims.spacing2))
-                OutlinedTextField(
+                com.ironlog.app.presentation.common.IronLogTextField(
                     value = state.name,
                     onValueChange = viewModel::updateName,
                     label = { Text(stringResource(id = R.string.meta_plan_editor_name_label)) },
@@ -254,3 +256,5 @@ private fun SelectedSubPlanRow(
         }
     }
 }
+
+

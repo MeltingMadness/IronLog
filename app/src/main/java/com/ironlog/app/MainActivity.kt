@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,32 +70,44 @@ class MainActivity : ComponentActivity() {
                     Screen.TrainingPlanList.route
                 )
 
-                Scaffold(
-                    containerColor = Color.Transparent,
-                    bottomBar = {
-                        if (showBottomBar) {
-                            BottomNavBar(navController)
-                        }
-                    }
-                ) { innerPadding ->
-                    val surfaces = ironLogSurfaceRoles
+                val surfaces = ironLogSurfaceRoles
+                
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                                         MaterialTheme.colorScheme.background,
-                                        surfaces.muted.copy(alpha = 0.42f),
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.26f),
                                         MaterialTheme.colorScheme.background
                                     )
                                 )
                             )
-                            .padding(innerPadding)
-                            .consumeWindowInsets(innerPadding)
                     ) {
-                        IronLogNavHost(navController)
+                        androidx.compose.material3.Scaffold(
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.onBackground,
+                            bottomBar = {
+                                if (showBottomBar) {
+                                    BottomNavBar(navController)
+                                }
+                            }
+                        ) { innerPadding ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding)
+                                    .consumeWindowInsets(innerPadding)
+                            ) {
+                                IronLogNavHost(navController)
+                            }
+                        }
                     }
                 }
             }
