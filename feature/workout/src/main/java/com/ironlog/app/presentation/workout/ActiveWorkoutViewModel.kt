@@ -44,6 +44,7 @@ data class ActiveWorkoutUiState(
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
+    val restTimerStartTime: LocalDateTime? = null,
     val error: String? = null
 )
 
@@ -63,13 +64,39 @@ class ActiveWorkoutViewModel(
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
     private val planId: Long = savedStateHandle["planId"] ?: 0L
 
-    private val showExercisePicker = MutableStateFlow(false)
-    private val showFinishDialog = MutableStateFlow(false)
-    private val exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
-    private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
-    private val _error = MutableStateFlow<String?>(null)
-    private val planTargets = mutableMapOf<Long, PlanTarget>()
-    private val planSupersetGroups = mutableMapOf<Long, Int?>()
+        private val showExercisePicker = MutableStateFlow(false)
+        private val showFinishDialog = MutableStateFlow(false)
+        private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
+        private val _error = MutableStateFlow<String?>(null)
+        private val _restTimerStartTime = MutableStateFlow<LocalDateTime?>(null)
+    
+        private val _planTargets = MutableStateFlow<Map<Long, PlanTarget>>(emptyMap())
+        private val _planSupersetGroups = MutableStateFlow<Map<Long, Int?>>(emptyMap())
+    private val exercisesWithSets = combine(
+        workoutRepository.getSetsForSession(sessionId),
+        addedExercises,
+        _planTargets,
+        _planSupersetGroups
+    ) { sets, added, targets, supersets ->
+        val setsByExercise = sets.groupBy { it.exerciseId }
+        val missingIds = setsByExercise.keys - added.map { it.id }.toSet()
+        val dynamicallyAdded = missingIds.mapNotNull { id -> exerciseRepository.getExerciseById(id) }
+        
+        if (dynamicallyAdded.isNotEmpty()) {
+            addedExercises.value = added + dynamicallyAdded
+        }
+        
+        val fullList = added + dynamicallyAdded
+        
+        fullList.map { exercise ->
+            ExerciseWithSets(
+                exercise = exercise,
+                sets = (setsByExercise[exercise.id] ?: emptyList()).sortedBy { it.setNumber },
+                planTarget = targets[exercise.id],
+                supersetGroupId = supersets[exercise.id]
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()
@@ -79,6 +106,7 @@ class ActiveWorkoutViewModel(
         exercisesWithSets,
         showExercisePicker,
         showFinishDialog,
+        _restTimerStartTime,
         _error
     ) { args ->
         @Suppress("UNCHECKED_CAST")
@@ -87,12 +115,12 @@ class ActiveWorkoutViewModel(
             exercisesWithSets = args[1] as List<ExerciseWithSets>,
             showExercisePicker = args[2] as Boolean,
             showFinishDialog = args[3] as Boolean,
-            error = args[4] as String?
+            restTimerStartTime = args[4] as LocalDateTime?,
+            error = args[5] as String?
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
     init {
-        observeSets()
         if (planId > 0L) {
             loadPlanExercises()
         }
@@ -105,58 +133,28 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             try {
                 val plan = trainingPlanRepository.getPlanById(planId) ?: return@launch
+                val newTargets = mutableMapOf<Long, PlanTarget>()
+                val newSupersets = mutableMapOf<Long, Int?>()
+                val newExercises = mutableListOf<Exercise>()
+                
                 for (planExercise in plan.exercises.sortedBy { it.orderIndex }) {
                     val exercise = exerciseRepository.getExerciseById(planExercise.exerciseId)
                     if (exercise != null) {
-                        planTargets[exercise.id] = PlanTarget(
+                        newTargets[exercise.id] = PlanTarget(
                             targetSets = planExercise.targetSets,
                             targetReps = planExercise.targetReps,
                             targetWeightKg = planExercise.targetWeightKg
                         )
-                        planSupersetGroups[exercise.id] = planExercise.supersetGroupId
-                        addExercise(exercise)
+                        newSupersets[exercise.id] = planExercise.supersetGroupId
+                        newExercises.add(exercise)
                     }
                 }
+                _planTargets.value = newTargets
+                _planSupersetGroups.value = newSupersets
+                addedExercises.value = newExercises
             } catch (e: Exception) {
                 _error.value = "Plan-Übungen konnten nicht geladen werden: ${e.message}"
             }
-        }
-    }
-
-    private fun observeSets() {
-        viewModelScope.launch {
-            workoutRepository.getSetsForSession(sessionId)
-                .catchAndLog("ActiveWorkoutVM")
-                .collect { sets ->
-                    val grouped = sets.groupBy { it.exerciseId }
-                    val fromSets = grouped.map { (exerciseId, exerciseSets) ->
-                        val exercise = exerciseRepository.getExerciseById(exerciseId)
-                        ExerciseWithSets(
-                            exercise = exercise ?: Exercise(
-                                id = exerciseId,
-                                name = "Unbekannt",
-                                primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
-                                category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
-                            ),
-                            sets = exerciseSets.sortedBy { it.setNumber },
-                            planTarget = planTargets[exerciseId],
-                            supersetGroupId = planSupersetGroups[exerciseId]
-                        )
-                    }
-                    // Merge with added exercises that have no sets yet
-                    val existingIds = fromSets.map { it.exercise.id }.toSet()
-                    val emptyExercises = addedExercises.value
-                        .filter { it.id !in existingIds }
-                        .map {
-                            ExerciseWithSets(
-                                exercise = it,
-                                sets = emptyList(),
-                                planTarget = planTargets[it.id],
-                                supersetGroupId = planSupersetGroups[it.id]
-                            )
-                        }
-                    exercisesWithSets.value = fromSets + emptyExercises
-                }
         }
     }
 
@@ -164,16 +162,6 @@ class ActiveWorkoutViewModel(
         val current = addedExercises.value
         if (current.none { it.id == exercise.id }) {
             addedExercises.value = current + exercise
-            // Trigger UI update
-            val existing = exercisesWithSets.value
-            if (existing.none { it.exercise.id == exercise.id }) {
-                exercisesWithSets.value = existing + ExerciseWithSets(
-                exercise = exercise,
-                sets = emptyList(),
-                planTarget = planTargets[exercise.id],
-                supersetGroupId = planSupersetGroups[exercise.id]
-            )
-            }
         }
     }
 
@@ -224,6 +212,8 @@ class ActiveWorkoutViewModel(
                     rpe = parsedRpe
                 )
                 workoutRepository.addSet(set)
+                
+                _restTimerStartTime.value = LocalDateTime.now()
 
                 // Check for personal records
                 if (!isWarmup) {
@@ -233,6 +223,10 @@ class ActiveWorkoutViewModel(
                 _error.value = "Satz konnte nicht gespeichert werden: ${e.message}"
             }
         }
+    }
+
+    fun dismissRestTimer() {
+        _restTimerStartTime.value = null
     }
 
     private suspend fun checkRecords(exerciseId: Long, reps: Int, weightKg: Double) {

@@ -1,4 +1,4 @@
-ï»¿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">IronLog</string>
 
@@ -32,7 +32,7 @@
     <string name="dashboard_recent_records">Letzte Rekorde</string>
     <string name="dashboard_no_records">Noch keine Rekorde. Logge dein erstes Training.</string>
     <string name="dashboard_last_workout">Letztes Training</string>
-    <string name="dashboard_last_workout_meta">Dauer: %1$d min Â· %2$d Uebungen</string>
+    <string name="dashboard_last_workout_meta">Dauer: %1$d min · %2$d Uebungen</string>
 
     <string name="dashboard_muscle_heatmap_title">Trainierte Muskeln diese Woche</string>
     <string name="dashboard_muscle_heatmap_empty">Noch keine Saetze diese Woche. Starte ein Training!</string>
@@ -70,11 +70,11 @@
     <string name="history_delete_dialog_text">Diese Session wird dauerhaft entfernt.</string>
     <string name="history_delete_cd">Session loeschen</string>
     <string name="history_time">Zeit: %1$s</string>
-    <string name="history_meta">%1$d min Â· %2$d Uebungen Â· %3$d Saetze</string>
+    <string name="history_meta">%1$d min · %2$d Uebungen · %3$d Saetze</string>
     <string name="history_volume">Volumen: %1$s</string>
 
     <string name="workout_detail_title">Trainingsdetails</string>
-    <string name="workout_detail_meta">Dauer: %1$d min Â· Volumen: %2$s</string>
+    <string name="workout_detail_meta">Dauer: %1$d min · Volumen: %2$s</string>
     <string name="workout_detail_record_cd">Rekord</string>
     <string name="workout_detail_pr_badge">PR</string>
     <string name="workout_detail_set_warmup">W%1$d</string>
@@ -242,4 +242,4 @@
     <string name="settings_msg_incident_created">Incident-Report wurde erstellt.</string>
     <string name="settings_msg_notification_denied">Benachrichtigungsberechtigung wurde nicht erteilt.</string>
     <string name="common_error_action_failed">Aktion fehlgeschlagen: %1$s</string>
-</resources>
+    <string name="workout_rest_timer_prefix">Pause</string>`n</resources>
