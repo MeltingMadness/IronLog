@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.BorderStroke
@@ -233,23 +234,37 @@ private fun SelectedSubPlanRow(
                 modifier = Modifier.weight(1f)
             )
             Row {
-                IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                IconButton(
+                    onClick = onMoveUp,
+                    enabled = !isFirst,
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropUp,
-                        contentDescription = stringResource(id = R.string.plan_editor_move_up_cd)
+                        contentDescription = stringResource(id = R.string.plan_editor_move_up_cd),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                IconButton(onClick = onMoveDown, enabled = !isLast) {
+                IconButton(
+                    onClick = onMoveDown,
+                    enabled = !isLast,
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = stringResource(id = R.string.plan_editor_move_down_cd)
+                        contentDescription = stringResource(id = R.string.plan_editor_move_down_cd),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                IconButton(onClick = onRemove) {
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(id = R.string.common_delete),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

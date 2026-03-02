@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -207,23 +208,37 @@ private fun PlanExerciseCard(
                     modifier = Modifier.weight(1f)
                 )
                 Row {
-                    IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                    IconButton(
+                        onClick = onMoveUp,
+                        enabled = !isFirst,
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowDropUp,
-                            contentDescription = stringResource(id = R.string.plan_editor_move_up_cd)
+                            contentDescription = stringResource(id = R.string.plan_editor_move_up_cd),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(onClick = onMoveDown, enabled = !isLast) {
+                    IconButton(
+                        onClick = onMoveDown,
+                        enabled = !isLast,
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = stringResource(id = R.string.plan_editor_move_down_cd)
+                            contentDescription = stringResource(id = R.string.plan_editor_move_down_cd),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(onClick = onRemove) {
+                    IconButton(
+                        onClick = onRemove,
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = stringResource(id = R.string.plan_editor_remove_cd),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -248,11 +263,15 @@ private fun PlanExerciseCard(
                     Text(stringResource(id = R.string.plan_editor_group_with_previous))
                 }
                 if (supersetGroupId != null) {
-                    TextButton(onClick = onUngroup) {
+                    TextButton(
+                        onClick = onUngroup,
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
+                            contentDescription = null
                         )
                         Spacer(modifier = Modifier.width(dims.spacing2))
                         Text(stringResource(id = R.string.plan_editor_ungroup))

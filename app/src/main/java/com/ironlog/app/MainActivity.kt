@@ -37,9 +37,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val preferencesRepository: AppPreferencesRepository = koinInject()
             val reminderScheduler: ReminderScheduler = koinInject()
-            val preferences by preferencesRepository.preferences.collectAsStateWithLifecycle(
-                initialValue = AppPreferences()
+            val preferencesState by preferencesRepository.preferences.collectAsStateWithLifecycle(
+                initialValue = null
             )
+            
+            val preferences = preferencesState ?: return@setContent
 
             IronLogTheme(
                 themeMode = preferences.themeMode,

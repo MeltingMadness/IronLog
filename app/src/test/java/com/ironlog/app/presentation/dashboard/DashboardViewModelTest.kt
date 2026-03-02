@@ -256,7 +256,7 @@ class DashboardViewModelTest {
         vm.startNewWorkout { id, planId -> receivedId = id }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(receivedId != null && receivedId!! > 0)
+        assertTrue((receivedId ?: 0L) > 0L)
     }
 
     @Test

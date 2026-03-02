@@ -229,20 +229,21 @@ private fun SwipeToDeletePlanCard(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
+            val progress = dismissState.progress
             if (dismissState.targetValue == SwipeToDismissBoxValue.Settled && dismissState.currentValue == SwipeToDismissBoxValue.Settled) {
                 Box(modifier = Modifier.fillMaxSize())
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large)
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = progress), shape = MaterialTheme.shapes.large)
                         .padding(end = ironLogDimens.spacingLg),
                     contentAlignment = Alignment.CenterEnd
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(id = R.string.common_delete),
-                        tint = MaterialTheme.colorScheme.onErrorContainer
+                        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = progress)
                     )
                 }
             }

@@ -251,18 +251,23 @@ private fun SwipeToDeleteExerciseItem(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(end = dims.spacingLg),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(id = R.string.common_delete),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
+            val progress = dismissState.progress
+            if (dismissState.targetValue == SwipeToDismissBoxValue.Settled && dismissState.currentValue == SwipeToDismissBoxValue.Settled) {
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = progress))
+                        .padding(end = dims.spacingLg),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(id = R.string.common_delete),
+                        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = progress)
+                    )
+                }
             }
         }
     ) {
