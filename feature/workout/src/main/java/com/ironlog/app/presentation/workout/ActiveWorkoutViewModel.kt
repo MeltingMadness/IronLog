@@ -14,7 +14,6 @@ import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
-import com.ironlog.app.domain.util.catchAndLog
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,11 +31,19 @@ data class PlanTarget(
     val targetWeightKg: Double = 0.0
 )
 
+data class PreviousExerciseSessionUi(
+    val sessionId: Long,
+    val sessionStart: LocalDateTime,
+    val sets: List<WorkoutSet>,
+    val lastWorkSetWeightKg: Double?
+)
+
 data class ExerciseWithSets(
     val exercise: Exercise,
     val sets: List<WorkoutSet>,
     val planTarget: PlanTarget? = null,
-    val supersetGroupId: Int? = null
+    val supersetGroupId: Int? = null,
+    val previousSession: PreviousExerciseSessionUi? = null
 )
 
 data class ActiveWorkoutUiState(
@@ -85,15 +92,33 @@ class ActiveWorkoutViewModel(
         if (dynamicallyAdded.isNotEmpty()) {
             addedExercises.value = added + dynamicallyAdded
         }
-        
+
         val fullList = added + dynamicallyAdded
-        
+        val previousSessionsByExercise = try {
+            workoutRepository.getPreviousSessionDataForExercises(
+                currentSessionId = sessionId,
+                exerciseIds = fullList.map { it.id }.distinct()
+            )
+        } catch (e: Exception) {
+            AppLogger.w("ActiveWorkoutVM", "Vorherige Sessiondaten konnten nicht geladen werden: ${e.message}", e)
+            emptyMap()
+        }
+
         fullList.map { exercise ->
+            val previousSession = previousSessionsByExercise[exercise.id]
             ExerciseWithSets(
                 exercise = exercise,
                 sets = (setsByExercise[exercise.id] ?: emptyList()).sortedBy { it.setNumber },
                 planTarget = targets[exercise.id],
-                supersetGroupId = supersets[exercise.id]
+                supersetGroupId = supersets[exercise.id],
+                previousSession = previousSession?.let {
+                    PreviousExerciseSessionUi(
+                        sessionId = it.sessionId,
+                        sessionStart = it.sessionStart,
+                        sets = it.sets,
+                        lastWorkSetWeightKg = it.lastWorkSetWeightKg
+                    )
+                }
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -274,6 +299,42 @@ class ActiveWorkoutViewModel(
                 workoutRepository.deleteSet(setId)
             } catch (e: Exception) {
                 _error.value = "Satz konnte nicht gelöscht werden: ${e.message}"
+            }
+        }
+    }
+
+    fun updateSet(setId: Long, reps: Int, weightKg: Double, intensity: String = "") {
+        viewModelScope.launch {
+            try {
+                val sets = workoutRepository.getSetsForSessionList(sessionId)
+                val set = sets.find { it.id == setId } ?: return@launch
+
+                var parsedRpe: Double? = null
+                if (intensity.isNotBlank()) {
+                    val rawVal = intensity.toDoubleOrNull()
+                    if (rawVal != null) {
+                        val prefs = appPreferencesRepository.preferences.first()
+                        parsedRpe = when (prefs.intensitySystem) {
+                            IntensitySystem.OFF -> null
+                            IntensitySystem.RPE -> rawVal
+                            IntensitySystem.RIR -> 10.0 - rawVal
+                        }
+                    }
+                }
+
+                val updatedSet = set.copy(
+                    reps = reps,
+                    weightKg = weightKg,
+                    rpe = parsedRpe
+                )
+                workoutRepository.updateSet(updatedSet)
+
+                // Check for personal records
+                if (!updatedSet.isWarmup) {
+                    checkRecords(updatedSet.exerciseId, updatedSet.reps, updatedSet.weightKg)
+                }
+            } catch (e: Exception) {
+                _error.value = "Satz konnte nicht aktualisiert werden: ${e.message}"
             }
         }
     }

@@ -31,6 +31,8 @@ fun SetInputRow(
     intensity: TextFieldValue,
     onIntensityChange: (TextFieldValue) -> Unit,
     intensityLabel: String,
+    weightPlaceholder: String? = null,
+    repsPlaceholder: String? = null,
     showIntensityField: Boolean = true,
     onLog: () -> Unit,
     modifier: Modifier = Modifier
@@ -46,6 +48,7 @@ fun SetInputRow(
             onValueChange = onWeightChange,
             suffix = stringResource(id = R.string.common_unit_kg),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+            placeholderText = weightPlaceholder ?: "-",
             modifier = Modifier.weight(1.2f)
         )
         CompactTextField(
@@ -53,6 +56,7 @@ fun SetInputRow(
             onValueChange = onRepsChange,
             suffix = stringResource(id = R.string.common_reps_short),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (showIntensityField) ImeAction.Next else ImeAction.Done),
+            placeholderText = repsPlaceholder ?: "-",
             modifier = Modifier.weight(1f)
         )
         if (showIntensityField) {

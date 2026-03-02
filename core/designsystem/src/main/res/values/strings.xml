@@ -60,6 +60,10 @@
     <string name="workout_set_number">%1$d.</string>
     <string name="workout_warmup_chip">Aufwaermen</string>
     <string name="workout_superset_header">Supersatz S%1$d (%2$d Uebungen)</string>
+    <string name="workout_previous_show_cd">Vorheriges Training einblenden</string>
+    <string name="workout_previous_hide_cd">Vorheriges Training ausblenden</string>
+    <string name="workout_previous_session_title">Letztes Training (%1$s)</string>
+    <string name="workout_previous_session_set">%1$s: %2$s kg x %3$d</string>
 
     <string name="history_title">Trainingsverlauf</string>
     <string name="history_empty_title">Noch keine Trainings</string>
@@ -242,4 +246,5 @@
     <string name="settings_msg_incident_created">Incident-Report wurde erstellt.</string>
     <string name="settings_msg_notification_denied">Benachrichtigungsberechtigung wurde nicht erteilt.</string>
     <string name="common_error_action_failed">Aktion fehlgeschlagen: %1$s</string>
-    <string name="workout_rest_timer_prefix">Pause</string>`n</resources>
+    <string name="workout_rest_timer_prefix">Pause</string>
+</resources>

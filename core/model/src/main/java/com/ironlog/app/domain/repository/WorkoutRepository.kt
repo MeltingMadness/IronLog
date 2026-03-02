@@ -2,6 +2,7 @@ package com.ironlog.app.domain.repository
 
 import androidx.paging.PagingData
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
+import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ interface WorkoutRepository {
     suspend fun getActiveSession(): WorkoutSession?
     fun observeActiveSession(): Flow<WorkoutSession?>
     suspend fun addSet(set: WorkoutSet): Long
+    suspend fun updateSet(set: WorkoutSet)
     suspend fun deleteSet(setId: Long)
     fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>>
     suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet>
@@ -33,5 +35,9 @@ interface WorkoutRepository {
     suspend fun getLastCompletedSession(): WorkoutSession?
     suspend fun getAllCompletedSessionsList(): List<WorkoutSession>
     suspend fun getCompletedWorkoutStartTimesDesc(): List<Long>
+    suspend fun getPreviousSessionDataForExercises(
+        currentSessionId: Long,
+        exerciseIds: List<Long>
+    ): Map<Long, PreviousExerciseSession>
     fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>>
 }

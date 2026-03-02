@@ -22,6 +22,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -269,6 +271,131 @@ class ActiveWorkoutViewModelTest {
         assertEquals(1, state.exercisesWithSets[0].supersetGroupId)
         assertEquals("Beinpresse", state.exercisesWithSets[1].exercise.name)
         assertEquals(1, state.exercisesWithSets[1].supersetGroupId)
+        
+        collector.cancel()
+    }
+
+    @Test
+    fun `uiState shows previous completed session data per exercise`() = runTest {
+        val previousSessionId = 99L
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = previousSessionId,
+                startTime = LocalDateTime.now().minusDays(2),
+                endTime = LocalDateTime.now().minusDays(2).plusHours(1),
+                durationSeconds = 3600
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 900L,
+                sessionId = previousSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 75.0,
+                isWarmup = true
+            )
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 901L,
+                sessionId = previousSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 2,
+                reps = 6,
+                weightKg = 90.0,
+                isWarmup = false
+            )
+        )
+
+        val vm = createViewModel()
+        vm.addExercise(testExercise)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val exerciseState = vm.uiState.value.exercisesWithSets.first()
+        assertNotNull(exerciseState.previousSession)
+        assertEquals(previousSessionId, exerciseState.previousSession!!.sessionId)
+        assertEquals(90.0, exerciseState.previousSession!!.lastWorkSetWeightKg ?: 0.0, 0.01)
+        assertEquals(2, exerciseState.previousSession!!.sets.size)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `previous session hint ignores active session and warmup-only history`() = runTest {
+        val previousSessionId = 77L
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = previousSessionId,
+                startTime = LocalDateTime.now().minusDays(3),
+                endTime = LocalDateTime.now().minusDays(3).plusHours(1),
+                durationSeconds = 3600
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 700L,
+                sessionId = previousSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 40.0,
+                isWarmup = true
+            )
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 701L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 110.0,
+                isWarmup = false
+            )
+        )
+
+        val vm = createViewModel()
+        vm.addExercise(testExercise)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val previous = vm.uiState.value.exercisesWithSets.first().previousSession
+        assertNotNull(previous)
+        assertEquals(previousSessionId, previous!!.sessionId)
+        assertNull(previous.lastWorkSetWeightKg)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `resuming active workout loads existing exercises from sets`() = runTest {
+        // Setup existing set for the active session (simulating a resumed workout)
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 100L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 50.0,
+                isWarmup = false
+            )
+        )
+
+        val vm = createViewModel()
+        
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals(1, state.exercisesWithSets.size)
+        assertEquals(testExercise.id, state.exercisesWithSets[0].exercise.id)
+        assertEquals(1, state.exercisesWithSets[0].sets.size)
         
         collector.cancel()
     }

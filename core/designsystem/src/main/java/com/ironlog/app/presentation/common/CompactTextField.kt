@@ -27,6 +27,7 @@ fun CompactTextField(
     onValueChange: (TextFieldValue) -> Unit,
     suffix: String,
     keyboardOptions: KeyboardOptions,
+    placeholderText: String = "-",
     modifier: Modifier = Modifier
 ) {
     BasicTextField(
@@ -58,7 +59,7 @@ fun CompactTextField(
                 ) {
                     if (value.text.isEmpty()) {
                         Text(
-                            text = "-",
+                            text = placeholderText,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     }
@@ -84,6 +85,7 @@ fun CompactTextField(
     onValueChange: (String) -> Unit,
     suffix: String,
     keyboardOptions: KeyboardOptions,
+    placeholderText: String = "-",
     modifier: Modifier = Modifier
 ) {
     BasicTextField(
@@ -115,7 +117,7 @@ fun CompactTextField(
                 ) {
                     if (value.isEmpty()) {
                         Text(
-                            text = "-",
+                            text = placeholderText,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     }

@@ -44,6 +44,9 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE id = :id")
     suspend fun getSessionById(id: Long): WorkoutSessionEntity?
 
+    @Query("SELECT * FROM workout_sessions WHERE id IN (:sessionIds)")
+    suspend fun getSessionsByIds(sessionIds: List<Long>): List<WorkoutSessionEntity>
+
     @Query("SELECT * FROM workout_sessions WHERE id = :id")
     fun observeSessionById(id: Long): Flow<WorkoutSessionEntity?>
 

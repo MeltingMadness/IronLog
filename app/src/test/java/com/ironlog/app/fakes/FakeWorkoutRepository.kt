@@ -3,6 +3,7 @@ package com.ironlog.app.fakes
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
+import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -87,6 +88,12 @@ class FakeWorkoutRepository : WorkoutRepository {
         return id
     }
 
+    override suspend fun updateSet(set: WorkoutSet) {
+        sets.value = sets.value.map { existing ->
+            if (existing.id == set.id) set else existing
+        }
+    }
+
     override suspend fun deleteSet(setId: Long) {
         sets.value = sets.value.filter { it.id != setId }
     }
@@ -165,6 +172,38 @@ class FakeWorkoutRepository : WorkoutRepository {
             .filter { !it.isActive }
             .map { it.session.startTime.toEpochMillis() }
             .sortedDescending()
+
+    override suspend fun getPreviousSessionDataForExercises(
+        currentSessionId: Long,
+        exerciseIds: List<Long>
+    ): Map<Long, PreviousExerciseSession> {
+        if (exerciseIds.isEmpty()) return emptyMap()
+
+        val completedById = sessions.value
+            .filter { !it.isActive && it.session.id != currentSessionId }
+            .associateBy { it.session.id }
+        if (completedById.isEmpty()) return emptyMap()
+
+        return exerciseIds.distinct().mapNotNull { exerciseId ->
+            val previousSessionId = sets.value
+                .filter { it.exerciseId == exerciseId && it.sessionId in completedById.keys }
+                .sortedByDescending { completedById[it.sessionId]!!.session.startTime }
+                .firstOrNull()
+                ?.sessionId
+                ?: return@mapNotNull null
+
+            val session = completedById[previousSessionId]?.session ?: return@mapNotNull null
+            val sessionSets = sets.value
+                .filter { it.exerciseId == exerciseId && it.sessionId == previousSessionId }
+                .sortedBy { it.setNumber }
+            exerciseId to PreviousExerciseSession(
+                sessionId = previousSessionId,
+                sessionStart = session.startTime,
+                sets = sessionSets,
+                lastWorkSetWeightKg = sessionSets.lastOrNull { !it.isWarmup }?.weightKg
+            )
+        }.toMap()
+    }
 
     override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
         sessions.map { list ->

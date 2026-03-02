@@ -3,6 +3,7 @@ package com.ironlog.app.data.repository
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -42,5 +43,63 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 1) {
             sessionDao.insert(match { entity -> entity.name == "Neues Training" })
         }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises returns empty map for empty exercise ids`() = runTest {
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = 1L,
+            exerciseIds = emptyList()
+        )
+
+        assertEquals(emptyMap<Long, com.ironlog.app.domain.model.PreviousExerciseSession>(), result)
+        coVerify(exactly = 0) { setDao.getMostRecentCompletedSetsForExercises(any(), any()) }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises maps session and last work set`() = runTest {
+        val currentSessionId = 1L
+        val exerciseId = 11L
+        val previousSessionId = 42L
+
+        coEvery {
+            setDao.getMostRecentCompletedSetsForExercises(currentSessionId, listOf(exerciseId))
+        } returns listOf(
+            WorkoutSetEntity(
+                id = 100L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 30.0,
+                isWarmup = true,
+                completedAt = 1_000L
+            ),
+            WorkoutSetEntity(
+                id = 101L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 2,
+                reps = 6,
+                weightKg = 80.0,
+                isWarmup = false,
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(previousSessionId)) } returns listOf(
+            WorkoutSessionEntity(
+                id = previousSessionId,
+                startTime = 1_700_000_000_000,
+                endTime = 1_700_000_300_000
+            )
+        )
+
+        val result = repository.getPreviousSessionDataForExercises(currentSessionId, listOf(exerciseId))
+
+        val previous = result[exerciseId]
+        assertEquals(1, result.size)
+        assertEquals(previousSessionId, previous?.sessionId)
+        assertEquals(80.0, previous?.lastWorkSetWeightKg ?: 0.0, 0.01)
+        assertEquals(2, previous?.sets?.size)
     }
 }

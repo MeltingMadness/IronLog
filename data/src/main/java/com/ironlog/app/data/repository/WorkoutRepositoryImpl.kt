@@ -10,6 +10,7 @@ import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
+import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -70,8 +71,13 @@ class WorkoutRepositoryImpl(
     override suspend fun addSet(set: WorkoutSet): Long =
         setDao.insert(WorkoutSetEntity.fromDomain(set))
 
-    override suspend fun deleteSet(setId: Long) =
+    override suspend fun updateSet(set: WorkoutSet) {
+        setDao.update(WorkoutSetEntity.fromDomain(set))
+    }
+
+    override suspend fun deleteSet(setId: Long) {
         setDao.deleteSet(setId)
+    }
 
     override fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>> =
         setDao.getSetsForSession(sessionId).map { list -> list.map { it.toDomain() } }
@@ -142,6 +148,37 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
         sessionDao.getCompletedWorkoutStartTimesDesc()
+
+    override suspend fun getPreviousSessionDataForExercises(
+        currentSessionId: Long,
+        exerciseIds: List<Long>
+    ): Map<Long, PreviousExerciseSession> {
+        if (exerciseIds.isEmpty()) return emptyMap()
+
+        val latestSets = setDao.getMostRecentCompletedSetsForExercises(
+            currentSessionId = currentSessionId,
+            exerciseIds = exerciseIds
+        )
+        if (latestSets.isEmpty()) return emptyMap()
+
+        val sessionIds = latestSets.map { it.sessionId }.distinct()
+        val sessionById = sessionDao.getSessionsByIds(sessionIds).associateBy { it.id }
+
+        return latestSets
+            .groupBy { it.exerciseId }
+            .mapNotNull { (exerciseId, setsForExercise) ->
+                val sessionId = setsForExercise.first().sessionId
+                val sessionStart = sessionById[sessionId]?.toDomain()?.startTime ?: return@mapNotNull null
+                val domainSets = setsForExercise.map(WorkoutSetEntity::toDomain)
+                exerciseId to PreviousExerciseSession(
+                    sessionId = sessionId,
+                    sessionStart = sessionStart,
+                    sets = domainSets,
+                    lastWorkSetWeightKg = domainSets.lastOrNull { !it.isWarmup }?.weightKg
+                )
+            }
+            .toMap()
+    }
 
     override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
         sessionDao.observeLastSessionPerMetaPlanSubPlan().map { rows ->
