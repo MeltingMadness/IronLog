@@ -281,6 +281,42 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `training plan options show last done across standalone and meta plan sessions`() = runTest {
+        val planId = planRepo.savePlan(TrainingPlan(name = "Push A"))
+        val standaloneDoneAt = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(18, 0))
+        val metaDoneAt = LocalDateTime.of(LocalDate.now().minusDays(4), LocalTime.of(7, 0))
+
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 301L,
+                startTime = metaDoneAt,
+                endTime = metaDoneAt.plusHours(1),
+                durationSeconds = 3600,
+                planId = planId,
+                metaPlanId = 900L
+            ),
+            isActive = false
+        )
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 302L,
+                startTime = standaloneDoneAt,
+                endTime = standaloneDoneAt.plusHours(1),
+                durationSeconds = 3600,
+                planId = planId
+            ),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val planStatus = vm.uiState.value.trainingPlans.firstOrNull { it.plan.id == planId }
+        assertNotNull(planStatus)
+        assertEquals(1L, planStatus!!.lastDoneDaysAgo)
+    }
+
+    @Test
     fun `startNewWorkoutWithMetaPlan startet Session mit plan und meta ids`() = runTest {
         val planId = planRepo.savePlan(TrainingPlan(name = "Meta Subplan"))
         val metaPlanId = metaPlanRepo.saveMetaPlan(

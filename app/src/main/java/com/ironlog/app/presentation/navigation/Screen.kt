@@ -7,7 +7,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.ironlog.app.R
+import com.ironlog.core.designsystem.R
 
 sealed class Screen(val route: String) {
     data object Dashboard : Screen("dashboard")

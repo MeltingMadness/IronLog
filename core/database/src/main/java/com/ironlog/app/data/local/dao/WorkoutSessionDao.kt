@@ -69,6 +69,14 @@ interface WorkoutSessionDao {
     suspend fun getCompletedWorkoutStartTimesDesc(): List<Long>
 
     @Query("""
+        SELECT planId, MAX(startTime) AS lastStartTime
+        FROM workout_sessions
+        WHERE planId IS NOT NULL AND endTime IS NOT NULL
+        GROUP BY planId
+    """)
+    fun observeLastSessionPerPlan(): Flow<List<LastPlanSessionRow>>
+
+    @Query("""
         SELECT planId, metaPlanId, MAX(startTime) AS lastStartTime
         FROM workout_sessions
         WHERE metaPlanId IS NOT NULL AND planId IS NOT NULL AND endTime IS NOT NULL

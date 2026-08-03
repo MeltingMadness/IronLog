@@ -49,7 +49,8 @@ class WorkoutRepositoryImplTest {
     fun `getPreviousSessionDataForExercises returns empty map for empty exercise ids`() = runTest {
         val result = repository.getPreviousSessionDataForExercises(
             currentSessionId = 1L,
-            exerciseIds = emptyList()
+            exerciseIds = emptyList(),
+            planId = null
         )
 
         assertEquals(emptyMap<Long, com.ironlog.app.domain.model.PreviousExerciseSession>(), result)
@@ -94,12 +95,61 @@ class WorkoutRepositoryImplTest {
             )
         )
 
-        val result = repository.getPreviousSessionDataForExercises(currentSessionId, listOf(exerciseId))
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = currentSessionId,
+            exerciseIds = listOf(exerciseId),
+            planId = null
+        )
 
         val previous = result[exerciseId]
         assertEquals(1, result.size)
         assertEquals(previousSessionId, previous?.sessionId)
         assertEquals(80.0, previous?.lastWorkSetWeightKg ?: 0.0, 0.01)
         assertEquals(2, previous?.sets?.size)
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises uses plan scoped query when plan id is provided`() = runTest {
+        val currentSessionId = 1L
+        val exerciseId = 11L
+        val planId = 55L
+        val previousSessionId = 42L
+
+        coEvery {
+            setDao.getMostRecentCompletedSetsForPlanExercises(currentSessionId, listOf(exerciseId), planId)
+        } returns listOf(
+            WorkoutSetEntity(
+                id = 101L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 6,
+                weightKg = 80.0,
+                isWarmup = false,
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(previousSessionId)) } returns listOf(
+            WorkoutSessionEntity(
+                id = previousSessionId,
+                startTime = 1_700_000_000_000,
+                endTime = 1_700_000_300_000,
+                planId = planId
+            )
+        )
+
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = currentSessionId,
+            exerciseIds = listOf(exerciseId),
+            planId = planId
+        )
+
+        assertEquals(previousSessionId, result[exerciseId]?.sessionId)
+        coVerify(exactly = 1) {
+            setDao.getMostRecentCompletedSetsForPlanExercises(currentSessionId, listOf(exerciseId), planId)
+        }
+        coVerify(exactly = 0) {
+            setDao.getMostRecentCompletedSetsForExercises(any(), any())
+        }
     }
 }

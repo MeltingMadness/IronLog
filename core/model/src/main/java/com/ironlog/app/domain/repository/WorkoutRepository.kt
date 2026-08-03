@@ -37,7 +37,9 @@ interface WorkoutRepository {
     suspend fun getCompletedWorkoutStartTimesDesc(): List<Long>
     suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
-        exerciseIds: List<Long>
+        exerciseIds: List<Long>,
+        planId: Long? = null
     ): Map<Long, PreviousExerciseSession>
+    fun observeLastSessionPerPlan(): Flow<List<com.ironlog.app.domain.model.LastPlanSession>>
     fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>>
 }

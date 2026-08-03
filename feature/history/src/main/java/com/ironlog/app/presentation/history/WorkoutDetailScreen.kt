@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -39,13 +41,15 @@ import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.common.ironLogSharedElement
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalSharedTransitionApi::class)
 @Composable
 fun WorkoutDetailScreen(
     onBack: () -> Unit,
@@ -87,7 +91,11 @@ fun WorkoutDetailScreen(
             ) {
                 item {
                     state.session?.let { session ->
-                        Column {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .ironLogSharedElement("workout_card_${session.id}")
+                        ) {
                             Text(
                                 text = session.startTime.format(DateFormatting.DATE_FULL),
                                 style = MaterialTheme.typography.headlineSmall,
@@ -136,19 +144,27 @@ fun WorkoutDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 if (exerciseDetail.records.isNotEmpty()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            contentDescription = stringResource(id = R.string.workout_detail_record_cd),
-                                            tint = MaterialTheme.colorScheme.tertiary,
-                                            modifier = Modifier.padding(end = dims.spacing2)
-                                        )
-                                        Text(
-                                            text = stringResource(id = R.string.workout_detail_pr_badge),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    androidx.compose.material3.Surface(
+                                        color = MaterialTheme.semantic.violet.copy(alpha = 0.15f),
+                                        shape = androidx.compose.foundation.shape.CircleShape
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = dims.spacingSm, vertical = dims.spacing2),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Star,
+                                                contentDescription = stringResource(id = R.string.workout_detail_record_cd),
+                                                tint = MaterialTheme.semantic.violet,
+                                                modifier = Modifier.size(12.dp).padding(end = dims.spacing2)
+                                            )
+                                            Text(
+                                                text = stringResource(id = R.string.workout_detail_pr_badge),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.semantic.violet,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
                                 }
                             }

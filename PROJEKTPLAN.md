@@ -7,12 +7,12 @@
 | **App-Name** | IronLog |
 | **Pfad** | `C:\Users\maert\IronLog` |
 | **Package** | `com.ironlog.app` |
-| **Tech Stack** | Kotlin 2.1, Jetpack Compose (M3), Room 2.6.1, Koin 4.0, Navigation Compose, Vico Charts 2.0.1, DataStore |
-| **AGP** | 8.13.2 |
-| **Gradle** | 8.13 |
+| **Tech Stack** | Kotlin 2.3.10, Jetpack Compose (M3), Room 2.8.4, Koin 4.1.1, Navigation Compose 2.9.7, Vico Charts 2.4.3, DataStore, WorkManager |
+| **AGP** | 9.0.0 |
+| **Gradle** | 9.1.0 |
 | **Min SDK** | 26 (Android 8.0) |
-| **Target/Compile SDK** | 35 |
-| **JDK** | 21 (Android Studio JBR) |
+| **Target/Compile SDK** | 35 / 36 |
+| **JDK** | 17 (Android Studio JBR) |
 | **Architektur** | MVVM + Clean Architecture, **Multi-Module** (`core`, `data`, `feature`) |
 | **UI-Sprache** | Deutsch |
 
@@ -28,7 +28,7 @@
 
 ### Phase 2: Training-Tracking (ABGESCHLOSSEN)
 - **ActiveWorkoutScreen + ViewModel** im Modul `feature:workout`.
-- Sätze loggen, Timer, PR-Erkennung in Echtzeit.
+- Sätze loggen, mehrere Rest-Timer pro Übung, PR-Erkennung in Echtzeit.
 
 ### Phase 3: Verlauf (ABGESCHLOSSEN)
 - Chronologische Liste aller Trainings im Modul `feature:history`.
@@ -42,10 +42,11 @@
 
 ### Phase 6: Pläne, Settings & Hintergrund-Dienste (ABGESCHLOSSEN)
 - **Trainingspläne:** Erstellen und Verwalten von Plänen (`feature:plans`).
-- **Einstellungen:** App-Einstellungen über DataStore persistiert (`feature:settings`, `data:preferences`).
+- **Meta-Trainingspläne:** Rotationen über mehrere Unterpläne (`feature:plans`).
+- **Einstellungen:** App-Einstellungen über DataStore persistiert (`feature:settings`).
 - **Background Tasks:** Training Reminder Worker (`data:reminder`).
 - **Daten:** Backup & Export Validierung (`data:backup`), Crash/Fehlerberichte (`data:incident`).
-- **Unit Tests:** Umfangreiche Testabdeckung für ViewModels, Repositories, Use-Cases und Validatoren ist implementiert.
+- **Tests:** Unit-Tests plus Android-Smoke-Tests für Navigation, Migrationspfade und zentrale UI-Flows.
 
 ---
 
@@ -117,22 +118,23 @@ training_plans               plan_exercises
 | # | Aufgabe | Beschreibung |
 |---|---------|-------------|
 | H-01 | **Error Handling UI** | Crash-Reports existieren (`data:incident`), aber detailliertes UI-Feedback bei bestimmten DB-Fehlern fehlt eventuell noch. |
-| H-02 | **Daten-Persistenz testen** | Manueller End-to-End Test für den Lebenszyklus: App starten, Training loggen, App killen, neu starten. Daten müssen sicher gespeichert bleiben. |
+| H-02 | **E2E Persistenz-Check** | Manueller Lebenszyklus-Test: App starten, Training loggen, App killen, neu starten. Daten müssen sicher gespeichert bleiben. |
+| H-03 | **Instrumented Regression Gates** | History-Detail-Flow, Shared Transitions und Workout-UX regelmäßig auf Gerät/Emulator gegenprüfen. |
 
 ### Prioritaet MITTEL — Qualitaet & UX
 | # | Aufgabe | Beschreibung |
 |---|---------|-------------|
-| M-01 | **History Pagination** | Große Trainingsverläufe laden bisher alles auf einmal. Umstellung auf Room Paging 3 in `feature:history`. |
-| M-02 | **Ladezustände UI** | Bessere Visualisierung (z.B. CircularProgressIndicator) während asynchrone Datenbank-Queries laufen. |
-| M-03 | **Leere Zustände verbessern** | Onboarding-Hinweise im Dashboard und Historie für Erstnutzer hinzufügen. |
+| M-01 | **History Performance** | Paging 3 ist vorhanden; große Verläufe weiter auf Scroll-Performance und Swipe/Delete-Verhalten beobachten. |
+| M-02 | **Ladezustände UI** | Skeletons und States sind vorhanden, aber auf Konsistenz zwischen Features weiter schärfen. |
+| M-03 | **Leere Zustände & Onboarding** | Dashboard und Historie sind vorhanden, können textlich und visuell noch feiner abgestimmt werden. |
 
 ### Prioritaet NIEDRIG — Nice-to-Have
 | # | Aufgabe | Beschreibung |
 |---|---------|-------------|
-| N-01 | **String Resources** | Hardcoded Kotlin-Strings (z.B. UI-Texte) systematisch in `strings.xml` extrahieren. |
-| N-02 | **Datenbank-Migrationen** | Setup für definierte Migrationspfade bei künftigen Schema-Änderungen. |
-| N-03 | **Warmup-Sätze UI** | Das Datenmodell (`isWarmup`) ist vorbereitet, in der UI der `SetInputRow` fehlt aber noch ein Flag dafür. |
-| N-04 | **Swipe-to-Delete** | Löschen von Einträgen in der Historie per Wischgeste (aktuell nur Icon-Button). |
+| N-01 | **String Resources** | Restliche Hardcoded Texte konsequent in `strings.xml` ziehen. |
+| N-02 | **Datenbank-Migrationen** | Weitere Migrationen und Schema-Tests für kommende Releases ergänzen. |
+| N-03 | **Feintuning Workout-UX** | Weitere Politur für Edit-States, Supersets und Rest-Timer-Chips. |
+| N-04 | **History Gesten** | Swipe-to-Delete ist aktiv; visuelle Rückmeldung und Undo-Verhalten können noch ausgebaut werden. |
 
 ---
 
@@ -140,8 +142,8 @@ training_plans               plan_exercises
 
 ### Voraussetzungen (installiert)
 - Android Studio 2025.2.3.9 (`C:\Program Files\Android\Android Studio`)
-- JDK 21 (Android Studio JBR)
-- Android SDK Platform 35, Build Tools 35.0.0, Platform Tools
+- JDK 17 (Android Studio JBR)
+- Android SDK Platform 36, Target SDK 35, aktuelle Platform Tools
 
 ### Build ausführen
 ```bash
@@ -167,7 +169,7 @@ cd C:\Users\maert\IronLog
 | Datum | Änderung |
 |-------|-----------|
 | 2025-02-09 | Projekt initial aufgesetzt |
-| 2025-02-10 | Migration auf Gradle 8.13 und AGP 8.13.2 |
-| **Aktuell** | **Komplette Umstrukturierung zu Multi-Module (`core`, `data`, `feature`)** |
-| **Aktuell** | Implementierung von Unit-Tests, Trainingsplänen, DataStore Settings und Background Remindern |
-| **Aktuell** | Aktualisierung des Projektplans zur Abbildung der Ist-Architektur |
+| 2025-02-10 | Migration auf Multi-Module (`core`, `data`, `feature`) |
+| 2026-03-20 | Toolchain aktualisiert auf Gradle 9.1.0, AGP 9.0.0, Kotlin 2.3.10 und Compose BOM 2025.12.01 |
+| 2026-03-20 | Shared-Transition-Helfer, Workout-State-Reconciliation und Rest-Timer-Handling stabilisiert |
+| 2026-03-20 | Projektplan auf den aktuellen Modul-, Test- und Tooling-Stand gebracht |

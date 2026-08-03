@@ -1,37 +1,37 @@
-﻿package com.ironlog.app.presentation.theme
+package com.ironlog.app.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Amber Theme (Default)
-val Primary = Color(0xFFFF6D00)
+// Ember / Amber Theme (Default)
+val Primary = Color(0xFFFF6B00)
 val OnPrimary = Color(0xFFFFFFFF)
-val PrimaryContainer = Color(0xFFFFD180)
-val OnPrimaryContainer = Color(0xFF3E2000)
+val PrimaryContainer = Color(0xFFFFD8B0)
+val OnPrimaryContainer = Color(0xFF3D1A00)
 
-val Secondary = Color(0xFF37474F)
+val Secondary = Color(0xFF0D9488)
 val OnSecondary = Color(0xFFFFFFFF)
-val SecondaryContainer = Color(0xFFCFD8DC)
-val OnSecondaryContainer = Color(0xFF1A2327)
+val SecondaryContainer = Color(0xFFB0F0EB)
+val OnSecondaryContainer = Color(0xFF003832)
 
-val Tertiary = Color(0xFF558B2F)
+val Tertiary = Color(0xFF7C3AED)
 val OnTertiary = Color(0xFFFFFFFF)
-val TertiaryContainer = Color(0xFFC5E1A5)
-val OnTertiaryContainer = Color(0xFF1B3409)
+val TertiaryContainer = Color(0xFFD8BFFF)
+val OnTertiaryContainer = Color(0xFF2D0070)
 
-val DarkPrimary = Color(0xFFFFAB40)
-val DarkOnPrimary = Color(0xFF3E2000)
-val DarkPrimaryContainer = Color(0xFFBF5F00)
-val DarkOnPrimaryContainer = Color(0xFFFFD180)
+val DarkPrimary = Color(0xFFFF9500)
+val DarkOnPrimary = Color(0xFF3D1A00)
+val DarkPrimaryContainer = Color(0xFF5A2600)
+val DarkOnPrimaryContainer = Color(0xFFFFD8B0)
 
-val DarkSecondary = Color(0xFF90A4AE)
-val DarkOnSecondary = Color(0xFF1A2327)
-val DarkSecondaryContainer = Color(0xFF455A64)
-val DarkOnSecondaryContainer = Color(0xFFCFD8DC)
+val DarkSecondary = Color(0xFF14B8A6)
+val DarkOnSecondary = Color(0xFF003832)
+val DarkSecondaryContainer = Color(0xFF004C45)
+val DarkOnSecondaryContainer = Color(0xFFB0F0EB)
 
-val DarkTertiary = Color(0xFF8BC34A)
-val DarkOnTertiary = Color(0xFF1B3409)
-val DarkTertiaryContainer = Color(0xFF33691E)
-val DarkOnTertiaryContainer = Color(0xFFC5E1A5)
+val DarkTertiary = Color(0xFFA78BFA)
+val DarkOnTertiary = Color(0xFF2D0070)
+val DarkTertiaryContainer = Color(0xFF46208D)
+val DarkOnTertiaryContainer = Color(0xFFD8BFFF)
 
 // Deep Cyan Theme
 val CyanPrimary = Color(0xFF00838F)
@@ -95,8 +95,7 @@ val DarkRedOnTertiary = Color(0xFF4D4000)
 val DarkRedTertiaryContainer = Color(0xFFFBC02D)
 val DarkRedOnTertiaryContainer = Color(0xFFFFF59D)
 
-
-// Universal Background / Surface
+// Universal Background / Surface for existing alternative schemes
 val Background = Color(0xFFF2F4F8)
 val OnBackground = Color(0xFF17181C)
 val Surface = Color(0xFFF7F9FC)
@@ -113,13 +112,23 @@ val AccentWarning = Color(0xFFEF6C00)
 val Error = Color(0xFFB3261E)
 val OnError = Color(0xFFFFFFFF)
 
+// Ember-specific warm surfaces
+val EmberBackground = Color(0xFFFFF8F0)
+val EmberOnBackground = Color(0xFF1A0F00)
+val EmberSurface = Color(0xFFFFFFFF)
+val EmberOnSurface = Color(0xFF1A0F00)
+val EmberSurfaceVariant = Color(0xFFFFF0E0)
+val EmberOnSurfaceVariant = Color(0xFF6B4A2A)
+val EmberSurfaceElevated = Color(0xFFFFFCF7)
+val EmberSurfaceMuted = Color(0xFFFFF3E5)
+
 // Universal Dark Background / Surface
 val DarkBackground = Color(0xFF0E1117)
 val DarkOnBackground = Color(0xFFE5E8EF)
 val DarkSurface = Color(0xFF12161E)
 val DarkOnSurface = Color(0xFFE5E8EF)
 val DarkSurfaceVariant = Color(0xFF2A303B)
-val DarkOnSurfaceVariant = Color(0xFFE2E8F0) // Brighter for better readability
+val DarkOnSurfaceVariant = Color(0xFFE2E8F0)
 
 val DarkSurfaceElevated = Color(0xFF1A202A)
 val DarkSurfaceMuted = Color(0xFF161B24)
@@ -129,3 +138,25 @@ val DarkAccentWarning = Color(0xFFFFB74D)
 
 val DarkError = Color(0xFFF2B8B5)
 val DarkOnError = Color(0xFF601410)
+
+val EmberDarkBackground = Color(0xFF0C0806)
+val EmberDarkOnBackground = Color(0xFFF5E6D3)
+val EmberDarkSurface = Color(0xFF1A110C)
+val EmberDarkOnSurface = Color(0xFFF5E6D3)
+val EmberDarkSurfaceVariant = Color(0xFF251A12)
+val EmberDarkOnSurfaceVariant = Color(0xFFB89880)
+val EmberDarkSurfaceElevated = Color(0xFF2E2018)
+val EmberDarkSurfaceMuted = Color(0xFF22170F)
+
+// Ember semantic accents
+val EmberSuccess = Color(0xFF34D399)
+val EmberDanger = Color(0xFFF87171)
+val EmberWarning = Color(0xFFFBBF24)
+val EmberRose = Color(0xFFE11D48)
+val EmberRoseLight = Color(0xFFFB7185)
+val EmberSky = Color(0xFF0284C7)
+val EmberSkyLight = Color(0xFF38BDF8)
+val EmberViolet = Color(0xFF7C3AED)
+val EmberVioletLight = Color(0xFFA78BFA)
+val EmberTeal = Color(0xFF0D9488)
+val EmberTealLight = Color(0xFF14B8A6)

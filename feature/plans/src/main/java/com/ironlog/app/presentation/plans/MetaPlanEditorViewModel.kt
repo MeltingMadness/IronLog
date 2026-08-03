@@ -87,7 +87,7 @@ class MetaPlanEditorViewModel(
                     _uiState.update { current ->
                         current.copy(
                             isLoading = false,
-                            error = "Unterplaene konnten nicht geladen werden: ${error.message}"
+                            error = "Unterpläne konnten nicht geladen werden: ${error.message}"
                         )
                     }
                 }

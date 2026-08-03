@@ -151,14 +151,23 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
-        exerciseIds: List<Long>
+        exerciseIds: List<Long>,
+        planId: Long?
     ): Map<Long, PreviousExerciseSession> {
         if (exerciseIds.isEmpty()) return emptyMap()
 
-        val latestSets = setDao.getMostRecentCompletedSetsForExercises(
-            currentSessionId = currentSessionId,
-            exerciseIds = exerciseIds
-        )
+        val latestSets = if (planId != null && planId > 0L) {
+            setDao.getMostRecentCompletedSetsForPlanExercises(
+                currentSessionId = currentSessionId,
+                exerciseIds = exerciseIds,
+                planId = planId
+            )
+        } else {
+            setDao.getMostRecentCompletedSetsForExercises(
+                currentSessionId = currentSessionId,
+                exerciseIds = exerciseIds
+            )
+        }
         if (latestSets.isEmpty()) return emptyMap()
 
         val sessionIds = latestSets.map { it.sessionId }.distinct()
@@ -179,6 +188,11 @@ class WorkoutRepositoryImpl(
             }
             .toMap()
     }
+
+    override fun observeLastSessionPerPlan(): Flow<List<com.ironlog.app.domain.model.LastPlanSession>> =
+        sessionDao.observeLastSessionPerPlan().map { rows ->
+            rows.map { com.ironlog.app.domain.model.LastPlanSession(it.planId, it.lastStartTime) }
+        }
 
     override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
         sessionDao.observeLastSessionPerMetaPlanSubPlan().map { rows ->

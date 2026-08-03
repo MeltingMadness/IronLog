@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="dashboard_last_workout_meta">
+        <item quantity="one">Dauer: %1$d min · %2$d Übung</item>
+        <item quantity="other">Dauer: %1$d min · %2$d Übungen</item>
+    </plurals>
+
+    <plurals name="workout_superset_header">
+        <item quantity="one">Supersatz S%1$d (%2$d Übung)</item>
+        <item quantity="other">Supersatz S%1$d (%2$d Übungen)</item>
+    </plurals>
+
+    <plurals name="plans_exercise_count">
+        <item quantity="one">%1$d Übung</item>
+        <item quantity="other">%1$d Übungen</item>
+    </plurals>
+
+    <plurals name="plan_selection_meta_last_done_days_ago">
+        <item quantity="one">vor %1$d Tag</item>
+        <item quantity="other">vor %1$d Tagen</item>
+    </plurals>
+
+    <plurals name="meta_plans_subplan_count">
+        <item quantity="one">%1$d Unterplan</item>
+        <item quantity="other">%1$d Unterpläne</item>
+    </plurals>
+</resources>

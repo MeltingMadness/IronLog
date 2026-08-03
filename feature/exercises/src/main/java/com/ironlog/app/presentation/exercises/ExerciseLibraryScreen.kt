@@ -61,6 +61,7 @@ import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.core.designsystem.R
 import org.koin.androidx.compose.koinViewModel
 
@@ -286,7 +287,7 @@ private fun SwipeToDeleteExerciseItem(
                     Text(
                         text = stringResource(id = R.string.exercises_custom_badge),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = MaterialTheme.semantic.violet
                     )
                     IconButton(onClick = onEdit) {
                         Icon(

@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,14 +40,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -189,7 +193,8 @@ private fun MetaPlanListCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        tone = IronLogSurfaceTone.MUTED,
+        tone = IronLogSurfaceTone.COLORED,
+        semanticColor = MaterialTheme.semantic.violet,
         alpha = 0.68f
     ) {
         Column(
@@ -227,7 +232,11 @@ private fun MetaPlanListCard(
             }
 
             Text(
-                text = stringResource(id = R.string.meta_plans_subplan_count, item.subPlans.size),
+                text = pluralStringResource(
+                    id = R.plurals.meta_plans_subplan_count,
+                    count = item.subPlans.size,
+                    item.subPlans.size
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -235,7 +244,8 @@ private fun MetaPlanListCard(
             item.nextSubPlan?.let { nextPlan ->
                 Text(
                     text = stringResource(id = R.string.plan_selection_meta_continue_with, nextPlan.name),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.semantic.violet
                 )
             }
         }

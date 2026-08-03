@@ -22,8 +22,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 data class PlanTarget(
     val targetSets: Int = 0,
@@ -51,7 +56,14 @@ data class ActiveWorkoutUiState(
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
-    val restTimerStartTime: LocalDateTime? = null,
+    val restTimers: Map<Long, Instant> = emptyMap(),
+    val error: String? = null
+)
+
+private data class ActiveWorkoutChromeState(
+    val showExercisePicker: Boolean = false,
+    val showFinishDialog: Boolean = false,
+    val restTimers: Map<Long, Instant> = emptyMap(),
     val error: String? = null
 )
 
@@ -71,40 +83,38 @@ class ActiveWorkoutViewModel(
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
     private val planId: Long = savedStateHandle["planId"] ?: 0L
 
-        private val showExercisePicker = MutableStateFlow(false)
-        private val showFinishDialog = MutableStateFlow(false)
-        private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
-        private val _error = MutableStateFlow<String?>(null)
-        private val _restTimerStartTime = MutableStateFlow<LocalDateTime?>(null)
-    
-        private val _planTargets = MutableStateFlow<Map<Long, PlanTarget>>(emptyMap())
-        private val _planSupersetGroups = MutableStateFlow<Map<Long, Int?>>(emptyMap())
+    private val showExercisePicker = MutableStateFlow(false)
+    private val showFinishDialog = MutableStateFlow(false)
+    private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
+    private val _error = MutableStateFlow<String?>(null)
+    private val _restTimers = MutableStateFlow<Map<Long, Instant>>(emptyMap())
+    private val _planTargets = MutableStateFlow<Map<Long, PlanTarget>>(emptyMap())
+    private val _planSupersetGroups = MutableStateFlow<Map<Long, Int?>>(emptyMap())
+    private val logSetMutex = Mutex()
+
+    private val sessionSets = workoutRepository.getSetsForSession(sessionId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val exercisesWithSets = combine(
-        workoutRepository.getSetsForSession(sessionId),
+        sessionSets,
         addedExercises,
         _planTargets,
         _planSupersetGroups
     ) { sets, added, targets, supersets ->
         val setsByExercise = sets.groupBy { it.exerciseId }
-        val missingIds = setsByExercise.keys - added.map { it.id }.toSet()
-        val dynamicallyAdded = missingIds.mapNotNull { id -> exerciseRepository.getExerciseById(id) }
-        
-        if (dynamicallyAdded.isNotEmpty()) {
-            addedExercises.value = added + dynamicallyAdded
-        }
-
-        val fullList = added + dynamicallyAdded
+        val exerciseList = added.distinctBy { it.id }
         val previousSessionsByExercise = try {
             workoutRepository.getPreviousSessionDataForExercises(
                 currentSessionId = sessionId,
-                exerciseIds = fullList.map { it.id }.distinct()
+                exerciseIds = exerciseList.map { it.id },
+                planId = planId.takeIf { it > 0L }
             )
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "Vorherige Sessiondaten konnten nicht geladen werden: ${e.message}", e)
             emptyMap()
         }
 
-        fullList.map { exercise ->
+        exerciseList.map { exercise ->
             val previousSession = previousSessionsByExercise[exercise.id]
             ExerciseWithSets(
                 exercise = exercise,
@@ -126,28 +136,59 @@ class ActiveWorkoutViewModel(
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()
 
+    private val chromeState = combine(
+        showExercisePicker,
+        showFinishDialog,
+        _restTimers,
+        _error
+    ) { pickerVisible, finishDialogVisible, restTimers, error ->
+        ActiveWorkoutChromeState(
+            showExercisePicker = pickerVisible,
+            showFinishDialog = finishDialogVisible,
+            restTimers = restTimers,
+            error = error
+        )
+    }
+
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
         workoutRepository.observeSessionById(sessionId),
         exercisesWithSets,
-        showExercisePicker,
-        showFinishDialog,
-        _restTimerStartTime,
-        _error
-    ) { args ->
-        @Suppress("UNCHECKED_CAST")
+        chromeState
+    ) { session, exercises, chrome ->
         ActiveWorkoutUiState(
-            session = args[0] as WorkoutSession?,
-            exercisesWithSets = args[1] as List<ExerciseWithSets>,
-            showExercisePicker = args[2] as Boolean,
-            showFinishDialog = args[3] as Boolean,
-            restTimerStartTime = args[4] as LocalDateTime?,
-            error = args[5] as String?
+            session = session,
+            exercisesWithSets = exercises,
+            showExercisePicker = chrome.showExercisePicker,
+            showFinishDialog = chrome.showFinishDialog,
+            restTimers = chrome.restTimers,
+            error = chrome.error
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
     init {
+        observeExerciseReconciliation()
         if (planId > 0L) {
             loadPlanExercises()
+        }
+    }
+
+    private fun observeExerciseReconciliation() {
+        viewModelScope.launch {
+            sessionSets.collect { sets ->
+                val knownIds = addedExercises.value.map { it.id }.toSet()
+                val missingExercises = sets
+                    .map { it.exerciseId }
+                    .distinct()
+                    .filterNot { it in knownIds }
+                    .mapNotNull { exerciseRepository.getExerciseById(it) }
+
+                if (missingExercises.isNotEmpty()) {
+                    addedExercises.update { current ->
+                        val currentIds = current.map { it.id }.toSet()
+                        current + missingExercises.filterNot { it.id in currentIds }
+                    }
+                }
+            }
         }
     }
 
@@ -176,7 +217,9 @@ class ActiveWorkoutViewModel(
                 }
                 _planTargets.value = newTargets
                 _planSupersetGroups.value = newSupersets
-                addedExercises.value = newExercises
+                addedExercises.update { current ->
+                    (newExercises + current).distinctBy { it.id }
+                }
             } catch (e: Exception) {
                 _error.value = "Plan-Übungen konnten nicht geladen werden: ${e.message}"
             }
@@ -184,9 +227,8 @@ class ActiveWorkoutViewModel(
     }
 
     fun addExercise(exercise: Exercise) {
-        val current = addedExercises.value
-        if (current.none { it.id == exercise.id }) {
-            addedExercises.value = current + exercise
+        addedExercises.update { current ->
+            if (current.any { it.id == exercise.id }) current else current + exercise
         }
     }
 
@@ -209,36 +251,42 @@ class ActiveWorkoutViewModel(
     fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false, intensity: String = "") {
         viewModelScope.launch {
             try {
-                val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
-                    .filter { it.exerciseId == exerciseId }
-                val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
+                logSetMutex.withLock {
+                    val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
+                        .filter { it.exerciseId == exerciseId }
+                    val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
+                    val parsedRpe = parseIntensity(intensity)
+                    val completedAtInstant = Instant.now()
 
-                var parsedRpe: Double? = null
-                if (intensity.isNotBlank()) {
-                    val rawVal = intensity.toDoubleOrNull()
-                    if (rawVal != null) {
-                        val prefs = appPreferencesRepository.preferences.first()
-                        parsedRpe = when (prefs.intensitySystem) {
-                            IntensitySystem.OFF -> null
-                            IntensitySystem.RPE -> rawVal
-                            IntensitySystem.RIR -> 10.0 - rawVal
+                    val set = WorkoutSet(
+                        sessionId = sessionId,
+                        exerciseId = exerciseId,
+                        setNumber = setNumber,
+                        reps = reps,
+                        weightKg = weightKg,
+                        isWarmup = isWarmup,
+                        completedAt = LocalDateTime.ofInstant(
+                            completedAtInstant,
+                            ZoneId.systemDefault()
+                        ),
+                        rpe = parsedRpe
+                    )
+                    workoutRepository.addSet(set)
+                    val planTarget = _planTargets.value[exerciseId]
+                    val completedWorkSetCount = persistedSets.count { !it.isWarmup } + if (isWarmup) 0 else 1
+                    val reachedPlannedSetCount = !isWarmup &&
+                        planTarget != null &&
+                        planTarget.targetSets > 0 &&
+                        completedWorkSetCount >= planTarget.targetSets
+
+                    _restTimers.update { currentTimers ->
+                        if (reachedPlannedSetCount) {
+                            currentTimers - exerciseId
+                        } else {
+                            currentTimers + (exerciseId to completedAtInstant)
                         }
                     }
                 }
-
-                val set = WorkoutSet(
-                    sessionId = sessionId,
-                    exerciseId = exerciseId,
-                    setNumber = setNumber,
-                    reps = reps,
-                    weightKg = weightKg,
-                    isWarmup = isWarmup,
-                    completedAt = LocalDateTime.now(),
-                    rpe = parsedRpe
-                )
-                workoutRepository.addSet(set)
-                
-                _restTimerStartTime.value = LocalDateTime.now()
 
                 // Check for personal records
                 if (!isWarmup) {
@@ -250,8 +298,21 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    fun dismissRestTimer() {
-        _restTimerStartTime.value = null
+    fun dismissRestTimer(exerciseId: Long) {
+        _restTimers.update { current ->
+            current - exerciseId
+        }
+    }
+
+    private suspend fun parseIntensity(intensity: String): Double? {
+        if (intensity.isBlank()) return null
+        val rawVal = intensity.toDoubleOrNull() ?: return null
+        val prefs = appPreferencesRepository.preferences.first()
+        return when (prefs.intensitySystem) {
+            IntensitySystem.OFF -> null
+            IntensitySystem.RPE -> rawVal
+            IntensitySystem.RIR -> 10.0 - rawVal
+        }
     }
 
     private suspend fun checkRecords(exerciseId: Long, reps: Int, weightKg: Double) {
@@ -309,18 +370,7 @@ class ActiveWorkoutViewModel(
                 val sets = workoutRepository.getSetsForSessionList(sessionId)
                 val set = sets.find { it.id == setId } ?: return@launch
 
-                var parsedRpe: Double? = null
-                if (intensity.isNotBlank()) {
-                    val rawVal = intensity.toDoubleOrNull()
-                    if (rawVal != null) {
-                        val prefs = appPreferencesRepository.preferences.first()
-                        parsedRpe = when (prefs.intensitySystem) {
-                            IntensitySystem.OFF -> null
-                            IntensitySystem.RPE -> rawVal
-                            IntensitySystem.RIR -> 10.0 - rawVal
-                        }
-                    }
-                }
+                val parsedRpe = parseIntensity(intensity)
 
                 val updatedSet = set.copy(
                     reps = reps,

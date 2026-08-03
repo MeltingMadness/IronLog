@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.semantic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.time.LocalDateTime
@@ -54,7 +55,7 @@ fun WorkoutTimer(
     }
 
     val fraction = (elapsed / WORKOUT_TARGET_SECONDS).coerceIn(0f, 1f)
-    val primary = MaterialTheme.colorScheme.primary
+    val primary = MaterialTheme.semantic.sky
 
     Box(
         modifier = modifier,

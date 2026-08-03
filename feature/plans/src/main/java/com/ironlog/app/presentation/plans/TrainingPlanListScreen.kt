@@ -48,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,7 +57,9 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.ButtonSize
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -270,7 +273,7 @@ private fun PlanCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        tone = IronLogSurfaceTone.ELEVATED
+        tone = IronLogSurfaceTone.ACCENT
     ) {
         Column(modifier = Modifier.padding(dims.spacingLg)) {
             Text(
@@ -281,9 +284,13 @@ private fun PlanCard(
             Spacer(modifier = Modifier.height(dims.spacingXs))
             
             Text(
-                text = stringResource(id = R.string.plans_exercise_count, item.plan.exercises.size),
+                text = pluralStringResource(
+                    id = R.plurals.plans_exercise_count,
+                    count = item.plan.exercises.size,
+                    item.plan.exercises.size
+                ),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.semantic.violet,
                 fontWeight = FontWeight.SemiBold
             )
 
@@ -304,7 +311,7 @@ private fun PlanCard(
                 onClick = onStart,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp) // Large touch target
+                    .height(ButtonSize.height)
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(dims.spacingXs))

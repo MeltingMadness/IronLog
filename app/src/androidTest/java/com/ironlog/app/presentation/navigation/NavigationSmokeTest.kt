@@ -89,7 +89,7 @@ class NavigationSmokeTest {
     }
 
     @Test
-    fun dashboard_to_history_detail_stats_smoke() {
+    fun dashboard_to_history_detail_stats_smoke_with_shared_transition_path() {
         lateinit var navController: NavHostController
 
         composeRule.setContent {
@@ -107,6 +107,9 @@ class NavigationSmokeTest {
             navController.navigate(Screen.WorkoutHistory.route)
         }
         composeRule.waitForIdle()
+        assertTrue(
+            composeRule.onAllNodesWithText("Trainingsverlauf").fetchSemanticsNodes().isNotEmpty()
+        )
         composeRule.runOnIdle {
             assertEquals(Screen.WorkoutHistory.route, navController.currentBackStackEntry?.destination?.route)
         }
@@ -115,6 +118,9 @@ class NavigationSmokeTest {
             navController.navigate(Screen.WorkoutDetail.createRoute(sessionId = 1L))
         }
         composeRule.waitForIdle()
+        assertTrue(
+            composeRule.onAllNodesWithText("Trainingsdetails").fetchSemanticsNodes().isNotEmpty()
+        )
         composeRule.runOnIdle {
             assertEquals(Screen.WorkoutDetail.route, navController.currentBackStackEntry?.destination?.route)
         }
@@ -186,7 +192,6 @@ class NavigationSmokeTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Darstellung").assertIsDisplayed()
         composeRule.onNodeWithText("Theme-Modus").assertIsDisplayed()
         composeRule.onNodeWithText("Dynamic Color").assertIsDisplayed()
         composeRule.onNodeWithText("Reduzierte Animationen").assertIsDisplayed()

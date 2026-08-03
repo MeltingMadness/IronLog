@@ -25,6 +25,8 @@ import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
+import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.Radius
 
 /**
  * Displays a visual heatmap of muscle groups trained this week.
@@ -90,28 +92,23 @@ private fun MuscleChip(
     intensity: Float
 ) {
     val dims = ironLogDimens
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val backgroundColor = if (intensity > 0f) {
-        primaryColor.copy(alpha = intensity * 0.6f)
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val chipColor = when {
+        intensity >= 0.75f -> MaterialTheme.semantic.rose
+        intensity >= 0.45f -> MaterialTheme.semantic.warning
+        else -> MaterialTheme.semantic.teal
     }
-    val textColor = if (intensity > 0.4f) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val backgroundColor = chipColor.copy(alpha = (intensity * 0.55f + 0.15f).coerceIn(0.15f, 0.7f))
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(dims.radiusSm))
+            .clip(RoundedCornerShape(Radius.sm))
             .background(backgroundColor)
             .padding(horizontal = dims.spacingSm, vertical = 6.dp)
     ) {
         Text(
             text = if (sets > 0) "$label ($sets)" else label,
             style = MaterialTheme.typography.labelMedium,
-            color = textColor,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = if (sets > 0) FontWeight.SemiBold else FontWeight.Normal
         )
     }

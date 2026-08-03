@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.presentation.theme
+package com.ironlog.app.presentation.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -28,14 +28,14 @@ private val AmberLightColorScheme = lightColorScheme(
     onTertiary = OnTertiary,
     tertiaryContainer = TertiaryContainer,
     onTertiaryContainer = OnTertiaryContainer,
-    background = Background,
-    onBackground = OnBackground,
-    surface = Surface,
-    onSurface = OnSurface,
-    surfaceVariant = SurfaceVariant,
-    onSurfaceVariant = OnSurfaceVariant,
-    error = Error,
-    onError = OnError,
+    background = EmberBackground,
+    onBackground = EmberOnBackground,
+    surface = EmberSurface,
+    onSurface = EmberOnSurface,
+    surfaceVariant = EmberSurfaceVariant,
+    onSurfaceVariant = EmberOnSurfaceVariant,
+    error = EmberDanger,
+    onError = OnError
 )
 
 private val CyanLightColorScheme = lightColorScheme(
@@ -58,7 +58,7 @@ private val CyanLightColorScheme = lightColorScheme(
     surfaceVariant = SurfaceVariant,
     onSurfaceVariant = OnSurfaceVariant,
     error = Error,
-    onError = OnError,
+    onError = OnError
 )
 
 private val RedLightColorScheme = lightColorScheme(
@@ -81,7 +81,7 @@ private val RedLightColorScheme = lightColorScheme(
     surfaceVariant = SurfaceVariant,
     onSurfaceVariant = OnSurfaceVariant,
     error = Error,
-    onError = OnError,
+    onError = OnError
 )
 
 private val AmberDarkColorScheme = darkColorScheme(
@@ -97,14 +97,14 @@ private val AmberDarkColorScheme = darkColorScheme(
     onTertiary = DarkOnTertiary,
     tertiaryContainer = DarkTertiaryContainer,
     onTertiaryContainer = DarkOnTertiaryContainer,
-    background = DarkBackground,
-    onBackground = DarkOnBackground,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    error = DarkError,
-    onError = DarkOnError,
+    background = EmberDarkBackground,
+    onBackground = EmberDarkOnBackground,
+    surface = EmberDarkSurface,
+    onSurface = EmberDarkOnSurface,
+    surfaceVariant = EmberDarkSurfaceVariant,
+    onSurfaceVariant = EmberDarkOnSurfaceVariant,
+    error = EmberDanger,
+    onError = DarkOnError
 )
 
 private val CyanDarkColorScheme = darkColorScheme(
@@ -127,7 +127,7 @@ private val CyanDarkColorScheme = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
     error = DarkError,
-    onError = DarkOnError,
+    onError = DarkOnError
 )
 
 private val RedDarkColorScheme = darkColorScheme(
@@ -150,36 +150,24 @@ private val RedDarkColorScheme = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
     error = DarkError,
-    onError = DarkOnError,
+    onError = DarkOnError
 )
 
-/**
- * Derives [IronLogSurfaceRoles] from any [ColorScheme], so surface roles
- * stay visually consistent with dynamic or static themes.
- */
 private fun deriveSurfaceRoles(
     colorScheme: ColorScheme,
     isDark: Boolean
 ): IronLogSurfaceRoles {
-    // "elevated" = surface tinted slightly by primary (like elevation tone 2)
-    val elevated = colorScheme.primary.copy(alpha = if (isDark) 0.08f else 0.05f)
+    val tintBase = if (isDark) DarkPrimary else Primary
+    val elevated = tintBase.copy(alpha = if (isDark) 0.10f else 0.06f)
         .compositeOver(colorScheme.surface)
-
-    // "muted" = surface with subtle tint (like elevation tone 1)
-    val muted = colorScheme.primary.copy(alpha = if (isDark) 0.05f else 0.04f)
+    val muted = tintBase.copy(alpha = if (isDark) 0.06f else 0.04f)
         .compositeOver(colorScheme.surface)
-
-    // "accentSuccess" = tertiary color serves as success semantic
-    val accentSuccess = colorScheme.tertiary
-
-    // "accentWarning" = primary serves as the attention/warning semantic
-    val accentWarning = colorScheme.primary
 
     return IronLogSurfaceRoles(
         elevated = elevated,
         muted = muted,
-        accentSuccess = accentSuccess,
-        accentWarning = accentWarning
+        accentSuccess = EmberSuccess,
+        accentWarning = tintBase
     )
 }
 
@@ -200,9 +188,7 @@ fun IronLogTheme(
     val context = LocalContext.current
     val isDynamic = useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
-        isDynamic -> {
-            if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+        isDynamic -> if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         isDarkTheme -> when (themeScheme) {
             ThemeScheme.AMBER -> AmberDarkColorScheme
             ThemeScheme.DEEP_CYAN -> CyanDarkColorScheme
@@ -215,30 +201,71 @@ fun IronLogTheme(
         }
     }
 
+    val semanticColors = EmberSemanticColors(
+        success = EmberSuccess,
+        danger = EmberDanger,
+        warning = EmberWarning,
+        rose = EmberRose,
+        roseLight = EmberRoseLight,
+        sky = EmberSky,
+        skyLight = EmberSkyLight,
+        violet = EmberViolet,
+        violetLight = EmberVioletLight,
+        teal = EmberTeal,
+        tealLight = EmberTealLight
+    )
+
     val surfaceRoles = if (isDynamic) {
-        // Derive surface roles from the dynamic color scheme so everything
-        // stays visually harmonious with the wallpaper-based palette.
         deriveSurfaceRoles(colorScheme, isDarkTheme)
     } else if (isDarkTheme) {
-        IronLogSurfaceRoles(
-            elevated = DarkSurfaceElevated,
-            muted = DarkSurfaceMuted,
-            accentSuccess = DarkAccentSuccess,
-            accentWarning = DarkAccentWarning
-        )
+        when (themeScheme) {
+            ThemeScheme.AMBER -> IronLogSurfaceRoles(
+                elevated = EmberDarkSurfaceElevated,
+                muted = EmberDarkSurfaceMuted,
+                accentSuccess = EmberSuccess,
+                accentWarning = DarkPrimary
+            )
+            ThemeScheme.DEEP_CYAN -> IronLogSurfaceRoles(
+                elevated = DarkSurfaceElevated,
+                muted = DarkSurfaceMuted,
+                accentSuccess = DarkAccentSuccess,
+                accentWarning = DarkCyanPrimary
+            )
+            ThemeScheme.NEON_RED -> IronLogSurfaceRoles(
+                elevated = DarkSurfaceElevated,
+                muted = DarkSurfaceMuted,
+                accentSuccess = DarkAccentSuccess,
+                accentWarning = DarkRedPrimary
+            )
+        }
     } else {
-        IronLogSurfaceRoles(
-            elevated = SurfaceElevated,
-            muted = SurfaceMuted,
-            accentSuccess = AccentSuccess,
-            accentWarning = AccentWarning
-        )
+        when (themeScheme) {
+            ThemeScheme.AMBER -> IronLogSurfaceRoles(
+                elevated = EmberSurfaceElevated,
+                muted = EmberSurfaceMuted,
+                accentSuccess = EmberSuccess,
+                accentWarning = Primary
+            )
+            ThemeScheme.DEEP_CYAN -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = CyanPrimary
+            )
+            ThemeScheme.NEON_RED -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = RedPrimary
+            )
+        }
     }
 
     CompositionLocalProvider(
         LocalIronLogDimens provides IronLogDimens(),
         LocalIronLogMotion provides IronLogMotion(reduced = reducedMotion),
-        LocalIronLogSurfaceRoles provides surfaceRoles
+        LocalIronLogSurfaceRoles provides surfaceRoles,
+        LocalEmberSemanticColors provides semanticColors
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import com.ironlog.app.presentation.theme.IconSize
 import com.ironlog.app.presentation.theme.ironLogDimens
 
 @Composable
@@ -37,7 +38,7 @@ fun EmptyStateScreen(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(dims.spacingXl + dims.spacingMd),
+                modifier = Modifier.size(IconSize.xxl),
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(dims.spacingMd))
