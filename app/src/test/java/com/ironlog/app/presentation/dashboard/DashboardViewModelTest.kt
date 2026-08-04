@@ -365,7 +365,7 @@ class DashboardViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(callbackCalled)
-        assertTrue(vm.uiState.value.error?.contains("Meta-Plan ist unvollstaendig") == true)
+        assertTrue(vm.uiState.value.error?.contains("Meta-Plan ist unvollständig") == true)
         assertNull(workoutRepo.getActiveSession())
     }
 
