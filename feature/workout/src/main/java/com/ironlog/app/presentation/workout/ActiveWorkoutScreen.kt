@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.workout
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -97,6 +98,7 @@ private data class ExerciseRenderGroup(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
