@@ -75,7 +75,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("StringFormatInvalid")
+@SuppressLint("StringFormatInvalid", "LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
