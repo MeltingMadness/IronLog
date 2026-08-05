@@ -85,28 +85,9 @@ jobs:
           disable-animations: true
           disable-linux-hw-accel: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
-          # Script runs under /bin/sh (dash on ubuntu) — keep it POSIX-compatible.
-          script: |
-            set -eu
-            adb wait-for-device
-            # Boot-completed alone is not enough: wait until PackageManager is up.
-            echo "Waiting for package manager service..."
-            i=1
-            while [ "$i" -le 90 ]; do
-              if adb shell cmd package list packages >/dev/null 2>&1; then
-                echo "Package manager ready after ${i} attempt(s)."
-                break
-              fi
-              if [ "$i" -eq 90 ]; then
-                echo "Package manager did not become ready in time."
-                adb shell getprop sys.boot_completed || true
-                adb shell service list || true
-                exit 1
-              fi
-              i=$((i + 1))
-              sleep 2
-            done
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+          # Keep script as a single line: the action invokes it via `sh -c`,
+          # so embedded quotes/newlines are fragile.
+          script: .github/scripts/wait-for-package-manager.sh && ./gradlew --no-daemon :app:connectedDebugAndroidTest
 
       - name: Upload androidTest reports
         if: always()
