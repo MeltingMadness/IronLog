@@ -64,13 +64,46 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # Public GitHub-hosted Ubuntu runners expose /dev/kvm, but the runner user
+      # is not in the kvm group by default. Without this, the emulator falls back
+      # to software acceleration and intermittently fails with
+      # "Can't find service: package" during APK install.
+      - name: Enable KVM group permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
       - name: Run instrumentation smoke tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           arch: x86_64
+          cores: 2
+          ram-size: 2048M
           disable-animations: true
-          script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+          disable-linux-hw-accel: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: |
+            set -euo pipefail
+            adb wait-for-device
+            # Boot-completed alone is not enough: wait until PackageManager is up.
+            echo "Waiting for package manager service..."
+            for i in $(seq 1 90); do
+              if adb shell cmd package list packages >/dev/null 2>&1; then
+                echo "Package manager ready after ${i} attempt(s)."
+                break
+              fi
+              if [ "$i" -eq 90 ]; then
+                echo "Package manager did not become ready in time."
+                adb shell getprop sys.boot_completed || true
+                adb shell service list || true
+                exit 1
+              fi
+              sleep 2
+            done
+            ./gradlew --no-daemon :app:connectedDebugAndroidTest
 
       - name: Upload androidTest reports
         if: always()
