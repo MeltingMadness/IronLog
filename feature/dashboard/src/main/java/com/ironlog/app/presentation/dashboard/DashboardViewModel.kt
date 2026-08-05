@@ -43,14 +43,21 @@ data class DashboardMetaSubPlanStatus(
     val lastDoneDaysAgo: Long?
 )
 
+data class DashboardPlanStatus(
+    val plan: TrainingPlan,
+    val lastDoneDaysAgo: Long?
+)
+
 data class DashboardUiState(
     val activeSession: WorkoutSession? = null,
-    val trainingPlans: List<TrainingPlan> = emptyList(),
+    val trainingPlans: List<DashboardPlanStatus> = emptyList(),
     val metaPlanOptions: List<DashboardMetaPlanOption> = emptyList(),
     val showPlanSelectionSheet: Boolean = false,
     val workoutsThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
     val currentStreak: Int = 0,
+    val workoutDaysThisWeek: Set<DayOfWeek> = emptySet(),
+    val weekStart: WeekStart = WeekStart.MONDAY,
     val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
@@ -92,7 +99,15 @@ class DashboardViewModel(
         }
 
         viewModelScope.launch {
-            trainingPlanRepository.getAllPlans()
+            combine(
+                trainingPlanRepository.getAllPlans(),
+                workoutRepository.observeLastSessionPerPlan()
+            ) { plans, lastPlanSessions ->
+                buildPlanOptions(
+                    plans = plans,
+                    lastSessionsPerPlan = lastPlanSessions
+                )
+            }
                 .catchAndLog("DashboardVM_Plans")
                 .collect { plans ->
                     _uiState.update { it.copy(trainingPlans = plans) }
@@ -162,6 +177,9 @@ class DashboardViewModel(
                 } else 0
 
                 val weekSets = statisticsRepository.getWorkSetsCompletedSince(startOfWeekMillis)
+                val workoutDaysThisWeek = weekSets
+                    .map { it.completedAt.toLocalDate().dayOfWeek }
+                    .toSet()
                 val exerciseMap = exerciseRepository
                     .getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
                     .associateBy { it.id }
@@ -200,6 +218,8 @@ class DashboardViewModel(
                         workoutsThisWeek = workoutsThisWeek,
                         workoutsThisMonth = workoutsThisMonth,
                         currentStreak = streak,
+                        workoutDaysThisWeek = workoutDaysThisWeek,
+                        weekStart = preferences.weekStart,
                         recentRecords = recordsWithNames,
                         lastWorkout = lastWorkout,
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,
@@ -287,7 +307,7 @@ class DashboardViewModel(
                 val nextPlan = option?.nextPlan
                 if (option == null || nextPlan == null) {
                     _uiState.update {
-                        it.copy(error = "Meta-Plan ist unvollstaendig oder enthaelt keine gueltigen Unterplaene.")
+                        it.copy(error = "Meta-Plan ist unvollständig oder enthält keine gültigen Unterpläne.")
                     }
                     return@launch
                 }
@@ -398,6 +418,32 @@ class DashboardViewModel(
                                 LocalDate.now()
                             )
                         }
+                    )
+                }
+            )
+        }
+    }
+
+    private fun buildPlanOptions(
+        plans: List<TrainingPlan>,
+        lastSessionsPerPlan: List<com.ironlog.app.domain.model.LastPlanSession>
+    ): List<DashboardPlanStatus> {
+        if (plans.isEmpty()) return emptyList()
+
+        val lastTimeByPlanId = lastSessionsPerPlan.associateBy(
+            keySelector = { it.planId },
+            valueTransform = { it.lastStartTime }
+        )
+
+        return plans.map { plan ->
+            DashboardPlanStatus(
+                plan = plan,
+                lastDoneDaysAgo = lastTimeByPlanId[plan.id]?.let { millis ->
+                    java.time.temporal.ChronoUnit.DAYS.between(
+                        java.time.Instant.ofEpochMilli(millis)
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toLocalDate(),
+                        LocalDate.now()
                     )
                 }
             )

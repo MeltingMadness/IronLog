@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+val releaseKeystoreProperties = Properties()
+val releaseKeystoreFile = rootProject.file("keystore.properties")
+val hasReleaseSigning = releaseKeystoreFile.exists()
+
+if (hasReleaseSigning) {
+    releaseKeystoreFile.inputStream().use(releaseKeystoreProperties::load)
 }
 
 android {
@@ -19,10 +29,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeystoreProperties.getProperty("storeFile"))
+                storePassword = releaseKeystoreProperties.getProperty("storePassword")
+                keyAlias = releaseKeystoreProperties.getProperty("keyAlias")
+                keyPassword = releaseKeystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -50,6 +74,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":shared"))
     // Project modules
     implementation(project(":core:model"))
     implementation(project(":core:common"))
@@ -95,6 +120,7 @@ dependencies {
 
     // Core
     implementation(libs.core.ktx)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.serialization.json)
@@ -106,10 +132,12 @@ dependencies {
     testImplementation(libs.koin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
+    testImplementation(project(":shared"))
 
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.room.testing)
+    androidTestImplementation(project(":shared"))
 }

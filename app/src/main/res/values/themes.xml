@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.IronLog" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.IronLog.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0C0806</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">#FF6B00</item>
+        <item name="postSplashScreenTheme">@style/Theme.IronLog</item>
+    </style>
 </resources>

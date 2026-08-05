@@ -1,20 +1,32 @@
-*.iml
-.gradle
-/local.properties
-*.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-/app/build
-/app/schemas
-.worktrees/
+# Gradle / Android
+.gradle/
+build/
+app/build/
 core/**/build/
 data/build/
 feature/**/build/
-build/
+shared/build/
+/captures
+.externalNativeBuild
+.cxx
+
+# Lokale/IDE-spezifische Dateien
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Signing & Geheimnisse (NIEMALS committen!)
+keystore.properties
+release-keystore/
+*.jks
+*.keystore
+
+# Crash-/Replay-Logs (JVM)
+hs_err_pid*.log
+replay_pid*.log
+
+# iOS (KMP)
+**/DerivedData/
+**/xcuserdata/
+*.xcworkspace/xcuserdata/

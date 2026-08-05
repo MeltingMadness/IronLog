@@ -1,6 +1,7 @@
 package com.ironlog.app.presentation.settings
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -8,6 +9,9 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
 import com.ironlog.core.designsystem.R
@@ -62,12 +68,14 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("StringFormatInvalid", "LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -207,16 +215,19 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.AMBER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
+                            leadingIcon = { SchemeColorDot(color = MaterialTheme.colorScheme.primary) },
                             label = { Text(stringResource(id = R.string.settings_scheme_amber)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.DEEP_CYAN,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.DEEP_CYAN) },
+                            leadingIcon = { SchemeColorDot(color = MaterialTheme.semantic.sky) },
                             label = { Text(stringResource(id = R.string.settings_scheme_deep_cyan)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.NEON_RED,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.NEON_RED) },
+                            leadingIcon = { SchemeColorDot(color = MaterialTheme.semantic.rose) },
                             label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) }
                         )
                     }
@@ -500,6 +511,16 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+@Composable
+private fun SchemeColorDot(color: Color) {
+    Box(
+        modifier = Modifier
+            .padding(end = 2.dp)
+            .background(color = color, shape = CircleShape)
+            .size(10.dp)
+    )
 }
 
 @Composable

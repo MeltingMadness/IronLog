@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 rootProject.name = "IronLog"
 
 include(":app")
+include(":shared")
 
 include(":core:model")
 include(":core:common")

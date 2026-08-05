@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 fun Modifier.glassmorphism(
     shape: Shape = RoundedCornerShape(20.dp),
     backgroundColor: Color = Color.White.copy(alpha = 0.56f),
-    borderColor: Color = Color.White.copy(alpha = 0.28f),
+    borderColor: Color = Color(0xFFFFB464).copy(alpha = 0.18f),
     borderWidth: Dp = 1.dp,
     specularHighlight: Boolean = true
 ): Modifier = this.then(
@@ -28,9 +28,9 @@ fun Modifier.glassmorphism(
         .background(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color.White.copy(alpha = 0.08f),
+                    Color(0xFFFFB464).copy(alpha = 0.07f),
                     Color.Transparent,
-                    Color.Black.copy(alpha = 0.08f)
+                    Color(0xFF2E1A00).copy(alpha = 0.10f)
                 )
             ),
             shape = shape
@@ -40,7 +40,7 @@ fun Modifier.glassmorphism(
             brush = Brush.linearGradient(
                 colors = listOf(
                     borderColor,
-                    borderColor.copy(alpha = 0.12f),
+                    borderColor.copy(alpha = 0.10f),
                     Color.Transparent,
                     borderColor.copy(alpha = 0.18f)
                 )
@@ -52,12 +52,12 @@ fun Modifier.glassmorphism(
             if (specularHighlight) {
                 val specularBrush = Brush.linearGradient(
                     colorStops = arrayOf(
-                        0f to Color.White.copy(alpha = 0.12f),
-                        0.4f to Color.White.copy(alpha = 0.04f),
+                        0f to Color(0xFFFFD080).copy(alpha = 0.16f),
+                        0.25f to Color(0xFFFFD080).copy(alpha = 0.05f),
                         1f to Color.Transparent
                     ),
                     start = Offset.Zero,
-                    end = Offset(size.width * 0.6f, size.height * 0.3f)
+                    end = Offset(0f, minOf(size.height * 0.35f, 60f))
                 )
                 drawRect(specularBrush)
             }

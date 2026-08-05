@@ -37,15 +37,21 @@ import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
+import com.ironlog.app.presentation.common.IronLogSurfaceCard
+import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.common.StatCardVariant
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
+import com.patrykandpatrick.vico.compose.common.fill
+import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
@@ -220,17 +226,34 @@ fun ExerciseStatsScreen(
                     }
 
                     item {
-                        CartesianChartHost(
-                            chart = rememberCartesianChart(
-                                rememberLineCartesianLayer(),
-                                startAxis = VerticalAxis.rememberStart(),
-                                bottomAxis = HorizontalAxis.rememberBottom(),
-                            ),
-                            modelProducer = modelProducer,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(250.dp)
-                        )
+                        IronLogSurfaceCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            tone = IronLogSurfaceTone.ACCENT
+                        ) {
+                            val lineColor = if (state.selectedMetric == ChartMetric.VOLUME) {
+                                MaterialTheme.semantic.teal
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            }
+                            CartesianChartHost(
+                                chart = rememberCartesianChart(
+                                    rememberLineCartesianLayer(
+                                        lineProvider = LineCartesianLayer.LineProvider.series(
+                                            LineCartesianLayer.rememberLine(
+                                                fill = LineCartesianLayer.LineFill.single(fill(lineColor))
+                                            )
+                                        )
+                                    ),
+                                    startAxis = VerticalAxis.rememberStart(),
+                                    bottomAxis = HorizontalAxis.rememberBottom(),
+                                ),
+                                modelProducer = modelProducer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .padding(dims.spacingSm)
+                            )
+                        }
                     }
                 } else {
                     item {

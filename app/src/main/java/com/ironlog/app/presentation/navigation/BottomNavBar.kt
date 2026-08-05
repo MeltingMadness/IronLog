@@ -49,11 +49,11 @@ fun BottomNavBar(navController: NavController) {
                 label = { Text(label) },
                 selected = currentRoute == item.screen.route,
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = surfaces.accentWarning.copy(alpha = 0.26f),
+                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.95f),
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 ),
                 onClick = {
                     if (currentRoute != item.screen.route) {

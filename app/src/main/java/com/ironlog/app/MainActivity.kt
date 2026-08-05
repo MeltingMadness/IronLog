@@ -5,6 +5,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -27,11 +28,11 @@ import com.ironlog.app.presentation.navigation.BottomNavBar
 import com.ironlog.app.presentation.navigation.IronLogNavHost
 import com.ironlog.app.presentation.navigation.Screen
 import com.ironlog.app.presentation.theme.IronLogTheme
-import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -71,9 +72,6 @@ class MainActivity : ComponentActivity() {
                     Screen.ExerciseLibrary.route,
                     Screen.TrainingPlanList.route
                 )
-
-                val surfaces = ironLogSurfaceRoles
-                
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
@@ -85,7 +83,8 @@ class MainActivity : ComponentActivity() {
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
                                         MaterialTheme.colorScheme.background,
                                         MaterialTheme.colorScheme.background
                                     )

@@ -1,5 +1,15 @@
 package com.ironlog.app.data.backup
 
+import com.ironlog.shared.backup.BackupExercise
+import com.ironlog.shared.backup.BackupMetaPlanItem
+import com.ironlog.shared.backup.BackupMetaTrainingPlan
+import com.ironlog.shared.backup.BackupPayloadV1
+import com.ironlog.shared.backup.BackupPayloadValidator
+import com.ironlog.shared.backup.BackupPersonalRecord
+import com.ironlog.shared.backup.BackupPlanExercise
+import com.ironlog.shared.backup.BackupTrainingPlan
+import com.ironlog.shared.backup.BackupWorkoutSession
+import com.ironlog.shared.backup.BackupWorkoutSet
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

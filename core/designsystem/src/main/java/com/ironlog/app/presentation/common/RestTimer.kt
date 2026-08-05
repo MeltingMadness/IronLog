@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -36,31 +37,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.theme.glassmorphism
+import com.ironlog.app.presentation.theme.semantic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Duration
+import java.time.Instant
 import java.util.Locale
 
 @Composable
 fun RestTimer(
-    startTime: LocalDateTime,
+    startTime: Instant,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    titleText: String? = null,
+    baseColor: Color? = null
 ) {
     var elapsed by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(startTime) {
         while (isActive) {
-            val now = LocalDateTime.now()
-            elapsed = now.toEpochSecond(ZoneOffset.UTC) - startTime.toEpochSecond(ZoneOffset.UTC)
+            elapsed = Duration.between(startTime, Instant.now()).seconds
             delay(1000)
         }
     }
 
     val minutes = elapsed / 60
     val seconds = elapsed % 60
-    val timeText = String.format(Locale.GERMAN, "%02d:%02d", minutes, seconds)
+    val timeText = String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
@@ -73,12 +76,16 @@ fun RestTimer(
         label = "pulse_scale"
     )
 
+    val activeColor = baseColor ?: MaterialTheme.semantic.sky
+    val containerColor = baseColor?.copy(alpha = 0.15f)
+        ?: MaterialTheme.semantic.sky.copy(alpha = 0.14f)
+    
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .glassmorphism(
-                backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                backgroundColor = containerColor,
+                borderColor = activeColor.copy(alpha = 0.3f)
             )
             .clickable { onDismiss() }
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -96,13 +103,13 @@ fun RestTimer(
                         scaleX = scale
                         scaleY = scale
                     }
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .background(activeColor, CircleShape)
             )
             
             Spacer(modifier = Modifier.width(8.dp))
             
             Text(
-                text = stringResource(id = R.string.workout_rest_timer_prefix),
+                text = titleText ?: stringResource(id = R.string.workout_rest_timer_prefix),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
@@ -118,7 +125,7 @@ fun RestTimer(
                         fontFeatureSettings = "tnum"
                     )
                 ),
-                color = MaterialTheme.colorScheme.primary,
+                color = activeColor,
                 fontWeight = FontWeight.Bold
             )
         }

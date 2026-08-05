@@ -77,7 +77,7 @@ class MetaPlanEditorViewModelTest {
         advanceUntilIdle()
 
         assertEquals(false, vm.uiState.value.isLoading)
-        assertTrue(vm.uiState.value.error?.contains("Unterplaene konnten nicht geladen werden") == true)
+        assertTrue(vm.uiState.value.error?.contains("Unterpläne konnten nicht geladen werden") == true)
     }
 
     @Test

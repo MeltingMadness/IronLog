@@ -137,7 +137,7 @@ class ExerciseLibraryViewModel(
                 }
                 editor.value = null
             } catch (e: Exception) {
-                error.value = "Uebung konnte nicht gespeichert werden: ${e.message}"
+                error.value = "Übung konnte nicht gespeichert werden: ${e.message}"
             }
         }
     }
@@ -147,7 +147,7 @@ class ExerciseLibraryViewModel(
             try {
                 exerciseRepository.deleteCustomExercise(id)
             } catch (e: Exception) {
-                error.value = "Uebung konnte nicht geloescht werden: ${e.message}"
+                error.value = "Übung konnte nicht gelöscht werden: ${e.message}"
             }
         }
     }

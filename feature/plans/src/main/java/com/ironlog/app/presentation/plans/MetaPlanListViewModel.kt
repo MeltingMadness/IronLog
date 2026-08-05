@@ -87,7 +87,7 @@ class MetaPlanListViewModel(
                     _uiState.value = MetaPlanListUiState(
                         items = emptyList(),
                         isLoading = false,
-                        error = "Meta-Plaene konnten nicht geladen werden: ${error.message}"
+                        error = "Meta-Pläne konnten nicht geladen werden: ${error.message}"
                     )
                 }
                 .collect { items ->
@@ -106,7 +106,7 @@ class MetaPlanListViewModel(
                 metaTrainingPlanRepository.deleteMetaPlan(metaPlanId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Meta-Plan konnte nicht geloescht werden: ${e.message}"
+                    error = "Meta-Plan konnte nicht gelöscht werden: ${e.message}"
                 )
             }
         }

@@ -52,6 +52,7 @@ import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.core.designsystem.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,7 +110,7 @@ fun ExercisePickerSheet(
                 exercises.filterNot { it.isArchived }
             }.catch { throwable ->
                 onCreationError?.invoke(
-                    "Uebungen konnten nicht geladen werden: ${throwable.message ?: "Unbekannter Fehler"}"
+                    "Übungen konnten nicht geladen werden: ${throwable.message ?: "Unbekannter Fehler"}"
                 )
                 emit(emptyList())
             }
@@ -193,7 +194,11 @@ fun ExercisePickerSheet(
                             .fillMaxWidth()
                             .clickable { onExerciseSelected(exercise) }
                             .semantics { role = Role.Button },
-                        tone = IronLogSurfaceTone.MUTED
+                        tone = IronLogSurfaceTone.ACCENT,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.semantic.sky.copy(alpha = 0.12f)
+                        )
                     ) {
                         ListItem(
                             headlineContent = { Text(exercise.name) },
@@ -240,7 +245,7 @@ fun ExercisePickerSheet(
                         onExerciseSelected(exercise)
                     }.onFailure { throwable ->
                         onCreationError?.invoke(
-                            throwable.message ?: "Uebung konnte nicht erstellt werden"
+                            throwable.message ?: "Übung konnte nicht erstellt werden"
                         )
                     }
                 }

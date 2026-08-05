@@ -21,15 +21,19 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
+import com.ironlog.app.presentation.theme.semantic
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -76,7 +80,13 @@ fun WeeklyVolumeCard(
             if (weeklyVolume.size >= 2) {
                 CartesianChartHost(
                     chart = rememberCartesianChart(
-                        rememberLineCartesianLayer(),
+                        rememberLineCartesianLayer(
+                            lineProvider = LineCartesianLayer.LineProvider.series(
+                                LineCartesianLayer.rememberLine(
+                                    fill = LineCartesianLayer.LineFill.single(fill(MaterialTheme.semantic.teal))
+                                )
+                            )
+                        ),
                         startAxis = VerticalAxis.rememberStart(),
                         bottomAxis = HorizontalAxis.rememberBottom(),
                     ),

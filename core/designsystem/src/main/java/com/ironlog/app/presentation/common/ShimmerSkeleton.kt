@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.Radius
 
 /**
  * Applies a sweeping shimmer effect to any composable.
@@ -74,7 +75,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(140.dp)
-                .clip(RoundedCornerShape(dims.radiusLg))
+                .clip(RoundedCornerShape(Radius.lg))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .shimmerEffect()
         )
@@ -88,7 +89,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .weight(1f)
                         .height(80.dp)
-                        .clip(RoundedCornerShape(dims.radiusLg))
+                        .clip(RoundedCornerShape(Radius.lg))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .shimmerEffect()
                 )
@@ -99,7 +100,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
-                .clip(RoundedCornerShape(dims.radiusLg))
+                .clip(RoundedCornerShape(Radius.lg))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .shimmerEffect()
         )
@@ -120,7 +121,7 @@ fun HistorySkeleton(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .clip(RoundedCornerShape(dims.radiusLg))
+                    .clip(RoundedCornerShape(Radius.lg))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .shimmerEffect()
             )
@@ -145,7 +146,7 @@ fun LoadingSkeleton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clip(RoundedCornerShape(dims.radiusMd))
+                    .clip(RoundedCornerShape(Radius.md))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .shimmerEffect()
             )

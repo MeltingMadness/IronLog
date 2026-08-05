@@ -66,6 +66,7 @@ import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.common.ironLogSharedElement
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.staggeredEntrance
 import org.koin.androidx.compose.koinViewModel
@@ -209,7 +210,7 @@ fun WorkoutHistoryScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SwipeToDeleteCard(
     item: WorkoutHistoryItem,
@@ -256,6 +257,7 @@ private fun SwipeToDeleteCard(
     }
 }
 
+@OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
 @Composable
 private fun WorkoutCard(
     item: WorkoutHistoryItem,
@@ -267,62 +269,55 @@ private fun WorkoutCard(
     IronLogSurfaceCard(
         modifier = Modifier
             .fillMaxWidth()
+            .ironLogSharedElement("workout_card_${item.session.id}")
             .clickable(onClick = onClick),
         tone = IronLogSurfaceTone.ELEVATED
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dims.spacingLg)
+                .padding(dims.spacingLg),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val title = if (item.session.name.isNotBlank()) item.session.name else stringResource(id = R.string.history_title)
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(dims.spacingXs))
-            
-            Text(
-                text = item.session.startTime.format(DateFormatting.DATE_FULL),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(dims.spacingSm))
-            
-            val durationMin = item.session.durationSeconds / 60
-            val statsList = mutableListOf<String>()
-            statsList.add("$durationMin min")
-            statsList.add("${item.exerciseCount} Übungen")
-            if (item.totalVolume > 0) {
-                statsList.add(WeightFormatting.formatVolume(item.totalVolume, unitSystem))
-            }
-            
-            Text(
-                text = statsList.joinToString(" • "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Spacer(modifier = Modifier.height(dims.spacingLg))
-            
-            androidx.compose.material3.Button(
-                onClick = onClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-            ) {
-                Icon(Icons.Default.ArrowForward, contentDescription = null)
-                Spacer(modifier = Modifier.width(dims.spacingXs))
+            Column(modifier = Modifier.weight(1f)) {
+                val title = if (item.session.name.isNotBlank()) item.session.name else stringResource(id = R.string.history_title)
                 Text(
-                    text = "Details",
-                    style = MaterialTheme.typography.titleMedium
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(dims.spacingXs))
+                
+                Text(
+                    text = item.session.startTime.format(DateFormatting.DATE_FULL),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(dims.spacingSm))
+                
+                val durationMin = item.session.durationSeconds / 60
+                val statsList = mutableListOf<String>()
+                statsList.add("$durationMin min")
+                statsList.add("${item.exerciseCount} Übungen")
+                if (item.totalVolume > 0) {
+                    statsList.add(WeightFormatting.formatVolume(item.totalVolume, unitSystem))
+                }
+                
+                Text(
+                    text = statsList.joinToString(" • "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
         }
     }
 }

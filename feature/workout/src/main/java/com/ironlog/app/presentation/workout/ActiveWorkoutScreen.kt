@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.workout
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -17,11 +18,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -52,13 +51,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,9 +82,14 @@ import androidx.compose.animation.core.spring
 import com.ironlog.app.presentation.common.RestTimer
 import com.ironlog.app.presentation.common.WorkoutTimer
 import com.ironlog.app.presentation.common.rememberHapticFeedback
+import com.ironlog.app.presentation.theme.ButtonSize
+import com.ironlog.app.presentation.theme.IconSize
+import com.ironlog.app.presentation.theme.Radius
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import java.util.Locale
 
 private data class ExerciseRenderGroup(
     val key: String,
@@ -92,6 +98,7 @@ private data class ExerciseRenderGroup(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
@@ -180,16 +187,28 @@ fun ActiveWorkoutScreen(
                     }
 
                     AnimatedVisibility(
-                        visible = state.restTimerStartTime != null,
+                        visible = state.restTimers.isNotEmpty(),
                         enter = fadeIn() + expandVertically(animationSpec = spring()),
                         exit = fadeOut() + shrinkVertically(animationSpec = spring())
                     ) {
-                        state.restTimerStartTime?.let { startTime ->
-                            RestTimer(
-                                startTime = startTime,
-                                onDismiss = viewModel::dismissRestTimer,
-                                modifier = Modifier.padding(bottom = dims.spacingMd)
-                            )
+                        androidx.compose.foundation.layout.FlowRow(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingMd),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                        ) {
+                            state.restTimers.forEach { (exerciseId, startTime) ->
+                                val exerciseWithSets = state.exercisesWithSets.find { it.exercise.id == exerciseId }
+                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.exercise.id == exerciseId } }
+                                val indexInSuperset = group?.exercises?.indexOfFirst { it.exercise.id == exerciseId } ?: -1
+
+                                RestTimer(
+                                    startTime = startTime,
+                                    onDismiss = { viewModel.dismissRestTimer(exerciseId) },
+                                    titleText = exerciseWithSets?.exercise?.name,
+                                    baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
+                                    modifier = Modifier.padding(horizontal = dims.spacingXs)
+                                )
+                            }
                         }
                     }
                 }
@@ -224,9 +243,10 @@ fun ActiveWorkoutScreen(
                                 }
                             )
                         }
-                        group.exercises.forEach { exerciseWithSets ->
+                        group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
                             ExerciseCard(
                                 exerciseWithSets = exerciseWithSets,
+                                tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
                                 onLogSet = { reps, weight, isWarmup, intensity ->
@@ -328,12 +348,22 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
 }
 
 @Composable
+private fun supersetTintColor(supersetGroupId: Int?, indexInSuperset: Int): Color? {
+    if (supersetGroupId == null || indexInSuperset < 0) return null
+    return when (indexInSuperset % 3) {
+        0 -> MaterialTheme.semantic.violet
+        1 -> MaterialTheme.semantic.sky
+        else -> MaterialTheme.semantic.rose
+    }
+}
+
+@Composable
 private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: String) {
     val dims = ironLogDimens
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
-        tone = IronLogSurfaceTone.ELEVATED,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+        tone = IronLogSurfaceTone.ACCENT,
+        border = BorderStroke(1.dp, MaterialTheme.semantic.violet.copy(alpha = 0.28f)),
     ) {
         Column(
             modifier = Modifier
@@ -342,10 +372,15 @@ private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: Stri
             verticalArrangement = Arrangement.spacedBy(dims.spacing2)
         ) {
             Text(
-                text = stringResource(id = R.string.workout_superset_header, groupId, exerciseCount),
+                text = pluralStringResource(
+                    id = R.plurals.workout_superset_header,
+                    count = exerciseCount,
+                    groupId,
+                    exerciseCount
+                ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.semantic.violet
             )
             Text(
                 text = exerciseNames,
@@ -361,6 +396,7 @@ private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: Stri
 @Composable
 private fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
+    tintColor: Color?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     onLogSet: (Int, Double, Boolean, String) -> Unit,
@@ -381,6 +417,7 @@ private fun ExerciseCard(
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
         tone = IronLogSurfaceTone.MUTED,
+        border = tintColor?.let { BorderStroke(1.dp, it.copy(alpha = 0.3f)) },
         alpha = 0.68f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
@@ -399,7 +436,7 @@ private fun ExerciseCard(
             ) {
                 if (showHistoryToggle) {
                     Box(
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(IconSize.lg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -409,12 +446,12 @@ private fun ExerciseCard(
                             } else {
                                 stringResource(id = R.string.workout_previous_show_cd)
                             },
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = tintColor ?: MaterialTheme.semantic.sky,
+                            modifier = Modifier.size(IconSize.sm)
                         )
                     }
                 } else {
-                    Spacer(modifier = Modifier.width(28.dp))
+                    Spacer(modifier = Modifier.width(IconSize.lg))
                 }
                 Text(
                     text = exerciseWithSets.exercise.name,
@@ -442,14 +479,14 @@ private fun ExerciseCard(
                 Text(
                     text = targetText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = tintColor ?: MaterialTheme.colorScheme.primary
                 )
                 if (completedWorkSets >= planTarget.targetSets) {
                     Text(
                         text = stringResource(id = R.string.workout_target_completed),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = MaterialTheme.semantic.success
                     )
                 }
             }
@@ -547,12 +584,12 @@ private fun PreviousSessionMiniHistory(
     Column(
         modifier = modifier
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.18f),
+                color = MaterialTheme.semantic.skyLight.copy(alpha = 0.35f),
                 shape = MaterialTheme.shapes.small
             )
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                color = MaterialTheme.semantic.sky.copy(alpha = 0.28f),
                 shape = MaterialTheme.shapes.small
             )
             .padding(horizontal = dims.spacingSm, vertical = dims.spacingXs),
@@ -593,7 +630,7 @@ private fun PreviousSessionSetRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = dims.spacing2),
         horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -623,12 +660,15 @@ private fun PreviousSessionSetRow(
         
         if (tracksIntensity) {
             val intensityText = formatIntensity(set.rpe, intensitySystem)
-            
+            val accentColor = rpeColor(set.rpe)
+
             LoggedSetBox(
                 value = intensityText,
                 suffix = intensitySystem.displayName,
                 isWarmup = set.isWarmup,
-                modifier = Modifier.weight(1f).alpha(0.7f)
+                modifier = Modifier.weight(1f).alpha(0.7f),
+                overrideContainerColor = accentColor?.copy(alpha = 0.15f),
+                overrideContentColor = accentColor
             )
         }
         
@@ -638,7 +678,11 @@ private fun PreviousSessionSetRow(
 }
 
 private fun formatWeightPlaceholder(weightKg: Double): String {
-    return if (weightKg % 1.0 == 0.0) weightKg.toInt().toString() else String.format("%.1f", weightKg)
+    return if (weightKg % 1.0 == 0.0) {
+        weightKg.toInt().toString()
+    } else {
+        String.format(Locale.ROOT, "%.1f", weightKg)
+    }
 }
 
 @Composable
@@ -646,22 +690,25 @@ private fun LoggedSetBox(
     value: String,
     suffix: String,
     isWarmup: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    overrideContainerColor: Color? = null,
+    overrideContentColor: Color? = null
 ) {
-    val containerColor = if (isWarmup) {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    val dims = ironLogDimens
+    val containerColor = overrideContainerColor ?: if (isWarmup) {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.34f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     }
 
     Box(
         modifier = modifier
-            .height(40.dp)
-            .background(color = containerColor, shape = MaterialTheme.shapes.small),
+            .height(ButtonSize.iconButton)
+            .background(color = containerColor, shape = RoundedCornerShape(Radius.sm)),
         contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = dims.spacingSm),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -672,7 +719,7 @@ private fun LoggedSetBox(
                     text = value,
                     fontSize = MaterialTheme.typography.titleMedium.fontSize,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isWarmup) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                    color = overrideContentColor ?: if (isWarmup) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     fontStyle = if (isWarmup) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -681,8 +728,8 @@ private fun LoggedSetBox(
                 Text(
                     text = suffix,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp)
+                    color = (overrideContentColor ?: MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.9f),
+                    modifier = Modifier.padding(start = dims.spacingXs)
                 )
             }
         }
@@ -699,15 +746,27 @@ private fun LoggedSetRow(
 ) {
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != com.ironlog.app.domain.model.IntensitySystem.OFF
-    var isEditing by remember { mutableStateOf(false) }
+    var isEditing by remember(set.id) { mutableStateOf(false) }
+    val weightText = remember(set.id, set.weightKg) {
+        if (set.weightKg % 1 == 0.0) set.weightKg.toInt().toString() else set.weightKg.toString()
+    }
+    val intensityText = remember(set.id, set.rpe, intensitySystem) {
+        formatIntensity(set.rpe, intensitySystem)
+    }
+    var repsInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
+    var weightInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
+    var intensityInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
+
+    LaunchedEffect(isEditing) {
+        if (isEditing) {
+            val repsText = set.reps.toString()
+            repsInput = TextFieldValue(repsText, TextRange(repsText.length))
+            weightInput = TextFieldValue(weightText, TextRange(weightText.length))
+            intensityInput = TextFieldValue(intensityText, TextRange(intensityText.length))
+        }
+    }
 
     if (isEditing) {
-        val weightText = if (set.weightKg % 1 == 0.0) set.weightKg.toInt().toString() else set.weightKg.toString()
-        var repsInput by remember { mutableStateOf(TextFieldValue(set.reps.toString(), TextRange(set.reps.toString().length))) }
-        var weightInput by remember { mutableStateOf(TextFieldValue(weightText, TextRange(weightText.length))) }
-        val intensityInitial = formatIntensity(set.rpe, intensitySystem)
-        var intensityInput by remember { mutableStateOf(TextFieldValue(intensityInitial, TextRange(intensityInitial.length))) }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -757,7 +816,7 @@ private fun LoggedSetRow(
                     isEditing = false
                     haptic.confirm()
                 },
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(ButtonSize.iconButton),
                 colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -766,7 +825,7 @@ private fun LoggedSetRow(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = stringResource(id = R.string.common_log),
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(IconSize.sm)
                 )
             }
         }
@@ -807,25 +866,27 @@ private fun LoggedSetRow(
             )
             
             if (tracksIntensity) {
-                val intensityText = formatIntensity(set.rpe, intensitySystem)
-                
+                val accentColor = rpeColor(set.rpe)
+
                 LoggedSetBox(
                     value = intensityText,
                     suffix = intensitySystem.displayName,
                     isWarmup = set.isWarmup,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    overrideContainerColor = accentColor?.copy(alpha = 0.15f),
+                    overrideContentColor = accentColor
                 )
             }
             
             IconButton(
                 onClick = { haptic.reject(); onDeleteSet(set.id) },
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(ButtonSize.iconButton)
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(id = R.string.workout_delete_set_cd),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+                    tint = MaterialTheme.semantic.danger,
+                    modifier = Modifier.size(IconSize.sm)
                 )
             }
         }
@@ -898,7 +959,7 @@ private fun PendingSetRow(
                     onLog(reps, weight, if (tracksIntensity) intensityInput.text else "")
                 }
             },
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(ButtonSize.iconButton),
             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -907,7 +968,7 @@ private fun PendingSetRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = stringResource(id = R.string.common_log),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(IconSize.sm)
             )
         }
     }
@@ -941,7 +1002,7 @@ private fun ExtraSetInput(
                 selected = isWarmup,
                 onClick = { isWarmup = !isWarmup },
                 label = { Text(stringResource(id = R.string.workout_warmup_chip), style = MaterialTheme.typography.labelSmall) },
-                modifier = Modifier.height(28.dp)
+                modifier = Modifier.height(ButtonSize.heightXs)
             )
         }
 
@@ -979,6 +1040,17 @@ private fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): Str
         rpe
     }
     return if (displayValue % 1.0 == 0.0) displayValue.toInt().toString() else displayValue.toString()
+}
+
+@Composable
+private fun rpeColor(rpe: Double?): Color? {
+    if (rpe == null) return null
+    return when {
+        rpe <= 7.0 -> MaterialTheme.semantic.success   // Grün
+        rpe <= 8.0 -> MaterialTheme.semantic.warning    // Amber
+        rpe <= 9.0 -> MaterialTheme.semantic.rose.copy(alpha = 0.85f) // Orange-Rose
+        else       -> MaterialTheme.semantic.danger     // Rot für RPE 10
+    }
 }
 
 

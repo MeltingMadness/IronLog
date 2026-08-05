@@ -1,0 +1,62 @@
+name: IronLogIOS
+options:
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    PRODUCT_NAME: IronLogIOS
+    SWIFT_VERSION: 5.10
+    DEVELOPMENT_TEAM: ""
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+targets:
+  IronLogIOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: IronLogIOS
+    dependencies:
+      - framework: ../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework
+        embed: true
+        codeSign: false
+    info:
+      path: IronLogIOS/Info.plist
+      properties:
+        CFBundleDisplayName: IronLog
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UILaunchScreen: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ironlog.ios
+        INFOPLIST_FILE: IronLogIOS/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        FRAMEWORK_SEARCH_PATHS: $(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+    preBuildScripts:
+      - name: Build Shared Framework
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+  IronLogIOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: IronLogIOSTests
+    dependencies:
+      - target: IronLogIOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ironlog.ios.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  IronLogIOS:
+    build:
+      targets:
+        IronLogIOS: all
+        IronLogIOSTests: [test]
+    test:
+      targets:
+        - IronLogIOSTests

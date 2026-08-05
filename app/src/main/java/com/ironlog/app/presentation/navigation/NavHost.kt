@@ -1,5 +1,10 @@
 package com.ironlog.app.presentation.navigation
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.runtime.CompositionLocalProvider
+import com.ironlog.app.presentation.common.LocalAnimatedVisibilityScope
+import com.ironlog.app.presentation.common.LocalSharedTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.snap
@@ -27,11 +32,16 @@ import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
 import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun IronLogNavHost(navController: NavHostController) {
     val motion = ironLogMotion
 
-    NavHost(
+    SharedTransitionLayout {
+        CompositionLocalProvider(
+            LocalSharedTransitionScope provides this@SharedTransitionLayout
+        ) {
+            NavHost(
         navController = navController,
         startDestination = Screen.Dashboard.route,
         enterTransition = {
@@ -131,23 +141,27 @@ fun IronLogNavHost(navController: NavHostController) {
         }
 
         composable(Screen.WorkoutHistory.route) {
-            WorkoutHistoryScreen(
+            CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@composable) {
+                WorkoutHistoryScreen(
                 onWorkoutClick = { sessionId ->
                     navController.navigate(Screen.WorkoutDetail.createRoute(sessionId))
                 }
             )
+            }
         }
 
         composable(
             route = Screen.WorkoutDetail.route,
             arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
         ) {
-            WorkoutDetailScreen(
+            CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@composable) {
+                WorkoutDetailScreen(
                 onBack = { navController.popBackStack() },
                 onExerciseClick = { exerciseId ->
                     navController.navigate(Screen.ExerciseStats.createRoute(exerciseId))
                 }
             )
+            }
         }
 
         composable(
@@ -218,4 +232,6 @@ fun IronLogNavHost(navController: NavHostController) {
             )
         }
     }
+    }
+}
 }

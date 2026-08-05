@@ -19,8 +19,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.theme.ButtonSize
+import com.ironlog.app.presentation.theme.IconSize
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.pressScale
 
 @Composable
 fun SetInputRow(
@@ -69,10 +70,8 @@ fun SetInputRow(
             )
         }
         IconButton(
-            onClick = {},
-            modifier = Modifier
-                .size(40.dp)
-                .pressScale(onClick = onLog),
+            onClick = onLog,
+            modifier = Modifier.size(ButtonSize.iconButton),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -81,7 +80,7 @@ fun SetInputRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = stringResource(id = R.string.common_log),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(IconSize.sm)
             )
         }
     }

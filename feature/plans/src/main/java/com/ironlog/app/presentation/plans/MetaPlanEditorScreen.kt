@@ -45,6 +45,7 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -219,7 +220,8 @@ private fun SelectedSubPlanRow(
     val dims = ironLogDimens
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
-        tone = IronLogSurfaceTone.MUTED,
+        tone = IronLogSurfaceTone.COLORED,
+        semanticColor = MaterialTheme.semantic.violet,
         alpha = 0.68f
     ) {
         Row(

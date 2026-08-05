@@ -27,6 +27,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -132,6 +133,18 @@ class ActiveWorkoutViewModelTest {
         assertEquals(10, sets[0].reps)
         assertEquals(80.0, sets[0].weightKg, 0.01)
         assertEquals(1, sets[0].setNumber)
+    }
+
+    @Test
+    fun `logSet vergibt bei schnellen Folgeaufrufen fortlaufende Setnummern`() = runTest {
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        vm.logSet(exerciseId = 1L, reps = 8, weightKg = 85.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId).sortedBy { it.setNumber }
+        assertEquals(listOf(1, 2), sets.map { it.setNumber })
     }
 
     @Test
@@ -373,6 +386,85 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `previous session hint prefers last completed session of same plan even if another plan is newer`() = runTest {
+        val targetPlanId = 55L
+        val otherPlanId = 77L
+        val samePlanSessionId = 201L
+        val otherPlanSessionId = 202L
+
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = samePlanSessionId,
+                startTime = LocalDateTime.now().minusDays(3),
+                endTime = LocalDateTime.now().minusDays(3).plusHours(1),
+                durationSeconds = 3600,
+                planId = targetPlanId,
+                metaPlanId = 500L
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 801L,
+                sessionId = samePlanSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 82.5,
+                isWarmup = false
+            )
+        )
+
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = otherPlanSessionId,
+                startTime = LocalDateTime.now().minusDays(1),
+                endTime = LocalDateTime.now().minusDays(1).plusHours(1),
+                durationSeconds = 3600,
+                planId = otherPlanId
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 802L,
+                sessionId = otherPlanSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 95.0,
+                isWarmup = false
+            )
+        )
+
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "sessionId" to sessionId,
+                "planId" to targetPlanId,
+                "metaPlanId" to 500L
+            )
+        )
+        val vm = ActiveWorkoutViewModel(
+            savedStateHandle,
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            planRepo,
+            prefsRepo
+        )
+        vm.addExercise(testExercise)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val previous = vm.uiState.value.exercisesWithSets.first().previousSession
+        assertNotNull(previous)
+        assertEquals(samePlanSessionId, previous!!.sessionId)
+        assertEquals(82.5, previous.lastWorkSetWeightKg ?: 0.0, 0.01)
+
+        collector.cancel()
+    }
+
+    @Test
     fun `resuming active workout loads existing exercises from sets`() = runTest {
         // Setup existing set for the active session (simulating a resumed workout)
         workoutRepo.addSetDirectly(
@@ -397,6 +489,102 @@ class ActiveWorkoutViewModelTest {
         assertEquals(testExercise.id, state.exercisesWithSets[0].exercise.id)
         assertEquals(1, state.exercisesWithSets[0].sets.size)
         
+        collector.cancel()
+    }
+
+    @Test
+    fun `resuming active workout reconciles exercises from sets without duplicates`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 101L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 70.0,
+                isWarmup = false
+            )
+        )
+
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val firstIds = vm.uiState.value.exercisesWithSets.map { it.exercise.id }
+        testDispatcher.scheduler.advanceUntilIdle()
+        val secondIds = vm.uiState.value.exercisesWithSets.map { it.exercise.id }
+
+        assertEquals(listOf(testExercise.id), firstIds)
+        assertEquals(firstIds, secondIds)
+        assertEquals(secondIds.distinct().size, secondIds.size)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `rest timer disappears automatically after logging last planned work set`() = runTest {
+        val planId = 88L
+        val plan = com.ironlog.app.domain.model.TrainingPlan(
+            id = planId,
+            name = "Push Day",
+            exercises = listOf(
+                com.ironlog.app.domain.model.PlanExercise(
+                    exerciseId = testExercise.id,
+                    orderIndex = 0,
+                    targetSets = 2,
+                    targetReps = 8,
+                    targetWeightKg = 80.0
+                )
+            )
+        )
+        planRepo.savePlan(plan)
+
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(testExercise.id in vm.uiState.value.restTimers)
+
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(testExercise.id !in vm.uiState.value.restTimers)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `rest timer state uses instant and dismisses per exercise independently`() = runTest {
+        val secondExercise = Exercise(
+            id = 2L,
+            name = "Schraegbankdruecken",
+            primaryMuscleGroup = MuscleGroup.BRUST,
+            category = ExerciseCategory.KURZHANTEL
+        )
+        exerciseRepo.addExercise(secondExercise)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+        vm.logSet(exerciseId = secondExercise.id, reps = 12, weightKg = 32.5)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val restTimers = vm.uiState.value.restTimers
+        assertEquals(setOf(testExercise.id, secondExercise.id), restTimers.keys)
+        val firstTimer: Instant = restTimers.getValue(testExercise.id)
+        val secondTimer: Instant = restTimers.getValue(secondExercise.id)
+        assertTrue(firstTimer.epochSecond > 0)
+        assertTrue(secondTimer.epochSecond > 0)
+
+        vm.dismissRestTimer(testExercise.id)
+
+        val afterDismiss = vm.uiState.value.restTimers
+        assertTrue(testExercise.id !in afterDismiss)
+        assertTrue(secondExercise.id in afterDismiss)
+
         collector.cancel()
     }
 }

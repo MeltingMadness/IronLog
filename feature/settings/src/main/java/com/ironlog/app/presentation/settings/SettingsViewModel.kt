@@ -17,6 +17,7 @@ import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.util.BuildInfo
+import com.ironlog.shared.settings.SettingsPreferencesController
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,6 +46,11 @@ class SettingsViewModel(
     private val incidentReportRepository: IncidentReportRepository,
     private val buildInfo: BuildInfo
 ) : ViewModel() {
+    private val preferencesController = SettingsPreferencesController(
+        scope = viewModelScope,
+        appPreferencesRepository = AndroidSharedAppPreferencesRepository(appPreferencesRepository),
+        reminderScheduler = AndroidSharedReminderScheduler(reminderScheduler)
+    )
 
     private val isBusy = MutableStateFlow(false)
     private val showResetDialog = MutableStateFlow(false)
@@ -53,12 +59,12 @@ class SettingsViewModel(
     val events = _events.asSharedFlow()
 
     val uiState: StateFlow<SettingsUiState> = combine(
-        appPreferencesRepository.preferences,
+        preferencesController.state,
         isBusy,
         showResetDialog
-    ) { preferences, busy, resetDialog ->
+    ) { preferencesState, busy, resetDialog ->
         SettingsUiState(
-            preferences = preferences,
+            preferences = preferencesState.preferences.toApp(),
             isBusy = busy,
             showResetDialog = resetDialog,
             buildInfo = buildInfo
@@ -66,70 +72,47 @@ class SettingsViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun updateUnitSystem(unitSystem: UnitSystem) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateUnitSystem(unitSystem)
-        }
+        preferencesController.updateUnitSystem(unitSystem.toShared())
     }
 
     fun updateWeekStart(weekStart: WeekStart) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateWeekStart(weekStart)
-        }
+        preferencesController.updateWeekStart(weekStart.toShared())
     }
 
     fun updateThemeMode(themeMode: ThemeMode) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateThemeMode(themeMode)
-        }
+        preferencesController.updateThemeMode(themeMode.toShared())
     }
 
     fun updateThemeScheme(themeScheme: ThemeScheme) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateThemeScheme(themeScheme)
-        }
+        preferencesController.updateThemeScheme(themeScheme.toShared())
     }
 
     fun updateUseDynamicColor(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateUseDynamicColor(enabled)
-        }
+        preferencesController.updateUseDynamicColor(enabled)
     }
 
     fun updateReducedMotion(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateReducedMotion(enabled)
-        }
+        preferencesController.updateReducedMotion(enabled)
     }
 
     fun updateDefaultWarmupFlag(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateDefaultWarmupFlag(enabled)
-        }
+        preferencesController.updateDefaultWarmupFlag(enabled)
     }
 
     fun updateTimerKeepScreenOn(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateTimerKeepScreenOn(enabled)
-        }
+        preferencesController.updateTimerKeepScreenOn(enabled)
     }
 
     fun updateBetaDiagnosticsOptIn(enabled: Boolean) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateBetaDiagnosticsOptIn(enabled)
-        }
+        preferencesController.updateBetaDiagnosticsOptIn(enabled)
     }
 
     fun updateIntensitySystem(system: IntensitySystem) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateIntensitySystem(system)
-        }
+        preferencesController.updateIntensitySystem(system.toShared())
     }
 
     fun updateReminderConfig(config: ReminderConfig) {
-        viewModelScope.launch {
-            appPreferencesRepository.updateReminderConfig(config)
-            reminderScheduler.sync(config)
-        }
+        preferencesController.updateReminderConfig(config.toShared())
     }
 
     fun exportBackup(uri: Uri) {

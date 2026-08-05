@@ -107,8 +107,10 @@ if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
     esac
 fi
 
-# Collect all arguments for the java command, stracks://am the agent://  arguments from JAVA_OPTS and GRADLE_OPTS to this script.
+# Collect all arguments for the java command, following arguments from JAVA_OPTS and GRADLE_OPTS to this script.
 DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+
+APP_ARGS=$@
 
 # Collect all arguments for the java command;
 #   * $DEFAULT_JVM_OPTS, $JAVA_OPTS, and $GRADLE_OPTS can contain fragments of

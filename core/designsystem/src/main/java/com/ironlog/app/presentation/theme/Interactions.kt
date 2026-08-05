@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * Falls back to plain clickable when reduced motion is on.
  */
 fun Modifier.pressScale(
-    targetScale: Float = 0.93f,
+    targetScale: Float = 0.96f,
     onClick: () -> Unit
 ): Modifier = composed {
     val motion = ironLogMotion

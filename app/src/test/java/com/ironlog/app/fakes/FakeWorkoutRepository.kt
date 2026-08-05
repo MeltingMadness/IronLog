@@ -175,7 +175,8 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
-        exerciseIds: List<Long>
+        exerciseIds: List<Long>,
+        planId: Long?
     ): Map<Long, PreviousExerciseSession> {
         if (exerciseIds.isEmpty()) return emptyMap()
 
@@ -186,7 +187,14 @@ class FakeWorkoutRepository : WorkoutRepository {
 
         return exerciseIds.distinct().mapNotNull { exerciseId ->
             val previousSessionId = sets.value
-                .filter { it.exerciseId == exerciseId && it.sessionId in completedById.keys }
+                .filter { set ->
+                    set.exerciseId == exerciseId &&
+                        set.sessionId in completedById.keys &&
+                        (
+                            planId == null ||
+                                completedById[set.sessionId]?.session?.planId == planId
+                            )
+                }
                 .sortedByDescending { completedById[it.sessionId]!!.session.startTime }
                 .firstOrNull()
                 ?.sessionId
@@ -204,6 +212,18 @@ class FakeWorkoutRepository : WorkoutRepository {
             )
         }.toMap()
     }
+
+    override fun observeLastSessionPerPlan(): Flow<List<com.ironlog.app.domain.model.LastPlanSession>> =
+        sessions.map { list ->
+            list.filter { !it.isActive && it.session.planId != null }
+                .groupBy { it.session.planId!! }
+                .map { (planId, entries) ->
+                    com.ironlog.app.domain.model.LastPlanSession(
+                        planId = planId,
+                        lastStartTime = entries.maxOf { it.session.startTime.toEpochMillis() }
+                    )
+                }
+        }
 
     override fun observeLastSessionPerMetaPlanSubPlan(): Flow<List<com.ironlog.app.domain.model.LastMetaPlanSession>> =
         sessions.map { list ->

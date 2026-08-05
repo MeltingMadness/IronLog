@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -38,7 +39,7 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanSelectionSheet(
-    plans: List<TrainingPlan>,
+    plans: List<DashboardPlanStatus>,
     metaPlanOptions: List<DashboardMetaPlanOption>,
     onDismiss: () -> Unit,
     onPlanSelected: (TrainingPlan) -> Unit,
@@ -68,20 +69,27 @@ fun PlanSelectionSheet(
                 contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
-                items(plans, key = { it.id }) { plan ->
+                items(plans, key = { it.plan.id }) { plan ->
+                    val lastDoneDaysAgo = plan.lastDoneDaysAgo
                     IronLogSurfaceCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onPlanSelected(plan) }
+                            .clickable { onPlanSelected(plan.plan) }
                             .semantics { role = Role.Button },
                         tone = IronLogSurfaceTone.ELEVATED
                     ) {
                         ListItem(
-                            headlineContent = { Text(plan.name) },
+                            headlineContent = { Text(plan.plan.name) },
+                            supportingContent = {
+                                Text(
+                                    text = lastDoneLabel(lastDoneDaysAgo),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
                             leadingContent = {
                                     Icon(
                                     Icons.AutoMirrored.Filled.Assignment,
-                                    contentDescription = plan.name
+                                    contentDescription = plan.plan.name
                                 )
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -193,6 +201,10 @@ private fun lastDoneLabel(daysAgo: Long?): String {
         null -> stringResource(id = R.string.plan_selection_meta_last_done_never)
         0L -> stringResource(id = R.string.plan_selection_meta_last_done_today)
         1L -> stringResource(id = R.string.plan_selection_meta_last_done_yesterday)
-        else -> stringResource(id = R.string.plan_selection_meta_last_done_days_ago, daysAgo.toInt())
+        else -> pluralStringResource(
+            id = R.plurals.plan_selection_meta_last_done_days_ago,
+            count = daysAgo.toInt(),
+            daysAgo.toInt()
+        )
     }
 }
