@@ -59,7 +59,7 @@ class BackupRepositoryImpl(
             exportedAtEpochMillis = System.currentTimeMillis(),
             exercises = exerciseDao.getAllExercisesList().map { it.toBackup() },
             workoutSessions = workoutSessionDao.getAllSessionsList().map { it.toBackup() },
-            workoutSets = workoutSetDao.getAllSetsList().map { it.toBackup() },
+            workoutSets = workoutSetDao.getAllSetsList().map { it.toBackupWorkoutSet() },
             trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
             planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
             personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
@@ -92,7 +92,7 @@ class BackupRepositoryImpl(
 
         val exercises = payload.exercises.distinctBy { it.id }.map { it.toEntity() }
         val sessions = payload.workoutSessions.distinctBy { it.id }.map { it.toEntity() }
-        val sets = payload.workoutSets.distinctBy { it.id }.map { it.toEntity() }
+        val sets = payload.workoutSets.distinctBy { it.id }.map { it.toWorkoutSetEntity() }
         val plans = payload.trainingPlans.distinctBy { it.id }.map { it.toEntity() }
         val planExercises = payload.planExercises.distinctBy { it.id }.map { it.toEntity() }
         val metaPlans = payload.metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() }
@@ -155,17 +155,6 @@ class BackupRepositoryImpl(
         metaPlanId = metaPlanId
     )
 
-    private fun WorkoutSetEntity.toBackup(): BackupWorkoutSet = BackupWorkoutSet(
-        id = id,
-        sessionId = sessionId,
-        exerciseId = exerciseId,
-        setNumber = setNumber,
-        reps = reps,
-        weightKg = weightKg,
-        isWarmup = isWarmup,
-        completedAt = completedAt
-    )
-
     private fun TrainingPlanEntity.toBackup(): BackupTrainingPlan = BackupTrainingPlan(
         id = id,
         name = name,
@@ -226,17 +215,6 @@ class BackupRepositoryImpl(
         metaPlanId = metaPlanId
     )
 
-    private fun BackupWorkoutSet.toEntity(): WorkoutSetEntity = WorkoutSetEntity(
-        id = id,
-        sessionId = sessionId,
-        exerciseId = exerciseId,
-        setNumber = setNumber,
-        reps = reps,
-        weightKg = weightKg,
-        isWarmup = isWarmup,
-        completedAt = completedAt
-    )
-
     private fun BackupTrainingPlan.toEntity(): TrainingPlanEntity = TrainingPlanEntity(
         id = id,
         name = name,
@@ -280,3 +258,27 @@ class BackupRepositoryImpl(
         private const val SCHEMA_VERSION = 8
     }
 }
+
+internal fun WorkoutSetEntity.toBackupWorkoutSet(): BackupWorkoutSet = BackupWorkoutSet(
+    id = id,
+    sessionId = sessionId,
+    exerciseId = exerciseId,
+    setNumber = setNumber,
+    reps = reps,
+    weightKg = weightKg,
+    isWarmup = isWarmup,
+    completedAt = completedAt,
+    rpe = rpe
+)
+
+internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity = WorkoutSetEntity(
+    id = id,
+    sessionId = sessionId,
+    exerciseId = exerciseId,
+    setNumber = setNumber,
+    reps = reps,
+    weightKg = weightKg,
+    isWarmup = isWarmup,
+    completedAt = completedAt,
+    rpe = rpe
+)
