@@ -167,9 +167,12 @@ class NavigationSmokeTest {
             }
         }
 
-        composeRule.waitForIdle()
-
         composeRule.onNodeWithContentDescription("Einstellungen").assertIsDisplayed()
+
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
+        }
 
         val hasStart = composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
         val hasContinue = composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
