@@ -260,7 +260,7 @@ class BackupLifecycleRoundTripTest {
      * Real database + DAOs + transaction runner + recovery store. Only the
      * content-provider document boundary is in-memory.
      */
-    private class Harness(context: Context) {
+    private class Harness(private val context: Context) {
         val dbName = "backup-lifecycle-${UUID.randomUUID()}.db"
         val documentIo = InMemoryBackupDocumentIo()
         val recoveryDir = File(
