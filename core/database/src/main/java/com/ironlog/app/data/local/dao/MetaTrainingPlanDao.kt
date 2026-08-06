@@ -71,6 +71,20 @@ interface MetaTrainingPlanDao {
     @Query("DELETE FROM meta_training_plans WHERE id = :metaPlanId")
     suspend fun deleteMetaPlan(metaPlanId: Long)
 
+    @Query("UPDATE workout_sessions SET metaPlanId = NULL WHERE metaPlanId = :metaPlanId")
+    suspend fun detachSessionsFromMetaPlan(metaPlanId: Long)
+
+    /**
+     * Atomically detaches referencing workout sessions before deleting the meta-plan.
+     * Sessions keep their own data and simply lose the meta-plan reference, which keeps
+     * the database and backups valid even for an active session.
+     */
+    @Transaction
+    suspend fun deleteMetaPlanAndDetachSessions(metaPlanId: Long) {
+        detachSessionsFromMetaPlan(metaPlanId)
+        deleteMetaPlan(metaPlanId)
+    }
+
     @Query("DELETE FROM meta_training_plans")
     suspend fun deleteAllMetaPlans()
 

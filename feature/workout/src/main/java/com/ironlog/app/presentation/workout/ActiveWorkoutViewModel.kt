@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,21 +54,78 @@ data class ExerciseWithSets(
     val previousSession: PreviousExerciseSessionUi? = null
 )
 
+sealed interface ActiveWorkoutSessionPhase {
+    data object Loading : ActiveWorkoutSessionPhase
+    data class Active(val session: WorkoutSession) : ActiveWorkoutSessionPhase
+    data object Missing : ActiveWorkoutSessionPhase
+}
+
+/**
+ * Describes the last failed mutation so the UI can offer a real retry without
+ * storing composable callbacks inside the ViewModel.
+ */
+sealed interface WorkoutRetryDescriptor {
+    data class LogSet(
+        val exerciseId: Long,
+        val reps: Int,
+        val weightKg: Double,
+        val isWarmup: Boolean,
+        val intensity: String,
+        val submissionId: Long
+    ) : WorkoutRetryDescriptor
+
+    data class UpdateSet(
+        val setId: Long,
+        val reps: Int,
+        val weightKg: Double,
+        val intensity: String
+    ) : WorkoutRetryDescriptor
+
+    data class DeleteSet(val setId: Long) : WorkoutRetryDescriptor
+
+    data class FinishWorkout(val discardEmptySession: Boolean) : WorkoutRetryDescriptor
+}
+
+data class WorkoutErrorUi(
+    val message: String,
+    val retry: WorkoutRetryDescriptor?,
+    val id: Long
+)
+
 data class ActiveWorkoutUiState(
-    val session: WorkoutSession? = null,
+    val sessionPhase: ActiveWorkoutSessionPhase = ActiveWorkoutSessionPhase.Loading,
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
     val restTimers: Map<Long, Instant> = emptyMap(),
-    val error: String? = null
+    val error: WorkoutErrorUi? = null,
+    val logInFlightByExercise: Map<Long, Int> = emptyMap(),
+    val logSuccessSubmissions: Set<Long> = emptySet(),
+    val updateInFlightBySet: Map<Long, Int> = emptyMap(),
+    val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
+    val finishInFlight: Boolean = false,
+    val workoutFinished: Boolean = false
 )
 
 private data class ActiveWorkoutChromeState(
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
     val restTimers: Map<Long, Instant> = emptyMap(),
-    val error: String? = null
+    val error: WorkoutErrorUi? = null
 )
+
+private data class OperationUiState(
+    val logInFlightByExercise: Map<Long, Int> = emptyMap(),
+    val logSuccessSubmissions: Set<Long> = emptySet(),
+    val updateInFlightBySet: Map<Long, Int> = emptyMap(),
+    val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
+    val finishInFlight: Boolean = false,
+    val workoutFinished: Boolean = false
+)
+
+private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
+
+internal fun nextSubmissionId(): Long = submissionIdSequence.incrementAndGet()
 
 sealed class WorkoutEvent {
     data class NewRecord(val exerciseName: String, val type: RecordType) : WorkoutEvent()
@@ -92,11 +152,24 @@ class ActiveWorkoutViewModel(
     private val showExercisePicker = MutableStateFlow(false)
     private val showFinishDialog = MutableStateFlow(false)
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
-    private val _error = MutableStateFlow<String?>(null)
+    private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
     private val _restTimers = MutableStateFlow<Map<Long, Instant>>(emptyMap())
     private val _planTargets = MutableStateFlow<Map<Long, PlanTarget>>(emptyMap())
     private val _planSupersetGroups = MutableStateFlow<Map<Long, Int?>>(emptyMap())
-    private val logSetMutex = Mutex()
+    private val operationState = MutableStateFlow(OperationUiState())
+    private var errorSequence = 0L
+    private val mutationMutex = Mutex()
+
+    private val sessionPhase = workoutRepository.observeSessionById(sessionId)
+        .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
+            if (session != null) {
+                ActiveWorkoutSessionPhase.Active(session)
+            } else {
+                ActiveWorkoutSessionPhase.Missing
+            }
+        }
+        .onStart { emit(ActiveWorkoutSessionPhase.Loading) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutSessionPhase.Loading)
 
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -157,17 +230,24 @@ class ActiveWorkoutViewModel(
     }
 
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
-        workoutRepository.observeSessionById(sessionId),
+        sessionPhase,
         exercisesWithSets,
-        chromeState
-    ) { session, exercises, chrome ->
+        chromeState,
+        operationState
+    ) { phase, exercises, chrome, operation ->
         ActiveWorkoutUiState(
-            session = session,
+            sessionPhase = phase,
             exercisesWithSets = exercises,
             showExercisePicker = chrome.showExercisePicker,
             showFinishDialog = chrome.showFinishDialog,
             restTimers = chrome.restTimers,
-            error = chrome.error
+            error = chrome.error,
+            logInFlightByExercise = operation.logInFlightByExercise,
+            logSuccessSubmissions = operation.logSuccessSubmissions,
+            updateInFlightBySet = operation.updateInFlightBySet,
+            updateSuccessCountBySet = operation.updateSuccessCountBySet,
+            finishInFlight = operation.finishInFlight,
+            workoutFinished = operation.workoutFinished
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
@@ -260,7 +340,7 @@ class ActiveWorkoutViewModel(
                     (newExercises + current).distinctBy { it.id }
                 }
             } catch (e: Exception) {
-                _error.value = "Plan-Übungen konnten nicht geladen werden: ${e.message}"
+                setError("Plan-Übungen konnten nicht geladen werden: ${e.message}")
             }
         }
     }
@@ -287,10 +367,23 @@ class ActiveWorkoutViewModel(
         showFinishDialog.value = false
     }
 
-    fun logSet(exerciseId: Long, reps: Int, weightKg: Double, isWarmup: Boolean = false, intensity: String = "") {
+    fun logSet(
+        exerciseId: Long,
+        reps: Int,
+        weightKg: Double,
+        isWarmup: Boolean = false,
+        intensity: String = "",
+        submissionId: Long = nextSubmissionId()
+    ) {
         viewModelScope.launch {
+            if (operationState.value.logInFlightByExercise[exerciseId] ?: 0 > 0) return@launch
+            operationState.update {
+                it.copy(logInFlightByExercise = incrementCounter(it.logInFlightByExercise, exerciseId))
+            }
+            var persisted = false
             try {
-                logSetMutex.withLock {
+                mutationMutex.withLock {
+                    if (operationState.value.workoutFinished) return@withLock
                     val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
                         .filter { it.exerciseId == exerciseId }
                     val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
@@ -310,7 +403,24 @@ class ActiveWorkoutViewModel(
                         ),
                         rpe = parsedRpe
                     )
+                    // The repository owns record recalculation and does it inside the same
+                    // transaction as the insert. The ViewModel only compares before/after and
+                    // must stay inside mutationMutex until that comparison is done, so a
+                    // concurrent delete/update cannot interleave and later be overwritten by
+                    // a stale add-based PR write.
+                    // Best-effort snapshot: a statistics-read failure must never block the
+                    // repository mutation. Without a snapshot no NewRecord event is emitted,
+                    // because an unknown baseline could otherwise produce false positives.
+                    val recordsBefore: Map<RecordType, PersonalRecord>? = if (!isWarmup) {
+                        snapshotRecordsBefore(exerciseId)
+                    } else {
+                        null
+                    }
                     workoutRepository.addSet(set)
+                    persisted = true
+                    if (!isWarmup && recordsBefore != null) {
+                        emitImprovedRecords(exerciseId, recordsBefore)
+                    }
                     val planTarget = _planTargets.value[exerciseId]
                     val completedWorkSetCount = persistedSets.count { !it.isWarmup } + if (isWarmup) 0 else 1
                     val reachedPlannedSetCount = !isWarmup &&
@@ -326,13 +436,32 @@ class ActiveWorkoutViewModel(
                         }
                     }
                 }
+                if (!persisted) return@launch
 
-                // Check for personal records
-                if (!isWarmup) {
-                    checkRecords(exerciseId, reps, weightKg)
+                operationState.update {
+                    it.copy(logSuccessSubmissions = it.logSuccessSubmissions + submissionId)
                 }
             } catch (e: Exception) {
-                _error.value = "Satz konnte nicht gespeichert werden: ${e.message}"
+                setError(
+                    message = "Satz konnte nicht gespeichert werden: ${e.message}",
+                    retry = WorkoutRetryDescriptor.LogSet(
+                        exerciseId = exerciseId,
+                        reps = reps,
+                        weightKg = weightKg,
+                        isWarmup = isWarmup,
+                        intensity = intensity,
+                        submissionId = submissionId
+                    )
+                )
+            } finally {
+                operationState.update {
+                    it.copy(
+                        logInFlightByExercise = decrementCounter(
+                            it.logInFlightByExercise,
+                            exerciseId
+                        )
+                    )
+                }
             }
         }
     }
@@ -358,104 +487,196 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    private suspend fun checkRecords(exerciseId: Long, reps: Int, weightKg: Double) {
+    /**
+     * Emits NewRecord only for values that actually improved after a successful
+     * repository mutation; the repository owns record recalculation, so this
+     * never writes a record itself.
+     */
+    private suspend fun emitImprovedRecords(
+        exerciseId: Long,
+        recordsBefore: Map<RecordType, PersonalRecord>
+    ) {
         try {
             val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
-
-            // Max weight
-            if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_WEIGHT, weightKg)) {
-                _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_WEIGHT))
-            }
-
-            // Max reps
-            if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_REPS, reps.toDouble())) {
-                _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_REPS))
-            }
-
-            // Estimated 1RM (Epley) — also valid for a true 1-rep max, where E1RM == weight
-            if (reps >= 1) {
-                val e1rm = com.ironlog.app.domain.util.WorkoutCalculations.calculateE1RM(weightKg, reps)
-                if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_E1RM, e1rm)) {
-                    _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_E1RM))
-                }
-            }
-
-            // Volume (weight × reps)
-            val allSets = statisticsRepository.getSetsForExerciseList(exerciseId)
-            // Group by session and find max session volume
-            val sessionVolumes = allSets
-                .filter { !it.isWarmup }
-                .groupBy { it.sessionId }
-                .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
-            val maxVolume = sessionVolumes.values.maxOrNull() ?: 0.0
-            if (maxVolume > 0) {
-                if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_VOLUME, maxVolume)) {
-                    _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_VOLUME))
+            val recordsAfter = statisticsRepository.getRecordsForExercisesList(listOf(exerciseId))
+                .associateBy { it.type }
+            RecordType.entries.forEach { type ->
+                val current = recordsAfter[type]?.value ?: return@forEach
+                val previous = recordsBefore[type]?.value
+                if (previous == null || current > previous) {
+                    _events.emit(WorkoutEvent.NewRecord(exercise.name, type))
                 }
             }
         } catch (e: Exception) {
-            // PR check failure should not crash the app, just log it
-            AppLogger.w("ActiveWorkoutVM", "PR-Pruefung fehlgeschlagen: ${e.message}", e)
+            AppLogger.w("ActiveWorkoutVM", "PR-Pruefung nach Mutation fehlgeschlagen: ${e.message}", e)
         }
     }
 
+    /**
+     * Loads the current personal records as a comparison baseline before a repository
+     * mutation. Best-effort by design: when statistics are temporarily unavailable the
+     * mutation still proceeds and the caller simply skips NewRecord emission.
+     */
+    private suspend fun snapshotRecordsBefore(exerciseId: Long): Map<RecordType, PersonalRecord>? =
+        try {
+            statisticsRepository.getRecordsForExercisesList(listOf(exerciseId))
+                .associateBy { it.type }
+        } catch (e: Exception) {
+            AppLogger.w("ActiveWorkoutVM", "PR-Snapshot konnte nicht geladen werden: ${e.message}", e)
+            null
+        }
+
     fun deleteSet(setId: Long) {
         viewModelScope.launch {
-            try {
-                workoutRepository.deleteSet(setId)
-            } catch (e: Exception) {
-                _error.value = "Satz konnte nicht gelöscht werden: ${e.message}"
+            mutationMutex.withLock {
+                if (operationState.value.workoutFinished) return@withLock
+                try {
+                    workoutRepository.deleteSet(setId)
+                } catch (e: Exception) {
+                    setError(
+                        message = "Satz konnte nicht gelöscht werden: ${e.message}",
+                        retry = WorkoutRetryDescriptor.DeleteSet(setId = setId)
+                    )
+                }
             }
         }
     }
 
     fun updateSet(setId: Long, reps: Int, weightKg: Double, intensity: String = "") {
         viewModelScope.launch {
+            operationState.update {
+                it.copy(updateInFlightBySet = incrementCounter(it.updateInFlightBySet, setId))
+            }
             try {
-                val sets = workoutRepository.getSetsForSessionList(sessionId)
-                val set = sets.find { it.id == setId } ?: return@launch
+                // A cleared/invalid reps field must never persist a stale or zero value.
+                if (reps <= 0) return@launch
 
-                val prefs = appPreferencesRepository.preferences.first()
-                // When intensity tracking is OFF, the intensity UI is hidden and the
-                // incoming string is always blank — preserve the existing RPE instead
-                // of wiping it out. When intensity tracking is on, a blank string means
-                // the user intentionally cleared the field.
-                val newRpe = if (prefs.intensitySystem == IntensitySystem.OFF) {
-                    set.rpe
-                } else {
-                    computeIntensity(intensity, prefs.intensitySystem)
-                }
+                mutationMutex.withLock {
+                    if (operationState.value.workoutFinished) return@withLock
 
-                val updatedSet = set.copy(
-                    reps = reps,
-                    weightKg = weightKg,
-                    rpe = newRpe
-                )
-                workoutRepository.updateSet(updatedSet)
+                    val sets = workoutRepository.getSetsForSessionList(sessionId)
+                    val set = sets.find { it.id == setId } ?: return@withLock
 
-                // Check for personal records
-                if (!updatedSet.isWarmup) {
-                    checkRecords(updatedSet.exerciseId, updatedSet.reps, updatedSet.weightKg)
+                    val prefs = appPreferencesRepository.preferences.first()
+                    // When intensity tracking is OFF, the intensity UI is hidden and the
+                    // incoming string is always blank — preserve the existing RPE instead
+                    // of wiping it out. When intensity tracking is on, a blank string means
+                    // the user intentionally cleared the field.
+                    val newRpe = if (prefs.intensitySystem == IntensitySystem.OFF) {
+                        set.rpe
+                    } else {
+                        computeIntensity(intensity, prefs.intensitySystem)
+                    }
+
+                    val updatedSet = set.copy(
+                        reps = reps,
+                        weightKg = weightKg,
+                        rpe = newRpe
+                    )
+                    val recordsBefore = snapshotRecordsBefore(updatedSet.exerciseId)
+                    workoutRepository.updateSet(updatedSet)
+                    if (recordsBefore != null) {
+                        emitImprovedRecords(updatedSet.exerciseId, recordsBefore)
+                    }
+                    operationState.update {
+                        it.copy(
+                            updateSuccessCountBySet = incrementCounter(
+                                it.updateSuccessCountBySet,
+                                setId
+                            )
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                _error.value = "Satz konnte nicht aktualisiert werden: ${e.message}"
+                setError(
+                    message = "Satz konnte nicht aktualisiert werden: ${e.message}",
+                    retry = WorkoutRetryDescriptor.UpdateSet(
+                        setId = setId,
+                        reps = reps,
+                        weightKg = weightKg,
+                        intensity = intensity
+                    )
+                )
+            } finally {
+                operationState.update {
+                    it.copy(updateInFlightBySet = decrementCounter(it.updateInFlightBySet, setId))
+                }
             }
         }
     }
 
     fun finishWorkout() {
         viewModelScope.launch {
-            try {
-                workoutRepository.finishWorkout(sessionId)
-                showFinishDialog.value = false
-            } catch (e: Exception) {
-                _error.value = "Training konnte nicht beendet werden: ${e.message}"
+            mutationMutex.withLock {
+                if (operationState.value.workoutFinished || operationState.value.finishInFlight) {
+                    return@withLock
+                }
+                operationState.update { it.copy(finishInFlight = true) }
+                var discardEmptySession = false
+                try {
+                    discardEmptySession = workoutRepository.getSetCountForSession(sessionId) == 0
+                    if (discardEmptySession) {
+                        workoutRepository.deleteSession(sessionId)
+                    } else {
+                        workoutRepository.finishWorkout(sessionId)
+                    }
+                    showFinishDialog.value = false
+                    operationState.update { it.copy(workoutFinished = true) }
+                } catch (e: Exception) {
+                    setError(
+                        message = "Training konnte nicht beendet werden: ${e.message}",
+                        retry = WorkoutRetryDescriptor.FinishWorkout(
+                            discardEmptySession = discardEmptySession
+                        )
+                    )
+                } finally {
+                    operationState.update { it.copy(finishInFlight = false) }
+                }
             }
+        }
+    }
+
+    fun retryLastError() {
+        val retry = _error.value?.retry ?: return
+        _error.value = null
+        when (retry) {
+            is WorkoutRetryDescriptor.LogSet -> logSet(
+                exerciseId = retry.exerciseId,
+                reps = retry.reps,
+                weightKg = retry.weightKg,
+                isWarmup = retry.isWarmup,
+                intensity = retry.intensity,
+                submissionId = retry.submissionId
+            )
+            is WorkoutRetryDescriptor.UpdateSet -> updateSet(
+                setId = retry.setId,
+                reps = retry.reps,
+                weightKg = retry.weightKg,
+                intensity = retry.intensity
+            )
+            is WorkoutRetryDescriptor.DeleteSet -> deleteSet(retry.setId)
+            is WorkoutRetryDescriptor.FinishWorkout -> finishWorkout()
         }
     }
 
     fun clearError() {
         _error.value = null
+    }
+
+    private fun setError(message: String, retry: WorkoutRetryDescriptor? = null) {
+        _error.value = WorkoutErrorUi(
+            message = message,
+            retry = retry,
+            id = errorSequence++
+        )
+    }
+
+    private fun incrementCounter(counter: Map<Long, Int>, key: Long): Map<Long, Int> =
+        counter + (key to ((counter[key] ?: 0) + 1))
+
+    private fun decrementCounter(counter: Map<Long, Int>, key: Long): Map<Long, Int> {
+        val next = (counter[key] ?: 0) - 1
+        return if (next <= 0) counter - key else counter + (key to next)
     }
 
     companion object {

@@ -2,6 +2,12 @@ package com.ironlog.app.di
 
 import com.ironlog.app.BuildConfig
 
+import com.ironlog.app.data.backup.BackupDocumentIo
+import com.ironlog.app.data.backup.ContentResolverBackupDocumentIo
+import com.ironlog.app.data.backup.FileRecoveryBackupStore
+import com.ironlog.app.data.backup.RecoveryBackupStore
+import com.ironlog.app.data.db.RoomTransactionRunner
+import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.preferences.AppPreferencesRepositoryImpl
 import com.ironlog.app.data.reminder.ReminderSchedulerImpl
@@ -47,9 +53,14 @@ val appModule = module {
     single { get<IronLogDatabase>().personalRecordDao() }
     single { get<IronLogDatabase>().trainingPlanDao() }
     single { get<IronLogDatabase>().metaTrainingPlanDao() }
+    single<TransactionRunner> { RoomTransactionRunner(get()) }
+    single<BackupDocumentIo> {
+        ContentResolverBackupDocumentIo(androidContext().contentResolver)
+    }
+    single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get()) }
+    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
@@ -58,8 +69,9 @@ val appModule = module {
     single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext(), get()) }
     single<BackupRepository> {
         BackupRepositoryImpl(
-            context = androidContext(),
-            database = get(),
+            transactionRunner = get(),
+            documentIo = get(),
+            recoveryStore = get(),
             exerciseDao = get(),
             workoutSessionDao = get(),
             workoutSetDao = get(),

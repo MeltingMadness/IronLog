@@ -17,7 +17,7 @@ import org.junit.Test
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 8
+        const val CURRENT_SCHEMA_VERSION = 9
     }
 
     @Test
@@ -203,5 +203,72 @@ class BackupPayloadValidatorTest {
 
         assertFalse(result.isValid)
         assertTrue(result.errors.any { it.contains("no exercises", ignoreCase = true) })
+    }
+
+    @Test
+    fun legacySchema8_payloadRemainsImportable() {
+        val payload = BackupPayloadV1(
+            formatVersion = 1,
+            schemaVersion = 8,
+            appVersion = "1.0",
+            exportedAtEpochMillis = 1000L,
+            exercises = listOf(
+                BackupExercise(
+                    id = 1L,
+                    name = "Bankdruecken",
+                    primaryMuscleGroup = "BRUST",
+                    secondaryMuscleGroups = "TRIZEPS",
+                    category = "LANGHANTEL",
+                    isCustom = false
+                )
+            ),
+            workoutSessions = emptyList(),
+            workoutSets = emptyList(),
+            trainingPlans = emptyList(),
+            planExercises = emptyList(),
+            personalRecords = emptyList()
+        )
+
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
+
+        assertTrue(result.errors.joinToString(), result.isValid)
+    }
+
+    @Test
+    fun duplicateExerciseIds_failValidation() {
+        val payload = BackupPayloadV1(
+            formatVersion = 1,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
+            appVersion = "1.0",
+            exportedAtEpochMillis = 1000L,
+            exercises = listOf(
+                BackupExercise(
+                    id = 1L,
+                    name = "Bankdruecken",
+                    primaryMuscleGroup = "BRUST",
+                    secondaryMuscleGroups = "TRIZEPS",
+                    category = "LANGHANTEL",
+                    isCustom = false
+                ),
+                BackupExercise(
+                    id = 1L,
+                    name = "Bankdruecken 2",
+                    primaryMuscleGroup = "BRUST",
+                    secondaryMuscleGroups = "",
+                    category = "LANGHANTEL",
+                    isCustom = true
+                )
+            ),
+            workoutSessions = emptyList(),
+            workoutSets = emptyList(),
+            trainingPlans = emptyList(),
+            planExercises = emptyList(),
+            personalRecords = emptyList()
+        )
+
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("duplicate exercise id: 1", ignoreCase = true) })
     }
 }

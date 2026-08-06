@@ -12,6 +12,9 @@ object BackupPayloadValidator {
         if (payload.formatVersion != 1) {
             errors += "Unsupported backup format version: ${payload.formatVersion}"
         }
+        if (payload.schemaVersion <= 0) {
+            errors += "Backup schema version must be positive: ${payload.schemaVersion}"
+        }
         if (payload.schemaVersion > currentSchemaVersion) {
             errors += "Backup schema version ${payload.schemaVersion} is newer than app schema $currentSchemaVersion"
         }
@@ -19,6 +22,15 @@ object BackupPayloadValidator {
         if (payload.exercises.isEmpty()) {
             errors += "Backup contains no exercises; refusing import to avoid wiping the exercise catalog"
         }
+
+        checkDuplicateIds(errors, payload.exercises.map { it.id }, "exercise")
+        checkDuplicateIds(errors, payload.workoutSessions.map { it.id }, "workout session")
+        checkDuplicateIds(errors, payload.workoutSets.map { it.id }, "workout set")
+        checkDuplicateIds(errors, payload.trainingPlans.map { it.id }, "training plan")
+        checkDuplicateIds(errors, payload.planExercises.map { it.id }, "plan exercise")
+        checkDuplicateIds(errors, payload.personalRecords.map { it.id }, "personal record")
+        checkDuplicateIds(errors, payload.metaTrainingPlans.map { it.id }, "meta training plan")
+        checkDuplicateIds(errors, payload.metaPlanItems.map { it.id }, "meta plan item")
 
         val exerciseIds = payload.exercises.map { it.id }.toSet()
         val sessionIds = payload.workoutSessions.map { it.id }.toSet()
@@ -76,5 +88,20 @@ object BackupPayloadValidator {
             isValid = errors.isEmpty(),
             errors = errors
         )
+    }
+
+    private fun checkDuplicateIds(
+        errors: MutableList<String>,
+        ids: List<Long>,
+        label: String
+    ) {
+        ids.groupingBy { it }
+            .eachCount()
+            .filterValues { it > 1 }
+            .keys
+            .sorted()
+            .forEach { id ->
+                errors += "Backup contains duplicate $label id: $id"
+            }
     }
 }

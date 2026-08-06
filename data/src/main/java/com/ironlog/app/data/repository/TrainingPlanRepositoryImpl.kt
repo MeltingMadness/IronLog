@@ -69,8 +69,7 @@ class TrainingPlanRepositoryImpl(
     }
 
     override suspend fun deletePlan(planId: Long) {
-        trainingPlanDao.deletePlan(planId)
-        // plan_exercises cascade-deleted via FK
+        trainingPlanDao.deletePlanAndDetachSessions(planId)
     }
 
     private fun normalizePlanExercises(exercises: List<PlanExercise>): List<PlanExercise> {

@@ -4,6 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
+import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -27,7 +28,8 @@ import java.time.LocalDateTime
 class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
     private val setDao: WorkoutSetDao,
-    private val personalRecordDao: PersonalRecordDao
+    private val personalRecordDao: PersonalRecordDao,
+    private val transactionRunner: TransactionRunner
 ) : WorkoutRepository {
     private val startWorkoutMutex = Mutex()
 
@@ -74,14 +76,32 @@ class WorkoutRepositoryImpl(
         sessionDao.observeActiveSession().map { it?.toDomain() }
 
     override suspend fun addSet(set: WorkoutSet): Long =
-        setDao.insert(WorkoutSetEntity.fromDomain(set))
+        transactionRunner.runInTransaction {
+            val id = setDao.insert(WorkoutSetEntity.fromDomain(set))
+            // The insert and the exact PR rebuild must share one transaction and run before
+            // any observer can compare records, otherwise a concurrent delete/update could
+            // recalculate first and the stale add-set values would resurrect a ghost PR.
+            if (!set.isWarmup) {
+                recalculatePersonalRecords(set.exerciseId)
+            }
+            id
+        }
 
     override suspend fun updateSet(set: WorkoutSet) {
-        setDao.update(WorkoutSetEntity.fromDomain(set))
+        transactionRunner.runInTransaction {
+            val previousExerciseId = setDao.getExerciseIdForSet(set.id)
+            setDao.update(WorkoutSetEntity.fromDomain(set))
+            listOfNotNull(previousExerciseId, set.exerciseId).distinct()
+                .forEach { exerciseId -> recalculatePersonalRecords(exerciseId) }
+        }
     }
 
     override suspend fun deleteSet(setId: Long) {
-        setDao.deleteSet(setId)
+        transactionRunner.runInTransaction {
+            val exerciseId = setDao.getExerciseIdForSet(setId) ?: return@runInTransaction
+            setDao.deleteSet(setId)
+            recalculatePersonalRecords(exerciseId)
+        }
     }
 
     override fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>> =
@@ -131,12 +151,14 @@ class WorkoutRepositoryImpl(
         sessionDao.observeSessionById(id).map { it?.toDomain() }
 
     override suspend fun deleteSession(sessionId: Long) {
-        // Personal records have no FK/cascade relationship to sessions or sets, so capture the
-        // affected exercises before deleting and rebuild their records afterwards, otherwise
-        // stale ("orphaned") records referencing now-deleted sets would remain forever.
-        val affectedExerciseIds = setDao.getExerciseIdsForSession(sessionId)
-        sessionDao.deleteSession(sessionId)
-        affectedExerciseIds.forEach { exerciseId -> recalculatePersonalRecords(exerciseId) }
+        transactionRunner.runInTransaction {
+            // Personal records have no FK/cascade relationship to sessions or sets, so capture the
+            // affected exercises before deleting and rebuild their records afterwards, otherwise
+            // stale ("orphaned") records referencing now-deleted sets would remain forever.
+            val affectedExerciseIds = setDao.getExerciseIdsForSession(sessionId)
+            sessionDao.deleteSession(sessionId)
+            affectedExerciseIds.forEach { exerciseId -> recalculatePersonalRecords(exerciseId) }
+        }
     }
 
     /**

@@ -74,7 +74,7 @@ class MetaTrainingPlanRepositoryImpl(
     }
 
     override suspend fun deleteMetaPlan(metaPlanId: Long) {
-        metaTrainingPlanDao.deleteMetaPlan(metaPlanId)
+        metaTrainingPlanDao.deleteMetaPlanAndDetachSessions(metaPlanId)
     }
 
     private fun normalizeItems(items: List<MetaTrainingPlanItem>) =
