@@ -66,8 +66,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.HapticFeedbackHelper
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
@@ -249,6 +251,7 @@ fun ActiveWorkoutScreen(
                                 tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
+                                unitSystem = preferences.unitSystem,
                                 onLogSet = { reps, weight, isWarmup, intensity ->
                                     viewModel.logSet(
                                         exerciseWithSets.exercise.id,
@@ -399,6 +402,7 @@ private fun ExerciseCard(
     tintColor: Color?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
     onLogSet: (Int, Double, Boolean, String) -> Unit,
     onUpdateSet: (Long, Int, Double, String) -> Unit,
     onDeleteSet: (Long) -> Unit,
@@ -408,7 +412,7 @@ private fun ExerciseCard(
     val planTarget = exerciseWithSets.planTarget
     val previousSession = exerciseWithSets.previousSession
     val showHistoryToggle = previousSession != null
-    val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let(::formatWeightPlaceholder)
+    val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let { formatWeightValue(it, unitSystem) }
     var showPreviousSession by remember(exerciseWithSets.exercise.id) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { !it.isWarmup }
@@ -497,7 +501,7 @@ private fun ExerciseCard(
                 for (setIndex in 1..targetSetCount) {
                     val matchingSet = loggedSets.filter { !it.isWarmup }.getOrNull(setIndex - 1)
                     if (matchingSet != null) {
-                        LoggedSetRow(set = matchingSet, intensitySystem = intensitySystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                        LoggedSetRow(set = matchingSet, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
                     } else {
                         PendingSetRow(
                             setNumber = setIndex,
@@ -505,17 +509,18 @@ private fun ExerciseCard(
                             defaultWeight = "",
                             weightPlaceholder = previousWeightHint,
                             intensitySystem = intensitySystem,
+                            unitSystem = unitSystem,
                             onLog = { reps, weight, intensity -> onLogSet(reps, weight, false, intensity) }
                         )
                     }
                 }
 
                 loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 loggedSets.filter { it.isWarmup }.forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -526,6 +531,7 @@ private fun ExerciseCard(
                         planTarget = planTarget,
                         defaultWarmupFlag = defaultWarmupFlag,
                         intensitySystem = intensitySystem,
+                        unitSystem = unitSystem,
                         weightPlaceholder = previousWeightHint,
                         onLogSet = onLogSet,
                         haptic = haptic
@@ -538,7 +544,7 @@ private fun ExerciseCard(
                 }
             } else {
                 loggedSets.forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -547,6 +553,7 @@ private fun ExerciseCard(
                     planTarget = null,
                     defaultWarmupFlag = defaultWarmupFlag,
                     intensitySystem = intensitySystem,
+                    unitSystem = unitSystem,
                     weightPlaceholder = previousWeightHint,
                     onLogSet = onLogSet,
                     haptic = haptic
@@ -562,6 +569,7 @@ private fun ExerciseCard(
                     PreviousSessionMiniHistory(
                         previousSession = it,
                         intensitySystem = intensitySystem,
+                        unitSystem = unitSystem,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = dims.spacingSm)
@@ -576,6 +584,7 @@ private fun ExerciseCard(
 private fun PreviousSessionMiniHistory(
     previousSession: PreviousExerciseSessionUi,
     intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
     modifier: Modifier = Modifier
 ) {
     val dims = ironLogDimens
@@ -610,7 +619,8 @@ private fun PreviousSessionMiniHistory(
             previousSession.sets.forEach { set ->
                 PreviousSessionSetRow(
                     set = set,
-                    intensitySystem = intensitySystem
+                    intensitySystem = intensitySystem,
+                    unitSystem = unitSystem
                 )
             }
         }
@@ -621,6 +631,7 @@ private fun PreviousSessionMiniHistory(
 private fun PreviousSessionSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
     intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
     modifier: Modifier = Modifier
 ) {
     val dims = ironLogDimens
@@ -642,11 +653,11 @@ private fun PreviousSessionSetRow(
             modifier = Modifier.width(20.dp)
         )
         
-        val weightText = if (set.weightKg % 1 == 0.0) set.weightKg.toInt().toString() else set.weightKg.toString()
+        val weightText = formatWeightValue(set.weightKg, unitSystem)
         
         LoggedSetBox(
             value = weightText,
-            suffix = stringResource(id = R.string.common_unit_kg),
+            suffix = WeightFormatting.unitLabel(unitSystem),
             isWarmup = set.isWarmup,
             modifier = Modifier.weight(1.2f).alpha(0.7f)
         )
@@ -677,11 +688,13 @@ private fun PreviousSessionSetRow(
     }
 }
 
-private fun formatWeightPlaceholder(weightKg: Double): String {
-    return if (weightKg % 1.0 == 0.0) {
-        weightKg.toInt().toString()
+/** Formats a weight stored in kg as a plain number in the user's preferred unit system. */
+private fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String {
+    val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
+    return if (displayValue % 1.0 == 0.0) {
+        displayValue.toInt().toString()
     } else {
-        String.format(Locale.ROOT, "%.1f", weightKg)
+        String.format(Locale.ROOT, "%.1f", displayValue)
     }
 }
 
@@ -740,6 +753,7 @@ private fun LoggedSetBox(
 private fun LoggedSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
     intensitySystem: com.ironlog.app.domain.model.IntensitySystem,
+    unitSystem: UnitSystem,
     onUpdateSet: (Long, Int, Double, String) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
@@ -747,8 +761,8 @@ private fun LoggedSetRow(
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != com.ironlog.app.domain.model.IntensitySystem.OFF
     var isEditing by remember(set.id) { mutableStateOf(false) }
-    val weightText = remember(set.id, set.weightKg) {
-        if (set.weightKg % 1 == 0.0) set.weightKg.toInt().toString() else set.weightKg.toString()
+    val weightText = remember(set.id, set.weightKg, unitSystem) {
+        formatWeightValue(set.weightKg, unitSystem)
     }
     val intensityText = remember(set.id, set.rpe, intensitySystem) {
         formatIntensity(set.rpe, intensitySystem)
@@ -785,7 +799,7 @@ private fun LoggedSetRow(
             com.ironlog.app.presentation.common.CompactTextField(
                 value = weightInput,
                 onValueChange = { weightInput = it },
-                suffix = stringResource(id = R.string.common_unit_kg),
+                suffix = WeightFormatting.unitLabel(unitSystem),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
                 modifier = Modifier.weight(1.2f)
             )
@@ -811,7 +825,8 @@ private fun LoggedSetRow(
             IconButton(
                 onClick = {
                     val r = repsInput.text.toIntOrNull() ?: set.reps
-                    val w = weightInput.text.toDoubleOrNull() ?: set.weightKg
+                    val enteredWeight = parseDecimal(weightInput.text)
+                    val w = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) } ?: set.weightKg
                     onUpdateSet(set.id, r, w, intensityInput.text)
                     isEditing = false
                     haptic.confirm()
@@ -849,11 +864,9 @@ private fun LoggedSetRow(
                 modifier = Modifier.width(20.dp)
             )
             
-            val weightText = if (set.weightKg % 1 == 0.0) set.weightKg.toInt().toString() else set.weightKg.toString()
-            
             LoggedSetBox(
                 value = weightText,
-                suffix = stringResource(id = R.string.common_unit_kg),
+                suffix = WeightFormatting.unitLabel(unitSystem),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1.2f)
             )
@@ -900,6 +913,7 @@ private fun PendingSetRow(
     defaultWeight: String,
     weightPlaceholder: String? = null,
     intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
     onLog: (Int, Double, String) -> Unit
 ) {
     val dims = ironLogDimens
@@ -907,6 +921,9 @@ private fun PendingSetRow(
     var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var weightInput by remember { mutableStateOf(TextFieldValue(defaultWeight, TextRange(defaultWeight.length))) }
     var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
+    // Prevents double-tap on the check button from inserting two sets before the
+    // pending row is replaced by the newly logged set.
+    var isLogging by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -926,7 +943,7 @@ private fun PendingSetRow(
         com.ironlog.app.presentation.common.CompactTextField(
             value = weightInput,
             onValueChange = { weightInput = it },
-            suffix = stringResource(id = R.string.common_unit_kg),
+            suffix = WeightFormatting.unitLabel(unitSystem),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
             placeholderText = weightPlaceholder ?: "-",
             modifier = Modifier.weight(1.2f)
@@ -952,13 +969,17 @@ private fun PendingSetRow(
         }
         
         IconButton(
-            onClick = {
+            onClick = onClick@{
+                if (isLogging) return@onClick
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
-                val weight = weightInput.text.toDoubleOrNull() ?: weightPlaceholder?.replace(",", ".")?.toDoubleOrNull()
+                val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
+                val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
+                    isLogging = true
                     onLog(reps, weight, if (tracksIntensity) intensityInput.text else "")
                 }
             },
+            enabled = !isLogging,
             modifier = Modifier.size(ButtonSize.iconButton),
             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -979,6 +1000,7 @@ private fun ExtraSetInput(
     planTarget: PlanTarget?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
     weightPlaceholder: String? = null,
     onLogSet: (Int, Double, Boolean, String) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
@@ -992,6 +1014,14 @@ private fun ExtraSetInput(
     var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
+    // Debounces the log button so a fast double-tap doesn't insert two sets.
+    var isLogging by remember { mutableStateOf(false) }
+    LaunchedEffect(isLogging) {
+        if (isLogging) {
+            kotlinx.coroutines.delay(500)
+            isLogging = false
+        }
+    }
 
     Column(modifier = Modifier.padding(top = dims.spacingXs)) {
         Row(
@@ -1017,10 +1047,15 @@ private fun ExtraSetInput(
             weightPlaceholder = weightPlaceholder,
             repsPlaceholder = repsPlaceholder,
             showIntensityField = tracksIntensity,
+            weightSuffix = WeightFormatting.unitLabel(unitSystem),
+            logEnabled = !isLogging,
             onLog = {
+                if (isLogging) return@SetInputRow
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
-                val weight = weightInput.text.toDoubleOrNull() ?: weightPlaceholder?.replace(",", ".")?.toDoubleOrNull()
+                val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
+                val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
+                    isLogging = true
                     onLogSet(reps, weight, isWarmup, if (tracksIntensity) intensityInput.text else "")
                     haptic.confirm()
                     repsInput = TextFieldValue("", TextRange.Zero)

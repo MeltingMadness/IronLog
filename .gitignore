@@ -30,3 +30,5 @@ replay_pid*.log
 **/DerivedData/
 **/xcuserdata/
 *.xcworkspace/xcuserdata/
+
+.kotlin/

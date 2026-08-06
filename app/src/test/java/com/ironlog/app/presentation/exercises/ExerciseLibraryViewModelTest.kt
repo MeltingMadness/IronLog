@@ -121,4 +121,17 @@ class ExerciseLibraryViewModelTest {
         val names = viewModel.uiState.value.exercises.map { it.name }
         assertEquals(listOf("Aktiv"), names)
     }
+
+    @Test
+    fun `error while loading exercises clears isLoading and surfaces an error message`() = runTest {
+        exerciseRepository.errorToThrow = RuntimeException("DB kaputt")
+
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertFalse("isLoading must not stay stuck at true after a load error", viewModel.uiState.value.isLoading)
+        assertNotNull(viewModel.uiState.value.error)
+        assertTrue(viewModel.uiState.value.exercises.isEmpty())
+    }
 }

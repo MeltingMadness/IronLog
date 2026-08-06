@@ -22,9 +22,6 @@ import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.data.seed.ExerciseSeedData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -357,22 +354,20 @@ abstract class IronLogDatabase : RoomDatabase() {
             super.onCreate(db)
             createSingleActiveSessionTriggers(db)
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val exercises = ExerciseSeedData.getAll()
-                for (exercise in exercises) {
-                    db.execSQL(
-                        "INSERT OR IGNORE INTO exercises (name, primaryMuscleGroup, secondaryMuscleGroups, category, isCustom, notes, isArchived) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        arrayOf<Any>(
-                            exercise.name,
-                            exercise.primaryMuscleGroup,
-                            exercise.secondaryMuscleGroups,
-                            exercise.category,
-                            if (exercise.isCustom) 1 else 0,
-                            exercise.notes,
-                            if (exercise.isArchived) 1 else 0
-                        )
+            val exercises = ExerciseSeedData.getAll()
+            for (exercise in exercises) {
+                db.execSQL(
+                    "INSERT OR IGNORE INTO exercises (name, primaryMuscleGroup, secondaryMuscleGroups, category, isCustom, notes, isArchived) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    arrayOf<Any>(
+                        exercise.name,
+                        exercise.primaryMuscleGroup,
+                        exercise.secondaryMuscleGroups,
+                        exercise.category,
+                        if (exercise.isCustom) 1 else 0,
+                        exercise.notes,
+                        if (exercise.isArchived) 1 else 0
                     )
-                }
+                )
             }
         }
 

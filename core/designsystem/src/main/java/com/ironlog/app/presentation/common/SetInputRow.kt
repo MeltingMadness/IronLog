@@ -35,6 +35,8 @@ fun SetInputRow(
     weightPlaceholder: String? = null,
     repsPlaceholder: String? = null,
     showIntensityField: Boolean = true,
+    weightSuffix: String? = null,
+    logEnabled: Boolean = true,
     onLog: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -47,7 +49,7 @@ fun SetInputRow(
         CompactTextField(
             value = weight,
             onValueChange = onWeightChange,
-            suffix = stringResource(id = R.string.common_unit_kg),
+            suffix = weightSuffix ?: stringResource(id = R.string.common_unit_kg),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
             placeholderText = weightPlaceholder ?: "-",
             modifier = Modifier.weight(1.2f)
@@ -71,6 +73,7 @@ fun SetInputRow(
         }
         IconButton(
             onClick = onLog,
+            enabled = logEnabled,
             modifier = Modifier.size(ButtonSize.iconButton),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,

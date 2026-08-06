@@ -475,6 +475,88 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `weekly volume groups ISO week days across a year boundary together`() = runTest {
+        // Dec 30 2024 (Mon) and Jan 1 2025 (Wed) fall in the same ISO-style week
+        // (week 1 of week-based-year 2025). Grouping by calendar year instead of
+        // week-based-year would incorrectly split them into "2024/KW1" and "2025/KW1".
+        val dec30 = LocalDateTime.of(2024, 12, 30, 10, 0)
+        val jan1 = LocalDateTime.of(2025, 1, 1, 10, 0)
+        statsRepo.addExerciseSet(
+            com.ironlog.app.domain.model.WorkoutSet(
+                sessionId = 1L, exerciseId = 1L, setNumber = 1, reps = 10,
+                weightKg = 100.0, completedAt = dec30
+            )
+        )
+        statsRepo.addExerciseSet(
+            com.ironlog.app.domain.model.WorkoutSet(
+                sessionId = 1L, exerciseId = 1L, setNumber = 1, reps = 10,
+                weightKg = 50.0, completedAt = jan1
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val kw1Entries = vm.uiState.value.weeklyVolume.filter { it.first == "KW1" }
+        assertEquals(1, kw1Entries.size)
+        // volume = weight * reps, summed across both sessions: (100*10) + (50*10)
+        assertEquals(1500.0, kw1Entries.first().second, 0.0001)
+    }
+
+    @Test
+    fun `startNewWorkout navigates to existing active session instead of assuming new plan`() = runTest {
+        val active = WorkoutSession(id = 555L, startTime = LocalDateTime.now(), planId = 42L)
+        workoutRepo.addSession(active, isActive = true)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        var receivedId: Long? = null
+        var receivedPlanId: Long? = null
+        vm.startNewWorkout { id, planId ->
+            receivedId = id
+            receivedPlanId = planId
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(555L, receivedId)
+        assertEquals(42L, receivedPlanId)
+    }
+
+    @Test
+    fun `startNewWorkoutWithPlan navigates to matching active session instead of starting a new one`() = runTest {
+        val plan = TrainingPlan(id = 42L, name = "Push")
+        val active = WorkoutSession(id = 555L, startTime = LocalDateTime.now(), planId = plan.id)
+        workoutRepo.addSession(active, isActive = true)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        var receivedId: Long? = null
+        vm.startNewWorkoutWithPlan(plan) { id, _ -> receivedId = id }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(555L, receivedId)
+    }
+
+    @Test
+    fun `startNewWorkoutWithPlan shows error when a different plan is already active`() = runTest {
+        val plan = TrainingPlan(id = 42L, name = "Push")
+        val active = WorkoutSession(id = 555L, startTime = LocalDateTime.now(), planId = 99L)
+        workoutRepo.addSession(active, isActive = true)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        var callbackCalled = false
+        vm.startNewWorkoutWithPlan(plan) { _, _ -> callbackCalled = true }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(callbackCalled)
+        assertNotNull(vm.uiState.value.error)
+    }
+
+    @Test
     fun `meta plan rotation exposes per-subplan last done days`() = runTest {
         val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
         val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))

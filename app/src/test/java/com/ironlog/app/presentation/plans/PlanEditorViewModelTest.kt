@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -186,5 +187,14 @@ class PlanEditorViewModelTest {
         assertEquals(mockExercise1.id, savedPlans[0].exercises[0].exerciseId)
         // Check order indices
         assertEquals(0, savedPlans[0].exercises[0].orderIndex)
+    }
+
+    @Test
+    fun `loading a missing plan sets notFound and clears isLoading instead of spinning forever`() = runTest {
+        val viewModel = createViewModel(planId = 9999L)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.notFound)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 }

@@ -6,11 +6,12 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
-import com.ironlog.app.domain.util.catchAndLog
+import com.ironlog.app.domain.util.AppLogger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -70,7 +71,15 @@ class ExerciseLibraryViewModel(
         }
     }.map { list ->
         list.filterNot { it.isArchived }
-    }.catchAndLog("ExerciseLibraryVM")
+    }.catch { e ->
+        // Unlike catchAndLog, this must keep the combine() below alive with a value so
+        // isLoading doesn't stay stuck at its initial `true` forever (see History pattern).
+        // Logging is best-effort: it must never prevent the error/isLoading state below
+        // from being applied (e.g. android.util.Log is unavailable in plain JVM unit tests).
+        runCatching { AppLogger.e("ExerciseLibraryVM", "Flow-Fehler: ${e.message}", e) }
+        error.value = "Übungen konnten nicht geladen werden: ${e.message}"
+        emit(emptyList())
+    }
 
     val uiState: StateFlow<ExerciseLibraryUiState> = combine(
         exercises,

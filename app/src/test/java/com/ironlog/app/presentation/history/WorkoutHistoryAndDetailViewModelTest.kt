@@ -115,4 +115,19 @@ class WorkoutHistoryAndDetailViewModelTest {
         assertTrue(exercise2Detail != null)
         assertTrue(exercise2Detail!!.records.isNotEmpty())
     }
+
+    @Test
+    fun `missing session sets notFound and clears isLoading instead of an empty scaffold`() = runTest {
+        val vm = WorkoutDetailViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("sessionId" to 12345L)),
+            workoutRepository = workoutRepo,
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.notFound)
+        assertEquals(false, vm.uiState.value.isLoading)
+    }
 }

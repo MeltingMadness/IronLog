@@ -2,6 +2,7 @@ package com.ironlog.app.data.repository
 
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.RecordType
@@ -10,7 +11,6 @@ import com.ironlog.app.domain.repository.StatisticsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 class StatisticsRepositoryImpl(
     private val personalRecordDao: PersonalRecordDao,
@@ -26,7 +26,7 @@ class StatisticsRepositoryImpl(
                 exerciseId = exerciseId,
                 type = type.name,
                 value = value,
-                achievedAt = now.toEpochSecond(ZoneOffset.UTC) * 1000
+                achievedAt = EpochConverter.toLong(now)
             )
             personalRecordDao.insert(entity)
             return true

@@ -28,8 +28,26 @@ internal object AppPreferenceKeys {
     val INTENSITY_SYSTEM = stringPreferencesKey("intensity_system")
 }
 
+// Sentinel stored when the user explicitly deselects every reminder day. This is required to
+// distinguish "user chose no days" from "preference was never written" (raw == null), since both
+// would otherwise be indistinguishable blank/empty strings and incorrectly snap back to the
+// Mon/Wed/Fri default every time the app reloads preferences.
+private const val REMINDER_DAYS_NONE_SENTINEL = "none"
+
 internal fun parseReminderDays(raw: String?): Set<DayOfWeek> {
-    if (raw.isNullOrBlank()) {
+    if (raw == null) {
+        // Key has never been written — fall back to the default for first-time users.
+        return ReminderConfig().daysOfWeek
+    }
+
+    if (raw == REMINDER_DAYS_NONE_SENTINEL) {
+        // Explicitly persisted empty selection — respect it instead of resetting to the default.
+        return emptySet()
+    }
+
+    if (raw.isBlank()) {
+        // Legacy encode used "" for empty, which historically decoded to the default.
+        // Keep that behavior for already-stored blank values.
         return ReminderConfig().daysOfWeek
     }
 
@@ -38,10 +56,10 @@ internal fun parseReminderDays(raw: String?): Set<DayOfWeek> {
             runCatching { DayOfWeek.valueOf(token.trim()) }.getOrNull()
         }
         .toSet()
-        .ifEmpty { ReminderConfig().daysOfWeek }
 }
 
 internal fun encodeReminderDays(days: Set<DayOfWeek>): String {
+    if (days.isEmpty()) return REMINDER_DAYS_NONE_SENTINEL
     return days.sortedBy { it.value }.joinToString(",") { it.name }
 }
 

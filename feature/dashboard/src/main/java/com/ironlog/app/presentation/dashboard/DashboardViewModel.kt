@@ -203,7 +203,7 @@ class DashboardViewModel(
                     .groupBy { set ->
                         val setDate = set.completedAt.toLocalDate()
                         val weekNum = setDate.get(weekFields.weekOfWeekBasedYear())
-                        val year = setDate.year
+                        val year = setDate.get(weekFields.weekBasedYear())
                         year to weekNum
                     }
                     .toSortedMap(compareBy<Pair<Int, Int>> { it.first }.thenBy { it.second })
@@ -312,6 +312,18 @@ class DashboardViewModel(
                     return@launch
                 }
 
+                val activeSession = workoutRepository.getActiveSession()
+                if (activeSession != null) {
+                    if (activeSession.planId == nextPlan.id && activeSession.metaPlanId == option.metaPlanId) {
+                        onSessionCreated(activeSession.id, nextPlan.id, option.metaPlanId)
+                    } else {
+                        _uiState.update {
+                            it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                        }
+                    }
+                    return@launch
+                }
+
                 val sessionId = workoutRepository.startWorkout(
                     name = nextPlan.name,
                     planId = nextPlan.id,
@@ -329,6 +341,12 @@ class DashboardViewModel(
     fun startNewWorkout(onSessionCreated: (Long, Long?) -> Unit) {
         viewModelScope.launch {
             try {
+                val activeSession = workoutRepository.getActiveSession()
+                if (activeSession != null) {
+                    onSessionCreated(activeSession.id, activeSession.planId)
+                    return@launch
+                }
+
                 val autoName = "Training ${LocalDate.now().format(DateFormatting.DATE_SHORT)}"
                 val sessionId = workoutRepository.startWorkout(
                     name = autoName,
@@ -345,6 +363,18 @@ class DashboardViewModel(
     fun startNewWorkoutWithPlan(plan: TrainingPlan, onSessionCreated: (Long, Long?) -> Unit) {
         viewModelScope.launch {
             try {
+                val activeSession = workoutRepository.getActiveSession()
+                if (activeSession != null) {
+                    if (activeSession.planId == plan.id) {
+                        onSessionCreated(activeSession.id, plan.id)
+                    } else {
+                        _uiState.update {
+                            it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                        }
+                    }
+                    return@launch
+                }
+
                 val sessionId = workoutRepository.startWorkout(
                     name = plan.name,
                     planId = plan.id,

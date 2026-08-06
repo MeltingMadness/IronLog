@@ -71,8 +71,14 @@ sealed class WorkoutEvent {
     data class NewRecord(val exerciseName: String, val type: RecordType) : WorkoutEvent()
 }
 
+/**
+ * Normalizes user-typed decimal input (weight/intensity) so that comma decimal
+ * separators (common on non-US keyboards) are parsed the same as dots.
+ */
+fun parseDecimal(text: String): Double? = text.trim().replace(",", ".").toDoubleOrNull()
+
 class ActiveWorkoutViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
@@ -166,9 +172,42 @@ class ActiveWorkoutViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
     init {
+        restoreAddedExercises()
+        persistAddedExerciseIds()
         observeExerciseReconciliation()
         if (planId > 0L) {
             loadPlanExercises()
+        }
+    }
+
+    /**
+     * Restores exercises added to this session (e.g. via the exercise picker) after
+     * process death, using the exercise IDs persisted in [savedStateHandle].
+     */
+    private fun restoreAddedExercises() {
+        val savedIds: List<Long> = savedStateHandle[KEY_ADDED_EXERCISE_IDS] ?: emptyList()
+        if (savedIds.isEmpty()) return
+        viewModelScope.launch {
+            try {
+                val restored = exerciseRepository.getExercisesByIds(savedIds)
+                if (restored.isEmpty()) return@launch
+                val restoredById = restored.associateBy { it.id }
+                val orderedRestored = savedIds.mapNotNull { restoredById[it] }
+                addedExercises.update { current ->
+                    val currentIds = current.map { it.id }.toSet()
+                    (orderedRestored.filterNot { it.id in currentIds } + current).distinctBy { it.id }
+                }
+            } catch (e: Exception) {
+                AppLogger.w("ActiveWorkoutVM", "Hinzugefuegte Uebungen konnten nicht wiederhergestellt werden: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun persistAddedExerciseIds() {
+        viewModelScope.launch {
+            addedExercises.collect { exercises ->
+                savedStateHandle[KEY_ADDED_EXERCISE_IDS] = exercises.map { it.id }
+            }
         }
     }
 
@@ -305,10 +344,14 @@ class ActiveWorkoutViewModel(
     }
 
     private suspend fun parseIntensity(intensity: String): Double? {
-        if (intensity.isBlank()) return null
-        val rawVal = intensity.toDoubleOrNull() ?: return null
         val prefs = appPreferencesRepository.preferences.first()
-        return when (prefs.intensitySystem) {
+        return computeIntensity(intensity, prefs.intensitySystem)
+    }
+
+    private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {
+        if (intensity.isBlank()) return null
+        val rawVal = parseDecimal(intensity) ?: return null
+        return when (intensitySystem) {
             IntensitySystem.OFF -> null
             IntensitySystem.RPE -> rawVal
             IntensitySystem.RIR -> 10.0 - rawVal
@@ -329,8 +372,8 @@ class ActiveWorkoutViewModel(
                 _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_REPS))
             }
 
-            // Estimated 1RM (Epley)
-            if (reps > 1) {
+            // Estimated 1RM (Epley) — also valid for a true 1-rep max, where E1RM == weight
+            if (reps >= 1) {
                 val e1rm = com.ironlog.app.domain.util.WorkoutCalculations.calculateE1RM(weightKg, reps)
                 if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_E1RM, e1rm)) {
                     _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_E1RM))
@@ -346,7 +389,9 @@ class ActiveWorkoutViewModel(
                 .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
             val maxVolume = sessionVolumes.values.maxOrNull() ?: 0.0
             if (maxVolume > 0) {
-                statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_VOLUME, maxVolume)
+                if (statisticsRepository.checkAndUpdateRecord(exerciseId, RecordType.MAX_VOLUME, maxVolume)) {
+                    _events.emit(WorkoutEvent.NewRecord(exercise.name, RecordType.MAX_VOLUME))
+                }
             }
         } catch (e: Exception) {
             // PR check failure should not crash the app, just log it
@@ -370,12 +415,21 @@ class ActiveWorkoutViewModel(
                 val sets = workoutRepository.getSetsForSessionList(sessionId)
                 val set = sets.find { it.id == setId } ?: return@launch
 
-                val parsedRpe = parseIntensity(intensity)
+                val prefs = appPreferencesRepository.preferences.first()
+                // When intensity tracking is OFF, the intensity UI is hidden and the
+                // incoming string is always blank — preserve the existing RPE instead
+                // of wiping it out. When intensity tracking is on, a blank string means
+                // the user intentionally cleared the field.
+                val newRpe = if (prefs.intensitySystem == IntensitySystem.OFF) {
+                    set.rpe
+                } else {
+                    computeIntensity(intensity, prefs.intensitySystem)
+                }
 
                 val updatedSet = set.copy(
                     reps = reps,
                     weightKg = weightKg,
-                    rpe = parsedRpe
+                    rpe = newRpe
                 )
                 workoutRepository.updateSet(updatedSet)
 
@@ -402,6 +456,10 @@ class ActiveWorkoutViewModel(
 
     fun clearError() {
         _error.value = null
+    }
+
+    companion object {
+        private const val KEY_ADDED_EXERCISE_IDS = "addedExerciseIds"
     }
 }
 
