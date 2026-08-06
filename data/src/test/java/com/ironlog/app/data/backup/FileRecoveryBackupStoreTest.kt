@@ -96,14 +96,16 @@ class FileRecoveryBackupStoreTest {
     @Test
     fun `latest resolves equal timestamps deterministically`() = runBlocking {
         val dir = tempFolder.root
-        val lower = "recovery-1000-${"a".repeat(64)}.json"
-        val higher = "recovery-1000-${"f".repeat(64)}.json"
+        val lowerHash = "lower".encodeToByteArray().sha256Hex()
+        val higherHash = "higher".encodeToByteArray().sha256Hex()
+        val lower = "recovery-1000-$lowerHash.json"
+        val higher = "recovery-1000-$higherHash.json"
         seed(dir, lower, "lower")
         seed(dir, higher, "higher")
 
         val store = FileRecoveryBackupStore(backupDir = dir)
 
-        assertEquals("f".repeat(64), store.latest()?.sha256)
+        assertEquals(higherHash, store.latest()?.sha256)
     }
 
     @Test
