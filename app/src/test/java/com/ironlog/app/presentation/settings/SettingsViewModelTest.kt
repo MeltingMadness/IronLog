@@ -15,6 +15,7 @@ import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.core.designsystem.R
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -321,7 +322,7 @@ class SettingsViewModelTest {
 
     private fun startEventCollector(scope: CoroutineScope): MutableList<Int> {
         val messages = mutableListOf<Int>()
-        scope.launch {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.events.collect { event ->
                 if (event is SettingsEvent.Message) messages += event.textRes
             }
