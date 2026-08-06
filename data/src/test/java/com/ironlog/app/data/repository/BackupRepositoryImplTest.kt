@@ -1,6 +1,7 @@
 package com.ironlog.app.data.repository
 
 import android.net.Uri
+import com.ironlog.app.data.backup.BackupConcurrentModificationException
 import com.ironlog.app.data.backup.BackupDocumentIo
 import com.ironlog.app.data.backup.BackupHashMismatchException
 import com.ironlog.app.data.backup.RecoveryBackupStore
@@ -108,13 +109,13 @@ class BackupRepositoryImplTest {
     fun `preview reads and validates without touching the database`() {
         val harness = Harness()
         val payload = validPayload()
-        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), payload)
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray()
 
         val preview = runBlocking { harness.repository.previewImport(URI) }
 
         assertTrue(preview.isValid)
         assertEquals(
-            json.encodeToString(BackupPayloadV1.serializer(), payload).sha256Hex(),
+            harness.documentIo.bytes.sha256Hex(),
             preview.sha256
         )
         assertEquals(1, preview.counts.exercises)
@@ -130,7 +131,7 @@ class BackupRepositoryImplTest {
         val harness = Harness()
         harness.stubSnapshotReads()
         harness.stubMutations()
-        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload())
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
         val expectedSha256 = harness.documentIo.bytes.sha256Hex()
 
         runBlocking { harness.repository.importBackup(URI, expectedSha256) }
@@ -151,7 +152,7 @@ class BackupRepositoryImplTest {
         val harness = Harness()
         harness.stubSnapshotReads()
         harness.stubMutations()
-        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload())
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
         harness.recoveryStore.failSave = IOException("no space")
 
         assertThrows(IOException::class.java) {
@@ -170,14 +171,14 @@ class BackupRepositoryImplTest {
         val harness = Harness()
         harness.stubSnapshotReads()
         harness.stubMutations()
-        val original = json.encodeToString(BackupPayloadV1.serializer(), validPayload())
+        val original = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
         harness.documentIo.bytes = original
         val preview = runBlocking { harness.repository.previewImport(URI) }
 
         harness.documentIo.bytes = json.encodeToString(
             BackupPayloadV1.serializer(),
             validPayload().copy(exportedAtEpochMillis = 999L)
-        )
+        ).encodeToByteArray()
 
         val error = assertThrows(BackupHashMismatchException::class.java) {
             runBlocking { harness.repository.importBackup(URI, preview.sha256) }
@@ -193,7 +194,7 @@ class BackupRepositoryImplTest {
     fun `repository serializes concurrent import calls`() {
         val harness = Harness(slowDocumentIo = true)
         harness.stubSnapshotReads()
-        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload())
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
         val expectedSha256 = harness.documentIo.bytes.sha256Hex()
 
         runBlocking {
@@ -272,7 +273,7 @@ class BackupRepositoryImplTest {
         coEvery { harness.metaTrainingPlanDao.getAllMetaPlansList() } returns emptyList()
         coEvery { harness.metaTrainingPlanDao.getAllMetaPlanItemsList() } returns emptyList()
         harness.stubMutations()
-        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload())
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
 
         val error = assertThrows(BackupConcurrentModificationException::class.java) {
             runBlocking { harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex()) }
