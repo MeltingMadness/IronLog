@@ -1,20 +1,23 @@
 package com.ironlog.app.data.repository
 
-import android.content.Context
 import android.net.Uri
-import androidx.room.withTransaction
-import com.ironlog.app.domain.util.BuildInfo
+import com.ironlog.app.data.backup.BackupConcurrentModificationException
+import com.ironlog.app.data.backup.BackupDocumentIo
 import com.ironlog.app.data.backup.BackupExercise
-import com.ironlog.app.data.backup.BackupPayloadV1
-import com.ironlog.app.data.backup.BackupPayloadValidator
-import com.ironlog.app.data.backup.BackupPersonalRecord
+import com.ironlog.app.data.backup.BackupHashMismatchException
 import com.ironlog.app.data.backup.BackupMetaPlanItem
 import com.ironlog.app.data.backup.BackupMetaTrainingPlan
+import com.ironlog.app.data.backup.BackupPayloadValidator
+import com.ironlog.app.data.backup.BackupPayloadV1
+import com.ironlog.app.data.backup.BackupPersonalRecord
 import com.ironlog.app.data.backup.BackupPlanExercise
+import com.ironlog.app.data.backup.BackupSnapshot
 import com.ironlog.app.data.backup.BackupTrainingPlan
 import com.ironlog.app.data.backup.BackupWorkoutSession
 import com.ironlog.app.data.backup.BackupWorkoutSet
-import com.ironlog.app.data.local.IronLogDatabase
+import com.ironlog.app.data.backup.RecoveryBackupStore
+import com.ironlog.app.data.backup.sha256Hex
+import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
@@ -30,13 +33,21 @@ import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.data.seed.ExerciseSeedData
+import com.ironlog.app.domain.repository.BackupContentCounts
+import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
+import com.ironlog.app.domain.repository.RecoveryBackup
+import com.ironlog.app.domain.util.BuildInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.io.IOException
 
 class BackupRepositoryImpl(
-    private val context: Context,
-    private val database: IronLogDatabase,
+    private val transactionRunner: TransactionRunner,
+    private val documentIo: BackupDocumentIo,
+    private val recoveryStore: RecoveryBackupStore,
     private val exerciseDao: ExerciseDao,
     private val workoutSessionDao: WorkoutSessionDao,
     private val workoutSetDao: WorkoutSetDao,
@@ -46,6 +57,8 @@ class BackupRepositoryImpl(
     private val buildInfo: BuildInfo
 ) : BackupRepository {
 
+    private val mutex = Mutex()
+
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = false
@@ -53,87 +66,193 @@ class BackupRepositoryImpl(
     }
 
     override suspend fun exportBackup(uri: Uri) {
-        val payload = BackupPayloadV1(
-            formatVersion = BACKUP_FORMAT_VERSION,
-            schemaVersion = SCHEMA_VERSION,
-            appVersion = buildInfo.versionName,
-            exportedAtEpochMillis = System.currentTimeMillis(),
-            exercises = exerciseDao.getAllExercisesList().map { it.toBackup() },
-            workoutSessions = workoutSessionDao.getAllSessionsList().map { it.toBackup() },
-            workoutSets = workoutSetDao.getAllSetsList().map { it.toBackupWorkoutSet() },
-            trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
-            planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
-            personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
-            metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
-            metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() }
-        )
-
-        val output = context.contentResolver.openOutputStream(uri)
-            ?: throw IOException("Backup output stream could not be opened")
-
-        output.use { stream ->
-            stream.write(json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray())
-            stream.flush()
+        mutex.withLock {
+            val snapshot = readSnapshot()
+            val bytes = exportBytes(snapshot)
+            documentIo.writeVerified(uri, bytes)
         }
     }
 
-    override suspend fun importBackup(uri: Uri) {
-        val input = context.contentResolver.openInputStream(uri)
-            ?: throw IOException("Backup input stream could not be opened")
-
-        val payload = input.use { stream ->
-            val raw = stream.bufferedReader().readText()
-            json.decodeFromString(BackupPayloadV1.serializer(), raw)
+    override suspend fun previewImport(uri: Uri): BackupImportPreview {
+        return mutex.withLock {
+            val bytes = documentIo.readBytes(uri)
+            val payload = decodePayload(bytes)
+            val validation = BackupPayloadValidator.validate(payload, SCHEMA_VERSION)
+            BackupImportPreview(
+                sha256 = bytes.sha256Hex(),
+                schemaVersion = payload.schemaVersion,
+                appVersion = payload.appVersion,
+                exportedAtEpochMillis = payload.exportedAtEpochMillis,
+                counts = payload.toCounts(),
+                validationErrors = validation.errors
+            )
         }
+    }
 
-        val validation = BackupPayloadValidator.validate(payload, SCHEMA_VERSION)
-        require(validation.isValid) {
-            "Backup validation failed: ${validation.errors.joinToString("; ")}"
+    override suspend fun importBackup(uri: Uri, expectedSha256: String) {
+        mutex.withLock {
+            val bytes = documentIo.readBytes(uri)
+            importVerifiedBytes(bytes, expectedSha256)
         }
+    }
 
-        val exercises = payload.exercises.distinctBy { it.id }.map { it.toEntity() }
-        val sessions = payload.workoutSessions.distinctBy { it.id }.map { it.toEntity() }
-        val sets = payload.workoutSets.distinctBy { it.id }.map { it.toWorkoutSetEntity() }
-        val plans = payload.trainingPlans.distinctBy { it.id }.map { it.toEntity() }
-        val planExercises = payload.planExercises.distinctBy { it.id }.map { it.toEntity() }
-        val metaPlans = payload.metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() }
-        val metaPlanItems = payload.metaPlanItems.distinctBy { it.id }.map { it.toEntity() }
-        val records = payload.personalRecords.distinctBy { it.id }.map { it.toEntity() }
+    override suspend fun latestRecovery(): RecoveryBackup? {
+        return mutex.withLock { recoveryStore.latest() }
+    }
 
-        database.withTransaction {
-            personalRecordDao.deleteAll()
-            workoutSetDao.deleteAll()
-            metaTrainingPlanDao.deleteAllMetaPlanItems()
-            trainingPlanDao.deleteAllPlanExercises()
-            workoutSessionDao.deleteAll()
-            metaTrainingPlanDao.deleteAllMetaPlans()
-            trainingPlanDao.deleteAllPlans()
-            exerciseDao.deleteAll()
-
-            // The validator already rejects backups without exercises, but we defensively
-            // re-seed the built-in catalog here too so a wipe can never leave the app without
-            // any exercises to choose from (see Bug 1: empty-backup catalog wipe).
-            exerciseDao.replaceAll(exercises.ifEmpty { ExerciseSeedData.getAll() })
-            if (sessions.isNotEmpty()) workoutSessionDao.replaceAll(sessions)
-            if (plans.isNotEmpty()) trainingPlanDao.replaceAllPlans(plans)
-            if (metaPlans.isNotEmpty()) metaTrainingPlanDao.replaceAllMetaPlans(metaPlans)
-            if (sets.isNotEmpty()) workoutSetDao.replaceAll(sets)
-            if (planExercises.isNotEmpty()) trainingPlanDao.replaceAllExercises(planExercises)
-            if (metaPlanItems.isNotEmpty()) metaTrainingPlanDao.replaceAllItems(metaPlanItems)
-            if (records.isNotEmpty()) personalRecordDao.replaceAll(records)
+    override suspend fun restoreLatestRecovery(): RecoveryBackup? {
+        return mutex.withLock {
+            val recovery = recoveryStore.latest() ?: return null
+            val bytes = recoveryStore.loadLatestBytes() ?: return null
+            importVerifiedBytes(bytes, recovery.sha256)
+            recovery
         }
     }
 
     override suspend fun resetUserData() {
-        database.withTransaction {
-            personalRecordDao.deleteAll()
-            workoutSetDao.deleteAll()
-            metaTrainingPlanDao.deleteAllMetaPlanItems()
-            trainingPlanDao.deleteAllPlanExercises()
-            workoutSessionDao.deleteAll()
-            metaTrainingPlanDao.deleteAllMetaPlans()
-            trainingPlanDao.deleteAllPlans()
-            exerciseDao.deleteAllCustomExercises()
+        mutex.withLock {
+            transactionRunner.runInTransaction {
+                personalRecordDao.deleteAll()
+                workoutSetDao.deleteAll()
+                metaTrainingPlanDao.deleteAllMetaPlanItems()
+                trainingPlanDao.deleteAllPlanExercises()
+                workoutSessionDao.deleteAll()
+                metaTrainingPlanDao.deleteAllMetaPlans()
+                trainingPlanDao.deleteAllPlans()
+                exerciseDao.deleteAllCustomExercises()
+            }
+        }
+    }
+
+    private suspend fun importVerifiedBytes(bytes: ByteArray, expectedSha256: String): RecoveryBackup {
+        val actualSha256 = bytes.sha256Hex()
+        if (actualSha256 != expectedSha256) {
+            throw BackupHashMismatchException(expectedSha256, actualSha256)
+        }
+
+        val payload = decodePayload(bytes)
+        validateOrThrow(payload)
+        val importData = payload.toImportData()
+
+        // Verified snapshot of the exact state we are about to delete. If this
+        // fails, no transaction has started and therefore zero rows are deleted.
+        val recoveryBytes = canonicalBytes(readSnapshot())
+        val recovery = recoveryStore.save(recoveryBytes)
+
+        try {
+            transactionRunner.runInTransaction {
+                // Guard against a writer changing the DB between the recovery
+                // snapshot and this destructive transaction.
+                val currentHash = canonicalBytes(readSnapshotBlock()).sha256Hex()
+                if (currentHash != recovery.sha256) {
+                    throw BackupConcurrentModificationException()
+                }
+                deleteAllInOrder()
+                insertAllInOrder(importData)
+            }
+        } catch (error: BackupConcurrentModificationException) {
+            // The just-written snapshot no longer represents current state.
+            runCatching { recoveryStore.delete(recovery) }
+            throw error
+        }
+
+        return recovery
+    }
+
+    private suspend fun readSnapshot(): BackupSnapshot =
+        transactionRunner.runInTransaction { readSnapshotBlock() }
+
+    private suspend fun readSnapshotBlock(): BackupSnapshot = BackupSnapshot(
+        exercises = exerciseDao.getAllExercisesList().map { it.toBackup() },
+        workoutSessions = workoutSessionDao.getAllSessionsList().map { it.toBackup() },
+        workoutSets = workoutSetDao.getAllSetsList().map { it.toBackupWorkoutSet() },
+        trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
+        planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
+        personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
+        metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
+        metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() }
+    )
+
+    private suspend fun canonicalBytes(snapshot: BackupSnapshot): ByteArray =
+        encodePayload(snapshot.canonicalPayload(SCHEMA_VERSION))
+
+    private suspend fun exportBytes(snapshot: BackupSnapshot): ByteArray =
+        encodePayload(
+            snapshot.toExportPayload(
+                schemaVersion = SCHEMA_VERSION,
+                appVersion = buildInfo.versionName,
+                exportedAtEpochMillis = System.currentTimeMillis()
+            )
+        )
+
+    private suspend fun encodePayload(payload: BackupPayloadV1): ByteArray =
+        withContext(Dispatchers.IO) {
+            json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray()
+        }
+
+    private suspend fun decodePayload(bytes: ByteArray): BackupPayloadV1 =
+        withContext(Dispatchers.IO) {
+            json.decodeFromString(BackupPayloadV1.serializer(), bytes.decodeToString())
+        }
+
+    private fun validateOrThrow(payload: BackupPayloadV1) {
+        val validation = BackupPayloadValidator.validate(payload, SCHEMA_VERSION)
+        require(validation.isValid) {
+            "Backup validation failed: ${validation.errors.joinToString("; ")}"
+        }
+    }
+
+    private fun BackupPayloadV1.toCounts(): BackupContentCounts = BackupContentCounts(
+        exercises = exercises.size,
+        workoutSessions = workoutSessions.size,
+        workoutSets = workoutSets.size,
+        trainingPlans = trainingPlans.size,
+        planExercises = planExercises.size,
+        personalRecords = personalRecords.size,
+        metaTrainingPlans = metaTrainingPlans.size,
+        metaPlanItems = metaPlanItems.size
+    )
+
+    private fun BackupPayloadV1.toImportData(): ImportData = ImportData(
+        exercises = exercises.distinctBy { it.id }.map { it.toEntity() },
+        workoutSessions = workoutSessions.distinctBy { it.id }.map { it.toEntity() },
+        workoutSets = workoutSets.distinctBy { it.id }.map { it.toWorkoutSetEntity() },
+        trainingPlans = trainingPlans.distinctBy { it.id }.map { it.toEntity() },
+        planExercises = planExercises.distinctBy { it.id }.map { it.toEntity() },
+        personalRecords = personalRecords.distinctBy { it.id }.map { it.toEntity() },
+        metaTrainingPlans = metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() },
+        metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() }
+    )
+
+    private suspend fun deleteAllInOrder() {
+        personalRecordDao.deleteAll()
+        workoutSetDao.deleteAll()
+        metaTrainingPlanDao.deleteAllMetaPlanItems()
+        trainingPlanDao.deleteAllPlanExercises()
+        workoutSessionDao.deleteAll()
+        metaTrainingPlanDao.deleteAllMetaPlans()
+        trainingPlanDao.deleteAllPlans()
+        exerciseDao.deleteAll()
+    }
+
+    private suspend fun insertAllInOrder(data: ImportData) {
+        exerciseDao.replaceAll(data.exercises.ifEmpty { ExerciseSeedData.getAll() })
+        if (data.trainingPlans.isNotEmpty()) trainingPlanDao.replaceAllPlans(data.trainingPlans)
+        if (data.metaTrainingPlans.isNotEmpty()) {
+            metaTrainingPlanDao.replaceAllMetaPlans(data.metaTrainingPlans)
+        }
+        if (data.workoutSessions.isNotEmpty()) {
+            workoutSessionDao.replaceAll(data.workoutSessions)
+        }
+        if (data.planExercises.isNotEmpty()) {
+            trainingPlanDao.replaceAllExercises(data.planExercises)
+        }
+        if (data.metaPlanItems.isNotEmpty()) {
+            metaTrainingPlanDao.replaceAllItems(data.metaPlanItems)
+        }
+        if (data.workoutSets.isNotEmpty()) workoutSetDao.replaceAll(data.workoutSets)
+        if (data.personalRecords.isNotEmpty()) {
+            personalRecordDao.replaceAll(data.personalRecords)
         }
     }
 
@@ -257,9 +376,19 @@ class BackupRepositoryImpl(
         orderIndex = orderIndex
     )
 
-    companion object {
-        private const val BACKUP_FORMAT_VERSION = 1
-        private const val SCHEMA_VERSION = 8
+    private data class ImportData(
+        val exercises: List<ExerciseEntity>,
+        val workoutSessions: List<WorkoutSessionEntity>,
+        val workoutSets: List<WorkoutSetEntity>,
+        val trainingPlans: List<TrainingPlanEntity>,
+        val planExercises: List<PlanExerciseEntity>,
+        val personalRecords: List<PersonalRecordEntity>,
+        val metaTrainingPlans: List<MetaTrainingPlanEntity>,
+        val metaPlanItems: List<MetaPlanItemEntity>
+    )
+
+    private companion object {
+        const val SCHEMA_VERSION = 9
     }
 }
 

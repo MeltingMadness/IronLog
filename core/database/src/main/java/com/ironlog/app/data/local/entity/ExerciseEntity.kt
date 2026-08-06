@@ -1,6 +1,5 @@
 package com.ironlog.app.data.local.entity
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -19,8 +18,8 @@ data class ExerciseEntity(
     val secondaryMuscleGroups: String, // comma-separated
     val category: String,
     val isCustom: Boolean = false,
-    @ColumnInfo(defaultValue = "''") val notes: String = "",
-    @ColumnInfo(defaultValue = "0") val isArchived: Boolean = false
+    val notes: String = "",
+    val isArchived: Boolean = false
 ) {
     fun toDomain(): Exercise = Exercise(
         id = id,

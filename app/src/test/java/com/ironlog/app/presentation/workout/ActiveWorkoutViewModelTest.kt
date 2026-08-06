@@ -7,11 +7,14 @@ import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -20,8 +23,16 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -73,6 +84,16 @@ class ActiveWorkoutViewModelTest {
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
         return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+    }
+
+    private fun withMockedAppLoggerWarnings(block: () -> Unit) {
+        mockkObject(AppLogger)
+        try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+            block()
+        } finally {
+            unmockkObject(AppLogger)
+        }
     }
 
     // --- Log Set ---
@@ -159,49 +180,184 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `logSet prueft auf PR`() = runTest {
-        val vm = createViewModel()
+    fun `logSet emittiert NewRecord aus Vergleich und schreibt keine PRs`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val now = LocalDateTime.now()
+        val before = listOf(
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 80.0, achievedAt = now
+            ),
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 6.0, achievedAt = now
+            ),
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 3L, exerciseId = testExercise.id, type = RecordType.MAX_E1RM, value = 100.0, achievedAt = now
+            ),
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 4L, exerciseId = testExercise.id, type = RecordType.MAX_VOLUME, value = 500.0, achievedAt = now
+            )
+        )
+        val after = listOf(
+            before[0].copy(value = 100.0),
+            before[1].copy(value = 8.0),
+            before[2].copy(value = 133.33),
+            before[3].copy(value = 800.0)
+        )
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(before, after)
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 100.0)
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
-        // Should have checked MAX_WEIGHT, MAX_REPS, MAX_E1RM, MAX_VOLUME
-        assertTrue(statsRepo.updatedRecords.any { it.first == 1L && it.second == RecordType.MAX_WEIGHT })
-        assertTrue(statsRepo.updatedRecords.any { it.first == 1L && it.second == RecordType.MAX_REPS })
-        assertTrue(statsRepo.updatedRecords.any { it.first == 1L && it.second == RecordType.MAX_E1RM })
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            setOf(RecordType.MAX_WEIGHT, RecordType.MAX_REPS, RecordType.MAX_E1RM, RecordType.MAX_VOLUME),
+            emitted.filterIsInstance<WorkoutEvent.NewRecord>().map { it.type }.toSet()
+        )
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
     }
 
     @Test
-    fun `E1RM Epley Berechnung korrekt`() = runTest {
-        val vm = createViewModel()
+    fun `logSet emittiert kein NewRecord wenn kein Record verbessert wurde`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val existing = listOf(
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 1L,
+                exerciseId = testExercise.id,
+                type = RecordType.MAX_WEIGHT,
+                value = 120.0,
+                achievedAt = LocalDateTime.now()
+            )
+        )
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(existing, existing)
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 100.0)
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
 
-        // E1RM = 100 * (1 + 10/30) = 100 * 1.333... = 133.33...
-        val e1rmRecord = statsRepo.updatedRecords.find { it.second == RecordType.MAX_E1RM }
-        assertTrue(e1rmRecord != null)
-        assertEquals(133.33, e1rmRecord!!.third, 0.01)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(emitted.isEmpty())
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
     }
 
     @Test
-    fun `E1RM wird auch bei 1 Wiederholung berechnet und aktualisiert MAX_E1RM`() = runTest {
-        val vm = createViewModel()
+    fun `logSet fuehrt Mutation aus wenn PR-Snapshot fehlschlaegt`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } throws
+            IllegalStateException("stats boom")
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
-        vm.logSet(exerciseId = 1L, reps = 1, weightKg = 100.0)
+        withMockedAppLoggerWarnings {
+            vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
 
-        // Bei 1 Wiederholung entspricht E1RM dem tatsächlichen Gewicht (echtes 1RM)
-        val e1rmRecord = statsRepo.updatedRecords.find { it.second == RecordType.MAX_E1RM }
-        assertNotNull(e1rmRecord)
-        assertEquals(100.0, e1rmRecord!!.third, 0.01)
+        assertEquals(1, workoutRepo.addSetCallCount)
+        assertEquals(1, workoutRepo.getSetsForSessionList(sessionId).size)
+        assertTrue(emitted.isEmpty())
+        assertNull(vm.uiState.value.error)
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
     }
 
     @Test
-    fun `Warmup-Satz keine PR-Pruefung`() = runTest {
-        val vm = createViewModel()
+    fun `Warmup-Satz no PR comparison and no PR write`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 50.0, isWarmup = true)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, isWarmup = true)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        // No PR checks for warmup
-        assertTrue(statsRepo.updatedRecords.isEmpty())
+        assertTrue(emitted.isEmpty())
+        coVerify(exactly = 0) { stats.getRecordsForExercisesList(any()) }
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `logSet haelt mutationMutex bis der Record-Vergleich abgeschlossen ist`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val comparisonGate = CompletableDeferred<Unit>()
+        var statsCallCount = 0
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } coAnswers {
+            statsCallCount++
+            if (statsCallCount == 1) {
+                emptyList()
+            } else {
+                comparisonGate.await()
+                emptyList()
+            }
+        }
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val addedSetId = workoutRepo.getSetsForSessionList(sessionId).first().id
+
+        // The record comparison is still blocked inside the mutex, so a queued delete
+        // must not run before it completes.
+        vm.deleteSet(addedSetId)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+
+        comparisonGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.deleteSetCallCount)
+        assertTrue(emitted.isEmpty())
+
+        eventCollector.cancel()
     }
 
     @Test
@@ -676,5 +832,351 @@ class ActiveWorkoutViewModelTest {
         assertTrue(secondExercise.id in afterDismiss)
 
         collector.cancel()
+    }
+
+    @Test
+    fun `missing session sets phase Missing and clears Loading`() = runTest {
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to 98765L))
+        val vm = ActiveWorkoutViewModel(
+            savedStateHandle,
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            planRepo,
+            prefsRepo
+        )
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(ActiveWorkoutSessionPhase.Missing, vm.uiState.value.sessionPhase)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `logSet failure releases lock and retry persists exactly one set`() = runTest {
+        workoutRepo.failAddSet = true
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, submissionId = 321L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.addSetCallCount)
+        assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
+        assertNull(vm.uiState.value.logInFlightByExercise[1L])
+        val error = vm.uiState.value.error
+        assertNotNull(error)
+        assertTrue(error!!.retry is WorkoutRetryDescriptor.LogSet)
+        assertEquals(321L, (error.retry as WorkoutRetryDescriptor.LogSet).submissionId)
+
+        workoutRepo.failAddSet = false
+        vm.retryLastError()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, workoutRepo.addSetCallCount)
+        val persisted = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(1, persisted.size)
+        assertEquals(10, persisted[0].reps)
+        assertEquals(80.0, persisted[0].weightKg, 0.01)
+        assertNull(vm.uiState.value.error)
+        assertTrue(321L in vm.uiState.value.logSuccessSubmissions)
+
+        vm.retryLastError()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(2, workoutRepo.addSetCallCount)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `updateSet ignores reps kleiner gleich null without persisting`() = runTest {
+        val vm = createViewModel()
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val logged = workoutRepo.getSetsForSessionList(sessionId).first()
+
+        vm.updateSet(setId = logged.id, reps = 0, weightKg = 90.0, intensity = "")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        val unchanged = workoutRepo.getSetsForSessionList(sessionId).first()
+        assertEquals(10, unchanged.reps)
+        assertEquals(80.0, unchanged.weightKg, 0.01)
+    }
+
+    @Test
+    fun `finishWorkout with zero sets discards session via deleteSession`() = runTest {
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.showFinishDialog()
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.deleteSessionCallCount)
+        assertEquals(0, workoutRepo.finishWorkoutCallCount)
+        assertNull(workoutRepo.getSessionById(sessionId))
+        assertFalse(vm.uiState.value.showFinishDialog)
+        assertTrue(vm.uiState.value.workoutFinished)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout with sets calls finishWorkout instead of deleteSession`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 400L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                isWarmup = false
+            )
+        )
+        val vm = createViewModel()
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertEquals(0, workoutRepo.deleteSessionCallCount)
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+    }
+
+    @Test
+    fun `finishWorkout failure keeps dialog and session and retry finishes exactly once`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 500L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                isWarmup = false
+            )
+        )
+        workoutRepo.failFinishWorkout = true
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.showFinishDialog()
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertTrue(vm.uiState.value.showFinishDialog)
+        assertNotNull(workoutRepo.getSessionById(sessionId))
+        assertFalse(vm.uiState.value.workoutFinished)
+        val error = vm.uiState.value.error
+        assertNotNull(error)
+        assertTrue(error!!.retry is WorkoutRetryDescriptor.FinishWorkout)
+
+        workoutRepo.failFinishWorkout = false
+        vm.retryLastError()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, workoutRepo.finishWorkoutCallCount)
+        assertFalse(vm.uiState.value.showFinishDialog)
+        assertTrue(vm.uiState.value.workoutFinished)
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout vor logSet verhindert nachtraeglichen Insert`() = runTest {
+        val vm = createViewModel()
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.deleteSessionCallCount)
+        assertEquals(0, workoutRepo.addSetCallCount)
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, submissionId = 700L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.addSetCallCount)
+        assertFalse(700L in vm.uiState.value.logSuccessSubmissions)
+    }
+
+    @Test
+    fun `logSet vor finishWorkout persistiert Satz und beendet normal`() = runTest {
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, workoutRepo.addSetCallCount)
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertEquals(0, workoutRepo.deleteSessionCallCount)
+        assertEquals(1, workoutRepo.getSetsForSessionList(sessionId).size)
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+    }
+
+    @Test
+    fun `updateSet emittiert verbesserte Records ohne PR-Schreibzugriff`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val beforeRecord = com.ironlog.app.domain.model.PersonalRecord(
+            id = 1L,
+            exerciseId = testExercise.id,
+            type = RecordType.MAX_WEIGHT,
+            value = 100.0,
+            achievedAt = LocalDateTime.now()
+        )
+        val improvedRecord = beforeRecord.copy(value = 120.0)
+        coEvery {
+            stats.getRecordsForExercisesList(listOf(testExercise.id))
+        } returnsMany listOf(listOf(beforeRecord), listOf(improvedRecord))
+
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 600L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0,
+                isWarmup = false
+            )
+        )
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
+
+        vm.updateSet(setId = 600L, reps = 12, weightKg = 120.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(
+            emitted.any { event ->
+                event is WorkoutEvent.NewRecord && event.type == RecordType.MAX_WEIGHT
+            }
+        )
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `updateSet fuehrt Mutation aus wenn PR-Snapshot fehlschlaegt`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 650L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0,
+                isWarmup = false
+            )
+        )
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } throws
+            IllegalStateException("stats boom")
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            planRepo,
+            prefsRepo
+        )
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
+
+        withMockedAppLoggerWarnings {
+            vm.updateSet(setId = 650L, reps = 12, weightKg = 120.0)
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
+
+        assertEquals(1, workoutRepo.updateSetCallCount)
+        val updated = workoutRepo.getSetsForSessionList(sessionId).first()
+        assertEquals(12, updated.reps)
+        assertEquals(120.0, updated.weightKg, 0.01)
+        assertTrue(emitted.isEmpty())
+        assertNull(vm.uiState.value.error)
+        coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `delete letzter Satz vor finishWorkout fuehrt zu Session-Discard statt empty completed`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 700L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                isWarmup = false
+            )
+        )
+        val vm = createViewModel()
+
+        vm.deleteSet(700L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.deleteSetCallCount)
+        assertEquals(1, workoutRepo.deleteSessionCallCount)
+        assertEquals(0, workoutRepo.finishWorkoutCallCount)
+        assertNull(workoutRepo.getSessionById(sessionId))
+        assertTrue(workoutRepo.getAllCompletedSessionsList().isEmpty())
+    }
+
+    @Test
+    fun `finishWorkout vor update und delete verhindert beide Repo-Mutationen`() = runTest {
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 800L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                isWarmup = false
+            )
+        )
+        val vm = createViewModel()
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.updateSet(setId = 800L, reps = 12, weightKg = 90.0)
+        vm.deleteSet(800L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        assertEquals(10, workoutRepo.getSetsForSessionList(sessionId).first().reps)
+        assertTrue(vm.uiState.value.updateInFlightBySet.isEmpty())
+        assertTrue(emitted.isEmpty())
+
+        eventCollector.cancel()
     }
 }

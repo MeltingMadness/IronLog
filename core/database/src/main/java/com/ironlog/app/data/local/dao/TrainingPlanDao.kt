@@ -55,6 +55,20 @@ interface TrainingPlanDao {
     @Query("DELETE FROM training_plans WHERE id = :planId")
     suspend fun deletePlan(planId: Long)
 
+    @Query("UPDATE workout_sessions SET planId = NULL WHERE planId = :planId")
+    suspend fun detachSessionsFromPlan(planId: Long)
+
+    /**
+     * Atomically detaches referencing workout sessions before deleting the plan.
+     * Sessions keep their own data and simply lose the plan reference, which keeps
+     * the database and backups valid even for an active session.
+     */
+    @Transaction
+    suspend fun deletePlanAndDetachSessions(planId: Long) {
+        detachSessionsFromPlan(planId)
+        deletePlan(planId)
+    }
+
     @Query("DELETE FROM training_plans")
     suspend fun deleteAllPlans()
 

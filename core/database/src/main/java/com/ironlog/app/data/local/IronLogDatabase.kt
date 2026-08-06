@@ -34,7 +34,7 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         MetaTrainingPlanEntity::class,
         MetaPlanItemEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -153,6 +153,28 @@ abstract class IronLogDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration 8 -> 9: Record column defaults in the Room schema.
+         *
+         * The bug-hunt batch added `@ColumnInfo(defaultValue = ...)` to
+         * `exercises.notes`/`isArchived` and `plan_exercises.targetSets`/
+         * `targetReps`/`targetWeightKg`, which changed the schema identity
+         * without a version bump. The annotations are removed again so the
+         * entity schema is exactly the pre-push v8 schema, while the version
+         * bump lets Room re-run identity validation and rewrite the recorded
+         * identity hash. Room only validates a column default when the entity
+         * declares one (the compiler side carries a non-null default); without
+         * the annotations, both databases created by the broken v8 builds
+         * (with physical DEFAULT clauses) and databases created before them
+         * (without) pass migration validation, so no table rebuild is needed
+         * and no rows can be lost.
+         */
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // No DDL: the schema is already valid for both v8 variants.
+            }
+        }
+
         @VisibleForTesting
         fun migration5To6ForTests(): Migration = MIGRATION_5_6
 
@@ -161,6 +183,9 @@ abstract class IronLogDatabase : RoomDatabase() {
 
         @VisibleForTesting
         fun migration7To8ForTests(): Migration = MIGRATION_7_8
+
+        @VisibleForTesting
+        fun migration8To9ForTests(): Migration = MIGRATION_8_9
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -339,7 +364,8 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
-                    MIGRATION_7_8
+                    MIGRATION_7_8,
+                    MIGRATION_8_9
                 )
                 .addCallback(SeedCallback())
                 .build()

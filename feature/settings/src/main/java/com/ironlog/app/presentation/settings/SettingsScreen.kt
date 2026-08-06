@@ -72,7 +72,9 @@ import com.ironlog.app.presentation.theme.semantic
 import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("StringFormatInvalid", "LocalContextGetResourceValueCall")
@@ -85,6 +87,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = ironLogDimens
+    val recoveryBackup = state.recoveryBackup
 
     var incidentSummary by remember { mutableStateOf("") }
     var incidentDetails by remember { mutableStateOf("") }
@@ -101,7 +104,7 @@ fun SettingsScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            viewModel.importBackup(uri)
+            viewModel.onImportUriPicked(uri)
         }
     }
 
@@ -427,16 +430,40 @@ fun SettingsScreen(
                                 val fileName = "ironlog-backup-${LocalDate.now()}.json"
                                 exportLauncher.launch(fileName)
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.isBusy
                         ) {
                             Text(stringResource(id = R.string.settings_backup_export))
                         }
                         Button(
                             onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.isBusy
                         ) {
                             Text(stringResource(id = R.string.settings_backup_import))
                         }
+                    }
+                    if (recoveryBackup != null) {
+                        Text(
+                            text = stringResource(
+                                id = R.string.settings_recovery_backup_available,
+                                formatEpochMillis(recoveryBackup.timestampMillis)
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(
+                            onClick = viewModel::showRecoveryRestoreDialog,
+                            enabled = !state.isBusy
+                        ) {
+                            Text(stringResource(id = R.string.settings_backup_recovery_restore))
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(id = R.string.settings_recovery_backup_none),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     TextButton(onClick = viewModel::showResetDialog) {
                         Text(stringResource(id = R.string.settings_data_reset))
@@ -492,6 +519,93 @@ fun SettingsScreen(
             }
         }
 
+        val importPreview = state.importPreview
+        if (state.importConfirmationVisible && importPreview != null) {
+            AlertDialog(
+                onDismissRequest = viewModel::cancelImport,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                title = { Text(stringResource(id = R.string.settings_import_dialog_title)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                        Text(stringResource(id = R.string.settings_import_dialog_replaces_all))
+                        Text(stringResource(id = R.string.settings_import_dialog_recovery_first))
+                        Text(stringResource(id = R.string.settings_import_dialog_preferences_excluded))
+                        Text(
+                            stringResource(
+                                id = R.string.settings_import_dialog_summary,
+                                importPreview.appVersion.ifBlank {
+                                    stringResource(id = R.string.common_unknown)
+                                },
+                                formatEpochMillis(importPreview.exportedAtEpochMillis),
+                                importPreview.counts.exercises,
+                                importPreview.counts.workoutSessions,
+                                importPreview.counts.workoutSets,
+                                importPreview.counts.trainingPlans,
+                                importPreview.counts.personalRecords
+                            )
+                        )
+                        if (!importPreview.isValid) {
+                            Text(
+                                text = stringResource(id = R.string.settings_import_dialog_invalid_header),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            importPreview.validationErrors.forEach { error ->
+                                Text(
+                                    text = error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = viewModel::confirmImport,
+                        enabled = importPreview.isValid && !state.isBusy
+                    ) {
+                        Text(stringResource(id = R.string.settings_import_dialog_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = viewModel::cancelImport) {
+                        Text(stringResource(id = R.string.settings_import_dialog_cancel))
+                    }
+                }
+            )
+        }
+
+        if (state.showRecoveryRestoreDialog && recoveryBackup != null) {
+            AlertDialog(
+                onDismissRequest = viewModel::dismissRecoveryRestoreDialog,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                title = { Text(stringResource(id = R.string.settings_recovery_dialog_title)) },
+                text = {
+                    Text(
+                        stringResource(
+                            id = R.string.settings_recovery_dialog_text,
+                            formatEpochMillis(recoveryBackup.timestampMillis)
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = viewModel::restoreLatestRecovery,
+                        enabled = !state.isBusy
+                    ) {
+                        Text(stringResource(id = R.string.settings_recovery_dialog_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = viewModel::dismissRecoveryRestoreDialog) {
+                        Text(stringResource(id = R.string.settings_recovery_dialog_cancel))
+                    }
+                }
+            )
+        }
+
         if (state.showResetDialog) {
             AlertDialog(
                 onDismissRequest = viewModel::dismissResetDialog,
@@ -512,6 +626,11 @@ fun SettingsScreen(
         }
     }
 }
+
+private fun formatEpochMillis(millis: Long): String =
+    Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
+        .format(DateFormatting.DATE_TIME)
 
 @Composable
 private fun SchemeColorDot(color: Color) {

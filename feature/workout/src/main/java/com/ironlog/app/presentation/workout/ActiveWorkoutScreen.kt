@@ -34,8 +34,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -115,6 +117,8 @@ fun ActiveWorkoutScreen(
     val context = LocalContext.current
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
+    val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
+    var workoutEndNavigated by remember { mutableStateOf(false) }
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -137,8 +141,25 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    LaunchedEffect(state.session?.endTime) {
-        if (state.session?.endTime != null) {
+    LaunchedEffect(state.error) {
+        val error = state.error ?: return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = error.message,
+            actionLabel = error.retry?.let { context.getString(R.string.common_retry) },
+            withDismissAction = true,
+            duration = SnackbarDuration.Long
+        )
+        when (result) {
+            SnackbarResult.ActionPerformed -> viewModel.retryLastError()
+            else -> viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(state.sessionPhase, state.workoutFinished) {
+        val session = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
+        val shouldNavigate = state.workoutFinished || session?.endTime != null
+        if (shouldNavigate && !workoutEndNavigated) {
+            workoutEndNavigated = true
             onWorkoutFinished()
         }
     }
@@ -148,7 +169,7 @@ fun ActiveWorkoutScreen(
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
-                    val name = state.session?.name?.takeIf { it.isNotBlank() }
+                    val name = activeSession?.name?.takeIf { it.isNotBlank() }
                         ?: stringResource(id = R.string.workout_title_default)
                     Text(name)
                 },
@@ -164,9 +185,19 @@ fun ActiveWorkoutScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
-        if (state.session == null && state.error == null) {
-            LoadingScreen(modifier = Modifier.padding(padding))
-            return@IronLogScreenScaffold
+        when (state.sessionPhase) {
+            ActiveWorkoutSessionPhase.Loading -> {
+                LoadingScreen(modifier = Modifier.padding(padding))
+                return@IronLogScreenScaffold
+            }
+            ActiveWorkoutSessionPhase.Missing -> {
+                MissingSessionContent(
+                    onBack = { onWorkoutFinished() },
+                    modifier = Modifier.padding(padding)
+                )
+                return@IronLogScreenScaffold
+            }
+            is ActiveWorkoutSessionPhase.Active -> Unit
         }
 
         Column(
@@ -174,7 +205,7 @@ fun ActiveWorkoutScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            state.session?.let { session ->
+            activeSession?.let { session ->
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -252,13 +283,18 @@ fun ActiveWorkoutScreen(
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
                                 unitSystem = preferences.unitSystem,
-                                onLogSet = { reps, weight, isWarmup, intensity ->
+                                isLogging = (state.logInFlightByExercise[exerciseWithSets.exercise.id] ?: 0) > 0,
+                                logSuccessSubmissions = state.logSuccessSubmissions,
+                                updateInFlightBySet = state.updateInFlightBySet,
+                                updateSuccessCountBySet = state.updateSuccessCountBySet,
+                                onLogSet = { reps, weight, isWarmup, intensity, submissionId ->
                                     viewModel.logSet(
                                         exerciseWithSets.exercise.id,
                                         reps,
                                         weight,
                                         isWarmup,
-                                        intensity
+                                        intensity,
+                                        submissionId
                                     )
                                 },
                                 onUpdateSet = viewModel::updateSet,
@@ -286,9 +322,31 @@ fun ActiveWorkoutScreen(
                 onDismissRequest = viewModel::dismissFinishDialog,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 title = { Text(stringResource(id = R.string.workout_finish_dialog_title)) },
-                text = { Text(stringResource(id = R.string.workout_finish_dialog_text)) },
+                text = {
+                    val error = state.error
+                    Column {
+                        Text(stringResource(id = R.string.workout_finish_dialog_text))
+                        if (error != null && error.retry is WorkoutRetryDescriptor.FinishWorkout) {
+                            Text(
+                                text = error.message,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = dims.spacingSm)
+                            )
+                            TextButton(
+                                onClick = viewModel::retryLastError,
+                                modifier = Modifier.padding(top = dims.spacingXs)
+                            ) {
+                                Text(stringResource(id = R.string.common_retry))
+                            }
+                        }
+                    }
+                },
                 confirmButton = {
-                    TextButton(onClick = viewModel::finishWorkout) {
+                    TextButton(
+                        onClick = viewModel::finishWorkout,
+                        enabled = !state.finishInFlight
+                    ) {
                         Text(stringResource(id = R.string.workout_finish_dialog_confirm))
                     }
                 },
@@ -351,6 +409,41 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
 }
 
 @Composable
+private fun MissingSessionContent(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dims = ironLogDimens
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(dims.spacingLg),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(id = R.string.workout_missing_session_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = stringResource(id = R.string.workout_missing_session_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = dims.spacingSm)
+        )
+        TextButton(
+            onClick = onBack,
+            modifier = Modifier.padding(top = dims.spacingMd)
+        ) {
+            Text(stringResource(id = R.string.nav_back))
+        }
+    }
+}
+
+@Composable
 private fun supersetTintColor(supersetGroupId: Int?, indexInSuperset: Int): Color? {
     if (supersetGroupId == null || indexInSuperset < 0) return null
     return when (indexInSuperset % 3) {
@@ -403,7 +496,11 @@ private fun ExerciseCard(
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
-    onLogSet: (Int, Double, Boolean, String) -> Unit,
+    isLogging: Boolean,
+    logSuccessSubmissions: Set<Long>,
+    updateInFlightBySet: Map<Long, Int>,
+    updateSuccessCountBySet: Map<Long, Int>,
+    onLogSet: (Int, Double, Boolean, String, Long) -> Unit,
     onUpdateSet: (Long, Int, Double, String) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: HapticFeedbackHelper
@@ -471,7 +568,7 @@ private fun ExerciseCard(
                         id = R.string.workout_target_with_weight,
                         planTarget.targetSets,
                         planTarget.targetReps,
-                        planTarget.targetWeightKg
+                        formatTargetWeight(planTarget.targetWeightKg, unitSystem)
                     )
                 } else {
                     stringResource(
@@ -501,7 +598,16 @@ private fun ExerciseCard(
                 for (setIndex in 1..targetSetCount) {
                     val matchingSet = loggedSets.filter { !it.isWarmup }.getOrNull(setIndex - 1)
                     if (matchingSet != null) {
-                        LoggedSetRow(set = matchingSet, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                        LoggedSetRow(
+                            set = matchingSet,
+                            intensitySystem = intensitySystem,
+                            unitSystem = unitSystem,
+                            isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
+                            updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
+                            onUpdateSet = onUpdateSet,
+                            onDeleteSet = onDeleteSet,
+                            haptic = haptic
+                        )
                     } else {
                         PendingSetRow(
                             setNumber = setIndex,
@@ -510,17 +616,39 @@ private fun ExerciseCard(
                             weightPlaceholder = previousWeightHint,
                             intensitySystem = intensitySystem,
                             unitSystem = unitSystem,
-                            onLog = { reps, weight, intensity -> onLogSet(reps, weight, false, intensity) }
+                            locked = isLogging,
+                            completedSubmissions = logSuccessSubmissions,
+                            onLog = { reps, weight, intensity, submissionId ->
+                                onLogSet(reps, weight, false, intensity, submissionId)
+                            }
                         )
                     }
                 }
 
                 loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(
+                        set = set,
+                        intensitySystem = intensitySystem,
+                        unitSystem = unitSystem,
+                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
+                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
+                        onUpdateSet = onUpdateSet,
+                        onDeleteSet = onDeleteSet,
+                        haptic = haptic
+                    )
                 }
 
                 loggedSets.filter { it.isWarmup }.forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(
+                        set = set,
+                        intensitySystem = intensitySystem,
+                        unitSystem = unitSystem,
+                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
+                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
+                        onUpdateSet = onUpdateSet,
+                        onDeleteSet = onDeleteSet,
+                        haptic = haptic
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -533,6 +661,8 @@ private fun ExerciseCard(
                         intensitySystem = intensitySystem,
                         unitSystem = unitSystem,
                         weightPlaceholder = previousWeightHint,
+                        locked = isLogging,
+                        logSuccessSubmissions = logSuccessSubmissions,
                         onLogSet = onLogSet,
                         haptic = haptic
                     )
@@ -544,7 +674,16 @@ private fun ExerciseCard(
                 }
             } else {
                 loggedSets.forEach { set ->
-                    LoggedSetRow(set = set, intensitySystem = intensitySystem, unitSystem = unitSystem, onUpdateSet = onUpdateSet, onDeleteSet = onDeleteSet, haptic = haptic)
+                    LoggedSetRow(
+                        set = set,
+                        intensitySystem = intensitySystem,
+                        unitSystem = unitSystem,
+                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
+                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
+                        onUpdateSet = onUpdateSet,
+                        onDeleteSet = onDeleteSet,
+                        haptic = haptic
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
@@ -555,6 +694,8 @@ private fun ExerciseCard(
                     intensitySystem = intensitySystem,
                     unitSystem = unitSystem,
                     weightPlaceholder = previousWeightHint,
+                    locked = isLogging,
+                    logSuccessSubmissions = logSuccessSubmissions,
                     onLogSet = onLogSet,
                     haptic = haptic
                 )
@@ -698,6 +839,12 @@ private fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String 
     }
 }
 
+/** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
+fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {
+    val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
+    return String.format(Locale.ROOT, "%.1f %s", displayValue, WeightFormatting.unitLabel(unitSystem))
+}
+
 @Composable
 private fun LoggedSetBox(
     value: String,
@@ -754,6 +901,8 @@ private fun LoggedSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
     intensitySystem: com.ironlog.app.domain.model.IntensitySystem,
     unitSystem: UnitSystem,
+    isUpdating: Boolean,
+    updateSuccessCount: Int,
     onUpdateSet: (Long, Int, Double, String) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
@@ -777,6 +926,13 @@ private fun LoggedSetRow(
             repsInput = TextFieldValue(repsText, TextRange(repsText.length))
             weightInput = TextFieldValue(weightText, TextRange(weightText.length))
             intensityInput = TextFieldValue(intensityText, TextRange(intensityText.length))
+        }
+    }
+
+    LaunchedEffect(updateSuccessCount) {
+        if (updateSuccessCount > 0 && isEditing) {
+            isEditing = false
+            haptic.confirm()
         }
     }
 
@@ -828,9 +984,8 @@ private fun LoggedSetRow(
                     val enteredWeight = parseDecimal(weightInput.text)
                     val w = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) } ?: set.weightKg
                     onUpdateSet(set.id, r, w, intensityInput.text)
-                    isEditing = false
-                    haptic.confirm()
                 },
+                enabled = !isUpdating,
                 modifier = Modifier.size(ButtonSize.iconButton),
                 colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -914,16 +1069,26 @@ private fun PendingSetRow(
     weightPlaceholder: String? = null,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
-    onLog: (Int, Double, String) -> Unit
+    locked: Boolean,
+    completedSubmissions: Set<Long>,
+    onLog: (Int, Double, String, Long) -> Unit
 ) {
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
     var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var weightInput by remember { mutableStateOf(TextFieldValue(defaultWeight, TextRange(defaultWeight.length))) }
     var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    // Prevents double-tap on the check button from inserting two sets before the
-    // pending row is replaced by the newly logged set.
-    var isLogging by remember { mutableStateOf(false) }
+    var activeSubmissionId by remember(setNumber) { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(activeSubmissionId, completedSubmissions) {
+        val submissionId = activeSubmissionId ?: return@LaunchedEffect
+        if (submissionId in completedSubmissions) {
+            repsInput = TextFieldValue("", TextRange.Zero)
+            weightInput = TextFieldValue("", TextRange.Zero)
+            intensityInput = TextFieldValue("", TextRange.Zero)
+            activeSubmissionId = null
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -969,17 +1134,22 @@ private fun PendingSetRow(
         }
         
         IconButton(
-            onClick = onClick@{
-                if (isLogging) return@onClick
+            onClick = {
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
                 val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
                 val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    isLogging = true
-                    onLog(reps, weight, if (tracksIntensity) intensityInput.text else "")
+                    val submissionId = nextSubmissionId()
+                    activeSubmissionId = submissionId
+                    onLog(
+                        reps,
+                        weight,
+                        if (tracksIntensity) intensityInput.text else "",
+                        submissionId
+                    )
                 }
             },
-            enabled = !isLogging,
+            enabled = !locked,
             modifier = Modifier.size(ButtonSize.iconButton),
             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -1002,7 +1172,9 @@ private fun ExtraSetInput(
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
     weightPlaceholder: String? = null,
-    onLogSet: (Int, Double, Boolean, String) -> Unit,
+    locked: Boolean,
+    logSuccessSubmissions: Set<Long>,
+    onLogSet: (Int, Double, Boolean, String, Long) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
 ) {
     val dims = ironLogDimens
@@ -1014,12 +1186,16 @@ private fun ExtraSetInput(
     var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
-    // Debounces the log button so a fast double-tap doesn't insert two sets.
-    var isLogging by remember { mutableStateOf(false) }
-    LaunchedEffect(isLogging) {
-        if (isLogging) {
-            kotlinx.coroutines.delay(500)
-            isLogging = false
+    var activeSubmissionId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(activeSubmissionId, logSuccessSubmissions) {
+        val submissionId = activeSubmissionId ?: return@LaunchedEffect
+        if (submissionId in logSuccessSubmissions) {
+            repsInput = TextFieldValue("", TextRange.Zero)
+            weightInput = TextFieldValue("", TextRange.Zero)
+            intensityInput = TextFieldValue("", TextRange.Zero)
+            activeSubmissionId = null
+            haptic.confirm()
         }
     }
 
@@ -1031,6 +1207,7 @@ private fun ExtraSetInput(
             FilterChip(
                 selected = isWarmup,
                 onClick = { isWarmup = !isWarmup },
+                enabled = !locked,
                 label = { Text(stringResource(id = R.string.workout_warmup_chip), style = MaterialTheme.typography.labelSmall) },
                 modifier = Modifier.height(ButtonSize.heightXs)
             )
@@ -1048,19 +1225,21 @@ private fun ExtraSetInput(
             repsPlaceholder = repsPlaceholder,
             showIntensityField = tracksIntensity,
             weightSuffix = WeightFormatting.unitLabel(unitSystem),
-            logEnabled = !isLogging,
+            logEnabled = !locked,
             onLog = {
-                if (isLogging) return@SetInputRow
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
                 val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
                 val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
                 if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    isLogging = true
-                    onLogSet(reps, weight, isWarmup, if (tracksIntensity) intensityInput.text else "")
-                    haptic.confirm()
-                    repsInput = TextFieldValue("", TextRange.Zero)
-                    weightInput = TextFieldValue("", TextRange.Zero)
-                    intensityInput = TextFieldValue("", TextRange.Zero)
+                    val submissionId = nextSubmissionId()
+                    activeSubmissionId = submissionId
+                    onLogSet(
+                        reps,
+                        weight,
+                        isWarmup,
+                        if (tracksIntensity) intensityInput.text else "",
+                        submissionId
+                    )
                 }
             }
         )

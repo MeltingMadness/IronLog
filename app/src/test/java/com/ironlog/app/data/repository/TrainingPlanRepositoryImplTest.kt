@@ -92,9 +92,23 @@ class TrainingPlanRepositoryImplTest {
         assertEquals(listOf(0, 1, 2, 3, 4, 5), stored.exercises.map { it.orderIndex })
     }
 
+    @Test
+    fun `deletePlan uses atomic detach-then-delete dao method`() = runTest {
+        val dao = FakeTrainingPlanDao().apply {
+            plans[1L] = TrainingPlanEntity(id = 1L, name = "Push", createdAt = 1L)
+        }
+        val repository = TrainingPlanRepositoryImpl(dao)
+
+        repository.deletePlan(1L)
+
+        assertEquals(listOf("atomic:1", "detach:1", "delete:1"), dao.operationOrder)
+        assertTrue(dao.plans.isEmpty())
+    }
+
     private class FakeTrainingPlanDao : TrainingPlanDao {
         val plans = linkedMapOf<Long, TrainingPlanEntity>()
         val exercisesByPlan = linkedMapOf<Long, MutableList<PlanExerciseEntity>>()
+        val operationOrder = mutableListOf<String>()
         private val plansFlow = MutableStateFlow<List<TrainingPlanEntity>>(emptyList())
         var nextPlanId = 100L
         var nextExerciseId = 1000L
@@ -170,9 +184,19 @@ class TrainingPlanRepositoryImplTest {
         }
 
         override suspend fun deletePlan(planId: Long) {
+            operationOrder += "delete:$planId"
             plans.remove(planId)
             exercisesByPlan.remove(planId)
             publish()
+        }
+
+        override suspend fun detachSessionsFromPlan(planId: Long) {
+            operationOrder += "detach:$planId"
+        }
+
+        override suspend fun deletePlanAndDetachSessions(planId: Long) {
+            operationOrder += "atomic:$planId"
+            super.deletePlanAndDetachSessions(planId)
         }
 
         override suspend fun deleteAllPlans() {

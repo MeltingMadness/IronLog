@@ -23,6 +23,17 @@ class FakeWorkoutRepository : WorkoutRepository {
     var getTotalVolumeForSessionCallCount = 0
     var getSetsForSessionsListCallCount = 0
     var getAllCompletedSessionsListCallCount = 0
+    var addSetCallCount = 0
+    var updateSetCallCount = 0
+    var deleteSetCallCount = 0
+    var finishWorkoutCallCount = 0
+    var deleteSessionCallCount = 0
+
+    var failAddSet = false
+    var failUpdateSet = false
+    var failDeleteSet = false
+    var failFinishWorkout = false
+    var failDeleteSession = false
 
     private fun java.time.LocalDateTime.toEpochMillis(): Long =
         atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -69,6 +80,10 @@ class FakeWorkoutRepository : WorkoutRepository {
     }
 
     override suspend fun finishWorkout(sessionId: Long) {
+        finishWorkoutCallCount++
+        if (failFinishWorkout) {
+            throw IllegalStateException("Injected finishWorkout failure")
+        }
         sessions.value = sessions.value.map {
             if (it.session.id == sessionId) {
                 val now = java.time.LocalDateTime.now()
@@ -87,18 +102,30 @@ class FakeWorkoutRepository : WorkoutRepository {
         sessions.map { list -> list.find { it.isActive }?.session }
 
     override suspend fun addSet(set: WorkoutSet): Long {
+        addSetCallCount++
+        if (failAddSet) {
+            throw IllegalStateException("Injected addSet failure")
+        }
         val id = nextSetId++
         sets.value = sets.value + set.copy(id = id)
         return id
     }
 
     override suspend fun updateSet(set: WorkoutSet) {
+        updateSetCallCount++
+        if (failUpdateSet) {
+            throw IllegalStateException("Injected updateSet failure")
+        }
         sets.value = sets.value.map { existing ->
             if (existing.id == set.id) set else existing
         }
     }
 
     override suspend fun deleteSet(setId: Long) {
+        deleteSetCallCount++
+        if (failDeleteSet) {
+            throw IllegalStateException("Injected deleteSet failure")
+        }
         sets.value = sets.value.filter { it.id != setId }
     }
 
@@ -141,6 +168,10 @@ class FakeWorkoutRepository : WorkoutRepository {
         sessions.map { list -> list.find { it.session.id == id }?.session }
 
     override suspend fun deleteSession(sessionId: Long) {
+        deleteSessionCallCount++
+        if (failDeleteSession) {
+            throw IllegalStateException("Injected deleteSession failure")
+        }
         sessions.value = sessions.value.filter { it.session.id != sessionId }
         sets.value = sets.value.filter { it.sessionId != sessionId }
     }
