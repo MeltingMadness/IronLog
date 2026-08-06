@@ -1,5 +1,6 @@
 package com.ironlog.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -30,9 +31,9 @@ data class PlanExerciseEntity(
     val exerciseId: Long,
     val orderIndex: Int,
     val supersetGroupId: Int? = null,
-    val targetSets: Int = 3,
-    val targetReps: Int = 10,
-    val targetWeightKg: Double = 0.0
+    @ColumnInfo(defaultValue = "3") val targetSets: Int = 3,
+    @ColumnInfo(defaultValue = "10") val targetReps: Int = 10,
+    @ColumnInfo(defaultValue = "0.0") val targetWeightKg: Double = 0.0
 ) {
     fun toDomain(): PlanExercise = PlanExercise(
         id = id,

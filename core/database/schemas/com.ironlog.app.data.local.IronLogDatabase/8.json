@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "097e7e46688af90b3da0301fb81fbfab",
+    "identityHash": "295b56d3fe195cf19e2a0cd0df90eb50",
     "entities": [
       {
         "tableName": "exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `primaryMuscleGroup` TEXT NOT NULL, `secondaryMuscleGroups` TEXT NOT NULL, `category` TEXT NOT NULL, `isCustom` INTEGER NOT NULL, `notes` TEXT NOT NULL, `isArchived` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `primaryMuscleGroup` TEXT NOT NULL, `secondaryMuscleGroups` TEXT NOT NULL, `category` TEXT NOT NULL, `isCustom` INTEGER NOT NULL, `notes` TEXT NOT NULL DEFAULT '', `isArchived` INTEGER NOT NULL DEFAULT 0)",
         "fields": [
           {
             "fieldPath": "id",
@@ -48,13 +48,15 @@
             "fieldPath": "notes",
             "columnName": "notes",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "isArchived",
             "columnName": "isArchived",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -359,7 +361,7 @@
       },
       {
         "tableName": "plan_exercises",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `planId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, `supersetGroupId` INTEGER, `targetSets` INTEGER NOT NULL, `targetReps` INTEGER NOT NULL, `targetWeightKg` REAL NOT NULL, FOREIGN KEY(`planId`) REFERENCES `training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `planId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, `supersetGroupId` INTEGER, `targetSets` INTEGER NOT NULL DEFAULT 3, `targetReps` INTEGER NOT NULL DEFAULT 10, `targetWeightKg` REAL NOT NULL DEFAULT 0.0, FOREIGN KEY(`planId`) REFERENCES `training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -394,19 +396,22 @@
             "fieldPath": "targetSets",
             "columnName": "targetSets",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "3"
           },
           {
             "fieldPath": "targetReps",
             "columnName": "targetReps",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "10"
           },
           {
             "fieldPath": "targetWeightKg",
             "columnName": "targetWeightKg",
             "affinity": "REAL",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0.0"
           }
         ],
         "primaryKey": {
@@ -573,7 +578,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '097e7e46688af90b3da0301fb81fbfab')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '295b56d3fe195cf19e2a0cd0df90eb50')"
     ]
   }
 }
