@@ -847,7 +847,7 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, workoutRepo.addSetCallCount)
-        assertEquals(emptyList(), workoutRepo.getSetsForSessionList(sessionId))
+        assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
         assertNull(vm.uiState.value.logInFlightByExercise[1L])
         val error = vm.uiState.value.error
         assertNotNull(error)
