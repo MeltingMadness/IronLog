@@ -107,7 +107,7 @@ class FileRecoveryBackupStoreTest {
     }
 
     @Test
-    fun `latest verifies content hash and fails closed on a corrupted newest snapshot`() =
+    fun `latest verifies content hash and fails closed on a corrupted newest snapshot`(): Unit =
         runBlocking {
             val store = FileRecoveryBackupStore(backupDir = tempFolder.root)
             val saved = store.save(snapshotBytes)
@@ -126,7 +126,7 @@ class FileRecoveryBackupStoreTest {
         }
 
     @Test
-    fun `loadLatestBytes verifies hash and rejects a corrupted snapshot`() = runBlocking {
+    fun `loadLatestBytes verifies hash and rejects a corrupted snapshot`(): Unit = runBlocking {
         val store = FileRecoveryBackupStore(backupDir = tempFolder.root)
         val saved = store.save(snapshotBytes)
 
