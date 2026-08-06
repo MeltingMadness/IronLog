@@ -1,9 +1,12 @@
 package com.ironlog.app.data.repository
 
+import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.domain.model.RecordType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -15,7 +18,8 @@ class WorkoutRepositoryImplTest {
 
     private val sessionDao: WorkoutSessionDao = mockk()
     private val setDao: WorkoutSetDao = mockk(relaxed = true)
-    private val repository = WorkoutRepositoryImpl(sessionDao, setDao)
+    private val personalRecordDao: PersonalRecordDao = mockk(relaxed = true)
+    private val repository = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao)
 
     @Test
     fun `startWorkout returns existing active session id and does not insert`() = runTest {
@@ -151,5 +155,71 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 0) {
             setDao.getMostRecentCompletedSetsForExercises(any(), any())
         }
+    }
+
+    @Test
+    fun `deleteSession lowers personal record to remaining set after deletion`() = runTest {
+        val sessionId = 5L
+        val exerciseId = 1L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+        // After the session (and its 120kg PR set) is deleted, only an 80kg set remains.
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                isWarmup = false,
+                completedAt = 1_000L
+            )
+        )
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_WEIGHT.name) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_REPS.name) } returns null
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_E1RM.name) } returns null
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_VOLUME.name) } returns null
+
+        repository.deleteSession(sessionId)
+
+        // The stale 120kg MAX_WEIGHT record (id 9) is updated in place to the new 80kg max.
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.id == 9L && it.type == RecordType.MAX_WEIGHT.name && it.value == 80.0 }
+            )
+        }
+    }
+
+    @Test
+    fun `deleteSession removes personal record when no sets remain for exercise`() = runTest {
+        val sessionId = 5L
+        val exerciseId = 1L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns emptyList()
+        coEvery { personalRecordDao.getRecord(exerciseId, any()) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+
+        repository.deleteSession(sessionId)
+
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_WEIGHT.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_REPS.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_E1RM.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_VOLUME.name) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `deleteSession does not touch personal records for unaffected exercises`() = runTest {
+        val sessionId = 5L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns emptyList()
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+
+        repository.deleteSession(sessionId)
+
+        coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
     }
 }

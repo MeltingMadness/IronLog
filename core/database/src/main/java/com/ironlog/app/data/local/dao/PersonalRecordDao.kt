@@ -36,4 +36,11 @@ interface PersonalRecordDao {
 
     @Query("DELETE FROM personal_records")
     suspend fun deleteAll()
+
+    /**
+     * Removes a single (exerciseId, type) record, e.g. when a workout history deletion leaves
+     * no remaining sets to justify the record (see Bug 7: orphaned PRs after session deletion).
+     */
+    @Query("DELETE FROM personal_records WHERE exerciseId = :exerciseId AND type = :type")
+    suspend fun deleteRecord(exerciseId: Long, type: String)
 }

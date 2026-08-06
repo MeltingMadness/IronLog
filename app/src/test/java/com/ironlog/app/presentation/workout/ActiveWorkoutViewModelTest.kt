@@ -123,6 +123,17 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `logSet akzeptiert Komma als Dezimaltrennzeichen fuer Intensitaet`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8,5")
+
+        val sets = workoutRepo.getSetsForSessionList(sessionId)
+        assertEquals(8.5, sets[0].rpe)
+    }
+
+    @Test
     fun `logSet erstellt Satz korrekt`() = runTest {
         val vm = createViewModel()
 
@@ -172,13 +183,15 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `E1RM nicht berechnet bei 1 Wiederholung`() = runTest {
+    fun `E1RM wird auch bei 1 Wiederholung berechnet und aktualisiert MAX_E1RM`() = runTest {
         val vm = createViewModel()
 
         vm.logSet(exerciseId = 1L, reps = 1, weightKg = 100.0)
 
-        val e1rmRecords = statsRepo.updatedRecords.filter { it.second == RecordType.MAX_E1RM }
-        assertTrue(e1rmRecords.isEmpty())
+        // Bei 1 Wiederholung entspricht E1RM dem tatsächlichen Gewicht (echtes 1RM)
+        val e1rmRecord = statsRepo.updatedRecords.find { it.second == RecordType.MAX_E1RM }
+        assertNotNull(e1rmRecord)
+        assertEquals(100.0, e1rmRecord!!.third, 0.01)
     }
 
     @Test
@@ -205,6 +218,56 @@ class ActiveWorkoutViewModelTest {
 
         val after = workoutRepo.getSetsForSessionList(sessionId).sortedBy { it.setNumber }
         assertEquals(listOf(2, 3), after.map { it.setNumber })
+    }
+
+    // --- Update Set ---
+
+    @Test
+    fun `updateSet behaelt vorhandenes RPE wenn IntensitySystem aus ist`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        val logged = workoutRepo.getSetsForSessionList(sessionId).first()
+
+        // User switches intensity tracking off before editing the set; the (hidden)
+        // intensity UI now sends a blank string, which must not wipe out the RPE.
+        prefsRepo.updateIntensitySystem(IntensitySystem.OFF)
+        vm.updateSet(setId = logged.id, reps = 12, weightKg = 82.5, intensity = "")
+
+        val updated = workoutRepo.getSetsForSessionList(sessionId).first { it.id == logged.id }
+        assertEquals(12, updated.reps)
+        assertEquals(82.5, updated.weightKg, 0.01)
+        assertEquals(8.5, updated.rpe)
+    }
+
+    @Test
+    fun `updateSet loescht RPE wenn Intensitaetsfeld absichtlich geleert wird`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        val logged = workoutRepo.getSetsForSessionList(sessionId).first()
+
+        // Intensity tracking stays on, user clears the field intentionally.
+        vm.updateSet(setId = logged.id, reps = 10, weightKg = 80.0, intensity = "")
+
+        val updated = workoutRepo.getSetsForSessionList(sessionId).first { it.id == logged.id }
+        assertNull(updated.rpe)
+    }
+
+    @Test
+    fun `updateSet akzeptiert Komma als Dezimaltrennzeichen fuer Intensitaet`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        val logged = workoutRepo.getSetsForSessionList(sessionId).first()
+
+        vm.updateSet(setId = logged.id, reps = 10, weightKg = 80.0, intensity = "9,0")
+
+        val updated = workoutRepo.getSetsForSessionList(sessionId).first { it.id == logged.id }
+        assertEquals(9.0, updated.rpe)
     }
 
     // --- Finish Workout ---
@@ -554,6 +617,33 @@ class ActiveWorkoutViewModelTest {
         assertTrue(testExercise.id !in vm.uiState.value.restTimers)
 
         collector.cancel()
+    }
+
+    @Test
+    fun `hinzugefuegte Uebungen ueberleben Prozesstod ueber SavedStateHandle`() = runTest {
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.addExercise(testExercise)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(testExercise.id), vm.uiState.value.exercisesWithSets.map { it.exercise.id })
+        collector.cancel()
+
+        // Simulate process death + recreation: a new ViewModel instance is created
+        // with the same (restored) SavedStateHandle, before any sets exist.
+        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf(testExercise.id),
+            restoredVm.uiState.value.exercisesWithSets.map { it.exercise.id }
+        )
+
+        restoredCollector.cancel()
     }
 
     @Test

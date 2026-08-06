@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
@@ -106,6 +107,22 @@ fun PlanEditorScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+        if (state.notFound) {
+            EmptyStateScreen(
+                title = stringResource(id = R.string.plan_editor_not_found_title),
+                subtitle = stringResource(id = R.string.plan_editor_not_found_subtitle),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                action = {
+                    TextButton(onClick = onBack) {
+                        Text(text = stringResource(id = R.string.nav_back))
+                    }
+                }
+            )
+            return@IronLogScreenScaffold
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
@@ -37,6 +38,7 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
@@ -81,6 +83,19 @@ fun WorkoutDetailScreen(
     ) { padding ->
         if (state.isLoading) {
             LoadingScreen(modifier = Modifier.padding(padding))
+        } else if (state.notFound) {
+            EmptyStateScreen(
+                title = stringResource(id = R.string.workout_detail_not_found_title),
+                subtitle = stringResource(id = R.string.workout_detail_not_found_subtitle),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                action = {
+                    TextButton(onClick = onBack) {
+                        Text(text = stringResource(id = R.string.nav_back))
+                    }
+                }
+            )
         } else {
             LazyColumn(
                 modifier = Modifier

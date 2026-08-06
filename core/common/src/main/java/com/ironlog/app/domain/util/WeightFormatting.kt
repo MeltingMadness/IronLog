@@ -7,7 +7,7 @@ object WeightFormatting {
     private const val KG_TO_LB = 2.2046226218
 
     fun formatWeight(weightKg: Double, unitSystem: UnitSystem): String {
-        val value = convert(weightKg, unitSystem)
+        val value = convertToDisplay(weightKg, unitSystem)
         val formatted = if (value % 1.0 == 0.0) {
             value.toInt().toString()
         } else {
@@ -17,7 +17,7 @@ object WeightFormatting {
     }
 
     fun formatVolume(volumeKg: Double, unitSystem: UnitSystem): String {
-        val value = convert(volumeKg, unitSystem)
+        val value = convertToDisplay(volumeKg, unitSystem)
         val formatted = if (value % 1.0 == 0.0) {
             value.toInt().toString()
         } else {
@@ -26,9 +26,14 @@ object WeightFormatting {
         return "$formatted ${unitLabel(unitSystem)}"
     }
 
-    private fun convert(valueKg: Double, unitSystem: UnitSystem): Double =
+    /** Converts a value stored in kg into the unit the user should see (kg or lb). */
+    fun convertToDisplay(valueKg: Double, unitSystem: UnitSystem): Double =
         if (unitSystem == UnitSystem.IMPERIAL) valueKg * KG_TO_LB else valueKg
 
-    private fun unitLabel(unitSystem: UnitSystem): String =
+    /** Converts a value typed by the user (in their preferred unit) back into kg for storage. */
+    fun convertToKg(displayValue: Double, unitSystem: UnitSystem): Double =
+        if (unitSystem == UnitSystem.IMPERIAL) displayValue / KG_TO_LB else displayValue
+
+    fun unitLabel(unitSystem: UnitSystem): String =
         if (unitSystem == UnitSystem.IMPERIAL) "lb" else "kg"
 }

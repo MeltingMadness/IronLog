@@ -52,6 +52,10 @@ class FakeWorkoutRepository : WorkoutRepository {
         planId: Long?,
         metaPlanId: Long?
     ): Long {
+        // Invariant: there can only be one active session, matching WorkoutRepositoryImpl -
+        // if one already exists, return its id and ignore the requested name/planId/metaPlanId.
+        sessions.value.find { it.isActive }?.let { return it.session.id }
+
         val id = nextSessionId++
         val session = WorkoutSession(
             id = id,

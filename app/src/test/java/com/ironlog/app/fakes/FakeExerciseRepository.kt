@@ -5,6 +5,7 @@ import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 class FakeExerciseRepository : ExerciseRepository {
@@ -13,12 +14,18 @@ class FakeExerciseRepository : ExerciseRepository {
     private var nextId = 1L
     var getExerciseByIdCallCount = 0
 
+    /** When set, [getAllExercises] emits this failure instead of the exercise list. */
+    var errorToThrow: Throwable? = null
+
     fun addExercise(exercise: Exercise) {
         val e = if (exercise.id == 0L) exercise.copy(id = nextId++) else exercise
         exercises.value = exercises.value + e
     }
 
-    override fun getAllExercises(): Flow<List<Exercise>> = exercises
+    override fun getAllExercises(): Flow<List<Exercise>> {
+        errorToThrow?.let { error -> return flow { throw error } }
+        return exercises
+    }
 
     override fun getExercisesByMuscleGroup(muscleGroup: MuscleGroup): Flow<List<Exercise>> =
         exercises.map { list -> list.filter { it.primaryMuscleGroup == muscleGroup } }

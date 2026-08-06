@@ -23,6 +23,7 @@ data class PlanEditorUiState(
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val showExercisePicker: Boolean = false,
+    val notFound: Boolean = false,
     val error: String? = null
 )
 
@@ -46,7 +47,7 @@ class PlanEditorViewModel(
 
     private fun loadPlan() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, notFound = false)
             try {
                 val plan = planRepository.getPlanById(planId)
                 if (plan != null) {
@@ -67,6 +68,13 @@ class PlanEditorViewModel(
                         planName = plan.name,
                         exercises = normalizedExercises,
                         isLoading = false
+                    )
+                } else {
+                    // Plan was deleted (e.g. from another screen) or the id is invalid —
+                    // surface an explicit not-found state instead of spinning forever.
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        notFound = true
                     )
                 }
             } catch (e: Exception) {

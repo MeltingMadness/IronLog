@@ -82,6 +82,8 @@
     <string name="history_volume">Volumen: %1$s</string>
 
     <string name="workout_detail_title">Trainingsdetails</string>
+    <string name="workout_detail_not_found_title">Training nicht gefunden</string>
+    <string name="workout_detail_not_found_subtitle">Dieses Training existiert nicht mehr oder der Link ist ungültig.</string>
     <string name="workout_detail_meta">Dauer: %1$d min • Volumen: %2$s</string>
     <string name="workout_detail_record_cd">Rekord</string>
     <string name="workout_detail_pr_badge">PR</string>
@@ -100,6 +102,8 @@
 
     <string name="plan_editor_title_edit">Plan bearbeiten</string>
     <string name="plan_editor_title_new">Neuer Plan</string>
+    <string name="plan_editor_not_found_title">Plan nicht gefunden</string>
+    <string name="plan_editor_not_found_subtitle">Dieser Plan existiert nicht mehr oder der Link ist ungültig.</string>
     <string name="plan_editor_save_cd">Plan speichern</string>
     <string name="plan_editor_name_label">Planname</string>
     <string name="plan_editor_add_exercise">Übung hinzufügen</string>

@@ -112,4 +112,25 @@ class BackupPayloadValidatorTest {
         assertFalse(result.isValid)
         assertTrue(result.errors.any { it.contains("active session", ignoreCase = true) })
     }
+
+    @Test
+    fun emptyExercises_failsValidation() {
+        val payload = BackupPayloadV1(
+            formatVersion = 1,
+            schemaVersion = CURRENT_SCHEMA_VERSION,
+            appVersion = "1.0",
+            exportedAtEpochMillis = 1000L,
+            exercises = emptyList(),
+            workoutSessions = emptyList(),
+            workoutSets = emptyList(),
+            trainingPlans = emptyList(),
+            planExercises = emptyList(),
+            personalRecords = emptyList()
+        )
+
+        val result = BackupPayloadValidator.validate(payload, currentSchemaVersion = CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("no exercises", ignoreCase = true) })
+    }
 }

@@ -27,6 +27,7 @@ data class WorkoutDetailUiState(
     val exercises: List<ExerciseDetail> = emptyList(),
     val totalVolume: Double = 0.0,
     val isLoading: Boolean = true,
+    val notFound: Boolean = false,
     val error: String? = null
 )
 
@@ -50,6 +51,16 @@ class WorkoutDetailViewModel(
         viewModelScope.launch {
             try {
                 val session = workoutRepository.getSessionById(sessionId)
+                if (session == null) {
+                    // Session was deleted (e.g. from the history list) or the id is invalid —
+                    // surface an explicit not-found state instead of an empty scaffold.
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        notFound = true
+                    )
+                    return@launch
+                }
+
                 val sets = workoutRepository.getSetsForSessionList(sessionId)
                 val volume = workoutRepository.getTotalVolumeForSession(sessionId)
 

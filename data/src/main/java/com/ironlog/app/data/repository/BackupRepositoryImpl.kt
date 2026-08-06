@@ -29,6 +29,7 @@ import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.data.seed.ExerciseSeedData
 import com.ironlog.app.domain.repository.BackupRepository
 import kotlinx.serialization.json.Json
 import java.io.IOException
@@ -109,7 +110,10 @@ class BackupRepositoryImpl(
             trainingPlanDao.deleteAllPlans()
             exerciseDao.deleteAll()
 
-            if (exercises.isNotEmpty()) exerciseDao.replaceAll(exercises)
+            // The validator already rejects backups without exercises, but we defensively
+            // re-seed the built-in catalog here too so a wipe can never leave the app without
+            // any exercises to choose from (see Bug 1: empty-backup catalog wipe).
+            exerciseDao.replaceAll(exercises.ifEmpty { ExerciseSeedData.getAll() })
             if (sessions.isNotEmpty()) workoutSessionDao.replaceAll(sessions)
             if (plans.isNotEmpty()) trainingPlanDao.replaceAllPlans(plans)
             if (metaPlans.isNotEmpty()) metaTrainingPlanDao.replaceAllMetaPlans(metaPlans)

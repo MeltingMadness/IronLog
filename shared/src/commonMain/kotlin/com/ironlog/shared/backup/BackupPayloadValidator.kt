@@ -16,6 +16,10 @@ object BackupPayloadValidator {
             errors += "Backup schema version ${payload.schemaVersion} is newer than app schema $currentSchemaVersion"
         }
 
+        if (payload.exercises.isEmpty()) {
+            errors += "Backup contains no exercises; refusing import to avoid wiping the exercise catalog"
+        }
+
         val exerciseIds = payload.exercises.map { it.id }.toSet()
         val sessionIds = payload.workoutSessions.map { it.id }.toSet()
         val planIds = payload.trainingPlans.map { it.id }.toSet()

@@ -4,16 +4,20 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
+import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
+import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.PreviousExerciseSession
+import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.WorkoutCalculations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -22,7 +26,8 @@ import java.time.LocalDateTime
 
 class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
-    private val setDao: WorkoutSetDao
+    private val setDao: WorkoutSetDao,
+    private val personalRecordDao: PersonalRecordDao
 ) : WorkoutRepository {
     private val startWorkoutMutex = Mutex()
 
@@ -125,8 +130,67 @@ class WorkoutRepositoryImpl(
     override fun observeSessionById(id: Long): Flow<WorkoutSession?> =
         sessionDao.observeSessionById(id).map { it?.toDomain() }
 
-    override suspend fun deleteSession(sessionId: Long) =
+    override suspend fun deleteSession(sessionId: Long) {
+        // Personal records have no FK/cascade relationship to sessions or sets, so capture the
+        // affected exercises before deleting and rebuild their records afterwards, otherwise
+        // stale ("orphaned") records referencing now-deleted sets would remain forever.
+        val affectedExerciseIds = setDao.getExerciseIdsForSession(sessionId)
         sessionDao.deleteSession(sessionId)
+        affectedExerciseIds.forEach { exerciseId -> recalculatePersonalRecords(exerciseId) }
+    }
+
+    /**
+     * Rebuilds MAX_WEIGHT / MAX_REPS / MAX_E1RM / MAX_VOLUME personal records for [exerciseId]
+     * from whatever work sets remain, updating or removing PR rows as needed.
+     */
+    private suspend fun recalculatePersonalRecords(exerciseId: Long) {
+        val workSets = setDao.getSetsForExerciseList(exerciseId).filterNot { it.isWarmup }
+
+        val bestWeightSet = workSets.maxByOrNull { it.weightKg }
+        upsertOrClearRecord(exerciseId, RecordType.MAX_WEIGHT, bestWeightSet?.weightKg, bestWeightSet?.completedAt)
+
+        val bestRepsSet = workSets.maxByOrNull { it.reps }
+        upsertOrClearRecord(exerciseId, RecordType.MAX_REPS, bestRepsSet?.reps?.toDouble(), bestRepsSet?.completedAt)
+
+        val bestE1rmSet = workSets.maxByOrNull { WorkoutCalculations.calculateE1RM(it.weightKg, it.reps) }
+        upsertOrClearRecord(
+            exerciseId,
+            RecordType.MAX_E1RM,
+            bestE1rmSet?.let { WorkoutCalculations.calculateE1RM(it.weightKg, it.reps) },
+            bestE1rmSet?.completedAt
+        )
+
+        val volumeBySession = workSets
+            .groupBy { it.sessionId }
+            .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
+        val bestVolumeSessionId = volumeBySession.maxByOrNull { it.value }?.key
+        val bestVolume = bestVolumeSessionId?.let { volumeBySession[it] }
+        val bestVolumeAchievedAt = bestVolumeSessionId
+            ?.let { sid -> workSets.filter { it.sessionId == sid }.maxOfOrNull(WorkoutSetEntity::completedAt) }
+        upsertOrClearRecord(exerciseId, RecordType.MAX_VOLUME, bestVolume, bestVolumeAchievedAt)
+    }
+
+    private suspend fun upsertOrClearRecord(
+        exerciseId: Long,
+        type: RecordType,
+        value: Double?,
+        achievedAt: Long?
+    ) {
+        val existing = personalRecordDao.getRecord(exerciseId, type.name)
+        if (value == null || achievedAt == null) {
+            if (existing != null) personalRecordDao.deleteRecord(exerciseId, type.name)
+            return
+        }
+        personalRecordDao.insert(
+            PersonalRecordEntity(
+                id = existing?.id ?: 0,
+                exerciseId = exerciseId,
+                type = type.name,
+                value = value,
+                achievedAt = achievedAt
+            )
+        )
+    }
 
     override suspend fun getExerciseIdsForSession(sessionId: Long): List<Long> =
         setDao.getExerciseIdsForSession(sessionId)

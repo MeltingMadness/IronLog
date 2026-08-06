@@ -49,7 +49,7 @@ val appModule = module {
     single { get<IronLogDatabase>().metaTrainingPlanDao() }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
+    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }

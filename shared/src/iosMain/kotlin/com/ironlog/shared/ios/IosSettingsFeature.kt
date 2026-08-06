@@ -2,8 +2,6 @@
 
 package com.ironlog.shared.ios
 
-import com.ironlog.shared.backup.BackupPayloadV1
-import com.ironlog.shared.backup.BackupPayloadValidator
 import com.ironlog.shared.incident.IncidentDiagnostics
 import com.ironlog.shared.incident.IncidentReportPayload
 import com.ironlog.shared.incident.IncidentReportSanitizer
@@ -55,9 +53,6 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.posix.memcpy
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-
-private const val BACKUP_FORMAT_VERSION = 1
-private const val BACKUP_SCHEMA_VERSION = 8
 
 class IosSettingsFeature {
     private val scope: CoroutineScope = MainScope()
@@ -389,59 +384,38 @@ private class IosReminderScheduler(
     private fun identifierForWeekday(weekday: Weekday): String = "ironlog.reminder.${weekday.name.lowercase()}"
 }
 
+/**
+ * iOS does not yet persist workout data in a real local database (unlike Android's Room-backed
+ * store), so there is nothing meaningful to export or restore. Earlier revisions silently
+ * produced an empty-but-"successful" backup on export and merely stashed the raw JSON without
+ * ever restoring anything on import, which misleads users into believing their training data is
+ * safely backed up / restored. Until iOS has real persistence to back this feature, we fail
+ * loudly instead of pretending to succeed.
+ */
 private class IosBackupRepository(
-    private val userDefaults: NSUserDefaults = NSUserDefaults.standardUserDefaults(),
     private val buildInfo: BuildInfo,
 ) : SharedBackupRepository {
-    private val json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = false
-        encodeDefaults = true
-    }
 
     override suspend fun exportBackup(): BackupBlob {
-        val payload = userDefaults.stringForKey(Keys.lastBackupPayload)?.let { raw ->
-            json.decodeFromString(BackupPayloadV1.serializer(), raw)
-        } ?: BackupPayloadV1(
-            formatVersion = BACKUP_FORMAT_VERSION,
-            schemaVersion = BACKUP_SCHEMA_VERSION,
-            appVersion = buildInfo.versionName,
-            exportedAtEpochMillis = currentEpochMillis(),
-            exercises = emptyList(),
-            workoutSessions = emptyList(),
-            workoutSets = emptyList(),
-            trainingPlans = emptyList(),
-            planExercises = emptyList(),
-            personalRecords = emptyList(),
-            metaTrainingPlans = emptyList(),
-            metaPlanItems = emptyList(),
-        )
-
-        return BackupBlob(
-            bytes = json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray(),
-            fileName = "ironlog-backup-v1.json",
-            mimeType = "application/json",
+        throw BackupNotSupportedException(
+            "Backup-Export wird auf iOS noch nicht unterstuetzt (App-Version ${buildInfo.versionName}).",
         )
     }
 
     override suspend fun importBackup(bytes: ByteArray) {
-        val raw = bytes.decodeToString()
-        val payload = json.decodeFromString(BackupPayloadV1.serializer(), raw)
-        val validation = BackupPayloadValidator.validate(payload, BACKUP_SCHEMA_VERSION)
-        require(validation.isValid) {
-            "Backup validation failed: ${validation.errors.joinToString("; ")}"
-        }
-        userDefaults.setObject(raw, Keys.lastBackupPayload)
+        throw BackupNotSupportedException("Backup-Import wird auf iOS noch nicht unterstuetzt.")
     }
 
     override suspend fun resetUserData() {
-        userDefaults.removeObjectForKey(Keys.lastBackupPayload)
-    }
-
-    private object Keys {
-        const val lastBackupPayload = "backup.lastPayload"
+        // No local workout data exists on iOS yet, so there is nothing to reset.
     }
 }
+
+/**
+ * Thrown by [IosBackupRepository] to signal that backup/restore is not available on this
+ * platform yet, so callers can surface a clear message instead of assuming success.
+ */
+class BackupNotSupportedException(message: String) : Exception(message)
 
 private class IosIncidentReportRepository(
     private val buildInfo: BuildInfo,

@@ -8,8 +8,9 @@ import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,38 +48,44 @@ class MetaPlanListViewModel(
         viewModelScope.launch {
             combine(
                 trainingPlanRepository.getAllPlans(),
-                workoutRepository.getAllCompletedSessions(),
+                workoutRepository.observeLastSessionPerMetaPlanSubPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
-            ) { plans, completedSessions, metaPlans ->
+            ) { plans, lastSessionsPerSubPlan, metaPlans ->
                 val plansById = plans.associateBy { it.id }
+                val lastTimeIndex = lastSessionsPerSubPlan.associateBy(
+                    keySelector = { it.planId to it.metaPlanId },
+                    valueTransform = { it.lastStartTime }
+                )
                 metaPlans.map { metaPlan ->
                     val subPlans = metaPlan.items
                         .sortedBy { it.orderIndex }
                         .mapNotNull { item -> plansById[item.trainingPlanId] }
-                    val completedForMeta = completedSessions.filter { session ->
-                        session.metaPlanId == metaPlan.id &&
-                            session.planId != null &&
-                            session.endTime != null
-                    }
+
+                    // Only consider sub-plans still present in the current rotation, matching
+                    // DashboardViewModel.buildMetaPlanOptions so both screens agree on "next up".
+                    val latestPlanId = subPlans
+                        .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id]?.let { plan.id to it } }
+                        .maxByOrNull { it.second }?.first
+
                     val nextSubPlan = if (subPlans.isEmpty()) {
                         null
                     } else {
-                        val lastCompleted = completedForMeta.maxByOrNull { it.endTime ?: it.startTime }
-                        val nextIndex = lastCompleted?.planId?.let { lastPlanId ->
-                            val lastIndex = subPlans.indexOfFirst { it.id == lastPlanId }
+                        val nextIndex = latestPlanId?.let { lastId ->
+                            val lastIndex = subPlans.indexOfFirst { it.id == lastId }
                             if (lastIndex >= 0) (lastIndex + 1) % subPlans.size else 0
                         } ?: 0
                         subPlans[nextIndex]
                     }
 
+                    val lastDoneMillis = subPlans
+                        .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id] }
+                        .maxOrNull()
+
                     MetaPlanListItemUi(
                         metaPlan = metaPlan,
                         subPlans = subPlans,
                         nextSubPlan = nextSubPlan,
-                        lastDoneDaysAgo = completedForMeta
-                            .maxByOrNull { it.startTime }
-                            ?.startTime
-                            ?.toRelativeDaysAgo()
+                        lastDoneDaysAgo = lastDoneMillis?.toRelativeDaysAgo()
                     )
                 }
             }
@@ -117,6 +124,7 @@ class MetaPlanListViewModel(
     }
 }
 
-private fun LocalDateTime.toRelativeDaysAgo(): Long {
-    return ChronoUnit.DAYS.between(this.toLocalDate(), LocalDate.now())
+private fun Long.toRelativeDaysAgo(): Long {
+    val date = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
+    return ChronoUnit.DAYS.between(date, LocalDate.now())
 }
