@@ -51,7 +51,8 @@ data class BackupWorkoutSet(
     val reps: Int,
     val weightKg: Double,
     val isWarmup: Boolean,
-    val completedAt: Long
+    val completedAt: Long,
+    val rpe: Double? = null
 )
 
 @Serializable
