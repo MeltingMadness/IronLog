@@ -8,11 +8,13 @@ import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -23,7 +25,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -79,6 +84,16 @@ class ActiveWorkoutViewModelTest {
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
         return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+    }
+
+    private fun withMockedAppLoggerWarnings(block: () -> Unit) {
+        mockkObject(AppLogger)
+        try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+            block()
+        } finally {
+            unmockkObject(AppLogger)
+        }
     }
 
     // --- Log Set ---
@@ -199,7 +214,7 @@ class ActiveWorkoutViewModelTest {
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
-        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -261,10 +276,12 @@ class ActiveWorkoutViewModelTest {
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
-        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
-        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
-        testDispatcher.scheduler.advanceUntilIdle()
+        withMockedAppLoggerWarnings {
+            vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
 
         assertEquals(1, workoutRepo.addSetCallCount)
         assertEquals(1, workoutRepo.getSetsForSessionList(sessionId).size)
@@ -1042,7 +1059,7 @@ class ActiveWorkoutViewModelTest {
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
-        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
         vm.updateSet(setId = 600L, reps = 12, weightKg = 120.0)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1082,10 +1099,12 @@ class ActiveWorkoutViewModelTest {
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
-        val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
 
-        vm.updateSet(setId = 650L, reps = 12, weightKg = 120.0)
-        testDispatcher.scheduler.advanceUntilIdle()
+        withMockedAppLoggerWarnings {
+            vm.updateSet(setId = 650L, reps = 12, weightKg = 120.0)
+            testDispatcher.scheduler.advanceUntilIdle()
+        }
 
         assertEquals(1, workoutRepo.updateSetCallCount)
         val updated = workoutRepo.getSetsForSessionList(sessionId).first()

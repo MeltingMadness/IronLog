@@ -13,6 +13,7 @@ import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.core.designsystem.R
+import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,19 +49,21 @@ class SettingsViewModelTest {
         preferencesRepository = FakeAppPreferencesRepository()
         backupRepository = FakeBackupRepository()
         reminderScheduler = FakeReminderScheduler()
-        viewModel = SettingsViewModel(
-            appPreferencesRepository = preferencesRepository,
-            backupRepository = backupRepository,
-            reminderScheduler = reminderScheduler,
-            incidentReportRepository = NoopIncidentReportRepository(),
-            buildInfo = BuildInfo("1.0-test", 1)
-        )
+        viewModel = createViewModel()
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    private fun createViewModel(): SettingsViewModel = SettingsViewModel(
+        appPreferencesRepository = preferencesRepository,
+        backupRepository = backupRepository,
+        reminderScheduler = reminderScheduler,
+        incidentReportRepository = NoopIncidentReportRepository(),
+        buildInfo = BuildInfo("1.0-test", 1)
+    )
 
     @Test
     fun `updateThemeMode persists selected mode`() = runTest {
@@ -95,7 +98,7 @@ class SettingsViewModelTest {
     @Test
     fun `import selection previews without importing and shows confirmation`() = runTest {
         startUiStateCollector(backgroundScope)
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
 
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
@@ -110,7 +113,7 @@ class SettingsViewModelTest {
     @Test
     fun `cancel import clears selection without mutation`() = runTest {
         startUiStateCollector(backgroundScope)
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
 
@@ -130,8 +133,8 @@ class SettingsViewModelTest {
     fun `second import pick while preview busy is ignored and first selection stays bound`() = runTest {
         startUiStateCollector(backgroundScope)
         val messages = startEventCollector(backgroundScope)
-        val first = Uri.parse("content://first.json")
-        val second = Uri.parse("content://second.json")
+        val first = mockk<Uri>()
+        val second = mockk<Uri>()
         val gate = CompletableDeferred<Unit>()
         backupRepository.previewGate = gate
         backupRepository.previewResultOverride = validPreview(sha256 = "first-hash")
@@ -159,7 +162,7 @@ class SettingsViewModelTest {
     fun `valid import confirmation calls importBackup once with preview hash`() = runTest {
         startUiStateCollector(backgroundScope)
         val messages = startEventCollector(backgroundScope)
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
 
@@ -180,7 +183,7 @@ class SettingsViewModelTest {
         backupRepository.previewResult = validPreview(
             validationErrors = listOf("Backup contains no exercises")
         )
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
 
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
@@ -197,12 +200,13 @@ class SettingsViewModelTest {
 
     @Test
     fun `import failure keeps confirmation retryable and recovery availability`() = runTest {
-        startUiStateCollector(backgroundScope)
-        val messages = startEventCollector(backgroundScope)
         val recovery = RecoveryBackup(timestampMillis = 1L, sha256 = "recovery", sizeBytes = 10)
         backupRepository.latestRecoveryResult = recovery
+        viewModel = createViewModel()
+        startUiStateCollector(backgroundScope)
+        val messages = startEventCollector(backgroundScope)
         backupRepository.importError = IOException("disk full")
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
 
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
@@ -229,7 +233,7 @@ class SettingsViewModelTest {
     fun `hash mismatch closes confirmation and requires fresh preview before retry`() = runTest {
         startUiStateCollector(backgroundScope)
         val messages = startEventCollector(backgroundScope)
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
 
@@ -259,14 +263,15 @@ class SettingsViewModelTest {
 
     @Test
     fun `recovery availability loads on init and restore requires confirmation`() = runTest {
-        startUiStateCollector(backgroundScope)
-        val messages = startEventCollector(backgroundScope)
         val recovery = RecoveryBackup(
             timestampMillis = 1_700_000_000_000L,
             sha256 = "recovery",
             sizeBytes = 42
         )
         backupRepository.latestRecoveryResult = recovery
+        viewModel = createViewModel()
+        startUiStateCollector(backgroundScope)
+        val messages = startEventCollector(backgroundScope)
         backupRepository.restoreResult = recovery
         advanceUntilIdle()
 
@@ -297,7 +302,7 @@ class SettingsViewModelTest {
         startUiStateCollector(backgroundScope)
         val messages = startEventCollector(backgroundScope)
         reminderScheduler.failSync = true
-        val uri = Uri.parse("content://backup.json")
+        val uri = mockk<Uri>()
 
         viewModel.onImportUriPicked(uri)
         advanceUntilIdle()
@@ -421,7 +426,7 @@ private class NoopIncidentReportRepository : IncidentReportRepository {
             id = "test",
             createdAtEpochMillis = 0,
             fileName = "incident.json",
-            uri = Uri.parse("file://incident.json")
+            uri = mockk<Uri>()
         )
     }
 }
