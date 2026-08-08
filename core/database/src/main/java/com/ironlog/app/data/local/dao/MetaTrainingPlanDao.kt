@@ -9,7 +9,9 @@ import androidx.room.Relation
 import androidx.room.Transaction
 import androidx.room.Update
 import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
+import com.ironlog.app.domain.util.resolveMetaPlanRotation
 import kotlinx.coroutines.flow.Flow
 
 data class MetaTrainingPlanWithItems(
@@ -46,6 +48,43 @@ interface MetaTrainingPlanDao {
 
     @Query("SELECT * FROM meta_plan_items WHERE metaPlanId = :metaPlanId ORDER BY orderIndex ASC")
     suspend fun getItemsForMetaPlan(metaPlanId: Long): List<MetaPlanItemEntity>
+
+    @Query(
+        """
+        SELECT trainingPlanId, metaPlanId, MAX(eventAt) AS lastEventAt
+        FROM (
+            SELECT planId AS trainingPlanId, metaPlanId, startTime AS eventAt
+            FROM workout_sessions
+            WHERE endTime IS NOT NULL AND planId IS NOT NULL AND metaPlanId IS NOT NULL
+            UNION ALL
+            SELECT trainingPlanId, metaPlanId, skippedAt AS eventAt
+            FROM meta_plan_skips
+        )
+        GROUP BY trainingPlanId, metaPlanId
+        """
+    )
+    fun observeLastRotationEventPerMetaPlanSubPlan(): Flow<List<LastMetaPlanRotationEventRow>>
+
+    @Query(
+        """
+        SELECT trainingPlanId, metaPlanId, MAX(eventAt) AS lastEventAt
+        FROM (
+            SELECT planId AS trainingPlanId, metaPlanId, startTime AS eventAt
+            FROM workout_sessions
+            WHERE endTime IS NOT NULL AND planId IS NOT NULL AND metaPlanId IS NOT NULL
+              AND metaPlanId = :metaPlanId
+            UNION ALL
+            SELECT trainingPlanId, metaPlanId, skippedAt AS eventAt
+            FROM meta_plan_skips
+            WHERE metaPlanId = :metaPlanId
+        )
+        GROUP BY trainingPlanId, metaPlanId
+        """
+    )
+    suspend fun getLastRotationEventsForMetaPlan(metaPlanId: Long): List<LastMetaPlanRotationEventRow>
+
+    @Insert
+    suspend fun insertMetaPlanSkip(skip: MetaPlanSkipEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetaPlan(plan: MetaTrainingPlanEntity): Long
@@ -111,5 +150,43 @@ interface MetaTrainingPlanDao {
         insertItems(normalizedItems)
 
         return metaPlanId
+    }
+
+    /**
+     * Persists a skip only when the expected sub-plan is still the current rotation
+     * target. All reads and the insert run inside one Room transaction so stale UI
+     * state and double taps cannot produce a second effective event.
+     */
+    @Transaction
+    suspend fun skipCurrentSubPlanIfCurrent(
+        metaPlanId: Long,
+        expectedTrainingPlanId: Long,
+        skippedAt: Long
+    ): Boolean {
+        val orderedIds = getItemsForMetaPlan(metaPlanId)
+            .sortedBy { it.orderIndex }
+            .map { it.trainingPlanId }
+        if (orderedIds.size < 2) return false
+
+        val anchors = getLastRotationEventsForMetaPlan(metaPlanId)
+            .associate { it.trainingPlanId to it.lastEventAt }
+        val current = resolveMetaPlanRotation(orderedIds, anchors).firstOrNull()
+        if (current != expectedTrainingPlanId) return false
+
+        val greatestAnchor = anchors.values.maxOrNull()
+        val effectiveSkippedAt = if (greatestAnchor != null && skippedAt <= greatestAnchor) {
+            greatestAnchor + 1L
+        } else {
+            skippedAt
+        }
+
+        insertMetaPlanSkip(
+            MetaPlanSkipEntity(
+                metaPlanId = metaPlanId,
+                trainingPlanId = expectedTrainingPlanId,
+                skippedAt = effectiveSkippedAt
+            )
+        )
+        return true
     }
 }

@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.plans
 
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
+import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
@@ -12,13 +13,16 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -177,5 +181,68 @@ class MetaPlanListViewModelTest {
         val item = vm.uiState.value.items.firstOrNull { it.metaPlan.id == metaId }
         assertNotNull(item)
         assertEquals(planBId, item?.nextSubPlan?.id)
+    }
+
+    @Test
+    fun `skipCurrentSubPlan records rotation event in fake repository`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val planCId = planRepo.savePlan(TrainingPlan(name = "Plan C"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planCId, orderIndex = 2)
+                )
+            )
+        )
+
+        assertTrue(metaPlanRepo.skipCurrentSubPlan(metaId, planAId))
+        val events = metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first()
+
+        assertEquals(
+            listOf(
+                MetaPlanRotationEvent(
+                    trainingPlanId = planAId,
+                    metaPlanId = metaId,
+                    lastEventAt = 1L
+                )
+            ),
+            events
+        )
+    }
+
+    @Test
+    fun `skipCurrentSubPlan rejects stale expected plan in fake repository`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val planCId = planRepo.savePlan(TrainingPlan(name = "Plan C"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planCId, orderIndex = 2)
+                )
+            )
+        )
+
+        assertTrue(metaPlanRepo.skipCurrentSubPlan(metaId, planAId))
+        assertFalse(metaPlanRepo.skipCurrentSubPlan(metaId, planAId))
+        val events = metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first()
+
+        assertEquals(
+            listOf(
+                MetaPlanRotationEvent(
+                    trainingPlanId = planAId,
+                    metaPlanId = metaId,
+                    lastEventAt = 1L
+                )
+            ),
+            events
+        )
     }
 }
