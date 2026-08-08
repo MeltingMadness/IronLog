@@ -80,7 +80,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     @Test
-    fun exportMutateImport_restoresAllEightTablesWithCanonicalParityAndFkIntegrity() =
+    fun exportMutateImport_restoresAllNineTablesWithCanonicalParityAndFkIntegrity() =
         runBlocking {
             harness = Harness(context)
             harness.seedFullDomain()
@@ -127,6 +127,7 @@ class BackupLifecycleRoundTripTest {
 
             val preImportPlanName = harness.preImportPlanName
             val preImportSetCount = harness.preImportSetCount
+            val preImportMetaPlanSkips = harness.readMetaPlanSkips()
 
             // Two-phase import: preview (document hash) then guarded import.
             val preview = harness.repository.previewImport(MEMORY_URI)
@@ -171,6 +172,10 @@ class BackupLifecycleRoundTripTest {
                 "post-import mutation must be visible",
                 harness.readSetCount() != harness.exportedSetCount
             )
+            assertTrue(
+                "post-import mutation must clear skips",
+                harness.readMetaPlanSkips().isEmpty()
+            )
             val restored = harness.repository.restoreLatestRecovery()
                 ?: throw AssertionError("restore must return the recovery metadata")
             assertEquals(latest.sha256, restored.sha256)
@@ -187,6 +192,7 @@ class BackupLifecycleRoundTripTest {
                 harness.preImportCustomExerciseIds,
                 harness.readCustomExerciseIds()
             )
+            assertEquals(preImportMetaPlanSkips, harness.readMetaPlanSkips())
             assertFalse("restored sets must be the pre-import (deleted) state", harness.readSetCount() > 0)
             assertForeignKeyIntegrity()
         }
@@ -308,7 +314,7 @@ class BackupLifecycleRoundTripTest {
         var preImportCustomExerciseIds: List<Long> = emptyList()
 
         suspend fun seedFullDomain() {
-            // Explicit, referentially valid IDs across all eight tables.
+            // Explicit, referentially valid IDs across all nine tables.
             val squat = ExerciseEntity(
                 id = CUSTOM_SQUAT_ID,
                 name = "Custom Squat",
@@ -440,8 +446,9 @@ class BackupLifecycleRoundTripTest {
         }
 
         suspend fun mutateAfterImport() {
-            // Add a set so the post-import state clearly differs from the
-            // pre-import recovery snapshot.
+            // Change sets and skips so the post-import state clearly differs
+            // from the pre-import recovery snapshot.
+            metaTrainingPlanDao.deleteAllMetaPlanSkips()
             workoutSetDao.insert(
                 WorkoutSetEntity(
                     id = POST_IMPORT_SET_ID,

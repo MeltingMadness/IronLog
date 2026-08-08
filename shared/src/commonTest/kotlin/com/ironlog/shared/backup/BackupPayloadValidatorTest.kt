@@ -232,13 +232,37 @@ class BackupPayloadValidatorTest {
 
     @Test
     fun legacyJsonWithoutMetaPlanSkips_decodesToEmptyList() {
-        val legacyJson = Json { encodeDefaults = false }.encodeToString(
-            BackupPayloadV1.serializer(),
-            validPayload().copy(schemaVersion = 10, metaPlanSkips = emptyList())
-        )
+        val legacyJson = """
+            {
+              "formatVersion": 1,
+              "schemaVersion": 9,
+              "appVersion": "1.0",
+              "exportedAtEpochMillis": 1000,
+              "exercises": [
+                {
+                  "id": 1,
+                  "name": "Bankdruecken",
+                  "primaryMuscleGroup": "BRUST",
+                  "secondaryMuscleGroups": "TRIZEPS",
+                  "category": "LANGHANTEL",
+                  "isCustom": false,
+                  "notes": "",
+                  "isArchived": false
+                }
+              ],
+              "workoutSessions": [],
+              "workoutSets": [],
+              "trainingPlans": [],
+              "planExercises": [],
+              "personalRecords": [],
+              "metaTrainingPlans": [],
+              "metaPlanItems": []
+            }
+        """.trimIndent()
 
         val legacy = Json.decodeFromString<BackupPayloadV1>(legacyJson)
 
+        assertEquals(9, legacy.schemaVersion)
         assertTrue(legacy.metaPlanSkips.isEmpty())
         assertTrue(
             BackupPayloadValidator.validate(legacy, CURRENT_SCHEMA_VERSION).isValid,
