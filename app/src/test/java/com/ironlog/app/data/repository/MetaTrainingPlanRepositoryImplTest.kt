@@ -172,6 +172,22 @@ class MetaTrainingPlanRepositoryImplTest {
             publishRotationEvents()
         }
 
+        override suspend fun getAllMetaPlanSkipsList(): List<MetaPlanSkipEntity> =
+            skipsByMetaPlan.values.flatten().sortedBy { it.id }
+
+        override suspend fun replaceAllMetaPlanSkips(skips: List<MetaPlanSkipEntity>) {
+            skipsByMetaPlan.clear()
+            skips.groupBy { it.metaPlanId }.forEach { (metaPlanId, list) ->
+                skipsByMetaPlan[metaPlanId] = list.toMutableList()
+            }
+            publishRotationEvents()
+        }
+
+        override suspend fun deleteAllMetaPlanSkips() {
+            skipsByMetaPlan.clear()
+            publishRotationEvents()
+        }
+
         override suspend fun insertMetaPlan(plan: MetaTrainingPlanEntity): Long {
             val id = nextMetaPlanId++
             metaPlans[id] = plan.copy(id = id)

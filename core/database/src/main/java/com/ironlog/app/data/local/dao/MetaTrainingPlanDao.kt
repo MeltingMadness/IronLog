@@ -86,6 +86,15 @@ interface MetaTrainingPlanDao {
     @Insert
     suspend fun insertMetaPlanSkip(skip: MetaPlanSkipEntity)
 
+    @Query("SELECT * FROM meta_plan_skips ORDER BY id ASC")
+    suspend fun getAllMetaPlanSkipsList(): List<MetaPlanSkipEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun replaceAllMetaPlanSkips(skips: List<MetaPlanSkipEntity>)
+
+    @Query("DELETE FROM meta_plan_skips")
+    suspend fun deleteAllMetaPlanSkips()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetaPlan(plan: MetaTrainingPlanEntity): Long
 

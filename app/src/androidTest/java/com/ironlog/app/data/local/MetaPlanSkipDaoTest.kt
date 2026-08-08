@@ -9,6 +9,7 @@ import com.ironlog.app.data.local.entity.MetaPlanItemEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -124,7 +125,40 @@ class MetaPlanSkipDaoTest {
         val planAId = insertPlan("Plan A")
         val planBId = insertPlan("Plan B")
         val metaPlanId = seedMetaPlan(planAId, planBId)
-        val sessionId = database.workoutSessionDao().insert(
+        val session = WorkoutSessionEntity(
+            startTime = 1000L,
+            endTime = 2000L,
+            durationSeconds = 1L,
+            name = "Meta Session",
+            notes = "keep notes",
+            planId = planAId,
+            metaPlanId = metaPlanId
+        )
+        val sessionId = database.workoutSessionDao().insert(session)
+
+        // The completed planA session makes planB the current rotation target.
+        assertTrue(
+            dao.skipCurrentSubPlanIfCurrent(
+                metaPlanId = metaPlanId,
+                expectedTrainingPlanId = planBId,
+                skippedAt = 3000L
+            )
+        )
+
+        val before = database.workoutSessionDao().getSessionById(sessionId)
+        assertEquals(session.copy(id = sessionId), before)
+        val sessions = database.workoutSessionDao().getAllCompletedSessionsList()
+        assertEquals(1, sessions.size)
+        assertEquals(session.copy(id = sessionId), sessions.single())
+        assertEquals(null, database.workoutSessionDao().getActiveSession())
+    }
+
+    @Test
+    fun mixedSessionAndSkipEventsAggregateToMaxPerSubPlan() = runBlocking {
+        val planAId = insertPlan("Plan A")
+        val planBId = insertPlan("Plan B")
+        val metaPlanId = seedMetaPlan(planAId, planBId)
+        database.workoutSessionDao().insert(
             WorkoutSessionEntity(
                 startTime = 1000L,
                 endTime = 2000L,
@@ -133,7 +167,17 @@ class MetaPlanSkipDaoTest {
                 metaPlanId = metaPlanId
             )
         )
+        database.workoutSessionDao().insert(
+            WorkoutSessionEntity(
+                startTime = 2000L,
+                endTime = 3000L,
+                durationSeconds = 1L,
+                planId = planBId,
+                metaPlanId = metaPlanId
+            )
+        )
 
+        // planA is current after the two sessions; the skip is newer than its session.
         assertTrue(
             dao.skipCurrentSubPlanIfCurrent(
                 metaPlanId = metaPlanId,
@@ -142,10 +186,18 @@ class MetaPlanSkipDaoTest {
             )
         )
 
-        val sessions = database.workoutSessionDao().getAllCompletedSessionsList()
-        assertEquals(1, sessions.size)
-        assertEquals(sessionId, sessions.single().id)
-        assertEquals(null, database.workoutSessionDao().getActiveSession())
+        val expected = mapOf(
+            planAId to 3000L,
+            planBId to 2000L
+        )
+        val suspendAggregate = dao.getLastRotationEventsForMetaPlan(metaPlanId)
+            .associate { it.trainingPlanId to it.lastEventAt }
+        assertEquals(expected, suspendAggregate)
+
+        val flowAggregate = dao.observeLastRotationEventPerMetaPlanSubPlan()
+            .first()
+            .associate { it.trainingPlanId to it.lastEventAt }
+        assertEquals(expected, flowAggregate)
     }
 
     private suspend fun insertPlan(name: String): Long =

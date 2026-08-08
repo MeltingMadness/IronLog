@@ -266,8 +266,25 @@ class IronLogDatabaseMigrationTest {
         }
         legacyHelper.close()
 
-        val migratedHelper = createMigratingV10Helper(context, dbName)
-        migratedHelper.writableDatabase.use { db ->
+        // The real Room open applies MIGRATION_9_10, validates the legacy v9
+        // schema against the recorded identity and rewrites the identity hash
+        // to the v10 schema. Any mismatch throws here.
+        val database = openMigratedV10Database(context, dbName)
+        runBlocking {
+            database.trainingPlanDao().getAllPlansList()
+        }
+        database.close()
+
+        val rawHelper = openRawV10Connection(context, dbName)
+        rawHelper.writableDatabase.use { db ->
+            db.query("PRAGMA user_version").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(10, cursor.getInt(0))
+            }
+            assertRecordedIdentityHash(
+                db,
+                "c6950cf049fba43c8663d55261bd94a1"
+            )
             assertTrue(tableExists(db, "meta_plan_skips"))
             assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId"))
             assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_trainingPlanId"))
@@ -304,8 +321,12 @@ class IronLogDatabaseMigrationTest {
                 assertTrue(cursor.moveToFirst())
                 assertEquals(1, cursor.getInt(0))
             }
+            db.execSQL("PRAGMA foreign_keys = ON")
+            db.query("PRAGMA foreign_key_check").use { cursor ->
+                assertFalse("foreign_key_check must be empty", cursor.moveToFirst())
+            }
         }
-        migratedHelper.close()
+        rawHelper.close()
         context.deleteDatabase(dbName)
     }
 
@@ -360,6 +381,34 @@ class IronLogDatabaseMigrationTest {
         dbName: String
     ): SupportSQLiteOpenHelper {
         val callback = object : SupportSQLiteOpenHelper.Callback(9) {
+            override fun onCreate(db: SupportSQLiteDatabase) = Unit
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
+    private fun openMigratedV10Database(
+        context: Context,
+        dbName: String
+    ): IronLogDatabase {
+        return Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
+            .addMigrations(IronLogDatabase.migration9To10ForTests())
+            .allowMainThreadQueries()
+            .build()
+    }
+
+    private fun openRawV10Connection(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
             override fun onCreate(db: SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
@@ -829,31 +878,14 @@ class IronLogDatabaseMigrationTest {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_plan_exercises_exerciseId ON plan_exercises (exerciseId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_meta_plan_items_metaPlanId ON meta_plan_items (metaPlanId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_meta_plan_items_trainingPlanId ON meta_plan_items (trainingPlanId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
+                db.execSQL(
+                    "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                        "'097e7e46688af90b3da0301fb81fbfab')"
+                )
             }
 
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
-        }
-
-        return FrameworkSQLiteOpenHelperFactory().create(
-            SupportSQLiteOpenHelper.Configuration.builder(context)
-                .name(dbName)
-                .callback(callback)
-                .build()
-        )
-    }
-
-    private fun createMigratingV10Helper(
-        context: Context,
-        dbName: String
-    ): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
-            override fun onCreate(db: SupportSQLiteDatabase) = Unit
-
-            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
-                assertEquals(9, oldVersion)
-                assertEquals(10, newVersion)
-                IronLogDatabase.migration9To10ForTests().migrate(db)
-            }
         }
 
         return FrameworkSQLiteOpenHelperFactory().create(

@@ -39,7 +39,7 @@ class MetaPlanListViewModelTest {
         Dispatchers.setMain(testDispatcher)
         planRepo = FakeTrainingPlanRepository()
         workoutRepo = FakeWorkoutRepository()
-        metaPlanRepo = FakeMetaTrainingPlanRepository()
+        metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
     }
 
     @After
@@ -245,4 +245,64 @@ class MetaPlanListViewModelTest {
             events
         )
     }
+
+    @Test
+    fun `rotation events aggregate completed sessions and skips`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val planCId = planRepo.savePlan(TrainingPlan(name = "Plan C"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planCId, orderIndex = 2)
+                )
+            )
+        )
+
+        val planAStart = LocalDateTime.of(2026, 8, 1, 8, 0)
+        val planBStart = LocalDateTime.of(2026, 8, 2, 8, 0)
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 1L,
+                startTime = planAStart,
+                endTime = planAStart.plusHours(1),
+                durationSeconds = 3600,
+                planId = planAId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 2L,
+                startTime = planBStart,
+                endTime = planBStart.plusHours(1),
+                durationSeconds = 3600,
+                planId = planBId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+
+        val sessionEvents = metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan()
+            .first()
+        assertEquals(2, sessionEvents.size)
+        // planC has no event yet, so it is the current rotation target.
+        assertTrue(metaPlanRepo.skipCurrentSubPlan(metaId, planCId))
+        val eventsByPlan = metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan()
+            .first()
+            .associateBy { it.trainingPlanId }
+
+        assertEquals(planBStart.toEpochMillis(), eventsByPlan.getValue(planBId).lastEventAt)
+        assertTrue(
+            eventsByPlan.getValue(planCId).lastEventAt >
+                eventsByPlan.getValue(planBId).lastEventAt
+        )
+    }
 }
+
+private fun java.time.LocalDateTime.toEpochMillis(): Long =
+    atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
