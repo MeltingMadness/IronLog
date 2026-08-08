@@ -15,7 +15,8 @@ data class BackupPayloadV1(
     val planExercises: List<BackupPlanExercise>,
     val personalRecords: List<BackupPersonalRecord>,
     val metaTrainingPlans: List<BackupMetaTrainingPlan> = emptyList(),
-    val metaPlanItems: List<BackupMetaPlanItem> = emptyList()
+    val metaPlanItems: List<BackupMetaPlanItem> = emptyList(),
+    val metaPlanSkips: List<BackupMetaPlanSkip> = emptyList()
 )
 
 @Serializable
@@ -96,4 +97,12 @@ data class BackupMetaPlanItem(
     val metaPlanId: Long,
     val trainingPlanId: Long,
     val orderIndex: Int
+)
+
+@Serializable
+data class BackupMetaPlanSkip(
+    val id: Long,
+    val metaPlanId: Long,
+    val trainingPlanId: Long,
+    val skippedAt: Long
 )

@@ -1,6 +1,7 @@
 package com.ironlog.app.data.backup
 
 import com.ironlog.shared.backup.BackupExercise
+import com.ironlog.shared.backup.BackupMetaPlanSkip
 import com.ironlog.shared.backup.BackupMetaPlanItem
 import com.ironlog.shared.backup.BackupMetaTrainingPlan
 import com.ironlog.shared.backup.BackupPayloadV1
@@ -11,13 +12,16 @@ import com.ironlog.shared.backup.BackupTrainingPlan
 import com.ironlog.shared.backup.BackupWorkoutSession
 import com.ironlog.shared.backup.BackupWorkoutSet
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 9
+        const val CURRENT_SCHEMA_VERSION = 10
     }
 
     @Test
@@ -271,4 +275,158 @@ class BackupPayloadValidatorTest {
         assertFalse(result.isValid)
         assertTrue(result.errors.any { it.contains("duplicate exercise id: 1", ignoreCase = true) })
     }
+
+    @Test
+    fun payloadWithMetaPlanSkip_roundTrips() {
+        val payload = validPayload().copy(
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(id = 7L, name = "Meta 1", createdAt = 1000L)
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(id = 11L, metaPlanId = 7L, trainingPlanId = 5L, orderIndex = 0)
+            ),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 7L, trainingPlanId = 5L, skippedAt = 2000L)
+            )
+        )
+
+        val encoded = Json.encodeToString(BackupPayloadV1.serializer(), payload)
+        val decoded = Json.decodeFromString(BackupPayloadV1.serializer(), encoded)
+
+        assertEquals(payload, decoded)
+        assertEquals(listOf(payload.metaPlanSkips.single()), decoded.metaPlanSkips)
+        assertTrue(BackupPayloadValidator.validate(decoded, CURRENT_SCHEMA_VERSION).isValid)
+    }
+
+    @Test
+    fun legacyJsonWithoutMetaPlanSkips_decodesToEmptyList() {
+        val legacyJson = Json { encodeDefaults = false }.encodeToString(
+            BackupPayloadV1.serializer(),
+            validPayload().copy(schemaVersion = 10, metaPlanSkips = emptyList())
+        )
+
+        val legacy = Json.decodeFromString<BackupPayloadV1>(legacyJson)
+
+        assertTrue(legacy.metaPlanSkips.isEmpty())
+        assertTrue(BackupPayloadValidator.validate(legacy, CURRENT_SCHEMA_VERSION).isValid)
+    }
+
+    @Test
+    fun metaPlanSkip_withMissingMetaPlan_failsValidation() {
+        val payload = validPayload().copy(
+            metaTrainingPlans = emptyList(),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 999L, trainingPlanId = 5L, skippedAt = 2000L)
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("missing meta plan", ignoreCase = true) })
+    }
+
+    @Test
+    fun metaPlanSkip_withMissingTrainingPlan_failsValidation() {
+        val payload = validPayload().copy(
+            trainingPlans = emptyList(),
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(id = 7L, name = "Meta 1", createdAt = 1000L)
+            ),
+            metaPlanItems = emptyList(),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 7L, trainingPlanId = 99L, skippedAt = 2000L)
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("missing training plan", ignoreCase = true) })
+    }
+
+    @Test
+    fun metaPlanSkip_doesNotRequireMatchingCurrentMetaPlanItem() {
+        val payload = validPayload().copy(
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(id = 7L, name = "Meta 1", createdAt = 1000L)
+            ),
+            metaPlanItems = emptyList(),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 7L, trainingPlanId = 5L, skippedAt = 2000L)
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertTrue(result.errors.joinToString(), result.isValid)
+    }
+
+    @Test
+    fun duplicateMetaPlanSkipIds_failValidation() {
+        val payload = validPayload().copy(
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(id = 7L, name = "Meta 1", createdAt = 1000L)
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(id = 11L, metaPlanId = 7L, trainingPlanId = 5L, orderIndex = 0)
+            ),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 7L, trainingPlanId = 5L, skippedAt = 2000L),
+                BackupMetaPlanSkip(id = 12L, metaPlanId = 7L, trainingPlanId = 5L, skippedAt = 3000L)
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(result.errors.any { it.contains("duplicate meta plan skip id: 12", ignoreCase = true) })
+    }
+
+    private fun validPayload(): BackupPayloadV1 = BackupPayloadV1(
+        formatVersion = 1,
+        schemaVersion = CURRENT_SCHEMA_VERSION,
+        appVersion = "1.0",
+        exportedAtEpochMillis = 1000L,
+        exercises = listOf(
+            BackupExercise(
+                id = 1L,
+                name = "Bankdruecken",
+                primaryMuscleGroup = "BRUST",
+                secondaryMuscleGroups = "TRIZEPS",
+                category = "LANGHANTEL",
+                isCustom = false
+            )
+        ),
+        workoutSessions = listOf(
+            BackupWorkoutSession(
+                id = 10L,
+                startTime = 1000L,
+                endTime = 2000L,
+                durationSeconds = 1L,
+                name = "Push",
+                notes = ""
+            )
+        ),
+        workoutSets = listOf(
+            BackupWorkoutSet(
+                id = 20L,
+                sessionId = 10L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 80.0,
+                isWarmup = false,
+                completedAt = 1200L
+            )
+        ),
+        trainingPlans = listOf(
+            BackupTrainingPlan(id = 5L, name = "Push", createdAt = 1000L)
+        ),
+        planExercises = emptyList(),
+        personalRecords = emptyList(),
+        metaTrainingPlans = emptyList(),
+        metaPlanItems = emptyList(),
+        metaPlanSkips = emptyList()
+    )
 }

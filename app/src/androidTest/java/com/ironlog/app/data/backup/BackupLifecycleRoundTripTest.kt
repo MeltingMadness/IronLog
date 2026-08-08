@@ -17,6 +17,7 @@ import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
 import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
@@ -28,6 +29,7 @@ import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.shared.backup.BackupExercise
 import com.ironlog.shared.backup.BackupMetaPlanItem
+import com.ironlog.shared.backup.BackupMetaPlanSkip
 import com.ironlog.shared.backup.BackupMetaTrainingPlan
 import com.ironlog.shared.backup.BackupPayloadV1
 import com.ironlog.shared.backup.BackupPersonalRecord
@@ -56,9 +58,9 @@ import java.util.UUID
  * ContentResolver semantics are covered separately in
  * ContentResolverBackupDocumentIoTest.
  *
- * Flow: seed all eight workout-domain tables -> export -> mutate/empty the
+ * Flow: seed all nine workout-domain tables -> export -> mutate/empty the
  * database -> preview + hash-guarded import -> full canonical parity of all
- * eight tables plus PRAGMA foreign_key_check. A second test verifies that the
+ * nine tables plus PRAGMA foreign_key_check. A second test verifies that the
  * import produced a real file in the recovery store and that
  * restoreLatestRecovery brings back the exact pre-import state.
  */
@@ -91,20 +93,21 @@ class BackupLifecycleRoundTripTest {
             assertTrue("export must contain non-seed exercises", payload.exercises.any { it.id == CUSTOM_SQUAT_ID })
             assertTrue("export must contain RPE", payload.workoutSets.any { it.rpe == 9.0 })
             assertTrue("export must contain notes", payload.exercises.any { it.notes.isNotBlank() })
-            assertEquals(9, payload.schemaVersion)
+            assertTrue("export must contain skip", payload.metaPlanSkips.any { it.id == SKIP_ID })
+            assertEquals(10, payload.schemaVersion)
 
             // Mutate/empty the database so the imported document must prove itself.
             harness.mutateAwayFromSeededState()
 
             val preview = harness.repository.previewImport(MEMORY_URI)
             assertTrue("preview must validate", preview.isValid)
-            assertEquals(9, preview.schemaVersion)
+            assertEquals(10, preview.schemaVersion)
             assertEquals(sha256Hex(exported), preview.sha256)
             assertPreviewCounts(preview, payload)
 
             harness.repository.importBackup(MEMORY_URI, preview.sha256)
 
-            assertEightTableParity(harness, payload)
+            assertNineTableParity(harness, payload)
             assertForeignKeyIntegrity()
         }
 
@@ -197,9 +200,10 @@ class BackupLifecycleRoundTripTest {
         assertEquals(payload.personalRecords.size, preview.counts.personalRecords)
         assertEquals(payload.metaTrainingPlans.size, preview.counts.metaTrainingPlans)
         assertEquals(payload.metaPlanItems.size, preview.counts.metaPlanItems)
+        assertEquals(payload.metaPlanSkips.size, preview.counts.metaPlanSkips)
     }
 
-    private suspend fun assertEightTableParity(harness: Harness, payload: BackupPayloadV1) {
+    private suspend fun assertNineTableParity(harness: Harness, payload: BackupPayloadV1) {
         assertEquals(payload.exercises, harness.readExercises())
         assertEquals(payload.workoutSessions, harness.readWorkoutSessions())
         assertEquals(payload.workoutSets, harness.readWorkoutSets())
@@ -208,6 +212,7 @@ class BackupLifecycleRoundTripTest {
         assertEquals(payload.personalRecords, harness.readPersonalRecords())
         assertEquals(payload.metaTrainingPlans, harness.readMetaTrainingPlans())
         assertEquals(payload.metaPlanItems, harness.readMetaPlanItems())
+        assertEquals(payload.metaPlanSkips, harness.readMetaPlanSkips())
     }
 
     private fun assertForeignKeyIntegrity() {
@@ -227,7 +232,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     private fun openRawConnection(dbName: String): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(9) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(
@@ -374,6 +379,14 @@ class BackupLifecycleRoundTripTest {
                     )
                 )
             )
+            metaTrainingPlanDao.insertMetaPlanSkip(
+                MetaPlanSkipEntity(
+                    id = SKIP_ID,
+                    metaPlanId = META_PLAN_ID,
+                    trainingPlanId = PLAN_ID,
+                    skippedAt = 2500L
+                )
+            )
             workoutSetDao.insert(
                 WorkoutSetEntity(
                     id = SET_1_ID,
@@ -468,6 +481,9 @@ class BackupLifecycleRoundTripTest {
         suspend fun readMetaPlanItems(): List<BackupMetaPlanItem> =
             metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() }
 
+        suspend fun readMetaPlanSkips(): List<BackupMetaPlanSkip> =
+            metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() }
+
         suspend fun readPlanName(): String =
             trainingPlanDao.getAllPlansList().single().name
 
@@ -504,6 +520,7 @@ class BackupLifecycleRoundTripTest {
         const val SESSION_ID = 4001L
         const val PLAN_EXERCISE_ID = 5001L
         const val META_PLAN_ITEM_ID = 6001L
+        const val SKIP_ID = 9001L
         const val SET_1_ID = 7001L
         const val SET_2_ID = 7002L
         const val RECORD_ID = 8001L
@@ -583,6 +600,13 @@ private fun MetaPlanItemEntity.toBackup() = BackupMetaPlanItem(
     metaPlanId = metaPlanId,
     trainingPlanId = trainingPlanId,
     orderIndex = orderIndex
+)
+
+private fun MetaPlanSkipEntity.toBackup() = BackupMetaPlanSkip(
+    id = id,
+    metaPlanId = metaPlanId,
+    trainingPlanId = trainingPlanId,
+    skippedAt = skippedAt
 )
 
 private fun sha256Hex(bytes: ByteArray): String =

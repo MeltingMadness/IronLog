@@ -9,3 +9,4 @@ typealias BackupPlanExercise = com.ironlog.shared.backup.BackupPlanExercise
 typealias BackupPersonalRecord = com.ironlog.shared.backup.BackupPersonalRecord
 typealias BackupMetaTrainingPlan = com.ironlog.shared.backup.BackupMetaTrainingPlan
 typealias BackupMetaPlanItem = com.ironlog.shared.backup.BackupMetaPlanItem
+typealias BackupMetaPlanSkip = com.ironlog.shared.backup.BackupMetaPlanSkip

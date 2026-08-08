@@ -10,7 +10,8 @@ data class BackupContentCounts(
     val planExercises: Int,
     val personalRecords: Int,
     val metaTrainingPlans: Int,
-    val metaPlanItems: Int
+    val metaPlanItems: Int,
+    val metaPlanSkips: Int
 )
 
 data class BackupImportPreview(
@@ -37,7 +38,7 @@ data class RecoveryBackup(
  *    of the exact bytes it read.
  * 2. [importBackup] re-reads the document, rejects it when the hash changed,
  *    saves a verified recovery snapshot of the current state, and only then
- *    replaces all eight workout-domain tables in one transaction.
+ *    replaces all nine workout-domain tables in one transaction.
  */
 interface BackupRepository {
     suspend fun exportBackup(uri: Uri)

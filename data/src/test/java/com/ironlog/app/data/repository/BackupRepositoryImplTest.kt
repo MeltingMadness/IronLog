@@ -14,12 +14,17 @@ import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
+import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.repository.RecoveryBackup
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.shared.backup.BackupExercise
+import com.ironlog.shared.backup.BackupMetaPlanItem
+import com.ironlog.shared.backup.BackupMetaPlanSkip
+import com.ironlog.shared.backup.BackupMetaTrainingPlan
 import com.ironlog.shared.backup.BackupPayloadV1
+import com.ironlog.shared.backup.BackupTrainingPlan
 import com.ironlog.shared.backup.BackupWorkoutSession
 import com.ironlog.shared.backup.BackupWorkoutSet
 import io.mockk.coEvery
@@ -73,15 +78,25 @@ class BackupRepositoryImplTest {
             completedAt = 1200L,
             rpe = 8.5
         )
-        harness.stubSnapshotReads(exercise = exercise, session = session, set = set)
+        val skip = MetaPlanSkipEntity(
+            id = 30L,
+            metaPlanId = 40L,
+            trainingPlanId = 50L,
+            skippedAt = 1500L
+        )
+        harness.stubSnapshotReads(exercise = exercise, session = session, set = set, skip = skip)
 
         runBlocking { harness.repository.exportBackup(URI) }
 
         val written = harness.documentIo.writtenBytes ?: throw AssertionError("no document written")
         val payload = json.decodeFromString(BackupPayloadV1.serializer(), written.decodeToString())
-        assertEquals(9, payload.schemaVersion)
+        assertEquals(10, payload.schemaVersion)
         assertEquals(8.5, payload.workoutSets.single().rpe)
         assertEquals("notiz", payload.exercises.single().notes)
+        assertEquals(
+            BackupMetaPlanSkip(id = 30L, metaPlanId = 40L, trainingPlanId = 50L, skippedAt = 1500L),
+            payload.metaPlanSkips.single()
+        )
         val txnEndIndex = harness.order.indexOf("txn-end")
         val writeIndex = harness.order.indexOf("write")
         assertTrue(
@@ -145,6 +160,56 @@ class BackupRepositoryImplTest {
         assertTrue("guard read must precede deletes", guardRead in 0 until delete)
         coVerify(exactly = 1) { harness.exerciseDao.deleteAll() }
         coVerify(exactly = 1) { harness.exerciseDao.replaceAll(any()) }
+    }
+
+    @Test
+    fun `import deletes skips before referenced plans and inserts them after plans exist`() {
+        val harness = Harness()
+        harness.stubSnapshotReads()
+        harness.stubMutations()
+        val payload = validPayload().copy(
+            trainingPlans = listOf(
+                BackupTrainingPlan(id = 5L, name = "Push", createdAt = 1000L)
+            ),
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(
+                    id = 40L,
+                    name = "Meta",
+                    createdAt = 1000L
+                )
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(
+                    id = 41L,
+                    metaPlanId = 40L,
+                    trainingPlanId = 5L,
+                    orderIndex = 0
+                )
+            ),
+            metaPlanSkips = listOf(
+                BackupMetaPlanSkip(id = 42L, metaPlanId = 40L, trainingPlanId = 5L, skippedAt = 1500L)
+            )
+        )
+        harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), payload).encodeToByteArray()
+
+        runBlocking { harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex()) }
+
+        val events = harness.transactionRunner.events
+        val deleteSkips = events.indexOf("delete-meta-skips")
+        val deleteItems = events.indexOf("delete-meta-items")
+        val deleteMetaPlans = events.indexOf("delete-meta-plans")
+        val deletePlans = events.indexOf("delete-plans")
+        assertTrue("skips must be deleted before meta plan items", deleteSkips in 0 until deleteItems)
+        assertTrue("items must be deleted before meta plans", deleteItems in 0 until deleteMetaPlans)
+        assertTrue("meta plans must be deleted before training plans", deleteMetaPlans in 0 until deletePlans)
+
+        val insertPlans = events.indexOf("insert-plans")
+        val insertMetaPlans = events.indexOf("insert-meta-plans")
+        val insertSkips = events.indexOf("insert-meta-skips")
+        assertTrue("plans must be inserted before skips", insertPlans in 0 until insertSkips)
+        assertTrue("meta plans must be inserted before skips", insertMetaPlans in 0 until insertSkips)
+        coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanSkips() }
+        coVerify(exactly = 1) { harness.metaTrainingPlanDao.replaceAllMetaPlanSkips(any()) }
     }
 
     @Test
@@ -301,6 +366,7 @@ class BackupRepositoryImplTest {
 
         coVerify(exactly = 1) { harness.personalRecordDao.deleteAll() }
         coVerify(exactly = 1) { harness.workoutSetDao.deleteAll() }
+        coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanSkips() }
         coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanItems() }
         coVerify(exactly = 1) { harness.trainingPlanDao.deleteAllPlanExercises() }
         coVerify(exactly = 1) { harness.workoutSessionDao.deleteAll() }
@@ -316,7 +382,7 @@ class BackupRepositoryImplTest {
 
     private fun validPayload(): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = 1,
-        schemaVersion = 9,
+        schemaVersion = 10,
         appVersion = "1.0",
         exportedAtEpochMillis = 42L,
         exercises = listOf(
@@ -356,7 +422,8 @@ class BackupRepositoryImplTest {
         planExercises = emptyList(),
         personalRecords = emptyList(),
         metaTrainingPlans = emptyList(),
-        metaPlanItems = emptyList()
+        metaPlanItems = emptyList(),
+        metaPlanSkips = emptyList()
     )
 
     private class Harness(
@@ -392,7 +459,8 @@ class BackupRepositoryImplTest {
         fun stubSnapshotReads(
             exercise: ExerciseEntity? = null,
             session: WorkoutSessionEntity? = null,
-            set: WorkoutSetEntity? = null
+            set: WorkoutSetEntity? = null,
+            skip: MetaPlanSkipEntity? = null
         ) {
             coEvery { exerciseDao.getAllExercisesList() } answers {
                 events += "read-exercises"
@@ -426,6 +494,10 @@ class BackupRepositoryImplTest {
                 events += "read-meta-items"
                 emptyList()
             }
+            coEvery { metaTrainingPlanDao.getAllMetaPlanSkipsList() } answers {
+                events += "read-meta-skips"
+                listOfNotNull(skip)
+            }
         }
 
         fun stubMutations() {
@@ -439,6 +511,10 @@ class BackupRepositoryImplTest {
             }
             coEvery { metaTrainingPlanDao.deleteAllMetaPlanItems() } answers {
                 events += "delete-meta-items"
+                Unit
+            }
+            coEvery { metaTrainingPlanDao.deleteAllMetaPlanSkips() } answers {
+                events += "delete-meta-skips"
                 Unit
             }
             coEvery { trainingPlanDao.deleteAllPlanExercises() } answers {
@@ -467,6 +543,22 @@ class BackupRepositoryImplTest {
             }
             coEvery { exerciseDao.replaceAll(any()) } answers {
                 events += "insert-exercises"
+                Unit
+            }
+            coEvery { trainingPlanDao.replaceAllPlans(any()) } answers {
+                events += "insert-plans"
+                Unit
+            }
+            coEvery { metaTrainingPlanDao.replaceAllMetaPlans(any()) } answers {
+                events += "insert-meta-plans"
+                Unit
+            }
+            coEvery { metaTrainingPlanDao.replaceAllMetaPlanSkips(any()) } answers {
+                events += "insert-meta-skips"
+                Unit
+            }
+            coEvery { metaTrainingPlanDao.replaceAllItems(any()) } answers {
+                events += "insert-meta-items"
                 Unit
             }
         }

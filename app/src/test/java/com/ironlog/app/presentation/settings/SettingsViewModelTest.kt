@@ -412,7 +412,8 @@ private fun validPreview(
         planExercises = 5,
         personalRecords = 6,
         metaTrainingPlans = 7,
-        metaPlanItems = 8
+        metaPlanItems = 8,
+        metaPlanSkips = 9
     ),
     validationErrors = validationErrors
 )
