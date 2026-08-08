@@ -29,6 +29,7 @@ class FakeWorkoutRepository : WorkoutRepository {
     var deleteSetCallCount = 0
     var finishWorkoutCallCount = 0
     var deleteSessionCallCount = 0
+    var getPreviousSessionDataForExercisesCallCount = 0
 
     var failAddSet = false
     var failUpdateSet = false
@@ -208,6 +209,7 @@ class FakeWorkoutRepository : WorkoutRepository {
         exerciseIds: List<Long>,
         scope: PreviousSessionScope
     ): Map<Long, PreviousExerciseSession> {
+        getPreviousSessionDataForExercisesCallCount++
         if (exerciseIds.isEmpty()) return emptyMap()
 
         val completedById = sessions.value
@@ -234,7 +236,11 @@ class FakeWorkoutRepository : WorkoutRepository {
                     set.exerciseId == exerciseId &&
                         set.sessionId in completedById.keys
                 }
-                .sortedByDescending { completedById[it.sessionId]!!.session.startTime }
+                .sortedWith(
+                    compareByDescending<WorkoutSet> {
+                        completedById.getValue(it.sessionId).session.startTime
+                    }.thenByDescending { it.sessionId }
+                )
                 .firstOrNull()
                 ?.sessionId
                 ?: return@mapNotNull null

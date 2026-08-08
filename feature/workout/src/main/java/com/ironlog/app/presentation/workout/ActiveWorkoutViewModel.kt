@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -176,13 +177,18 @@ class ActiveWorkoutViewModel(
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val shareWeightHistoryAcrossContexts =
+        appPreferencesRepository.preferences
+            .map { it.shareWeightHistoryAcrossContexts }
+            .distinctUntilChanged()
+
     private val exercisesWithSets = combine(
         sessionSets,
         addedExercises,
         _planTargets,
         _planSupersetGroups,
-        appPreferencesRepository.preferences
-    ) { sets, added, targets, supersets, preferences ->
+        shareWeightHistoryAcrossContexts
+    ) { sets, added, targets, supersets, shareAcrossContexts ->
         val setsByExercise = sets.groupBy { it.exerciseId }
         val exerciseList = added.distinctBy { it.id }
         val previousSessionsByExercise = try {
@@ -192,7 +198,7 @@ class ActiveWorkoutViewModel(
                 scope = previousSessionScope(
                     planId = planId,
                     metaPlanId = metaPlanId,
-                    shareAcrossContexts = preferences.shareWeightHistoryAcrossContexts
+                    shareAcrossContexts = shareAcrossContexts
                 )
             )
         } catch (e: Exception) {

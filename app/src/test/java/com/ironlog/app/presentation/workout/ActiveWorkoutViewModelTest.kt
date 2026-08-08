@@ -918,6 +918,102 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `other preference changes do not reload previous session history`() = runTest {
+        val vm = createViewModel()
+        vm.addExercise(testExercise)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val callsBefore = workoutRepo.getPreviousSessionDataForExercisesCallCount
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        prefsRepo.updateUnitSystem(com.ironlog.app.domain.model.UnitSystem.IMPERIAL)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(callsBefore, workoutRepo.getPreviousSessionDataForExercisesCallCount)
+        collector.cancel()
+    }
+
+    @Test
+    fun `previous session hint ties equal start times to higher session id`() = runTest {
+        val planId = 55L
+        val olderSessionId = 601L
+        val newerSessionId = 602L
+        val sameStartTime = LocalDateTime.now().minusDays(2)
+
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = olderSessionId,
+                startTime = sameStartTime,
+                endTime = sameStartTime.plusHours(1),
+                durationSeconds = 3600,
+                planId = planId,
+                metaPlanId = 500L
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 931L,
+                sessionId = olderSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 80.0,
+                isWarmup = false
+            )
+        )
+
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = newerSessionId,
+                startTime = sameStartTime,
+                endTime = sameStartTime.plusHours(1),
+                durationSeconds = 3600,
+                planId = planId,
+                metaPlanId = 500L
+            ),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            com.ironlog.app.domain.model.WorkoutSet(
+                id = 932L,
+                sessionId = newerSessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 6,
+                weightKg = 95.0,
+                isWarmup = false
+            )
+        )
+
+        val savedStateHandle = SavedStateHandle(
+            mapOf(
+                "sessionId" to sessionId,
+                "planId" to planId,
+                "metaPlanId" to 500L
+            )
+        )
+        val vm = ActiveWorkoutViewModel(
+            savedStateHandle,
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            planRepo,
+            prefsRepo
+        )
+        vm.addExercise(testExercise)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val previous = vm.uiState.value.exercisesWithSets.first().previousSession
+        assertNotNull(previous)
+        assertEquals(newerSessionId, previous!!.sessionId)
+        assertEquals(95.0, previous.lastWorkSetWeightKg ?: 0.0, 0.01)
+
+        collector.cancel()
+    }
+
+    @Test
     fun `resuming active workout loads existing exercises from sets`() = runTest {
         // Setup existing set for the active session (simulating a resumed workout)
         workoutRepo.addSetDirectly(
