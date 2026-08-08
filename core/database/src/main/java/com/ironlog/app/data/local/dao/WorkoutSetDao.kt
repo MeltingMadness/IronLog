@@ -88,6 +88,63 @@ interface WorkoutSetDao {
         planId: Long
     ): List<WorkoutSetEntity>
 
+    @Query(
+        """
+        SELECT ws.* FROM workout_sets ws
+        INNER JOIN workout_sessions s ON s.id = ws.sessionId
+        WHERE ws.exerciseId IN (:exerciseIds)
+          AND ws.sessionId != :currentSessionId
+          AND s.endTime IS NOT NULL
+          AND s.planId = :planId AND s.metaPlanId IS NULL
+          AND ws.sessionId = (
+              SELECT ws2.sessionId
+              FROM workout_sets ws2
+              INNER JOIN workout_sessions s2 ON s2.id = ws2.sessionId
+              WHERE ws2.exerciseId = ws.exerciseId
+                AND ws2.sessionId != :currentSessionId
+                AND s2.endTime IS NOT NULL
+                AND s2.planId = :planId AND s2.metaPlanId IS NULL
+              ORDER BY s2.startTime DESC, ws2.sessionId DESC
+              LIMIT 1
+          )
+        ORDER BY ws.exerciseId ASC, ws.setNumber ASC
+    """
+    )
+    suspend fun getMostRecentCompletedSetsForNormalPlanExercises(
+        currentSessionId: Long,
+        exerciseIds: List<Long>,
+        planId: Long
+    ): List<WorkoutSetEntity>
+
+    @Query(
+        """
+        SELECT ws.* FROM workout_sets ws
+        INNER JOIN workout_sessions s ON s.id = ws.sessionId
+        WHERE ws.exerciseId IN (:exerciseIds)
+          AND ws.sessionId != :currentSessionId
+          AND s.endTime IS NOT NULL
+          AND s.planId = :planId AND s.metaPlanId = :metaPlanId
+          AND ws.sessionId = (
+              SELECT ws2.sessionId
+              FROM workout_sets ws2
+              INNER JOIN workout_sessions s2 ON s2.id = ws2.sessionId
+              WHERE ws2.exerciseId = ws.exerciseId
+                AND ws2.sessionId != :currentSessionId
+                AND s2.endTime IS NOT NULL
+                AND s2.planId = :planId AND s2.metaPlanId = :metaPlanId
+              ORDER BY s2.startTime DESC, ws2.sessionId DESC
+              LIMIT 1
+          )
+        ORDER BY ws.exerciseId ASC, ws.setNumber ASC
+    """
+    )
+    suspend fun getMostRecentCompletedSetsForMetaPlanExercises(
+        currentSessionId: Long,
+        exerciseIds: List<Long>,
+        planId: Long,
+        metaPlanId: Long
+    ): List<WorkoutSetEntity>
+
     @Query("SELECT * FROM workout_sets ORDER BY id ASC")
     suspend fun getAllSetsList(): List<WorkoutSetEntity>
 

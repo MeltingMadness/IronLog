@@ -6,6 +6,7 @@ import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
+import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -31,6 +32,17 @@ class MetaTrainingPlanRepositoryImpl(
             }
         }
     }
+
+    override fun observeLastRotationEventPerMetaPlanSubPlan(): Flow<List<MetaPlanRotationEvent>> =
+        metaTrainingPlanDao.observeLastRotationEventPerMetaPlanSubPlan().map { rows ->
+            rows.map { row ->
+                MetaPlanRotationEvent(
+                    trainingPlanId = row.trainingPlanId,
+                    metaPlanId = row.metaPlanId,
+                    lastEventAt = row.lastEventAt
+                )
+            }
+        }
 
     override suspend fun getMetaPlanById(id: Long): MetaTrainingPlan? {
         val relation = metaTrainingPlanDao.getMetaPlanWithItemsById(id) ?: return null
@@ -75,6 +87,17 @@ class MetaTrainingPlanRepositoryImpl(
 
     override suspend fun deleteMetaPlan(metaPlanId: Long) {
         metaTrainingPlanDao.deleteMetaPlanAndDetachSessions(metaPlanId)
+    }
+
+    override suspend fun skipCurrentSubPlan(
+        metaPlanId: Long,
+        expectedTrainingPlanId: Long
+    ): Boolean {
+        return metaTrainingPlanDao.skipCurrentSubPlanIfCurrent(
+            metaPlanId = metaPlanId,
+            expectedTrainingPlanId = expectedTrainingPlanId,
+            skippedAt = EpochConverter.toLong(LocalDateTime.now())
+        )
     }
 
     private fun normalizeItems(items: List<MetaTrainingPlanItem>) =

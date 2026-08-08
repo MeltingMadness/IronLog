@@ -136,10 +136,11 @@ class IronLogDatabaseMigrationTest {
         insertV8Data(legacyHelper)
         legacyHelper.close()
 
-        // The real Room open runs the no-op MIGRATION_8_9, validates the
-        // schema against the version 9 identity and rewrites the recorded
-        // identity hash. Any schema mismatch throws here.
-        val database = openMigratedV9Database(context, dbName)
+        // The real Room open runs the no-op MIGRATION_8_9 followed by
+        // MIGRATION_9_10, validates the schema against the version 10
+        // identity and rewrites the recorded identity hash. Any schema
+        // mismatch throws here.
+        val database = openMigratedV8To10Database(context, dbName)
         runBlocking {
             // Triggers the Room open on a database whose recorded identity is
             // the pre-push v8 hash and whose physical schema has no DEFAULTs.
@@ -147,15 +148,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV9Connection(context, dbName)
+        val rawHelper = openRawV10Connection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(9, cursor.getInt(0))
+                assertEquals(10, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "097e7e46688af90b3da0301fb81fbfab"
+                "c6950cf049fba43c8663d55261bd94a1"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -183,7 +184,7 @@ class IronLogDatabaseMigrationTest {
         insertV8Data(pushHelper)
         pushHelper.close()
 
-        val database = openMigratedV9Database(context, dbName)
+        val database = openMigratedV8To10Database(context, dbName)
         runBlocking {
             // Triggers the Room open on a database whose recorded identity is
             // the broken v8 hash and whose physical schema carries DEFAULTs.
@@ -191,15 +192,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV9Connection(context, dbName)
+        val rawHelper = openRawV10Connection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(9, cursor.getInt(0))
+                assertEquals(10, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "097e7e46688af90b3da0301fb81fbfab"
+                "c6950cf049fba43c8663d55261bd94a1"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -235,6 +236,95 @@ class IronLogDatabaseMigrationTest {
                 assertEquals(3, cursor.getInt(0))
                 assertEquals(10, cursor.getInt(1))
                 assertEquals(0.0, cursor.getDouble(2), 0.0)
+            }
+        }
+        rawHelper.close()
+        context.deleteDatabase(dbName)
+    }
+
+    @Test
+    fun migration9To10_addsMetaPlanSkipsTableAndPreservesData() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dbName = "ironlog-migration-9-10-test.db"
+        context.deleteDatabase(dbName)
+
+        val legacyHelper = createLegacyV9Helper(context, dbName)
+        legacyHelper.writableDatabase.use { db ->
+            db.execSQL("INSERT INTO training_plans (id, name, createdAt) VALUES (1, 'Push', 1000)")
+            db.execSQL("INSERT INTO meta_training_plans (id, name, createdAt) VALUES (1, 'Meta', 1000)")
+            db.execSQL(
+                """
+                INSERT INTO meta_plan_items (id, metaPlanId, trainingPlanId, orderIndex)
+                VALUES (1, 1, 1, 0)
+                """.trimIndent()
+            )
+            db.execSQL(
+                """
+                INSERT INTO workout_sessions (id, startTime, endTime, durationSeconds, name, notes, planId, metaPlanId)
+                VALUES (1, 1000, 2000, 1, 'Session', '', 1, 1)
+                """.trimIndent()
+            )
+        }
+        legacyHelper.close()
+
+        // The real Room open applies MIGRATION_9_10, validates the legacy v9
+        // schema against the recorded identity and rewrites the identity hash
+        // to the v10 schema. Any mismatch throws here.
+        val database = openMigratedV10Database(context, dbName)
+        runBlocking {
+            database.trainingPlanDao().getAllPlansList()
+        }
+        database.close()
+
+        val rawHelper = openRawV10Connection(context, dbName)
+        rawHelper.writableDatabase.use { db ->
+            db.query("PRAGMA user_version").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(10, cursor.getInt(0))
+            }
+            assertRecordedIdentityHash(
+                db,
+                "c6950cf049fba43c8663d55261bd94a1"
+            )
+            assertTrue(tableExists(db, "meta_plan_skips"))
+            assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId"))
+            assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_trainingPlanId"))
+            assertTrue(
+                hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId_trainingPlanId")
+            )
+
+            db.query("SELECT COUNT(*) FROM training_plans").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+            db.query("SELECT COUNT(*) FROM meta_training_plans").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+            db.query("SELECT COUNT(*) FROM meta_plan_items").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+            db.query(
+                "SELECT COUNT(*) FROM workout_sessions WHERE id = 1 AND planId = 1 AND metaPlanId = 1"
+            ).use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+
+            db.execSQL(
+                """
+                INSERT INTO meta_plan_skips (metaPlanId, trainingPlanId, skippedAt)
+                VALUES (1, 1, 1000)
+                """.trimIndent()
+            )
+            db.query("SELECT COUNT(*) FROM meta_plan_skips").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(1, cursor.getInt(0))
+            }
+            db.execSQL("PRAGMA foreign_keys = ON")
+            db.query("PRAGMA foreign_key_check").use { cursor ->
+                assertFalse("foreign_key_check must be empty", cursor.moveToFirst())
             }
         }
         rawHelper.close()
@@ -277,21 +367,32 @@ class IronLogDatabaseMigrationTest {
         }
     }
 
-    private fun openMigratedV9Database(
+    private fun openMigratedV8To10Database(
         context: Context,
         dbName: String
     ): IronLogDatabase {
         return Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
             .addMigrations(IronLogDatabase.migration8To9ForTests())
+            .addMigrations(IronLogDatabase.migration9To10ForTests())
             .allowMainThreadQueries()
             .build()
     }
 
-    private fun openRawV9Connection(
+    private fun openMigratedV10Database(
+        context: Context,
+        dbName: String
+    ): IronLogDatabase {
+        return Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
+            .addMigrations(IronLogDatabase.migration9To10ForTests())
+            .allowMainThreadQueries()
+            .build()
+    }
+
+    private fun openRawV10Connection(
         context: Context,
         dbName: String
     ): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(9) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
             override fun onCreate(db: SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
@@ -628,6 +729,143 @@ class IronLogDatabaseMigrationTest {
                 db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
                 db.execSQL(
                     "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '$identityHash')"
+                )
+            }
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
+    private fun createLegacyV9Helper(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(9) {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS exercises (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        primaryMuscleGroup TEXT NOT NULL,
+                        secondaryMuscleGroups TEXT NOT NULL,
+                        category TEXT NOT NULL,
+                        isCustom INTEGER NOT NULL,
+                        notes TEXT NOT NULL,
+                        isArchived INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS workout_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        startTime INTEGER NOT NULL,
+                        endTime INTEGER,
+                        durationSeconds INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        notes TEXT NOT NULL,
+                        planId INTEGER,
+                        metaPlanId INTEGER
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS workout_sets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        sessionId INTEGER NOT NULL,
+                        exerciseId INTEGER NOT NULL,
+                        setNumber INTEGER NOT NULL,
+                        reps INTEGER NOT NULL,
+                        weightKg REAL NOT NULL,
+                        isWarmup INTEGER NOT NULL,
+                        completedAt INTEGER NOT NULL,
+                        rpe REAL,
+                        FOREIGN KEY(sessionId) REFERENCES workout_sessions(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(exerciseId) REFERENCES exercises(id) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS personal_records (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        exerciseId INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        value REAL NOT NULL,
+                        achievedAt INTEGER NOT NULL,
+                        FOREIGN KEY(exerciseId) REFERENCES exercises(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS training_plans (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS plan_exercises (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        planId INTEGER NOT NULL,
+                        exerciseId INTEGER NOT NULL,
+                        orderIndex INTEGER NOT NULL,
+                        supersetGroupId INTEGER,
+                        targetSets INTEGER NOT NULL,
+                        targetReps INTEGER NOT NULL,
+                        targetWeightKg REAL NOT NULL,
+                        FOREIGN KEY(planId) REFERENCES training_plans(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(exerciseId) REFERENCES exercises(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS meta_training_plans (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS meta_plan_items (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        metaPlanId INTEGER NOT NULL,
+                        trainingPlanId INTEGER NOT NULL,
+                        orderIndex INTEGER NOT NULL,
+                        FOREIGN KEY(metaPlanId) REFERENCES meta_training_plans(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(trainingPlanId) REFERENCES training_plans(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_exercises_isArchived ON exercises (isArchived)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_sessions_planId ON workout_sessions (planId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_sessions_metaPlanId ON workout_sessions (metaPlanId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_sets_sessionId ON workout_sets (sessionId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_sets_exerciseId ON workout_sets (exerciseId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_personal_records_exerciseId ON personal_records (exerciseId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_plan_exercises_planId ON plan_exercises (planId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_plan_exercises_exerciseId ON plan_exercises (exerciseId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_meta_plan_items_metaPlanId ON meta_plan_items (metaPlanId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_meta_plan_items_trainingPlanId ON meta_plan_items (trainingPlanId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
+                db.execSQL(
+                    "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                        "'097e7e46688af90b3da0301fb81fbfab')"
                 )
             }
 

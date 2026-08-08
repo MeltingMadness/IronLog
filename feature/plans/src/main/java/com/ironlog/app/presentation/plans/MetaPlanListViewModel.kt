@@ -8,6 +8,7 @@ import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
+import com.ironlog.app.domain.util.resolveMetaPlanRotation
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -49,8 +50,9 @@ class MetaPlanListViewModel(
             combine(
                 trainingPlanRepository.getAllPlans(),
                 workoutRepository.observeLastSessionPerMetaPlanSubPlan(),
+                metaTrainingPlanRepository.observeLastRotationEventPerMetaPlanSubPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
-            ) { plans, lastSessionsPerSubPlan, metaPlans ->
+            ) { plans, lastSessionsPerSubPlan, rotationEvents, metaPlans ->
                 val plansById = plans.associateBy { it.id }
                 val lastTimeIndex = lastSessionsPerSubPlan.associateBy(
                     keySelector = { it.planId to it.metaPlanId },
@@ -61,21 +63,16 @@ class MetaPlanListViewModel(
                         .sortedBy { it.orderIndex }
                         .mapNotNull { item -> plansById[item.trainingPlanId] }
 
-                    // Only consider sub-plans still present in the current rotation, matching
-                    // DashboardViewModel.buildMetaPlanOptions so both screens agree on "next up".
-                    val latestPlanId = subPlans
-                        .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id]?.let { plan.id to it } }
-                        .maxByOrNull { it.second }?.first
+                    val eventIndexForMetaPlan = rotationEvents
+                        .filter { it.metaPlanId == metaPlan.id }
+                        .associate { it.trainingPlanId to it.lastEventAt }
 
-                    val nextSubPlan = if (subPlans.isEmpty()) {
-                        null
-                    } else {
-                        val nextIndex = latestPlanId?.let { lastId ->
-                            val lastIndex = subPlans.indexOfFirst { it.id == lastId }
-                            if (lastIndex >= 0) (lastIndex + 1) % subPlans.size else 0
-                        } ?: 0
-                        subPlans[nextIndex]
-                    }
+                    val rotationIds = resolveMetaPlanRotation(
+                        orderedPlanIds = subPlans.map { it.id },
+                        lastEventAtByPlanId = eventIndexForMetaPlan
+                    )
+
+                    val nextSubPlan = rotationIds.firstOrNull()?.let(plansById::get)
 
                     val lastDoneMillis = subPlans
                         .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id] }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -21,7 +22,9 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
@@ -41,9 +44,11 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 fun PlanSelectionSheet(
     plans: List<DashboardPlanStatus>,
     metaPlanOptions: List<DashboardMetaPlanOption>,
+    skippingMetaPlanId: Long?,
     onDismiss: () -> Unit,
     onPlanSelected: (TrainingPlan) -> Unit,
     onMetaPlanSelected: (Long) -> Unit,
+    onSkipMetaPlan: (Long) -> Unit,
     onFreeWorkoutSelected: () -> Unit
 ) {
     val dims = ironLogDimens
@@ -69,39 +74,7 @@ fun PlanSelectionSheet(
                 contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
-                items(plans, key = { it.plan.id }) { plan ->
-                    val lastDoneDaysAgo = plan.lastDoneDaysAgo
-                    IronLogSurfaceCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onPlanSelected(plan.plan) }
-                            .semantics { role = Role.Button },
-                        tone = IronLogSurfaceTone.ELEVATED
-                    ) {
-                        ListItem(
-                            headlineContent = { Text(plan.plan.name) },
-                            supportingContent = {
-                                Text(
-                                    text = lastDoneLabel(lastDoneDaysAgo),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            },
-                            leadingContent = {
-                                    Icon(
-                                    Icons.AutoMirrored.Filled.Assignment,
-                                    contentDescription = plan.plan.name
-                                )
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-                        )
-                    }
-                }
-
-                if (plans.isNotEmpty()) {
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
-                }
-
-                item {
+                item(key = "meta_header") {
                     Text(
                         text = stringResource(id = R.string.plan_selection_meta_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -110,7 +83,7 @@ fun PlanSelectionSheet(
                 }
 
                 if (metaPlanOptions.isEmpty()) {
-                    item {
+                    item(key = "meta_empty") {
                         IronLogSurfaceCard(
                             modifier = Modifier.fillMaxWidth(),
                             tone = IronLogSurfaceTone.MUTED
@@ -122,12 +95,16 @@ fun PlanSelectionSheet(
                         }
                     }
                 } else {
-                    items(metaPlanOptions, key = { it.metaPlanId }) { option ->
+                    items(metaPlanOptions, key = { "meta-${it.metaPlanId}" }) { option ->
                         val nextPlanName = option.nextPlan?.name ?: stringResource(id = R.string.common_unknown)
                         IronLogSurfaceCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onMetaPlanSelected(option.metaPlanId) }
+                                .clickable(
+                                    enabled = skippingMetaPlanId != option.metaPlanId
+                                ) {
+                                    onMetaPlanSelected(option.metaPlanId)
+                                }
                                 .semantics { role = Role.Button },
                             tone = IronLogSurfaceTone.MUTED
                         ) {
@@ -135,12 +112,24 @@ fun PlanSelectionSheet(
                                 headlineContent = { Text(option.metaPlanName) },
                                 supportingContent = {
                                     Column(verticalArrangement = Arrangement.spacedBy(dims.spacing2)) {
-                                        Text(
-                                            text = stringResource(
-                                                id = R.string.plan_selection_meta_continue_with,
-                                                nextPlanName
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(
+                                                    id = R.string.plan_selection_meta_continue_with,
+                                                    nextPlanName
+                                                )
                                             )
-                                        )
+                                            TextButton(
+                                                onClick = { onSkipMetaPlan(option.metaPlanId) },
+                                                enabled = option.canSkip && skippingMetaPlanId != option.metaPlanId
+                                            ) {
+                                                Text(stringResource(id = R.string.plan_selection_meta_skip))
+                                            }
+                                        }
                                         option.rotationPlans.forEach { subPlan ->
                                             Text(
                                                 text = stringResource(
@@ -166,9 +155,45 @@ fun PlanSelectionSheet(
                     }
                 }
 
-                item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
+                item(key = "meta_plan_divider") {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                }
 
-                item {
+                items(plans, key = { "plan-${it.plan.id}" }) { plan ->
+                    val lastDoneDaysAgo = plan.lastDoneDaysAgo
+                    IronLogSurfaceCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onPlanSelected(plan.plan) }
+                            .semantics { role = Role.Button },
+                        tone = IronLogSurfaceTone.ELEVATED
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(plan.plan.name) },
+                            supportingContent = {
+                                Text(
+                                    text = lastDoneLabel(lastDoneDaysAgo),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            leadingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Assignment,
+                                    contentDescription = plan.plan.name
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
+                }
+
+                if (plans.isNotEmpty()) {
+                    item(key = "normal_plan_divider") {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                    }
+                }
+
+                item(key = "free_workout") {
                     IronLogSurfaceCard(
                         modifier = Modifier
                             .fillMaxWidth()

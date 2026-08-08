@@ -63,6 +63,10 @@ class FakeAppPreferencesRepository(
         state.value = state.value.copy(intensitySystem = intensitySystem)
     }
 
+    override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
+    }
+
     override suspend fun updateReminderConfig(config: ReminderConfig) {
         state.value = state.value.copy(reminderConfig = config)
     }

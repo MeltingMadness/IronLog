@@ -308,6 +308,12 @@ fun SettingsScreen(
                         checked = state.preferences.betaDiagnosticsOptIn,
                         onCheckedChange = viewModel::updateBetaDiagnosticsOptIn
                     )
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_share_weight_history_title),
+                        subtitle = stringResource(id = R.string.settings_share_weight_history_subtitle),
+                        checked = state.preferences.shareWeightHistoryAcrossContexts,
+                        onCheckedChange = viewModel::updateShareWeightHistoryAcrossContexts
+                    )
 
                     Spacer(modifier = Modifier.height(dims.spacingXs))
 

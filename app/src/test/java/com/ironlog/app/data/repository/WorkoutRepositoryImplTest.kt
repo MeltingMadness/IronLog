@@ -7,6 +7,7 @@ import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.util.WorkoutCalculations
@@ -63,7 +64,7 @@ class WorkoutRepositoryImplTest {
         val result = repository.getPreviousSessionDataForExercises(
             currentSessionId = 1L,
             exerciseIds = emptyList(),
-            planId = null
+            scope = PreviousSessionScope.Global
         )
 
         assertEquals(emptyMap<Long, com.ironlog.app.domain.model.PreviousExerciseSession>(), result)
@@ -111,7 +112,7 @@ class WorkoutRepositoryImplTest {
         val result = repository.getPreviousSessionDataForExercises(
             currentSessionId = currentSessionId,
             exerciseIds = listOf(exerciseId),
-            planId = null
+            scope = PreviousSessionScope.Global
         )
 
         val previous = result[exerciseId]
@@ -154,7 +155,7 @@ class WorkoutRepositoryImplTest {
         val result = repository.getPreviousSessionDataForExercises(
             currentSessionId = currentSessionId,
             exerciseIds = listOf(exerciseId),
-            planId = planId
+            scope = PreviousSessionScope.SharedPlan(planId)
         )
 
         assertEquals(previousSessionId, result[exerciseId]?.sessionId)
@@ -163,6 +164,45 @@ class WorkoutRepositoryImplTest {
         }
         coVerify(exactly = 0) {
             setDao.getMostRecentCompletedSetsForExercises(any(), any())
+        }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches normal plan scope to context query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.NormalPlan(3L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForNormalPlanExercises(99L, listOf(7L), 3L)
+        }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches meta plan scope to context query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.MetaPlan(3L, 8L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForMetaPlanExercises(99L, listOf(7L), 3L, 8L)
+        }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches shared plan scope to plan query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.SharedPlan(3L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForPlanExercises(99L, listOf(7L), 3L)
         }
     }
 

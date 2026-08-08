@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -43,7 +45,8 @@ data class PreviousExerciseSessionUi(
     val sessionId: Long,
     val sessionStart: LocalDateTime,
     val sets: List<WorkoutSet>,
-    val lastWorkSetWeightKg: Double?
+    val lastWorkSetWeightKg: Double?,
+    val lastWorkSetReachedTarget: Boolean = false
 )
 
 data class ExerciseWithSets(
@@ -137,6 +140,17 @@ sealed class WorkoutEvent {
  */
 fun parseDecimal(text: String): Double? = text.trim().replace(",", ".").toDoubleOrNull()
 
+fun lastWorkSetReachedTarget(
+    planTarget: PlanTarget?,
+    previousSets: List<WorkoutSet>
+): Boolean {
+    val target = planTarget ?: return false
+    if (target.targetReps <= 0 || target.targetWeightKg <= 0.0) return false
+    val lastWorkSet = previousSets.lastOrNull { !it.isWarmup } ?: return false
+    return lastWorkSet.reps >= target.targetReps &&
+        lastWorkSet.weightKg >= target.targetWeightKg
+}
+
 class ActiveWorkoutViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
@@ -148,6 +162,7 @@ class ActiveWorkoutViewModel(
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
     private val planId: Long = savedStateHandle["planId"] ?: 0L
+    private val metaPlanId: Long = savedStateHandle["metaPlanId"] ?: 0L
 
     private val showExercisePicker = MutableStateFlow(false)
     private val showFinishDialog = MutableStateFlow(false)
@@ -174,19 +189,29 @@ class ActiveWorkoutViewModel(
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val shareWeightHistoryAcrossContexts =
+        appPreferencesRepository.preferences
+            .map { it.shareWeightHistoryAcrossContexts }
+            .distinctUntilChanged()
+
     private val exercisesWithSets = combine(
         sessionSets,
         addedExercises,
         _planTargets,
-        _planSupersetGroups
-    ) { sets, added, targets, supersets ->
+        _planSupersetGroups,
+        shareWeightHistoryAcrossContexts
+    ) { sets, added, targets, supersets, shareAcrossContexts ->
         val setsByExercise = sets.groupBy { it.exerciseId }
         val exerciseList = added.distinctBy { it.id }
         val previousSessionsByExercise = try {
             workoutRepository.getPreviousSessionDataForExercises(
                 currentSessionId = sessionId,
                 exerciseIds = exerciseList.map { it.id },
-                planId = planId.takeIf { it > 0L }
+                scope = previousSessionScope(
+                    planId = planId,
+                    metaPlanId = metaPlanId,
+                    shareAcrossContexts = shareAcrossContexts
+                )
             )
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "Vorherige Sessiondaten konnten nicht geladen werden: ${e.message}", e)
@@ -205,12 +230,27 @@ class ActiveWorkoutViewModel(
                         sessionId = it.sessionId,
                         sessionStart = it.sessionStart,
                         sets = it.sets,
-                        lastWorkSetWeightKg = it.lastWorkSetWeightKg
+                        lastWorkSetWeightKg = it.lastWorkSetWeightKg,
+                        lastWorkSetReachedTarget = lastWorkSetReachedTarget(
+                            planTarget = targets[exercise.id],
+                            previousSets = it.sets
+                        )
                     )
                 }
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    internal fun previousSessionScope(
+        planId: Long,
+        metaPlanId: Long,
+        shareAcrossContexts: Boolean
+    ): PreviousSessionScope = when {
+        planId <= 0L -> PreviousSessionScope.Global
+        shareAcrossContexts -> PreviousSessionScope.SharedPlan(planId)
+        metaPlanId > 0L -> PreviousSessionScope.MetaPlan(planId, metaPlanId)
+        else -> PreviousSessionScope.NormalPlan(planId)
+    }
 
     private val _events = MutableSharedFlow<WorkoutEvent>()
     val events = _events.asSharedFlow()

@@ -6,6 +6,7 @@ import com.ironlog.app.data.backup.BackupDocumentIo
 import com.ironlog.app.data.backup.BackupExercise
 import com.ironlog.app.data.backup.BackupHashMismatchException
 import com.ironlog.app.data.backup.BackupMetaPlanItem
+import com.ironlog.app.data.backup.BackupMetaPlanSkip
 import com.ironlog.app.data.backup.BackupMetaTrainingPlan
 import com.ironlog.app.data.backup.BackupPayloadValidator
 import com.ironlog.app.data.backup.BackupPayloadV1
@@ -26,6 +27,7 @@ import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
 import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
@@ -114,6 +116,7 @@ class BackupRepositoryImpl(
             transactionRunner.runInTransaction {
                 personalRecordDao.deleteAll()
                 workoutSetDao.deleteAll()
+                metaTrainingPlanDao.deleteAllMetaPlanSkips()
                 metaTrainingPlanDao.deleteAllMetaPlanItems()
                 trainingPlanDao.deleteAllPlanExercises()
                 workoutSessionDao.deleteAll()
@@ -170,7 +173,8 @@ class BackupRepositoryImpl(
         planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
         personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
         metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
-        metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() }
+        metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() },
+        metaPlanSkips = metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() }
     )
 
     private suspend fun canonicalBytes(snapshot: BackupSnapshot): ByteArray =
@@ -210,7 +214,8 @@ class BackupRepositoryImpl(
         planExercises = planExercises.size,
         personalRecords = personalRecords.size,
         metaTrainingPlans = metaTrainingPlans.size,
-        metaPlanItems = metaPlanItems.size
+        metaPlanItems = metaPlanItems.size,
+        metaPlanSkips = metaPlanSkips.size
     )
 
     private fun BackupPayloadV1.toImportData(): ImportData = ImportData(
@@ -221,12 +226,14 @@ class BackupRepositoryImpl(
         planExercises = planExercises.distinctBy { it.id }.map { it.toEntity() },
         personalRecords = personalRecords.distinctBy { it.id }.map { it.toEntity() },
         metaTrainingPlans = metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() },
-        metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() }
+        metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() },
+        metaPlanSkips = metaPlanSkips.distinctBy { it.id }.map { it.toEntity() }
     )
 
     private suspend fun deleteAllInOrder() {
         personalRecordDao.deleteAll()
         workoutSetDao.deleteAll()
+        metaTrainingPlanDao.deleteAllMetaPlanSkips()
         metaTrainingPlanDao.deleteAllMetaPlanItems()
         trainingPlanDao.deleteAllPlanExercises()
         workoutSessionDao.deleteAll()
@@ -249,6 +256,9 @@ class BackupRepositoryImpl(
         }
         if (data.metaPlanItems.isNotEmpty()) {
             metaTrainingPlanDao.replaceAllItems(data.metaPlanItems)
+        }
+        if (data.metaPlanSkips.isNotEmpty()) {
+            metaTrainingPlanDao.replaceAllMetaPlanSkips(data.metaPlanSkips)
         }
         if (data.workoutSets.isNotEmpty()) workoutSetDao.replaceAll(data.workoutSets)
         if (data.personalRecords.isNotEmpty()) {
@@ -316,6 +326,13 @@ class BackupRepositoryImpl(
         orderIndex = orderIndex
     )
 
+    private fun MetaPlanSkipEntity.toBackup(): BackupMetaPlanSkip = BackupMetaPlanSkip(
+        id = id,
+        metaPlanId = metaPlanId,
+        trainingPlanId = trainingPlanId,
+        skippedAt = skippedAt
+    )
+
     private fun BackupExercise.toEntity(): ExerciseEntity = ExerciseEntity(
         id = id,
         name = name,
@@ -376,6 +393,13 @@ class BackupRepositoryImpl(
         orderIndex = orderIndex
     )
 
+    private fun BackupMetaPlanSkip.toEntity(): MetaPlanSkipEntity = MetaPlanSkipEntity(
+        id = id,
+        metaPlanId = metaPlanId,
+        trainingPlanId = trainingPlanId,
+        skippedAt = skippedAt
+    )
+
     private data class ImportData(
         val exercises: List<ExerciseEntity>,
         val workoutSessions: List<WorkoutSessionEntity>,
@@ -384,11 +408,12 @@ class BackupRepositoryImpl(
         val planExercises: List<PlanExerciseEntity>,
         val personalRecords: List<PersonalRecordEntity>,
         val metaTrainingPlans: List<MetaTrainingPlanEntity>,
-        val metaPlanItems: List<MetaPlanItemEntity>
+        val metaPlanItems: List<MetaPlanItemEntity>,
+        val metaPlanSkips: List<MetaPlanSkipEntity>
     )
 
     private companion object {
-        const val SCHEMA_VERSION = 9
+        const val SCHEMA_VERSION = 10
     }
 }
 

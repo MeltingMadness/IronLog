@@ -31,6 +31,7 @@ object BackupPayloadValidator {
         checkDuplicateIds(errors, payload.personalRecords.map { it.id }, "personal record")
         checkDuplicateIds(errors, payload.metaTrainingPlans.map { it.id }, "meta training plan")
         checkDuplicateIds(errors, payload.metaPlanItems.map { it.id }, "meta plan item")
+        checkDuplicateIds(errors, payload.metaPlanSkips.map { it.id }, "meta plan skip")
 
         val exerciseIds = payload.exercises.map { it.id }.toSet()
         val sessionIds = payload.workoutSessions.map { it.id }.toSet()
@@ -81,6 +82,17 @@ object BackupPayloadValidator {
             }
             if (item.trainingPlanId !in planIds) {
                 errors += "Meta plan item ${item.id} references missing training plan ${item.trainingPlanId}"
+            }
+        }
+
+        // Historical skips may remain valid after rotation editing, so they only
+        // need their parent plan IDs; they must not match a current item.
+        payload.metaPlanSkips.forEach { skip ->
+            if (skip.metaPlanId !in metaPlanIds) {
+                errors += "Meta plan skip ${skip.id} references missing meta plan ${skip.metaPlanId}"
+            }
+            if (skip.trainingPlanId !in planIds) {
+                errors += "Meta plan skip ${skip.id} references missing training plan ${skip.trainingPlanId}"
             }
         }
 

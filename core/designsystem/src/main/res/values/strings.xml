@@ -27,10 +27,6 @@
     <string name="dashboard_quick_stats">Schnellstatistik</string>
     <string name="dashboard_this_week">Diese Woche</string>
     <string name="dashboard_this_month">Diesen Monat</string>
-    <string name="dashboard_streak">Serie</string>
-    <string name="dashboard_streak_value">%1$d T</string>
-    <string name="dashboard_streak_label">%1$d Tage Serie</string>
-    <string name="dashboard_weekly_progress">%1$d / %2$d diese Woche</string>
     <string name="dashboard_recent_records">Letzte Rekorde</string>
     <string name="dashboard_no_records">Noch keine Rekorde. Logge dein erstes Training.</string>
     <string name="dashboard_last_workout">Letztes Training</string>
@@ -61,6 +57,7 @@
     <string name="workout_target_with_weight">Ziel: %1$d x %2$d @ %3$s</string>
     <string name="workout_target_no_weight">Ziel: %1$d x %2$d</string>
     <string name="workout_target_completed">Ziel erreicht</string>
+    <string name="workout_previous_last_set_target_reached">Letzter Satz: Ziel erreicht</string>
     <string name="workout_add_extra_set">Zusatzsatz hinzufügen</string>
     <string name="workout_set_row_warmup">W%1$d: %2$.1f kg x %3$d</string>
     <string name="workout_set_row_work">%1$d: %2$.1f kg x %3$d</string>
@@ -184,6 +181,9 @@
     <string name="settings_beta_diagnostics_title">Beta-Diagnose aktivieren</string>
     <string name="settings_beta_diagnostics_subtitle">Technische Geräte- und Builddaten (OS, Gerätemodell) in Incident-Reports aufnehmen</string>
 
+    <string name="settings_share_weight_history_title">Gewichte zwischen Einzel- und Meta-Plänen teilen</string>
+    <string name="settings_share_weight_history_subtitle">Wenn aus, verwendet jeder Einzel- und Meta-Plan eine eigene Gewichtshistorie.</string>
+
     <string name="settings_reminder_enabled_title">Trainingserinnerungen</string>
     <string name="settings_reminder_enabled_subtitle">Geplante Erinnerungen als Benachrichtigung</string>
     <string name="settings_reminder_time_title">Uhrzeit</string>
@@ -232,6 +232,7 @@
     <string name="plan_selection_meta_title">Meta-Trainingspläne</string>
     <string name="plan_selection_meta_empty">Noch keine Meta-Trainingspläne.</string>
     <string name="plan_selection_meta_continue_with">Weiter mit: %1$s</string>
+    <string name="plan_selection_meta_skip">Überspringen</string>
     <string name="plan_selection_meta_rotation">Rotation: %1$s</string>
     <string name="plan_selection_meta_last_done">Zuletzt: %1$s</string>
     <string name="plan_selection_meta_subplan_last_done">%1$s - %2$s</string>

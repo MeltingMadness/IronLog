@@ -14,6 +14,7 @@ import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.PreviousExerciseSession
+import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
@@ -232,27 +233,37 @@ class WorkoutRepositoryImpl(
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
         sessionDao.getAllCompletedSessionsList().map { it.toDomain() }
 
-    override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
-        sessionDao.getCompletedWorkoutStartTimesDesc()
-
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,
-        planId: Long?
+        scope: PreviousSessionScope
     ): Map<Long, PreviousExerciseSession> {
         if (exerciseIds.isEmpty()) return emptyMap()
 
-        val latestSets = if (planId != null && planId > 0L) {
-            setDao.getMostRecentCompletedSetsForPlanExercises(
-                currentSessionId = currentSessionId,
-                exerciseIds = exerciseIds,
-                planId = planId
-            )
-        } else {
-            setDao.getMostRecentCompletedSetsForExercises(
+        val latestSets = when (scope) {
+            PreviousSessionScope.Global -> setDao.getMostRecentCompletedSetsForExercises(
                 currentSessionId = currentSessionId,
                 exerciseIds = exerciseIds
             )
+            is PreviousSessionScope.NormalPlan ->
+                setDao.getMostRecentCompletedSetsForNormalPlanExercises(
+                    currentSessionId = currentSessionId,
+                    exerciseIds = exerciseIds,
+                    planId = scope.planId
+                )
+            is PreviousSessionScope.MetaPlan ->
+                setDao.getMostRecentCompletedSetsForMetaPlanExercises(
+                    currentSessionId = currentSessionId,
+                    exerciseIds = exerciseIds,
+                    planId = scope.planId,
+                    metaPlanId = scope.metaPlanId
+                )
+            is PreviousSessionScope.SharedPlan ->
+                setDao.getMostRecentCompletedSetsForPlanExercises(
+                    currentSessionId = currentSessionId,
+                    exerciseIds = exerciseIds,
+                    planId = scope.planId
+                )
         }
         if (latestSets.isEmpty()) return emptyMap()
 

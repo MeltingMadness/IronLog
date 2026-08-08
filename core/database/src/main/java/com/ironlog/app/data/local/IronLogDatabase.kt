@@ -15,6 +15,7 @@ import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
 import com.ironlog.app.data.local.entity.MetaPlanItemEntity
+import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
@@ -32,9 +33,10 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         TrainingPlanEntity::class,
         PlanExerciseEntity::class,
         MetaTrainingPlanEntity::class,
-        MetaPlanItemEntity::class
+        MetaPlanItemEntity::class,
+        MetaPlanSkipEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -175,6 +177,27 @@ abstract class IronLogDatabase : RoomDatabase() {
             }
         }
 
+        /** Migration 9 -> 10: Meta-plan skip events */
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `meta_plan_skips` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `metaPlanId` INTEGER NOT NULL,
+                        `trainingPlanId` INTEGER NOT NULL,
+                        `skippedAt` INTEGER NOT NULL,
+                        FOREIGN KEY(`metaPlanId`) REFERENCES `meta_training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`trainingPlanId`) REFERENCES `training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_skips_metaPlanId` ON `meta_plan_skips` (`metaPlanId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_skips_trainingPlanId` ON `meta_plan_skips` (`trainingPlanId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_meta_plan_skips_metaPlanId_trainingPlanId` ON `meta_plan_skips` (`metaPlanId`, `trainingPlanId`)")
+            }
+        }
+
         @VisibleForTesting
         fun migration5To6ForTests(): Migration = MIGRATION_5_6
 
@@ -186,6 +209,9 @@ abstract class IronLogDatabase : RoomDatabase() {
 
         @VisibleForTesting
         fun migration8To9ForTests(): Migration = MIGRATION_8_9
+
+        @VisibleForTesting
+        fun migration9To10ForTests(): Migration = MIGRATION_9_10
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -365,7 +391,8 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
-                    MIGRATION_8_9
+                    MIGRATION_8_9,
+                    MIGRATION_9_10
                 )
                 .addCallback(SeedCallback())
                 .build()
