@@ -1,7 +1,7 @@
 # IronLog: Progressions-Coach
 
 Stand: 2026-08-08
-Status: Design im Dialog freigegeben, schriftliche Prüfung durch den Nutzer ausstehend
+Status: Vom Nutzer am 2026-08-08 schriftlich freigegeben
 
 ## Ziel
 
