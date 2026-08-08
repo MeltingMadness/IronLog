@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -21,7 +22,9 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
@@ -41,9 +44,11 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 fun PlanSelectionSheet(
     plans: List<DashboardPlanStatus>,
     metaPlanOptions: List<DashboardMetaPlanOption>,
+    skippingMetaPlanId: Long?,
     onDismiss: () -> Unit,
     onPlanSelected: (TrainingPlan) -> Unit,
     onMetaPlanSelected: (Long) -> Unit,
+    onSkipMetaPlan: (Long) -> Unit,
     onFreeWorkoutSelected: () -> Unit
 ) {
     val dims = ironLogDimens
@@ -103,12 +108,24 @@ fun PlanSelectionSheet(
                                 headlineContent = { Text(option.metaPlanName) },
                                 supportingContent = {
                                     Column(verticalArrangement = Arrangement.spacedBy(dims.spacing2)) {
-                                        Text(
-                                            text = stringResource(
-                                                id = R.string.plan_selection_meta_continue_with,
-                                                nextPlanName
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(
+                                                    id = R.string.plan_selection_meta_continue_with,
+                                                    nextPlanName
+                                                )
                                             )
-                                        )
+                                            TextButton(
+                                                onClick = { onSkipMetaPlan(option.metaPlanId) },
+                                                enabled = option.canSkip && skippingMetaPlanId != option.metaPlanId
+                                            ) {
+                                                Text(stringResource(id = R.string.plan_selection_meta_skip))
+                                            }
+                                        }
                                         option.rotationPlans.forEach { subPlan ->
                                             Text(
                                                 text = stringResource(

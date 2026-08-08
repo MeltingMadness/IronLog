@@ -22,6 +22,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -301,6 +302,90 @@ class MetaPlanListViewModelTest {
             eventsByPlan.getValue(planCId).lastEventAt >
                 eventsByPlan.getValue(planBId).lastEventAt
         )
+    }
+
+    @Test
+    fun `nextSubPlan advances after skip while last done stays session-based`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val planCId = planRepo.savePlan(TrainingPlan(name = "Plan C"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planCId, orderIndex = 2)
+                )
+            )
+        )
+
+        val threeDaysAgo = LocalDateTime.of(LocalDate.now().minusDays(3), LocalTime.of(8, 0))
+        val oneDayAgo = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(8, 0))
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 1L,
+                startTime = threeDaysAgo,
+                endTime = threeDaysAgo.plusHours(1),
+                durationSeconds = 3600,
+                planId = planAId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 2L,
+                startTime = oneDayAgo,
+                endTime = oneDayAgo.plusHours(1),
+                durationSeconds = 3600,
+                planId = planBId,
+                metaPlanId = metaId
+            ),
+            isActive = false
+        )
+
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val before = vm.uiState.value.items.first { it.metaPlan.id == metaId }
+        assertEquals(planCId, before.nextSubPlan?.id)
+        assertEquals(1L, before.lastDoneDaysAgo)
+
+        assertTrue(metaPlanRepo.skipCurrentSubPlan(metaId, planCId))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val after = vm.uiState.value.items.first { it.metaPlan.id == metaId }
+        assertEquals(planAId, after.nextSubPlan?.id)
+        assertEquals(1L, after.lastDoneDaysAgo)
+        assertEquals(2, workoutRepo.getAllCompletedSessionsList().size)
+    }
+
+    @Test
+    fun `skip without completed session does not become last done history`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(planAId, vm.uiState.value.items.first().nextSubPlan?.id)
+
+        assertTrue(metaPlanRepo.skipCurrentSubPlan(metaId, planAId))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val item = vm.uiState.value.items.first { it.metaPlan.id == metaId }
+        assertEquals(planBId, item.nextSubPlan?.id)
+        assertNull(item.lastDoneDaysAgo)
+        assertTrue(workoutRepo.getAllCompletedSessionsList().isEmpty())
     }
 }
 

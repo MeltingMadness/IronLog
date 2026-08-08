@@ -2,8 +2,10 @@ package com.ironlog.app.presentation.dashboard
 
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
+import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
@@ -12,6 +14,8 @@ import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,7 +41,7 @@ class DashboardViewModelTest {
     private lateinit var statsRepo: FakeStatisticsRepository
     private lateinit var preferencesRepo: FakeAppPreferencesRepository
     private lateinit var planRepo: FakeTrainingPlanRepository
-    private lateinit var metaPlanRepo: FakeMetaTrainingPlanRepository
+    private lateinit var metaPlanRepo: MetaTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -47,7 +51,7 @@ class DashboardViewModelTest {
         statsRepo = FakeStatisticsRepository()
         preferencesRepo = FakeAppPreferencesRepository()
         planRepo = FakeTrainingPlanRepository()
-        metaPlanRepo = FakeMetaTrainingPlanRepository()
+        metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
     }
 
     @After
@@ -455,5 +459,176 @@ class DashboardViewModelTest {
         val statusByPlan = option!!.rotationPlans.associateBy({ it.plan.id }, { it.lastDoneDaysAgo })
         assertEquals(3L, statusByPlan[planAId])
         assertNull(statusByPlan[planBId])
+    }
+
+    @Test
+    fun `skipCurrentMetaSubPlan wechselt zum naechsten Teilplan ohne Session`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta Skip",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val before = vm.uiState.value.metaPlanOptions.single()
+        assertEquals(planAId, before.nextPlan?.id)
+        assertTrue(before.canSkip)
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(planBId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
+        assertNull(workoutRepo.getActiveSession())
+        assertTrue(workoutRepo.getAllCompletedSessionsList().isEmpty())
+    }
+
+    @Test
+    fun `skipCurrentMetaSubPlan ist bei genau einem Teilplan deaktiviert`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Single Meta",
+                items = listOf(MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0))
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val option = vm.uiState.value.metaPlanOptions.single()
+        assertFalse(option.canSkip)
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(planAId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
+        assertTrue(metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first().isEmpty())
+        assertNull(workoutRepo.getActiveSession())
+    }
+
+    @Test
+    fun `skipCurrentMetaSubPlan blockiert bei aktiver Session`() = runTest {
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta Blocked",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+        workoutRepo.addSession(
+            WorkoutSession(id = 555L, startTime = LocalDateTime.now(), planId = 99L),
+            isActive = true
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(555L, workoutRepo.getActiveSession()?.id)
+        assertTrue(vm.uiState.value.error?.contains("anderes Training aktiv") == true)
+        assertTrue(metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first().isEmpty())
+    }
+
+    @Test
+    fun `skipCurrentMetaSubPlan sperrt waehrend des Schreibvorgangs`() = runTest {
+        metaPlanRepo = DelayingMetaPlanRepo(FakeMetaTrainingPlanRepository(workoutRepo))
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta Lock",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(metaId, vm.uiState.value.skippingMetaPlanId)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.uiState.value.skippingMetaPlanId)
+        assertEquals(planBId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
+    }
+
+    @Test
+    fun `skipCurrentMetaSubPlan behandelt veralteten Vorschlag ohne Mutation`() = runTest {
+        metaPlanRepo = RejectingMetaPlanRepo(FakeMetaTrainingPlanRepository(workoutRepo))
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta Stale",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(planAId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
+        assertTrue(vm.uiState.value.error?.contains("hat sich geändert") == true)
+        assertTrue(metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first().isEmpty())
+        assertNull(workoutRepo.getActiveSession())
+    }
+
+    private class RejectingMetaPlanRepo(
+        private val delegate: FakeMetaTrainingPlanRepository
+    ) : MetaTrainingPlanRepository {
+        override fun getAllMetaPlans(): Flow<List<MetaTrainingPlan>> = delegate.getAllMetaPlans()
+        override fun observeLastRotationEventPerMetaPlanSubPlan(): Flow<List<MetaPlanRotationEvent>> =
+            delegate.observeLastRotationEventPerMetaPlanSubPlan()
+        override suspend fun getMetaPlanById(id: Long): MetaTrainingPlan? = delegate.getMetaPlanById(id)
+        override suspend fun saveMetaPlan(plan: MetaTrainingPlan): Long = delegate.saveMetaPlan(plan)
+        override suspend fun deleteMetaPlan(metaPlanId: Long) = delegate.deleteMetaPlan(metaPlanId)
+        override suspend fun skipCurrentSubPlan(
+            metaPlanId: Long,
+            expectedTrainingPlanId: Long
+        ): Boolean = false
+    }
+
+    private class DelayingMetaPlanRepo(
+        private val delegate: FakeMetaTrainingPlanRepository
+    ) : MetaTrainingPlanRepository {
+        override fun getAllMetaPlans(): Flow<List<MetaTrainingPlan>> = delegate.getAllMetaPlans()
+        override fun observeLastRotationEventPerMetaPlanSubPlan(): Flow<List<MetaPlanRotationEvent>> =
+            delegate.observeLastRotationEventPerMetaPlanSubPlan()
+        override suspend fun getMetaPlanById(id: Long): MetaTrainingPlan? = delegate.getMetaPlanById(id)
+        override suspend fun saveMetaPlan(plan: MetaTrainingPlan): Long = delegate.saveMetaPlan(plan)
+        override suspend fun deleteMetaPlan(metaPlanId: Long) = delegate.deleteMetaPlan(metaPlanId)
+        override suspend fun skipCurrentSubPlan(
+            metaPlanId: Long,
+            expectedTrainingPlanId: Long
+        ): Boolean {
+            kotlinx.coroutines.delay(1000)
+            return delegate.skipCurrentSubPlan(metaPlanId, expectedTrainingPlanId)
+        }
     }
 }

@@ -232,6 +232,8 @@
     <string name="plan_selection_meta_title">Meta-Trainingspläne</string>
     <string name="plan_selection_meta_empty">Noch keine Meta-Trainingspläne.</string>
     <string name="plan_selection_meta_continue_with">Weiter mit: %1$s</string>
+    <string name="plan_selection_meta_skip">Überspringen</string>
+    <string name="plan_selection_meta_skip_stale">Der vorgeschlagene Plan hat sich geändert. Bitte erneut versuchen.</string>
     <string name="plan_selection_meta_rotation">Rotation: %1$s</string>
     <string name="plan_selection_meta_last_done">Zuletzt: %1$s</string>
     <string name="plan_selection_meta_subplan_last_done">%1$s - %2$s</string>

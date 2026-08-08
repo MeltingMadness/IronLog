@@ -3,6 +3,7 @@ package com.ironlog.app.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.data.local.entity.EpochConverter
+import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PersonalRecord
@@ -17,6 +18,7 @@ import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.catchAndLog
+import com.ironlog.app.domain.util.resolveMetaPlanRotation
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,7 +37,8 @@ data class DashboardMetaPlanOption(
     val metaPlanId: Long,
     val metaPlanName: String,
     val nextPlan: TrainingPlan?,
-    val rotationPlans: List<DashboardMetaSubPlanStatus>
+    val rotationPlans: List<DashboardMetaSubPlanStatus>,
+    val canSkip: Boolean
 )
 
 data class DashboardMetaSubPlanStatus(
@@ -61,7 +64,8 @@ data class DashboardUiState(
     val muscleHeatmap: Map<MuscleGroup, Int> = emptyMap(),
     val weeklyVolume: List<Pair<String, Double>> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val skippingMetaPlanId: Long? = null
 )
 
 class DashboardViewModel(
@@ -115,11 +119,13 @@ class DashboardViewModel(
             combine(
                 trainingPlanRepository.getAllPlans(),
                 workoutRepository.observeLastSessionPerMetaPlanSubPlan(),
+                metaTrainingPlanRepository.observeLastRotationEventPerMetaPlanSubPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
-            ) { plans, lastSessions, metaPlans ->
+            ) { plans, lastSessions, rotationEvents, metaPlans ->
                 buildMetaPlanOptions(
                     plans = plans,
                     lastSessionsPerSubPlan = lastSessions,
+                    rotationEvents = rotationEvents,
                     metaPlans = metaPlans
                 )
             }
@@ -251,6 +257,38 @@ class DashboardViewModel(
         _uiState.update { it.copy(showPlanSelectionSheet = false) }
     }
 
+    fun skipCurrentMetaSubPlan(metaPlanId: Long) {
+        viewModelScope.launch {
+            val option = _uiState.value.metaPlanOptions.firstOrNull { it.metaPlanId == metaPlanId }
+                ?: return@launch
+            val expectedPlanId = option.nextPlan?.id ?: return@launch
+            if (!option.canSkip) return@launch
+            if (workoutRepository.getActiveSession() != null) {
+                _uiState.update {
+                    it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                }
+                return@launch
+            }
+            if (_uiState.value.skippingMetaPlanId != null) return@launch
+
+            _uiState.update { it.copy(skippingMetaPlanId = metaPlanId) }
+            try {
+                val skipped = metaTrainingPlanRepository.skipCurrentSubPlan(metaPlanId, expectedPlanId)
+                if (!skipped) {
+                    _uiState.update {
+                        it.copy(error = "Der vorgeschlagene Plan hat sich geändert. Bitte erneut versuchen.")
+                    }
+                }
+            } catch (error: Exception) {
+                _uiState.update {
+                    it.copy(error = "Teilplan konnte nicht übersprungen werden: ${error.message}")
+                }
+            } finally {
+                _uiState.update { it.copy(skippingMetaPlanId = null) }
+            }
+        }
+    }
+
     fun startNewWorkoutWithMetaPlan(
         metaPlanId: Long,
         onSessionCreated: (Long, Long?, Long?) -> Unit
@@ -350,6 +388,7 @@ class DashboardViewModel(
     private fun buildMetaPlanOptions(
         plans: List<TrainingPlan>,
         lastSessionsPerSubPlan: List<com.ironlog.app.domain.model.LastMetaPlanSession>,
+        rotationEvents: List<MetaPlanRotationEvent>,
         metaPlans: List<MetaTrainingPlan>
     ): List<DashboardMetaPlanOption> {
         if (metaPlans.isEmpty()) return emptyList()
@@ -370,22 +409,21 @@ class DashboardViewModel(
                     metaPlanId = metaPlan.id,
                     metaPlanName = metaPlan.name,
                     nextPlan = null,
-                    rotationPlans = emptyList()
+                    rotationPlans = emptyList(),
+                    canSkip = false
                 )
             }
 
-            val latestPlanId = orderedSubPlans
-                .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id]?.let { plan.id to it } }
-                .maxByOrNull { it.second }?.first
+            val eventIndexForMetaPlan = rotationEvents
+                .filter { it.metaPlanId == metaPlan.id }
+                .associate { it.trainingPlanId to it.lastEventAt }
 
-            val nextIndex = latestPlanId?.let { lastId ->
-                val lastIndex = orderedSubPlans.indexOfFirst { it.id == lastId }
-                if (lastIndex >= 0) (lastIndex + 1) % orderedSubPlans.size else 0
-            } ?: 0
+            val rotationIds = resolveMetaPlanRotation(
+                orderedPlanIds = orderedSubPlans.map { it.id },
+                lastEventAtByPlanId = eventIndexForMetaPlan
+            )
 
-            val rotatedPlans = (0 until orderedSubPlans.size).map { offset ->
-                orderedSubPlans[(nextIndex + offset) % orderedSubPlans.size]
-            }
+            val rotatedPlans = rotationIds.mapNotNull(plansById::get)
 
             DashboardMetaPlanOption(
                 metaPlanId = metaPlan.id,
@@ -403,7 +441,8 @@ class DashboardViewModel(
                             )
                         }
                     )
-                }
+                },
+                canSkip = orderedSubPlans.size > 1
             )
         }
     }

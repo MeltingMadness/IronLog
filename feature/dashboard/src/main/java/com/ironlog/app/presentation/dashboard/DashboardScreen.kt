@@ -225,6 +225,7 @@ fun DashboardScreen(
             PlanSelectionSheet(
                 plans = state.trainingPlans,
                 metaPlanOptions = state.metaPlanOptions,
+                skippingMetaPlanId = state.skippingMetaPlanId,
                 onDismiss = viewModel::dismissPlanSelectionSheet,
                 onPlanSelected = { plan -> 
                     viewModel.dismissPlanSelectionSheet()
@@ -236,6 +237,7 @@ fun DashboardScreen(
                     viewModel.dismissPlanSelectionSheet()
                     viewModel.startNewWorkoutWithMetaPlan(metaPlanId, onStartWorkout)
                 },
+                onSkipMetaPlan = viewModel::skipCurrentMetaSubPlan,
                 onFreeWorkoutSelected = { 
                     viewModel.dismissPlanSelectionSheet()
                     viewModel.startNewWorkout { sessionId, planId ->
