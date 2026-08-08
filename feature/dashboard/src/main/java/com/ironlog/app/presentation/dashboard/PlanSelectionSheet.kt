@@ -69,39 +69,7 @@ fun PlanSelectionSheet(
                 contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
-                items(plans, key = { it.plan.id }) { plan ->
-                    val lastDoneDaysAgo = plan.lastDoneDaysAgo
-                    IronLogSurfaceCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onPlanSelected(plan.plan) }
-                            .semantics { role = Role.Button },
-                        tone = IronLogSurfaceTone.ELEVATED
-                    ) {
-                        ListItem(
-                            headlineContent = { Text(plan.plan.name) },
-                            supportingContent = {
-                                Text(
-                                    text = lastDoneLabel(lastDoneDaysAgo),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            },
-                            leadingContent = {
-                                    Icon(
-                                    Icons.AutoMirrored.Filled.Assignment,
-                                    contentDescription = plan.plan.name
-                                )
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-                        )
-                    }
-                }
-
-                if (plans.isNotEmpty()) {
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
-                }
-
-                item {
+                item(key = "meta_header") {
                     Text(
                         text = stringResource(id = R.string.plan_selection_meta_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -110,7 +78,7 @@ fun PlanSelectionSheet(
                 }
 
                 if (metaPlanOptions.isEmpty()) {
-                    item {
+                    item(key = "meta_empty") {
                         IronLogSurfaceCard(
                             modifier = Modifier.fillMaxWidth(),
                             tone = IronLogSurfaceTone.MUTED
@@ -166,9 +134,43 @@ fun PlanSelectionSheet(
                     }
                 }
 
-                item { HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs)) }
+                item(key = "meta_plan_divider") {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                }
 
-                item {
+                items(plans, key = { it.plan.id }) { plan ->
+                    val lastDoneDaysAgo = plan.lastDoneDaysAgo
+                    IronLogSurfaceCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onPlanSelected(plan.plan) }
+                            .semantics { role = Role.Button },
+                        tone = IronLogSurfaceTone.ELEVATED
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(plan.plan.name) },
+                            supportingContent = {
+                                Text(
+                                    text = lastDoneLabel(lastDoneDaysAgo),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            leadingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Assignment,
+                                    contentDescription = plan.plan.name
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        )
+                    }
+                }
+
+                item(key = "normal_plan_divider") {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                }
+
+                item(key = "free_workout") {
                     IronLogSurfaceCard(
                         modifier = Modifier
                             .fillMaxWidth()

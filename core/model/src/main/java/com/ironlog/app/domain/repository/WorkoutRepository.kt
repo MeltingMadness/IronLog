@@ -34,7 +34,6 @@ interface WorkoutRepository {
     suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int
     suspend fun getLastCompletedSession(): WorkoutSession?
     suspend fun getAllCompletedSessionsList(): List<WorkoutSession>
-    suspend fun getCompletedWorkoutStartTimesDesc(): List<Long>
     suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,

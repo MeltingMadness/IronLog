@@ -65,143 +65,6 @@ class DashboardViewModelTest {
     )
 
     @Test
-    fun `Streak ist 0 bei keinen Trainings`() = runTest {
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(0, streak)
-    }
-
-    @Test
-    fun `calculateStreak laedt nicht alle Sessions sondern nur Timestamps`() = runTest {
-        val today = LocalDate.now()
-        for (i in 0L..2L) {
-            val dt = LocalDateTime.of(today.minusDays(i), LocalTime.of(10, 0))
-            workoutRepo.addSession(WorkoutSession(id = i + 100L, startTime = dt,
-                endTime = dt.plusHours(1), durationSeconds = 3600), isActive = false)
-        }
-        val vm = createViewModel()
-        assertEquals(3, vm.calculateStreak())
-        assertEquals(0, workoutRepo.getAllCompletedSessionsListCallCount) // heavyweight path not used
-    }
-
-    @Test
-    fun `calculateStreak zaehlt Session kurz vor Mitternacht korrekt zum selben Tag`() = runTest {
-        val today = LocalDate.now()
-        // Session at 23:59 local time today — must count as today, not tomorrow
-        val lateNight = LocalDateTime.of(today, LocalTime.of(23, 59))
-        workoutRepo.addSession(
-            WorkoutSession(id = 200L, startTime = lateNight,
-                endTime = lateNight.plusMinutes(60), durationSeconds = 3600),
-            isActive = false
-        )
-        val vm = createViewModel()
-        assertEquals(1, vm.calculateStreak())
-    }
-
-    @Test
-    fun `Streak ist 1 bei Training heute`() = runTest {
-        val today = LocalDateTime.of(LocalDate.now(), LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 1, startTime = today, endTime = today.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(1, streak)
-    }
-
-    @Test
-    fun `Streak ist 1 bei Training gestern`() = runTest {
-        val yesterday = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 1, startTime = yesterday, endTime = yesterday.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(1, streak)
-    }
-
-    @Test
-    fun `Streak zaehlt aufeinanderfolgende Tage`() = runTest {
-        val today = LocalDate.now()
-        for (i in 0L..4L) {
-            val dt = LocalDateTime.of(today.minusDays(i), LocalTime.of(10, 0))
-            workoutRepo.addSession(
-                WorkoutSession(
-                    id = i + 1,
-                    startTime = dt,
-                    endTime = dt.plusHours(1),
-                    durationSeconds = 3600
-                ),
-                isActive = false
-            )
-        }
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(5, streak)
-    }
-
-    @Test
-    fun `Luecke bricht Streak`() = runTest {
-        val today = LocalDate.now()
-        val todayDt = LocalDateTime.of(today, LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 1, startTime = todayDt, endTime = todayDt.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-        val yesterdayDt = LocalDateTime.of(today.minusDays(1), LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 2, startTime = yesterdayDt, endTime = yesterdayDt.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-        val threeDaysAgoDt = LocalDateTime.of(today.minusDays(3), LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 3, startTime = threeDaysAgoDt, endTime = threeDaysAgoDt.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(2, streak)
-    }
-
-    @Test
-    fun `Streak 0 wenn letztes Training vorgestern`() = runTest {
-        val twoDaysAgo = LocalDateTime.of(LocalDate.now().minusDays(2), LocalTime.of(10, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 1, startTime = twoDaysAgo, endTime = twoDaysAgo.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(0, streak)
-    }
-
-    @Test
-    fun `Mehrere Trainings am gleichen Tag zaehlen als 1`() = runTest {
-        val today = LocalDate.now()
-        val morning = LocalDateTime.of(today, LocalTime.of(8, 0))
-        val evening = LocalDateTime.of(today, LocalTime.of(18, 0))
-        workoutRepo.addSession(
-            WorkoutSession(id = 1, startTime = morning, endTime = morning.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-        workoutRepo.addSession(
-            WorkoutSession(id = 2, startTime = evening, endTime = evening.plusHours(1), durationSeconds = 3600),
-            isActive = false
-        )
-
-        val vm = createViewModel()
-        val streak = vm.calculateStreak()
-        assertEquals(1, streak)
-    }
-
-    @Test
     fun `loadDashboard nutzt Batch-Query statt N einzelne getExerciseById Calls`() = runTest {
         exerciseRepo.addExercise(com.ironlog.app.domain.model.Exercise(id = 1L, name = "Kniebeuge", primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BEINE, category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL))
         exerciseRepo.addExercise(com.ironlog.app.domain.model.Exercise(id = 2L, name = "Bankdrücken", primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST, category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL))
@@ -393,6 +256,8 @@ class DashboardViewModelTest {
 
         assertNull(vm.uiState.value.activeSession)
         assertEquals(1, vm.uiState.value.workoutsThisWeek)
+        assertEquals(1, vm.uiState.value.workoutsThisMonth)
+        assertFalse(vm.uiState.value.isLoading)
         assertNotNull(vm.uiState.value.lastWorkout)
     }
 
@@ -420,7 +285,6 @@ class DashboardViewModelTest {
 
         assertEquals(0, vm.uiState.value.workoutsThisWeek)
         assertEquals(0, vm.uiState.value.workoutsThisMonth)
-        assertEquals(0, vm.uiState.value.currentStreak)
         assertNull(vm.uiState.value.lastWorkout)
     }
 

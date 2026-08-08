@@ -202,12 +202,6 @@ class FakeWorkoutRepository : WorkoutRepository {
         return sessions.value.filter { !it.isActive }.map { it.session }
     }
 
-    override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
-        sessions.value
-            .filter { !it.isActive }
-            .map { it.session.startTime.toEpochMillis() }
-            .sortedDescending()
-
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,

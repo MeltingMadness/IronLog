@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.animation.core.LinearEasing
@@ -40,11 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
@@ -52,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.time.DayOfWeek
 import java.time.LocalDateTime
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
@@ -66,10 +58,7 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.app.presentation.theme.staggeredEntrance
-import com.ironlog.app.domain.model.WeekStart
 import org.koin.androidx.compose.koinViewModel
-
-private const val DEFAULT_WEEKLY_WORKOUT_GOAL = 4
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,14 +136,6 @@ fun DashboardScreen(
             } else {
                 item {
                     SectionTitle(text = stringResource(id = R.string.dashboard_quick_stats))
-                }
-
-                item {
-                    StreakCard(
-                        currentStreak = state.currentStreak,
-                        workoutDaysThisWeek = state.workoutDaysThisWeek,
-                        weekStart = state.weekStart
-                    )
                 }
 
                 item {
@@ -261,94 +242,6 @@ fun DashboardScreen(
                         onStartWorkout(sessionId, planId, null)
                     }
                 }
-            )
-        }
-    }
-}
-
-@Composable
-private fun StreakCard(
-    currentStreak: Int,
-    workoutDaysThisWeek: Set<DayOfWeek>,
-    weekStart: WeekStart,
-    modifier: Modifier = Modifier
-) {
-    val dims = ironLogDimens
-    val startDay = if (weekStart == WeekStart.SUNDAY) DayOfWeek.SUNDAY else DayOfWeek.MONDAY
-    val daysOfWeek = (0 until 7).map { DayOfWeek.of(((startDay.value - 1 + it) % 7) + 1) }
-    val allLabels = mapOf(
-        DayOfWeek.MONDAY to "Mo",
-        DayOfWeek.TUESDAY to "Di",
-        DayOfWeek.WEDNESDAY to "Mi",
-        DayOfWeek.THURSDAY to "Do",
-        DayOfWeek.FRIDAY to "Fr",
-        DayOfWeek.SATURDAY to "Sa",
-        DayOfWeek.SUNDAY to "So"
-    )
-    val dayLabels = daysOfWeek.map { allLabels.getValue(it) }
-
-    IronLogSurfaceCard(
-        modifier = modifier.fillMaxWidth(),
-        tone = IronLogSurfaceTone.ACCENT
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dims.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-        ) {
-            Text(
-                text = stringResource(id = R.string.dashboard_streak_label, currentStreak),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                daysOfWeek.forEachIndexed { index, day ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(
-                                    color = if (day in workoutDaysThisWeek) {
-                                        MaterialTheme.semantic.success
-                                    } else {
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                    },
-                                    shape = CircleShape
-                                )
-                        )
-                        Text(
-                            text = dayLabels[index],
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            LinearProgressIndicator(
-                progress = { (workoutDaysThisWeek.size / DEFAULT_WEEKLY_WORKOUT_GOAL.toFloat()).coerceAtMost(1f) },
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-            )
-
-            Text(
-                text = stringResource(
-                    id = R.string.dashboard_weekly_progress,
-                    workoutDaysThisWeek.size,
-                    DEFAULT_WEEKLY_WORKOUT_GOAL
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

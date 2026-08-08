@@ -232,9 +232,6 @@ class WorkoutRepositoryImpl(
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
         sessionDao.getAllCompletedSessionsList().map { it.toDomain() }
 
-    override suspend fun getCompletedWorkoutStartTimesDesc(): List<Long> =
-        sessionDao.getCompletedWorkoutStartTimesDesc()
-
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,

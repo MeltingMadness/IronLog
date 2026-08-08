@@ -55,9 +55,6 @@ data class DashboardUiState(
     val showPlanSelectionSheet: Boolean = false,
     val workoutsThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
-    val currentStreak: Int = 0,
-    val workoutDaysThisWeek: Set<DayOfWeek> = emptySet(),
-    val weekStart: WeekStart = WeekStart.MONDAY,
     val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
@@ -162,8 +159,6 @@ class DashboardViewModel(
                 val startOfMonthMillis = EpochConverter.toLong(startOfMonth.atStartOfDay())
                 val workoutsThisMonth = workoutRepository.getCompletedSessionCountSince(startOfMonthMillis)
 
-                val streak = calculateStreak()
-
                 val records = statisticsRepository.getRecentRecordsList(5)
                 val recordExerciseMap = exerciseRepository.getExercisesByIds(records.map { it.exerciseId })
                     .associateBy { it.id }
@@ -177,9 +172,6 @@ class DashboardViewModel(
                 } else 0
 
                 val weekSets = statisticsRepository.getWorkSetsCompletedSince(startOfWeekMillis)
-                val workoutDaysThisWeek = weekSets
-                    .map { it.completedAt.toLocalDate().dayOfWeek }
-                    .toSet()
                 val exerciseMap = exerciseRepository
                     .getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
                     .associateBy { it.id }
@@ -217,9 +209,6 @@ class DashboardViewModel(
                     it.copy(
                         workoutsThisWeek = workoutsThisWeek,
                         workoutsThisMonth = workoutsThisMonth,
-                        currentStreak = streak,
-                        workoutDaysThisWeek = workoutDaysThisWeek,
-                        weekStart = preferences.weekStart,
                         recentRecords = recordsWithNames,
                         lastWorkout = lastWorkout,
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,
@@ -252,41 +241,6 @@ class DashboardViewModel(
                     loadDashboard(showLoadingIndicator = false)
                 }
         }
-    }
-
-    suspend fun calculateStreak(): Int {
-        val startTimesDesc = workoutRepository.getCompletedWorkoutStartTimesDesc()
-        if (startTimesDesc.isEmpty()) return 0
-
-        // Timezone note: epoch-millis from Room are stored as system-local wall-clock time
-        // (see EpochConverter). Conversion back uses systemDefault() to match insertion semantics.
-        // DST transitions are handled correctly because toLocalDate() operates on the shifted
-        // local time, not UTC midnight.
-        val workoutDates = startTimesDesc
-            .map { millis ->
-                java.time.Instant.ofEpochMilli(millis)
-                    .atZone(java.time.ZoneId.systemDefault())
-                    .toLocalDate()
-            }
-            .distinct()  // Already sorted descending from DAO
-
-        var streak = 0
-        var expectedDate = LocalDate.now()
-
-        if (workoutDates.firstOrNull() != expectedDate) {
-            expectedDate = expectedDate.minusDays(1)
-        }
-
-        for (date in workoutDates) {
-            if (date == expectedDate) {
-                streak++
-                expectedDate = expectedDate.minusDays(1)
-            } else if (date.isBefore(expectedDate)) {
-                break
-            }
-        }
-
-        return streak
     }
 
     fun showPlanSelectionSheet() {

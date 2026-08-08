@@ -27,10 +27,6 @@
     <string name="dashboard_quick_stats">Schnellstatistik</string>
     <string name="dashboard_this_week">Diese Woche</string>
     <string name="dashboard_this_month">Diesen Monat</string>
-    <string name="dashboard_streak">Serie</string>
-    <string name="dashboard_streak_value">%1$d T</string>
-    <string name="dashboard_streak_label">%1$d Tage Serie</string>
-    <string name="dashboard_weekly_progress">%1$d / %2$d diese Woche</string>
     <string name="dashboard_recent_records">Letzte Rekorde</string>
     <string name="dashboard_no_records">Noch keine Rekorde. Logge dein erstes Training.</string>
     <string name="dashboard_last_workout">Letztes Training</string>

@@ -65,9 +65,6 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     suspend fun getAllCompletedSessionsList(): List<WorkoutSessionEntity>
 
-    @Query("SELECT startTime FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
-    suspend fun getCompletedWorkoutStartTimesDesc(): List<Long>
-
     @Query("""
         SELECT planId, MAX(startTime) AS lastStartTime
         FROM workout_sessions
