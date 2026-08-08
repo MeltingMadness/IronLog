@@ -573,6 +573,38 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `start waehrend laufendem Skip erzeugt keine Session`() = runTest {
+        metaPlanRepo = DelayingMetaPlanRepo(FakeMetaTrainingPlanRepository(workoutRepo))
+        val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "Plan B"))
+        val metaId = metaPlanRepo.saveMetaPlan(
+            MetaTrainingPlan(
+                name = "Meta Start Lock",
+                items = listOf(
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1)
+                )
+            )
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.skipCurrentMetaSubPlan(metaId)
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(metaId, vm.uiState.value.skippingMetaPlanId)
+
+        var started = false
+        vm.startNewWorkoutWithMetaPlan(metaId) { _, _, _ -> started = true }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(started)
+        assertNull(workoutRepo.getActiveSession())
+        assertTrue(workoutRepo.getAllCompletedSessionsList().isEmpty())
+        assertEquals(planBId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
+    }
+
+    @Test
     fun `skipCurrentMetaSubPlan behandelt veralteten Vorschlag ohne Mutation`() = runTest {
         metaPlanRepo = RejectingMetaPlanRepo(FakeMetaTrainingPlanRepository(workoutRepo))
         val planAId = planRepo.savePlan(TrainingPlan(name = "Plan A"))

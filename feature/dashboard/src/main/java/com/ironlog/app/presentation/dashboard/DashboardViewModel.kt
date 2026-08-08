@@ -294,6 +294,7 @@ class DashboardViewModel(
         onSessionCreated: (Long, Long?, Long?) -> Unit
     ) {
         viewModelScope.launch {
+            if (_uiState.value.skippingMetaPlanId != null) return@launch
             try {
                 val option = _uiState.value.metaPlanOptions.firstOrNull { it.metaPlanId == metaPlanId }
                 val nextPlan = option?.nextPlan

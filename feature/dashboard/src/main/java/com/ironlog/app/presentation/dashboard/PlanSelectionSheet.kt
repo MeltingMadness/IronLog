@@ -100,7 +100,11 @@ fun PlanSelectionSheet(
                         IronLogSurfaceCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onMetaPlanSelected(option.metaPlanId) }
+                                .clickable(
+                                    enabled = skippingMetaPlanId != option.metaPlanId
+                                ) {
+                                    onMetaPlanSelected(option.metaPlanId)
+                                }
                                 .semantics { role = Role.Button },
                             tone = IronLogSurfaceTone.MUTED
                         ) {
