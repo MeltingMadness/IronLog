@@ -1,8 +1,15 @@
 package com.ironlog.app.data.preferences
 
+import android.content.Context
 import com.ironlog.app.domain.model.ReminderConfig
+import io.mockk.every
+import io.mockk.mockk
+import java.nio.file.Files
 import java.time.DayOfWeek
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -44,5 +51,23 @@ class AppPreferencesDataStoreTest {
     fun `invalid tokens are dropped without discarding valid days`() {
         val decoded = parseReminderDays("MONDAY,NOT_A_DAY,FRIDAY")
         assertEquals(setOf(DayOfWeek.MONDAY, DayOfWeek.FRIDAY), decoded)
+    }
+
+    @Test
+    fun `share weight history across contexts defaults to false and persists enabled flag`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        assertFalse(repository.preferences.first().shareWeightHistoryAcrossContexts)
+        repository.updateShareWeightHistoryAcrossContexts(true)
+
+        assertTrue(repository.preferences.first().shareWeightHistoryAcrossContexts)
+    }
+
+    private fun createContextWithTempDataStore(): Context {
+        val dataStoreDir = Files.createTempDirectory("ironlog-datastore").toFile()
+        val context = mockk<Context>(relaxed = true)
+        every { context.applicationContext } returns context
+        every { context.filesDir } returns dataStoreDir
+        return context
     }
 }

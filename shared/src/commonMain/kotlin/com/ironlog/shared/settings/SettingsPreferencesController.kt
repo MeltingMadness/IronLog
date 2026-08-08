@@ -29,6 +29,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean)
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
+    suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) = Unit
 }
 
 interface SharedReminderScheduler {
@@ -101,5 +102,9 @@ class SettingsPreferencesController(
 
     fun updateIntensitySystem(intensitySystem: IntensitySystem) {
         controllerScope.launch { appPreferencesRepository.updateIntensitySystem(intensitySystem) }
+    }
+
+    fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateShareWeightHistoryAcrossContexts(enabled) }
     }
 }

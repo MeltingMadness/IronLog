@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsPreferencesControllerTest {
@@ -54,6 +55,22 @@ class SettingsPreferencesControllerTest {
 
         assertEquals(config, repository.current.reminderConfig)
         assertEquals(config, reminderScheduler.syncedConfig)
+    }
+
+    @Test
+    fun updateShareWeightHistoryAcrossContexts_persistsFlag() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updateShareWeightHistoryAcrossContexts(true)
+        advanceUntilIdle()
+
+        assertTrue(repository.current.shareWeightHistoryAcrossContexts)
     }
 }
 
@@ -109,6 +126,10 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) {
         state.value = state.value.copy(intensitySystem = intensitySystem)
+    }
+
+    override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
     }
 }
 

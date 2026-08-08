@@ -97,6 +97,20 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `updateShareWeightHistoryAcrossContexts persists flag`() = runTest {
+        viewModel.updateShareWeightHistoryAcrossContexts(true)
+        advanceUntilIdle()
+
+        assertTrue(preferencesRepository.current.shareWeightHistoryAcrossContexts)
+    }
+
+    @Test
+    fun `default share weight history across contexts remains disabled`() = runTest {
+        advanceUntilIdle()
+        assertFalse(preferencesRepository.current.shareWeightHistoryAcrossContexts)
+    }
+
+    @Test
     fun `import selection previews without importing and shows confirmation`() = runTest {
         startUiStateCollector(backgroundScope)
         val uri = mockk<Uri>()

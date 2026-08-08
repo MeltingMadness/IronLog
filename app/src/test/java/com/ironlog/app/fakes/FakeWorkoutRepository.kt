@@ -4,6 +4,7 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.PreviousExerciseSession
+import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -205,12 +206,25 @@ class FakeWorkoutRepository : WorkoutRepository {
     override suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,
         exerciseIds: List<Long>,
-        planId: Long?
+        scope: PreviousSessionScope
     ): Map<Long, PreviousExerciseSession> {
         if (exerciseIds.isEmpty()) return emptyMap()
 
         val completedById = sessions.value
             .filter { !it.isActive && it.session.id != currentSessionId }
+            .filter { sessionData ->
+                when (scope) {
+                    PreviousSessionScope.Global -> true
+                    is PreviousSessionScope.NormalPlan ->
+                        sessionData.session.planId == scope.planId &&
+                            sessionData.session.metaPlanId == null
+                    is PreviousSessionScope.MetaPlan ->
+                        sessionData.session.planId == scope.planId &&
+                            sessionData.session.metaPlanId == scope.metaPlanId
+                    is PreviousSessionScope.SharedPlan ->
+                        sessionData.session.planId == scope.planId
+                }
+            }
             .associateBy { it.session.id }
         if (completedById.isEmpty()) return emptyMap()
 
@@ -218,11 +232,7 @@ class FakeWorkoutRepository : WorkoutRepository {
             val previousSessionId = sets.value
                 .filter { set ->
                     set.exerciseId == exerciseId &&
-                        set.sessionId in completedById.keys &&
-                        (
-                            planId == null ||
-                                completedById[set.sessionId]?.session?.planId == planId
-                            )
+                        set.sessionId in completedById.keys
                 }
                 .sortedByDescending { completedById[it.sessionId]!!.session.startTime }
                 .firstOrNull()

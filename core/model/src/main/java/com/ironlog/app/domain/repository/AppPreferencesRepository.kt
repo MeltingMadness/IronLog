@@ -23,4 +23,5 @@ interface AppPreferencesRepository {
     suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean)
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
+    suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
 }

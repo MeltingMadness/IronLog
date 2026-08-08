@@ -56,7 +56,9 @@ class AppPreferencesRepositoryImpl(
             timerKeepScreenOn = prefs[AppPreferenceKeys.TIMER_KEEP_SCREEN_ON] ?: false,
             betaDiagnosticsOptIn = prefs[AppPreferenceKeys.BETA_DIAGNOSTICS_OPT_IN] ?: false,
             reminderConfig = reminderConfig,
-            intensitySystem = intensitySystem
+            intensitySystem = intensitySystem,
+            shareWeightHistoryAcrossContexts =
+                prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] ?: false
         )
     }
 
@@ -126,6 +128,12 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.INTENSITY_SYSTEM] = intensitySystem.name
+        }
+    }
+
+    override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] = enabled
         }
     }
 }

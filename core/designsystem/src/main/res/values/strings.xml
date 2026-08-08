@@ -180,6 +180,9 @@
     <string name="settings_beta_diagnostics_title">Beta-Diagnose aktivieren</string>
     <string name="settings_beta_diagnostics_subtitle">Technische Geräte- und Builddaten (OS, Gerätemodell) in Incident-Reports aufnehmen</string>
 
+    <string name="settings_share_weight_history_title">Gewichte zwischen Einzel- und Meta-Plänen teilen</string>
+    <string name="settings_share_weight_history_subtitle">Wenn aus, verwendet jeder Einzel- und Meta-Plan eine eigene Gewichtshistorie.</string>
+
     <string name="settings_reminder_enabled_title">Trainingserinnerungen</string>
     <string name="settings_reminder_enabled_subtitle">Geplante Erinnerungen als Benachrichtigung</string>
     <string name="settings_reminder_time_title">Uhrzeit</string>

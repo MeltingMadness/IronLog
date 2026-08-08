@@ -65,6 +65,10 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateIntensitySystem(intensitySystem: com.ironlog.shared.model.IntensitySystem) {
         delegate.updateIntensitySystem(intensitySystem.toApp())
     }
+
+    override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        delegate.updateShareWeightHistoryAcrossContexts(enabled)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -91,7 +95,8 @@ internal fun AppPreferences.toShared(): com.ironlog.shared.model.AppPreferences 
         timerKeepScreenOn = timerKeepScreenOn,
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toShared(),
-        intensitySystem = intensitySystem.toShared()
+        intensitySystem = intensitySystem.toShared(),
+        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts
     )
 
 internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -106,7 +111,8 @@ internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
         timerKeepScreenOn = timerKeepScreenOn,
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toApp(),
-        intensitySystem = intensitySystem.toApp()
+        intensitySystem = intensitySystem.toApp(),
+        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts
     )
 
 internal fun ReminderConfig.toShared(): com.ironlog.shared.model.ReminderConfig =

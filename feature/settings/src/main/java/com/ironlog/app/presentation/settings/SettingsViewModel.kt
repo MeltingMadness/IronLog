@@ -143,6 +143,10 @@ class SettingsViewModel(
         preferencesController.updateIntensitySystem(system.toShared())
     }
 
+    fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
+        preferencesController.updateShareWeightHistoryAcrossContexts(enabled)
+    }
+
     fun updateReminderConfig(config: ReminderConfig) {
         preferencesController.updateReminderConfig(config.toShared())
     }

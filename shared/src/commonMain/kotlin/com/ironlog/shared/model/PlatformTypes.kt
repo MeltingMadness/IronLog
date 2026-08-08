@@ -70,7 +70,8 @@ data class AppPreferences(
     val timerKeepScreenOn: Boolean = false,
     val betaDiagnosticsOptIn: Boolean = false,
     val reminderConfig: ReminderConfig = ReminderConfig(),
-    val intensitySystem: IntensitySystem = IntensitySystem.RPE
+    val intensitySystem: IntensitySystem = IntensitySystem.RPE,
+    val shareWeightHistoryAcrossContexts: Boolean = false
 )
 
 @Serializable
