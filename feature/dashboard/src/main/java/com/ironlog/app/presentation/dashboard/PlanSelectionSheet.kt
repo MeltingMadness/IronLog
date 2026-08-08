@@ -90,7 +90,7 @@ fun PlanSelectionSheet(
                         }
                     }
                 } else {
-                    items(metaPlanOptions, key = { it.metaPlanId }) { option ->
+                    items(metaPlanOptions, key = { "meta-${it.metaPlanId}" }) { option ->
                         val nextPlanName = option.nextPlan?.name ?: stringResource(id = R.string.common_unknown)
                         IronLogSurfaceCard(
                             modifier = Modifier
@@ -138,7 +138,7 @@ fun PlanSelectionSheet(
                     HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
                 }
 
-                items(plans, key = { it.plan.id }) { plan ->
+                items(plans, key = { "plan-${it.plan.id}" }) { plan ->
                     val lastDoneDaysAgo = plan.lastDoneDaysAgo
                     IronLogSurfaceCard(
                         modifier = Modifier
@@ -166,8 +166,10 @@ fun PlanSelectionSheet(
                     }
                 }
 
-                item(key = "normal_plan_divider") {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                if (plans.isNotEmpty()) {
+                    item(key = "normal_plan_divider") {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = dims.spacingXs))
+                    }
                 }
 
                 item(key = "free_workout") {
