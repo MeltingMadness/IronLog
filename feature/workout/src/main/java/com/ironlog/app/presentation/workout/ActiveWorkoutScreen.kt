@@ -582,6 +582,14 @@ private fun ExerciseCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = tintColor ?: MaterialTheme.colorScheme.primary
                 )
+                if (previousSession?.lastWorkSetReachedTarget == true) {
+                    Text(
+                        text = stringResource(id = R.string.workout_previous_last_set_target_reached),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.semantic.success
+                    )
+                }
                 if (completedWorkSets >= planTarget.targetSets) {
                     Text(
                         text = stringResource(id = R.string.workout_target_completed),

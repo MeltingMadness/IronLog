@@ -45,7 +45,8 @@ data class PreviousExerciseSessionUi(
     val sessionId: Long,
     val sessionStart: LocalDateTime,
     val sets: List<WorkoutSet>,
-    val lastWorkSetWeightKg: Double?
+    val lastWorkSetWeightKg: Double?,
+    val lastWorkSetReachedTarget: Boolean = false
 )
 
 data class ExerciseWithSets(
@@ -139,6 +140,17 @@ sealed class WorkoutEvent {
  */
 fun parseDecimal(text: String): Double? = text.trim().replace(",", ".").toDoubleOrNull()
 
+fun lastWorkSetReachedTarget(
+    planTarget: PlanTarget?,
+    previousSets: List<WorkoutSet>
+): Boolean {
+    val target = planTarget ?: return false
+    if (target.targetReps <= 0 || target.targetWeightKg <= 0.0) return false
+    val lastWorkSet = previousSets.lastOrNull { !it.isWarmup } ?: return false
+    return lastWorkSet.reps >= target.targetReps &&
+        lastWorkSet.weightKg >= target.targetWeightKg
+}
+
 class ActiveWorkoutViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
@@ -218,7 +230,11 @@ class ActiveWorkoutViewModel(
                         sessionId = it.sessionId,
                         sessionStart = it.sessionStart,
                         sets = it.sets,
-                        lastWorkSetWeightKg = it.lastWorkSetWeightKg
+                        lastWorkSetWeightKg = it.lastWorkSetWeightKg,
+                        lastWorkSetReachedTarget = lastWorkSetReachedTarget(
+                            planTarget = targets[exercise.id],
+                            previousSets = it.sets
+                        )
                     )
                 }
             )
