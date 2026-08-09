@@ -6,10 +6,14 @@ import androidx.paging.PagingData
 import androidx.paging.map
 import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
+import com.ironlog.app.data.local.entity.ProgressionTargetColumns
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
@@ -30,6 +34,8 @@ class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
     private val setDao: WorkoutSetDao,
     private val personalRecordDao: PersonalRecordDao,
+    private val trainingPlanDao: TrainingPlanDao,
+    private val progressionDao: ProgressionDao,
     private val transactionRunner: TransactionRunner
 ) : WorkoutRepository {
     private val startWorkoutMutex = Mutex()
@@ -46,14 +52,46 @@ class WorkoutRepositoryImpl(
             // Invariant: there can only be one active session.
             sessionDao.getActiveSession()?.let { return@withLock it.id }
 
-            val now = LocalDateTime.now()
-            val entity = WorkoutSessionEntity(
-                startTime = EpochConverter.toLong(now),
-                name = name,
-                planId = planId,
-                metaPlanId = metaPlanId
-            )
-            sessionDao.insert(entity)
+            transactionRunner.runInTransaction {
+                sessionDao.getActiveSession()?.let { return@runInTransaction it.id }
+                if (planId != null) {
+                    require(trainingPlanDao.getPlanById(planId) != null) {
+                        "Training plan $planId does not exist"
+                    }
+                }
+                val sessionId = sessionDao.insert(
+                    WorkoutSessionEntity(
+                        startTime = EpochConverter.toLong(LocalDateTime.now()),
+                        name = name,
+                        planId = planId,
+                        metaPlanId = metaPlanId
+                    )
+                )
+                if (planId != null) {
+                    val targets = trainingPlanDao.getExercisesForPlan(planId)
+                        .sortedBy { it.orderIndex }
+                        .map { planExercise ->
+                            WorkoutPlanTargetEntity(
+                                sessionId = sessionId,
+                                planId = planId,
+                                exerciseId = planExercise.exerciseId,
+                                orderIndex = planExercise.orderIndex,
+                                supersetGroupId = planExercise.supersetGroupId,
+                                target = ProgressionTargetColumns(
+                                    sets = planExercise.targetSets,
+                                    reps = planExercise.targetReps,
+                                    weightKg = planExercise.targetWeightKg
+                                ),
+                                progression = planExercise.progression
+                            )
+                        }
+                    val insertedIds = progressionDao.insertTargets(targets)
+                    check(insertedIds.size == targets.size && insertedIds.all { it > 0L }) {
+                        "Incomplete plan target snapshot"
+                    }
+                }
+                sessionId
+            }
         }
     }
 

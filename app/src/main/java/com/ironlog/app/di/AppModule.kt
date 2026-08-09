@@ -53,6 +53,7 @@ val appModule = module {
     single { get<IronLogDatabase>().personalRecordDao() }
     single { get<IronLogDatabase>().trainingPlanDao() }
     single { get<IronLogDatabase>().metaTrainingPlanDao() }
+    single { get<IronLogDatabase>().progressionDao() }
     single<TransactionRunner> { RoomTransactionRunner(get()) }
     single<BackupDocumentIo> {
         ContentResolverBackupDocumentIo(androidContext().contentResolver)
@@ -60,7 +61,7 @@ val appModule = module {
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get()) }
+    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }

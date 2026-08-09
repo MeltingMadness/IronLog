@@ -2,9 +2,14 @@ package com.ironlog.app.data.repository
 
 import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
+import com.ironlog.app.data.local.entity.TrainingPlanEntity
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.PreviousSessionScope
@@ -15,8 +20,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.time.LocalDateTime
@@ -26,10 +33,19 @@ class WorkoutRepositoryImplTest {
     private val sessionDao: WorkoutSessionDao = mockk()
     private val setDao: WorkoutSetDao = mockk(relaxed = true)
     private val personalRecordDao: PersonalRecordDao = mockk(relaxed = true)
+    private val trainingPlanDao: TrainingPlanDao = mockk(relaxed = true)
+    private val progressionDao: ProgressionDao = mockk(relaxed = true)
     private val transactionRunner = object : TransactionRunner {
         override suspend fun <T> runInTransaction(block: suspend () -> T): T = block()
     }
-    private val repository = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao, transactionRunner)
+    private val repository = WorkoutRepositoryImpl(
+        sessionDao,
+        setDao,
+        personalRecordDao,
+        trainingPlanDao,
+        progressionDao,
+        transactionRunner
+    )
 
     @Test
     fun `startWorkout returns existing active session id and does not insert`() = runTest {
@@ -165,6 +181,52 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 0) {
             setDao.getMostRecentCompletedSetsForExercises(any(), any())
         }
+    }
+
+    @Test
+    fun `planned workout snapshots every plan position including duplicate exercises`() = runTest {
+        val insertedTargets = slot<List<WorkoutPlanTargetEntity>>()
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+        coEvery { trainingPlanDao.getPlanById(3L) } returns TrainingPlanEntity(
+            id = 3L,
+            name = "Two squats",
+            createdAt = 1_700_000_000_000
+        )
+        coEvery { trainingPlanDao.getExercisesForPlan(3L) } returns listOf(
+            PlanExerciseEntity(
+                id = 11L,
+                planId = 3L,
+                exerciseId = 7L,
+                orderIndex = 0,
+                targetWeightKg = 100.0
+            ),
+            PlanExerciseEntity(
+                id = 12L,
+                planId = 3L,
+                exerciseId = 7L,
+                orderIndex = 1,
+                targetWeightKg = 80.0
+            )
+        )
+        coEvery { progressionDao.insertTargets(capture(insertedTargets)) } returns listOf(101L, 102L)
+
+        val sessionId = repository.startWorkout("Two squats", planId = 3L, metaPlanId = null)
+
+        assertEquals(2, insertedTargets.captured.size)
+        assertEquals(listOf(0, 1), insertedTargets.captured.map { it.orderIndex })
+        assertEquals(listOf(100.0, 80.0), insertedTargets.captured.map { it.target.weightKg })
+        assertTrue(insertedTargets.captured.all { it.sessionId == sessionId && it.planId == 3L })
+    }
+
+    @Test
+    fun `free workout creates no plan target snapshots`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        repository.startWorkout("Free", planId = null, metaPlanId = null)
+
+        coVerify(exactly = 0) { progressionDao.insertTargets(any()) }
     }
 
     @Test
@@ -363,7 +425,14 @@ class WorkoutRepositoryImplTest {
     @Test
     fun `updateSet runs update and record rebuild through one transaction`() = runTest {
         val runner = TrackingTransactionRunner()
-        val repo = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao, runner)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
         val set = WorkoutSetEntity(
             id = 10L,
             sessionId = 2L,
@@ -387,7 +456,14 @@ class WorkoutRepositoryImplTest {
     @Test
     fun `deleteSession runs session delete and record rebuild through one transaction`() = runTest {
         val runner = TrackingTransactionRunner()
-        val repo = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao, runner)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
         val sessionId = 5L
         val exerciseId = 1L
         coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
@@ -432,7 +508,14 @@ class WorkoutRepositoryImplTest {
     @Test
     fun `addSet rekalkuliert alle vier PR-Typen exakt in einer Transaktion`() = runTest {
         val runner = TrackingTransactionRunner()
-        val repo = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao, runner)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
         val newSet = WorkoutSet(
             sessionId = 3L,
             exerciseId = 1L,
@@ -550,7 +633,14 @@ class WorkoutRepositoryImplTest {
     @Test
     fun `addSet behandelt Warmup-Satz ohne PR-Rekalkulation`() = runTest {
         val runner = TrackingTransactionRunner()
-        val repo = WorkoutRepositoryImpl(sessionDao, setDao, personalRecordDao, runner)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
 
         repo.addSet(
             WorkoutSet(
