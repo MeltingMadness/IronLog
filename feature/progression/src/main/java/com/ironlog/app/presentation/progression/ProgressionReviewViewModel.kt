@@ -44,13 +44,17 @@ data class ProgressionReviewItemUi(
 
 enum class ProgressionEditField { SETS, REPS, WEIGHT }
 
+enum class ProgressionEditError { INVALID_SETS, INVALID_REPS, INVALID_WEIGHT }
+
+enum class ProgressionReviewMessage { STALE, INVALID, ACTION_FAILED }
+
 data class ProgressionEditDraft(
     val sets: String,
     val reps: String,
     val weight: String,
     val unitSystem: UnitSystem,
     val dirtyFields: Set<ProgressionEditField> = emptySet(),
-    val errors: Map<ProgressionEditField, String> = emptyMap()
+    val errors: Map<ProgressionEditField, ProgressionEditError> = emptyMap()
 )
 
 data class ProgressionReviewUiState(
@@ -58,7 +62,7 @@ data class ProgressionReviewUiState(
     val edits: Map<Long, ProgressionEditDraft> = emptyMap(),
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     val isWorking: Boolean = false,
-    val message: String? = null
+    val message: ProgressionReviewMessage? = null
 )
 
 class ProgressionReviewViewModel(
@@ -73,7 +77,7 @@ class ProgressionReviewViewModel(
     init {
         viewModelScope.launch {
             runCatching { progressionRepository.reconcileOutstandingSuggestions() }
-                .onFailure { error -> showFailure(error) }
+                .onFailure { showFailure() }
 
             combine(
                 progressionRepository.observeReviewItems(sessionId),
@@ -174,8 +178,8 @@ class ProgressionReviewViewModel(
             try {
                 progressionRepository.rejectSuggestion(suggestionId)
                 _uiState.update { it.copy(edits = it.edits - suggestionId) }
-            } catch (error: Throwable) {
-                showFailure(error)
+            } catch (_: Throwable) {
+                showFailure()
             } finally {
                 setWorking(false)
             }
@@ -195,16 +199,16 @@ class ProgressionReviewViewModel(
                     }
                     is ProgressionDecisionResult.Stale -> {
                         _uiState.update {
-                            it.copy(message = STALE_MESSAGE)
+                            it.copy(message = ProgressionReviewMessage.STALE)
                         }
                         progressionRepository.reconcileOutstandingSuggestions()
                     }
                     is ProgressionDecisionResult.Invalid -> {
-                        _uiState.update { it.copy(message = result.message) }
+                        _uiState.update { it.copy(message = ProgressionReviewMessage.INVALID) }
                     }
                 }
-            } catch (error: Throwable) {
-                showFailure(error)
+            } catch (_: Throwable) {
+                showFailure()
             } finally {
                 setWorking(false)
             }
@@ -216,11 +220,11 @@ class ProgressionReviewViewModel(
         draft: ProgressionEditDraft
     ): ProgressionTarget? {
         val proposed = item.proposed ?: return null
-        val errors = linkedMapOf<ProgressionEditField, String>()
+        val errors = linkedMapOf<ProgressionEditField, ProgressionEditError>()
 
         val sets = if (ProgressionEditField.SETS in draft.dirtyFields) {
             draft.sets.toIntOrNull()?.takeIf { it > 0 } ?: run {
-                errors[ProgressionEditField.SETS] = SETS_ERROR
+                errors[ProgressionEditField.SETS] = ProgressionEditError.INVALID_SETS
                 proposed.sets
             }
         } else {
@@ -229,7 +233,7 @@ class ProgressionReviewViewModel(
 
         val reps = if (ProgressionEditField.REPS in draft.dirtyFields) {
             draft.reps.toIntOrNull()?.takeIf { it > 0 } ?: run {
-                errors[ProgressionEditField.REPS] = REPS_ERROR
+                errors[ProgressionEditField.REPS] = ProgressionEditError.INVALID_REPS
                 proposed.reps
             }
         } else {
@@ -244,7 +248,7 @@ class ProgressionReviewViewModel(
                 ?.takeIf { it.isFinite() && it >= 0.0 }
                 ?.let { WeightFormatting.convertToKg(it, draft.unitSystem) }
                 ?: run {
-                    errors[ProgressionEditField.WEIGHT] = WEIGHT_ERROR
+                    errors[ProgressionEditField.WEIGHT] = ProgressionEditError.INVALID_WEIGHT
                     proposed.weightKg
                 }
         } else {
@@ -262,11 +266,8 @@ class ProgressionReviewViewModel(
         _uiState.update { it.copy(isWorking = working, message = if (working) null else it.message) }
     }
 
-    private fun showFailure(error: Throwable) {
-        val detail = error.message?.takeIf(String::isNotBlank)
-        _uiState.update {
-            it.copy(message = if (detail == null) ACTION_FAILED else "$ACTION_FAILED: $detail")
-        }
+    private fun showFailure() {
+        _uiState.update { it.copy(message = ProgressionReviewMessage.ACTION_FAILED) }
     }
 
     private fun ProgressionSuggestion.toUi(): ProgressionReviewItemUi {
@@ -313,10 +314,5 @@ class ProgressionReviewViewModel(
 
     private companion object {
         const val SESSION_ID_KEY = "sessionId"
-        const val STALE_MESSAGE = "Dieser Vorschlag passt nicht mehr zum Plan."
-        const val ACTION_FAILED = "Aktion fehlgeschlagen"
-        const val SETS_ERROR = "Gib eine positive Satzzahl ein."
-        const val REPS_ERROR = "Gib eine positive Wiederholungszahl ein."
-        const val WEIGHT_ERROR = "Gib ein gültiges Gewicht ein."
     }
 }

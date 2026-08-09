@@ -207,12 +207,12 @@ class ProgressionReviewViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            setOf(
-                ProgressionEditField.SETS,
-                ProgressionEditField.REPS,
-                ProgressionEditField.WEIGHT
+            mapOf(
+                ProgressionEditField.SETS to ProgressionEditError.INVALID_SETS,
+                ProgressionEditField.REPS to ProgressionEditError.INVALID_REPS,
+                ProgressionEditField.WEIGHT to ProgressionEditError.INVALID_WEIGHT
             ),
-            viewModel.uiState.value.edits.getValue(2L).errors.keys
+            viewModel.uiState.value.edits.getValue(2L).errors
         )
         assertTrue(repository.lastAccepted.isEmpty())
         assertFalse(viewModel.uiState.value.isWorking)
@@ -332,7 +332,7 @@ class ProgressionReviewViewModelTest {
         viewModel.acceptOne(2L)
         advanceUntilIdle()
 
-        assertEquals("Dieser Vorschlag passt nicht mehr zum Plan.", viewModel.uiState.value.message)
+        assertEquals(ProgressionReviewMessage.STALE, viewModel.uiState.value.message)
         assertEquals(1, repository.reconcileCalls)
         assertEquals(
             ProgressionSuggestionStatus.PENDING,
@@ -343,7 +343,7 @@ class ProgressionReviewViewModelTest {
     @Test
     fun `invalid acceptance message remains visible without optimistic status`() = runTest(dispatcher) {
         repository.reviewItems.value = listOf(pendingChange(id = 2L))
-        repository.acceptResult = ProgressionDecisionResult.Invalid("Ungültiges Ziel")
+        repository.acceptResult = ProgressionDecisionResult.Invalid("must not reach the UI")
         val viewModel = createViewModel()
         advanceUntilIdle()
         repository.reconcileCalls = 0
@@ -351,7 +351,7 @@ class ProgressionReviewViewModelTest {
         viewModel.acceptOne(2L)
         advanceUntilIdle()
 
-        assertEquals("Ungültiges Ziel", viewModel.uiState.value.message)
+        assertEquals(ProgressionReviewMessage.INVALID, viewModel.uiState.value.message)
         assertEquals(0, repository.reconcileCalls)
         assertEquals(
             ProgressionSuggestionStatus.PENDING,
@@ -389,7 +389,7 @@ class ProgressionReviewViewModelTest {
     @Test
     fun `reject failure clears working and reports error without optimistic mutation`() = runTest(dispatcher) {
         repository.reviewItems.value = listOf(pendingChange(id = 2L))
-        repository.rejectError = IllegalStateException("disk")
+        repository.rejectError = IllegalStateException("must not reach the UI")
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -397,7 +397,7 @@ class ProgressionReviewViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isWorking)
-        assertEquals("Aktion fehlgeschlagen: disk", viewModel.uiState.value.message)
+        assertEquals(ProgressionReviewMessage.ACTION_FAILED, viewModel.uiState.value.message)
         assertEquals(
             ProgressionSuggestionStatus.PENDING,
             viewModel.uiState.value.items.single().status

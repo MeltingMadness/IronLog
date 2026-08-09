@@ -345,6 +345,12 @@
     <string name="progression_review_edit_sets">Sätze</string>
     <string name="progression_review_edit_reps">Wiederholungen</string>
     <string name="progression_review_edit_weight">Gewicht (%1$s)</string>
+    <string name="progression_review_edit_error_sets">Gib eine positive Satzzahl ein.</string>
+    <string name="progression_review_edit_error_reps">Gib eine positive Wiederholungszahl ein.</string>
+    <string name="progression_review_edit_error_weight">Gib ein gültiges Gewicht ein.</string>
+    <string name="progression_review_message_stale">Dieser Vorschlag passt nicht mehr zum Plan.</string>
+    <string name="progression_review_message_invalid">Der Vorschlag konnte nicht übernommen werden.</string>
+    <string name="progression_review_message_action_failed">Die Aktion ist fehlgeschlagen.</string>
 
     <string name="progression_review_reason_rep_advanced">Das Wiederholungsziel wurde erreicht und wird erhöht.</string>
     <string name="progression_review_reason_load_advanced">Das Zielgewicht steigt um %1$s %2$s.</string>

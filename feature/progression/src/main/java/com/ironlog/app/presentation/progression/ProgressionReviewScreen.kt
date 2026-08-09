@@ -59,10 +59,11 @@ fun ProgressionReviewScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var editingSuggestionId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val messageText = state.message?.let { progressionReviewMessageText(it) }
 
-    LaunchedEffect(state.message) {
-        val message = state.message ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message)
+    LaunchedEffect(state.message, messageText) {
+        val localizedMessage = messageText ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(localizedMessage)
         viewModel.clearMessage()
     }
 
@@ -305,14 +306,18 @@ private fun ProgressionEditSheet(
                 value = draft.sets,
                 onValueChange = { onUpdate(it, draft.reps, draft.weight) },
                 label = stringResource(R.string.progression_review_edit_sets),
-                error = draft.errors[ProgressionEditField.SETS],
+                error = draft.errors[ProgressionEditField.SETS]?.let {
+                    progressionEditErrorText(it)
+                },
                 keyboardType = KeyboardType.Number
             )
             EditField(
                 value = draft.reps,
                 onValueChange = { onUpdate(draft.sets, it, draft.weight) },
                 label = stringResource(R.string.progression_review_edit_reps),
-                error = draft.errors[ProgressionEditField.REPS],
+                error = draft.errors[ProgressionEditField.REPS]?.let {
+                    progressionEditErrorText(it)
+                },
                 keyboardType = KeyboardType.Number
             )
             EditField(
@@ -322,7 +327,9 @@ private fun ProgressionEditSheet(
                     R.string.progression_review_edit_weight,
                     WeightFormatting.unitLabel(draft.unitSystem)
                 ),
-                error = draft.errors[ProgressionEditField.WEIGHT],
+                error = draft.errors[ProgressionEditField.WEIGHT]?.let {
+                    progressionEditErrorText(it)
+                },
                 keyboardType = KeyboardType.Decimal
             )
             Row(
@@ -379,6 +386,24 @@ private fun progressionStatusText(status: ProgressionSuggestionStatus): String =
         ProgressionSuggestionStatus.ACCEPTED -> R.string.progression_review_status_accepted
         ProgressionSuggestionStatus.REJECTED -> R.string.progression_review_status_rejected
         ProgressionSuggestionStatus.STALE -> R.string.progression_review_status_stale
+    }
+)
+
+@Composable
+private fun progressionReviewMessageText(message: ProgressionReviewMessage): String = stringResource(
+    when (message) {
+        ProgressionReviewMessage.STALE -> R.string.progression_review_message_stale
+        ProgressionReviewMessage.INVALID -> R.string.progression_review_message_invalid
+        ProgressionReviewMessage.ACTION_FAILED -> R.string.progression_review_message_action_failed
+    }
+)
+
+@Composable
+private fun progressionEditErrorText(error: ProgressionEditError): String = stringResource(
+    when (error) {
+        ProgressionEditError.INVALID_SETS -> R.string.progression_review_edit_error_sets
+        ProgressionEditError.INVALID_REPS -> R.string.progression_review_edit_error_reps
+        ProgressionEditError.INVALID_WEIGHT -> R.string.progression_review_edit_error_weight
     }
 )
 
