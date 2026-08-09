@@ -68,7 +68,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
@@ -229,14 +231,14 @@ fun ActiveWorkoutScreen(
                             horizontalArrangement = Arrangement.Center,
                             verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                         ) {
-                            state.restTimers.forEach { (exerciseId, startTime) ->
-                                val exerciseWithSets = state.exercisesWithSets.find { it.exercise.id == exerciseId }
-                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.exercise.id == exerciseId } }
-                                val indexInSuperset = group?.exercises?.indexOfFirst { it.exercise.id == exerciseId } ?: -1
+                            state.restTimers.forEach { (exerciseKey, startTime) ->
+                                val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
+                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
+                                val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
 
                                 RestTimer(
                                     startTime = startTime,
-                                    onDismiss = { viewModel.dismissRestTimer(exerciseId) },
+                                    onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
                                     titleText = exerciseWithSets?.exercise?.name,
                                     baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
                                     modifier = Modifier.padding(horizontal = dims.spacingXs)
@@ -283,18 +285,19 @@ fun ActiveWorkoutScreen(
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
                                 unitSystem = preferences.unitSystem,
-                                isLogging = (state.logInFlightByExercise[exerciseWithSets.exercise.id] ?: 0) > 0,
+                                isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
                                 logSuccessSubmissions = state.logSuccessSubmissions,
                                 updateInFlightBySet = state.updateInFlightBySet,
                                 updateSuccessCountBySet = state.updateSuccessCountBySet,
                                 onLogSet = { reps, weight, isWarmup, intensity, submissionId ->
                                     viewModel.logSet(
-                                        exerciseWithSets.exercise.id,
-                                        reps,
-                                        weight,
-                                        isWarmup,
-                                        intensity,
-                                        submissionId
+                                        key = exerciseWithSets.key,
+                                        exerciseId = exerciseWithSets.exercise.id,
+                                        reps = reps,
+                                        weightKg = weight,
+                                        isWarmup = isWarmup,
+                                        intensity = intensity,
+                                        submissionId = submissionId
                                     )
                                 },
                                 onUpdateSet = viewModel::updateSet,
@@ -370,7 +373,7 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
         if (groupId == null) {
             val item = exercises[cursor]
             groups += ExerciseRenderGroup(
-                key = "single-${item.exercise.id}-$cursor",
+                key = "single-${item.key.stableListKey()}",
                 supersetGroupId = null,
                 exercises = listOf(item)
             )
@@ -390,13 +393,13 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
         if (run.size < 2) {
             val item = exercises[cursor]
             groups += ExerciseRenderGroup(
-                key = "single-${item.exercise.id}-$cursor",
+                key = "single-${item.key.stableListKey()}",
                 supersetGroupId = null,
                 exercises = listOf(item)
             )
         } else {
             groups += ExerciseRenderGroup(
-                key = "superset-$groupId-$cursor",
+                key = "superset-$groupId-${run.joinToString("-") { it.key.stableListKey() }}",
                 supersetGroupId = groupId,
                 exercises = run
             )
@@ -406,6 +409,11 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
     }
 
     return groups
+}
+
+private fun WorkoutExerciseKey.stableListKey(): String = when (this) {
+    is WorkoutExerciseKey.Planned -> "planned-$snapshotId"
+    is WorkoutExerciseKey.AdHoc -> "adhoc-$exerciseId"
 }
 
 @Composable
@@ -508,12 +516,19 @@ private fun ExerciseCard(
     val dims = ironLogDimens
     val planTarget = exerciseWithSets.planTarget
     val previousSession = exerciseWithSets.previousSession
+    val rowIntensitySystem = if (
+        intensitySystem == IntensitySystem.OFF && planTarget?.config is ProgressionConfig.RpeRir
+    ) {
+        IntensitySystem.RPE
+    } else {
+        intensitySystem
+    }
     val showHistoryToggle = previousSession != null
     val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let { formatWeightValue(it, unitSystem) }
-    var showPreviousSession by remember(exerciseWithSets.exercise.id) { mutableStateOf(false) }
+    var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { !it.isWarmup }
-    val targetSetCount = planTarget?.targetSets ?: 0
+    val targetSetCount = planTarget?.target?.sets ?: 0
 
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
@@ -563,24 +578,32 @@ private fun ExerciseCard(
             }
 
             if (planTarget != null) {
-                val targetText = if (planTarget.targetWeightKg > 0) {
+                val targetText = if (planTarget.target.weightKg > 0) {
                     stringResource(
                         id = R.string.workout_target_with_weight,
-                        planTarget.targetSets,
-                        planTarget.targetReps,
-                        formatTargetWeight(planTarget.targetWeightKg, unitSystem)
+                        planTarget.target.sets,
+                        planTarget.target.reps,
+                        formatTargetWeight(planTarget.target.weightKg, unitSystem)
                     )
                 } else {
                     stringResource(
                         id = R.string.workout_target_no_weight,
-                        planTarget.targetSets,
-                        planTarget.targetReps
+                        planTarget.target.sets,
+                        planTarget.target.reps
                     )
                 }
                 Text(
                     text = targetText,
                     style = MaterialTheme.typography.bodySmall,
                     color = tintColor ?: MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(
+                        id = R.string.workout_progression_scheme,
+                        progressionSchemeLabel(planTarget.config)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (previousSession?.lastWorkSetReachedTarget == true) {
                     Text(
@@ -590,7 +613,7 @@ private fun ExerciseCard(
                         color = MaterialTheme.semantic.success
                     )
                 }
-                if (completedWorkSets >= planTarget.targetSets) {
+                if (completedWorkSets >= planTarget.target.sets) {
                     Text(
                         text = stringResource(id = R.string.workout_target_completed),
                         style = MaterialTheme.typography.bodySmall,
@@ -608,7 +631,7 @@ private fun ExerciseCard(
                     if (matchingSet != null) {
                         LoggedSetRow(
                             set = matchingSet,
-                            intensitySystem = intensitySystem,
+                            intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
                             updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
@@ -619,10 +642,10 @@ private fun ExerciseCard(
                     } else {
                         PendingSetRow(
                             setNumber = setIndex,
-                            repsPlaceholder = if (planTarget.targetReps > 0) planTarget.targetReps.toString() else null,
+                            repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
                             defaultWeight = "",
                             weightPlaceholder = previousWeightHint,
-                            intensitySystem = intensitySystem,
+                            intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             locked = isLogging,
                             completedSubmissions = logSuccessSubmissions,
@@ -636,7 +659,7 @@ private fun ExerciseCard(
                 loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -649,7 +672,7 @@ private fun ExerciseCard(
                 loggedSets.filter { it.isWarmup }.forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -666,7 +689,7 @@ private fun ExerciseCard(
                     ExtraSetInput(
                         planTarget = planTarget,
                         defaultWarmupFlag = defaultWarmupFlag,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         weightPlaceholder = previousWeightHint,
                         locked = isLogging,
@@ -684,7 +707,7 @@ private fun ExerciseCard(
                 loggedSets.forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -699,7 +722,7 @@ private fun ExerciseCard(
                 ExtraSetInput(
                     planTarget = null,
                     defaultWarmupFlag = defaultWarmupFlag,
-                    intensitySystem = intensitySystem,
+                    intensitySystem = rowIntensitySystem,
                     unitSystem = unitSystem,
                     weightPlaceholder = previousWeightHint,
                     locked = isLogging,
@@ -717,7 +740,7 @@ private fun ExerciseCard(
                 previousSession?.let {
                     PreviousSessionMiniHistory(
                         previousSession = it,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1175,7 +1198,7 @@ private fun PendingSetRow(
 
 @Composable
 private fun ExtraSetInput(
-    planTarget: PlanTarget?,
+    planTarget: WorkoutPlanTarget?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
@@ -1188,7 +1211,7 @@ private fun ExtraSetInput(
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
     val repsPlaceholder = planTarget?.let {
-        if (it.targetReps > 0) it.targetReps.toString() else null
+        if (it.target.reps > 0) it.target.reps.toString() else null
     }
     var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
@@ -1252,6 +1275,16 @@ private fun ExtraSetInput(
             }
         )
     }
+}
+
+@Composable
+private fun progressionSchemeLabel(config: ProgressionConfig): String = when (config) {
+    is ProgressionConfig.Manual -> stringResource(R.string.workout_progression_manual)
+    is ProgressionConfig.Linear -> stringResource(R.string.workout_progression_linear)
+    is ProgressionConfig.DoubleProgression -> stringResource(R.string.workout_progression_double)
+    is ProgressionConfig.TotalReps -> stringResource(R.string.workout_progression_total_reps)
+    is ProgressionConfig.RpeRir -> stringResource(R.string.workout_progression_rpe_rir)
+    is ProgressionConfig.Invalid -> stringResource(R.string.workout_progression_invalid)
 }
 
 private fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): String {

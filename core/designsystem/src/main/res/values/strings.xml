@@ -57,6 +57,13 @@
     <string name="workout_target_with_weight">Ziel: %1$d x %2$d @ %3$s</string>
     <string name="workout_target_no_weight">Ziel: %1$d x %2$d</string>
     <string name="workout_target_completed">Ziel erreicht</string>
+    <string name="workout_progression_scheme">Schema: %1$s</string>
+    <string name="workout_progression_manual">Manuell</string>
+    <string name="workout_progression_linear">Linear</string>
+    <string name="workout_progression_double">Doppelte Progression</string>
+    <string name="workout_progression_total_reps">Gesamtwiederholungen</string>
+    <string name="workout_progression_rpe_rir">RPE/RIR</string>
+    <string name="workout_progression_invalid">Konfiguration ungültig</string>
     <string name="workout_previous_last_set_target_reached">Letzter Satz: Ziel erreicht</string>
     <string name="workout_add_extra_set">Zusatzsatz hinzufügen</string>
     <string name="workout_set_row_warmup">W%1$d: %2$.1f kg x %3$d</string>

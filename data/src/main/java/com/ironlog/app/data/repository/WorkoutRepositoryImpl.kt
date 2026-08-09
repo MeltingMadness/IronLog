@@ -116,6 +116,17 @@ class WorkoutRepositoryImpl(
 
     override suspend fun addSet(set: WorkoutSet): Long =
         transactionRunner.runInTransaction {
+            requireActiveSession(set.sessionId)
+            set.planTargetSnapshotId?.let { targetId ->
+                val target = progressionDao.getTargetById(targetId)
+                check(
+                    target != null &&
+                        target.sessionId == set.sessionId &&
+                        target.exerciseId == set.exerciseId
+                ) {
+                    "Plan target $targetId does not belong to session ${set.sessionId} and exercise ${set.exerciseId}"
+                }
+            }
             val id = setDao.insert(WorkoutSetEntity.fromDomain(set))
             // The insert and the exact PR rebuild must share one transaction and run before
             // any observer can compare records, otherwise a concurrent delete/update could
@@ -128,19 +139,40 @@ class WorkoutRepositoryImpl(
 
     override suspend fun updateSet(set: WorkoutSet) {
         transactionRunner.runInTransaction {
-            val previousExerciseId = setDao.getExerciseIdForSet(set.id)
-            setDao.update(WorkoutSetEntity.fromDomain(set))
-            listOfNotNull(previousExerciseId, set.exerciseId).distinct()
-                .forEach { exerciseId -> recalculatePersonalRecords(exerciseId) }
+            val stored = setDao.getSetById(set.id)
+                ?: throw IllegalStateException("Workout set ${set.id} does not exist")
+            requireActiveSession(stored.sessionId)
+            val updated = WorkoutSetEntity.fromDomain(set)
+            check(
+                updated.sessionId == stored.sessionId &&
+                    updated.exerciseId == stored.exerciseId &&
+                    updated.setNumber == stored.setNumber &&
+                    updated.isWarmup == stored.isWarmup &&
+                    updated.completedAt == stored.completedAt &&
+                    updated.planTargetSnapshotId == stored.planTargetSnapshotId
+            ) {
+                "Workout set identity fields cannot be changed"
+            }
+            setDao.update(updated)
+            recalculatePersonalRecords(stored.exerciseId)
         }
     }
 
     override suspend fun deleteSet(setId: Long) {
         transactionRunner.runInTransaction {
-            val exerciseId = setDao.getExerciseIdForSet(setId) ?: return@runInTransaction
+            val stored = setDao.getSetById(setId) ?: return@runInTransaction
+            requireActiveSession(stored.sessionId)
             setDao.deleteSet(setId)
-            recalculatePersonalRecords(exerciseId)
+            recalculatePersonalRecords(stored.exerciseId)
         }
+    }
+
+    private suspend fun requireActiveSession(sessionId: Long): WorkoutSessionEntity {
+        val session = sessionDao.getSessionById(sessionId)
+        check(session != null && session.endTime == null) {
+            "Workout session $sessionId is not active"
+        }
+        return session
     }
 
     override fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>> =

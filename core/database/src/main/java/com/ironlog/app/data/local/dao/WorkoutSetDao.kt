@@ -154,6 +154,9 @@ interface WorkoutSetDao {
     @Query("DELETE FROM workout_sets WHERE id = :id")
     suspend fun deleteSet(id: Long)
 
+    @Query("SELECT * FROM workout_sets WHERE id = :id LIMIT 1")
+    suspend fun getSetById(id: Long): WorkoutSetEntity?
+
     @Query("SELECT exerciseId FROM workout_sets WHERE id = :id")
     suspend fun getExerciseIdForSet(id: Long): Long?
 

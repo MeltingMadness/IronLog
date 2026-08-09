@@ -5,10 +5,16 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.ProgressionTarget
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WeightStep
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
@@ -19,6 +25,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -50,6 +57,8 @@ class ActiveWorkoutViewModelTest {
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statsRepo: FakeStatisticsRepository
     private lateinit var planRepo: FakeTrainingPlanRepository
+    private lateinit var progressionRepo: ProgressionRepository
+    private lateinit var progressionTargets: MutableStateFlow<List<WorkoutPlanTarget>>
     private lateinit var prefsRepo: FakeAppPreferencesRepository
 
     private val testExercise = Exercise(
@@ -68,6 +77,9 @@ class ActiveWorkoutViewModelTest {
         exerciseRepo = FakeExerciseRepository()
         statsRepo = FakeStatisticsRepository()
         planRepo = FakeTrainingPlanRepository()
+        progressionRepo = mockk()
+        progressionTargets = MutableStateFlow(emptyList())
+        every { progressionRepo.observeTargetsForSession(any()) } returns progressionTargets
         prefsRepo = FakeAppPreferencesRepository()
 
         exerciseRepo.addExercise(testExercise)
@@ -84,7 +96,7 @@ class ActiveWorkoutViewModelTest {
 
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
     }
 
     private fun withMockedAppLoggerWarnings(block: () -> Unit) {
@@ -211,7 +223,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -248,7 +260,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -273,7 +285,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -301,7 +313,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -336,7 +348,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -488,10 +500,30 @@ class ActiveWorkoutViewModelTest {
             )
         )
         planRepo.savePlan(plan)
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 991L,
+                exerciseId = exercise1.id,
+                orderIndex = 0,
+                planId = planId,
+                supersetGroupId = 1,
+                reps = 10,
+                weightKg = 100.0
+            ),
+            snapshotTarget(
+                id = 992L,
+                exerciseId = exercise2.id,
+                orderIndex = 1,
+                planId = planId,
+                supersetGroupId = 1,
+                reps = 12,
+                weightKg = 150.0
+            )
+        )
 
         // Create ViewModel with planId
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
 
         val collector = backgroundScope.launch { vm.uiState.collect() }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -500,7 +532,7 @@ class ActiveWorkoutViewModelTest {
         val state = vm.uiState.value
         assertEquals(2, state.exercisesWithSets.size)
         assertEquals("Kniebeugen", state.exercisesWithSets[0].exercise.name)
-        assertEquals(3, state.exercisesWithSets[0].planTarget?.targetSets)
+        assertEquals(3, state.exercisesWithSets[0].planTarget?.target?.sets)
         assertEquals(1, state.exercisesWithSets[0].supersetGroupId)
         assertEquals("Beinpresse", state.exercisesWithSets[1].exercise.name)
         assertEquals(1, state.exercisesWithSets[1].supersetGroupId)
@@ -669,7 +701,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         vm.addExercise(testExercise)
@@ -744,7 +776,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         vm.addExercise(testExercise)
@@ -823,7 +855,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         vm.addExercise(testExercise)
@@ -903,7 +935,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         vm.addExercise(testExercise)
@@ -999,7 +1031,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         vm.addExercise(testExercise)
@@ -1018,28 +1050,28 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `lastWorkSetReachedTarget returns true when target was reached`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertTrue(lastWorkSetReachedTarget(target, listOf(previousSet(8, 80.0))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns true when target was exceeded`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertTrue(lastWorkSetReachedTarget(target, listOf(previousSet(9, 85.0))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns false when reps are below target`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertFalse(lastWorkSetReachedTarget(target, listOf(previousSet(7, 90.0))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns false when weight is below target`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertFalse(lastWorkSetReachedTarget(target, listOf(previousSet(8, 79.0))))
     }
@@ -1051,35 +1083,35 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `lastWorkSetReachedTarget returns false when weight target is zero`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 0.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 0.0)
 
         assertFalse(lastWorkSetReachedTarget(target, listOf(previousSet(8, 90.0))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns false when reps target is zero`() {
-        val target = PlanTarget(targetReps = 0, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 0, weightKg = 80.0)
 
         assertFalse(lastWorkSetReachedTarget(target, listOf(previousSet(8, 90.0))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns false for warmup-only history`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertFalse(lastWorkSetReachedTarget(target, listOf(previousSet(8, 80.0, warmup = true))))
     }
 
     @Test
     fun `lastWorkSetReachedTarget returns false without previous sets`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertFalse(lastWorkSetReachedTarget(target, emptyList()))
     }
 
     @Test
     fun `lastWorkSetReachedTarget evaluates last non-warmup set even when warmup comes last`() {
-        val target = PlanTarget(targetReps = 8, targetWeightKg = 80.0)
+        val target = previousPlanTarget(reps = 8, weightKg = 80.0)
 
         assertTrue(
             lastWorkSetReachedTarget(
@@ -1130,6 +1162,16 @@ class ActiveWorkoutViewModelTest {
                 )
             )
         )
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 551L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                planId = planId,
+                reps = 8,
+                weightKg = 80.0
+            )
+        )
 
         val savedStateHandle = SavedStateHandle(
             mapOf(
@@ -1143,7 +1185,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1197,6 +1239,16 @@ class ActiveWorkoutViewModelTest {
                 )
             )
         )
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 551L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                planId = planId,
+                reps = 8,
+                weightKg = 80.0
+            )
+        )
 
         val savedStateHandle = SavedStateHandle(
             mapOf(
@@ -1210,7 +1262,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1297,20 +1349,41 @@ class ActiveWorkoutViewModelTest {
             )
         )
         planRepo.savePlan(plan)
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 881L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                planId = planId,
+                sets = 2,
+                reps = 8,
+                weightKg = 80.0
+            )
+        )
 
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
         testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue(testExercise.id in vm.uiState.value.restTimers)
+        assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
 
-        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(testExercise.id !in vm.uiState.value.restTimers)
+        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
 
         collector.cancel()
     }
@@ -1318,7 +1391,7 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `hinzugefuegte Uebungen ueberleben Prozesstod ueber SavedStateHandle`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1330,7 +1403,7 @@ class ActiveWorkoutViewModelTest {
 
         // Simulate process death + recreation: a new ViewModel instance is created
         // with the same (restored) SavedStateHandle, before any sets exist.
-        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, planRepo, prefsRepo)
+        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
         val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1359,17 +1432,19 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val restTimers = vm.uiState.value.restTimers
-        assertEquals(setOf(testExercise.id, secondExercise.id), restTimers.keys)
-        val firstTimer: Instant = restTimers.getValue(testExercise.id)
-        val secondTimer: Instant = restTimers.getValue(secondExercise.id)
+        val firstKey = WorkoutExerciseKey.AdHoc(testExercise.id)
+        val secondKey = WorkoutExerciseKey.AdHoc(secondExercise.id)
+        assertEquals(setOf(firstKey, secondKey), restTimers.keys)
+        val firstTimer: Instant = restTimers.getValue(firstKey)
+        val secondTimer: Instant = restTimers.getValue(secondKey)
         assertTrue(firstTimer.epochSecond > 0)
         assertTrue(secondTimer.epochSecond > 0)
 
-        vm.dismissRestTimer(testExercise.id)
+        vm.dismissRestTimer(firstKey)
 
         val afterDismiss = vm.uiState.value.restTimers
-        assertTrue(testExercise.id !in afterDismiss)
-        assertTrue(secondExercise.id in afterDismiss)
+        assertTrue(firstKey !in afterDismiss)
+        assertTrue(secondKey in afterDismiss)
 
         collector.cancel()
     }
@@ -1382,7 +1457,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             statsRepo,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1405,7 +1480,7 @@ class ActiveWorkoutViewModelTest {
 
         assertEquals(1, workoutRepo.addSetCallCount)
         assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
-        assertNull(vm.uiState.value.logInFlightByExercise[1L])
+        assertNull(vm.uiState.value.logInFlightByExercise[WorkoutExerciseKey.AdHoc(1L)])
         val error = vm.uiState.value.error
         assertNotNull(error)
         assertTrue(error!!.retry is WorkoutRetryDescriptor.LogSet)
@@ -1595,7 +1670,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -1635,7 +1710,7 @@ class ActiveWorkoutViewModelTest {
             workoutRepo,
             exerciseRepo,
             stats,
-            planRepo,
+            progressionRepo,
             prefsRepo
         )
         val emitted = mutableListOf<WorkoutEvent>()
@@ -1719,6 +1794,198 @@ class ActiveWorkoutViewModelTest {
 
         eventCollector.cancel()
     }
+
+    @Test
+    fun `duplicate planned exercise positions stay separate and receive only their own sets`() = runTest {
+        val exercise = testExercise.copy(id = 7L)
+        exerciseRepo.addExercise(exercise)
+        val targets = kotlinx.coroutines.flow.MutableStateFlow(
+            listOf(
+                snapshotTarget(id = 41L, exerciseId = 7L, orderIndex = 0, weightKg = 100.0),
+                snapshotTarget(id = 42L, exerciseId = 7L, orderIndex = 1, weightKg = 80.0)
+            )
+        )
+        val progressionRepository = mockk<com.ironlog.app.domain.repository.ProgressionRepository>(relaxed = true)
+        every { progressionRepository.observeTargetsForSession(sessionId) } returns targets
+        workoutRepo.addSetDirectly(snapshotSet(id = 1L, exerciseId = 7L, snapshotId = 41L))
+        workoutRepo.addSetDirectly(snapshotSet(id = 2L, exerciseId = 7L, snapshotId = 42L))
+        val viewModel = createSnapshotViewModel(progressionRepository)
+        val collector = backgroundScope.launch { viewModel.uiState.collect { } }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val items = viewModel.uiState.value.exercisesWithSets
+        assertEquals(
+            listOf(WorkoutExerciseKey.Planned(41L), WorkoutExerciseKey.Planned(42L)),
+            items.map { it.key }
+        )
+        assertEquals(listOf(listOf(1L), listOf(2L)), items.map { row -> row.sets.map { it.id } })
+        collector.cancel()
+    }
+
+    @Test
+    fun `logging against a planned position stores snapshot id and numbers within that position`() = runTest {
+        val exercise = testExercise.copy(id = 7L)
+        exerciseRepo.addExercise(exercise)
+        val targets = kotlinx.coroutines.flow.MutableStateFlow(
+            listOf(
+                snapshotTarget(id = 41L, exerciseId = 7L, orderIndex = 0),
+                snapshotTarget(id = 42L, exerciseId = 7L, orderIndex = 1)
+            )
+        )
+        val progressionRepository = mockk<com.ironlog.app.domain.repository.ProgressionRepository>(relaxed = true)
+        every { progressionRepository.observeTargetsForSession(sessionId) } returns targets
+        workoutRepo.addSetDirectly(
+            snapshotSet(id = 1L, exerciseId = 7L, snapshotId = 41L, setNumber = 1)
+        )
+        workoutRepo.addSetDirectly(
+            snapshotSet(id = 2L, exerciseId = 7L, snapshotId = 42L, setNumber = 7)
+        )
+        val viewModel = createSnapshotViewModel(progressionRepository)
+
+        viewModel.logSet(
+            key = WorkoutExerciseKey.Planned(41L),
+            exerciseId = 7L,
+            reps = 8,
+            weightKg = 100.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val added = workoutRepo.getSetsForSessionList(sessionId).last()
+        assertEquals(41L, added.planTargetSnapshotId)
+        assertEquals(2, added.setNumber)
+    }
+
+    @Test
+    fun `logging an added exercise keeps snapshot id null`() = runTest {
+        val exercise = testExercise.copy(id = 9L)
+        exerciseRepo.addExercise(exercise)
+        val progressionRepository = mockk<com.ironlog.app.domain.repository.ProgressionRepository>(relaxed = true)
+        every { progressionRepository.observeTargetsForSession(sessionId) } returns
+            kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+        val viewModel = createSnapshotViewModel(progressionRepository, planId = 0L)
+
+        viewModel.logSet(
+            key = WorkoutExerciseKey.AdHoc(9L),
+            exerciseId = 9L,
+            reps = 10,
+            weightKg = 20.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(workoutRepo.getSetsForSessionList(sessionId).single().planTargetSnapshotId)
+    }
+
+    @Test
+    fun `linked set restoration never creates a duplicate ad hoc row`() = runTest {
+        val exercise = testExercise.copy(id = 7L)
+        exerciseRepo.addExercise(exercise)
+        val targets = kotlinx.coroutines.flow.MutableStateFlow(
+            listOf(snapshotTarget(id = 41L, exerciseId = 7L, orderIndex = 0))
+        )
+        val progressionRepository = mockk<com.ironlog.app.domain.repository.ProgressionRepository>(relaxed = true)
+        every { progressionRepository.observeTargetsForSession(sessionId) } returns targets
+        workoutRepo.addSetDirectly(snapshotSet(id = 1L, exerciseId = 7L, snapshotId = 41L))
+        val viewModel = createSnapshotViewModel(progressionRepository)
+        val collector = backgroundScope.launch { viewModel.uiState.collect { } }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val rows = viewModel.uiState.value.exercisesWithSets
+        assertEquals(listOf(WorkoutExerciseKey.Planned(41L)), rows.map { it.key })
+        collector.cancel()
+    }
+
+    @Test
+    fun `rpe progression captures canonical rpe even when global intensity tracking is off`() = runTest {
+        val exercise = testExercise.copy(id = 7L)
+        exerciseRepo.addExercise(exercise)
+        prefsRepo.updateIntensitySystem(IntensitySystem.OFF)
+        val targets = kotlinx.coroutines.flow.MutableStateFlow(
+            listOf(
+                snapshotTarget(
+                    id = 41L,
+                    exerciseId = 7L,
+                    orderIndex = 0,
+                    config = ProgressionConfig.RpeRir(
+                        targetRpe = 8.0,
+                        tolerance = 0.5,
+                        step = WeightStep(2.5, UnitSystem.METRIC, 2.5)
+                    )
+                )
+            )
+        )
+        val progressionRepository = mockk<com.ironlog.app.domain.repository.ProgressionRepository>(relaxed = true)
+        every { progressionRepository.observeTargetsForSession(sessionId) } returns targets
+        val viewModel = createSnapshotViewModel(progressionRepository)
+
+        viewModel.logSet(
+            key = WorkoutExerciseKey.Planned(41L),
+            exerciseId = 7L,
+            reps = 8,
+            weightKg = 100.0,
+            intensity = "8"
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(8.0, workoutRepo.getSetsForSessionList(sessionId).single().rpe ?: 0.0, 0.0)
+    }
+
+    private fun createSnapshotViewModel(
+        progressionRepository: com.ironlog.app.domain.repository.ProgressionRepository,
+        planId: Long = 3L
+    ) = ActiveWorkoutViewModel(
+        SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId)),
+        workoutRepo,
+        exerciseRepo,
+        statsRepo,
+        progressionRepository,
+        prefsRepo
+    )
+
+    private fun snapshotTarget(
+        id: Long,
+        exerciseId: Long,
+        orderIndex: Int,
+        planId: Long = 3L,
+        supersetGroupId: Int? = null,
+        sets: Int = 3,
+        reps: Int = 8,
+        weightKg: Double = 100.0,
+        config: ProgressionConfig = ProgressionConfig.Manual()
+    ) = WorkoutPlanTarget(
+        id = id,
+        sessionId = sessionId,
+        planId = planId,
+        exerciseId = exerciseId,
+        orderIndex = orderIndex,
+        supersetGroupId = supersetGroupId,
+        target = ProgressionTarget(sets = sets, reps = reps, weightKg = weightKg),
+        config = config
+    )
+
+    private fun previousPlanTarget(reps: Int, weightKg: Double) = snapshotTarget(
+        id = 1L,
+        exerciseId = testExercise.id,
+        orderIndex = 0,
+        reps = reps,
+        weightKg = weightKg
+    )
+
+    private fun snapshotSet(
+        id: Long,
+        exerciseId: Long,
+        snapshotId: Long?,
+        setNumber: Int = 1
+    ) = WorkoutSet(
+        id = id,
+        sessionId = sessionId,
+        exerciseId = exerciseId,
+        setNumber = setNumber,
+        reps = 8,
+        weightKg = 100.0,
+        planTargetSnapshotId = snapshotId
+    )
 }
 
 private fun previousSet(
