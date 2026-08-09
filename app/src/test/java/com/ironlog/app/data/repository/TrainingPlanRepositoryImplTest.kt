@@ -134,6 +134,34 @@ class TrainingPlanRepositoryImplTest {
         override suspend fun getExercisesForPlan(planId: Long): List<PlanExerciseEntity> =
             exercisesByPlan[planId]?.sortedBy { it.orderIndex } ?: emptyList()
 
+        override suspend fun getPlanExerciseAt(
+            planId: Long,
+            exerciseId: Long,
+            orderIndex: Int
+        ): PlanExerciseEntity? = exercisesByPlan[planId]?.firstOrNull {
+            it.exerciseId == exerciseId && it.orderIndex == orderIndex
+        }
+
+        override suspend fun updatePlanExerciseTargetsById(
+            id: Long,
+            sets: Int,
+            reps: Int,
+            weightKg: Double
+        ): Int {
+            exercisesByPlan.values.forEach { exercises ->
+                val index = exercises.indexOfFirst { it.id == id }
+                if (index >= 0) {
+                    exercises[index] = exercises[index].copy(
+                        targetSets = sets,
+                        targetReps = reps,
+                        targetWeightKg = weightKg
+                    )
+                    return 1
+                }
+            }
+            return 0
+        }
+
         override suspend fun insertPlan(plan: TrainingPlanEntity): Long {
             val id = nextPlanId++
             plans[id] = plan.copy(id = id)
