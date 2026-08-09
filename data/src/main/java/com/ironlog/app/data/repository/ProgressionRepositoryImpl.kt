@@ -13,9 +13,11 @@ import com.ironlog.app.domain.model.ProgressionContext
 import com.ironlog.app.domain.model.ProgressionDecisionResult
 import com.ironlog.app.domain.model.ProgressionGenerationResult
 import com.ironlog.app.domain.model.ProgressionOutcome
+import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionSuggestion
 import com.ironlog.app.domain.model.ProgressionSuggestionStatus
 import com.ironlog.app.domain.model.ProgressionTarget
+import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.progression.ProgressionEngine
 import com.ironlog.app.domain.repository.ProgressionRepository
@@ -120,18 +122,20 @@ class ProgressionRepositoryImpl(
                     sourceEndTime = sourceEndTime,
                     sourceSessionId = sessionId
                 )
+                val setsForTarget = sets
+                    .filter { it.planTargetSnapshotId == target.id }
+                    .map { it.toDomain() }
                 val outcome = engine.evaluate(
                     ProgressionContext(
                         sourceTarget = sourceTarget,
-                        setsForTarget = sets
-                            .filter { it.planTargetSnapshotId == target.id }
-                            .map { it.toDomain() },
+                        setsForTarget = setsForTarget,
                         previousComparableOutcomesNewestFirst = previousOutcomes
                     )
                 )
                 require(outcome.sourceTarget == sourceTarget.target) {
                     "Engine outcome source does not match progression target ${target.id}"
                 }
+                validateEvidenceProvenance(outcome, sourceTarget, setsForTarget)
                 val status = when (outcome) {
                     is ProgressionOutcome.ProposeChange -> ProgressionSuggestionStatus.PENDING
                     is ProgressionOutcome.KeepTarget,
@@ -166,6 +170,58 @@ class ProgressionRepositoryImpl(
                 pendingCount = statuses.count { it == ProgressionSuggestionStatus.PENDING }
             )
         }
+
+    private fun validateEvidenceProvenance(
+        outcome: ProgressionOutcome,
+        sourceTarget: WorkoutPlanTarget,
+        setsForTarget: List<WorkoutSet>
+    ) {
+        val evidenceIds = outcome.countedSetIds
+        check(evidenceIds.all { it > 0L } && evidenceIds.distinct().size == evidenceIds.size) {
+            "Engine evidence for progression target ${sourceTarget.id} must contain positive unique set ids"
+        }
+        val setsById = setsForTarget.groupBy(WorkoutSet::id)
+        check(evidenceIds.all { setsById[it]?.size == 1 }) {
+            "Engine evidence does not belong uniquely to progression target ${sourceTarget.id}"
+        }
+
+        val orderedWorkSets = setsForTarget
+            .filterNot(WorkoutSet::isWarmup)
+            .sortedWith(compareBy(WorkoutSet::setNumber, WorkoutSet::completedAt, WorkoutSet::id))
+        val availableEvidenceIds = orderedWorkSets
+            .map(WorkoutSet::id)
+            .filter { it > 0L }
+            .distinct()
+        fun countedEvidenceIds(): List<Long> {
+            check(sourceTarget.target.sets >= 0) {
+                "Engine returned counted evidence for invalid progression target ${sourceTarget.id}"
+            }
+            return orderedWorkSets.take(sourceTarget.target.sets).map(WorkoutSet::id)
+        }
+
+        val expectedEvidenceIds = when (outcome) {
+            is ProgressionOutcome.ProposeChange,
+            is ProgressionOutcome.KeepTarget -> countedEvidenceIds()
+            is ProgressionOutcome.InsufficientData -> when (outcome.reasonCode) {
+                ProgressionReasonCode.CONFIG_INVALID,
+                ProgressionReasonCode.RULE_REVISION_UNSUPPORTED,
+                ProgressionReasonCode.TOO_FEW_WORK_SETS,
+                ProgressionReasonCode.SET_NUMBER_INVALID,
+                ProgressionReasonCode.SET_VALUE_INVALID -> availableEvidenceIds
+                ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION,
+                ProgressionReasonCode.RPE_MISSING,
+                ProgressionReasonCode.RPE_INVALID -> countedEvidenceIds()
+                else -> error(
+                    "Unsupported insufficient-data evidence contract ${outcome.reasonCode} " +
+                        "for progression target ${sourceTarget.id}"
+                )
+            }
+            is ProgressionOutcome.NotApplicable -> emptyList()
+        }
+        check(evidenceIds == expectedEvidenceIds) {
+            "Engine evidence order or completeness differs from progression target ${sourceTarget.id}"
+        }
+    }
 
     private suspend fun loadPreviousComparableOutcomes(
         target: WorkoutPlanTargetEntity,

@@ -480,6 +480,31 @@ class ProgressionRepositoryImplTest {
     }
 
     @Test
+    fun `generation rejects foreign engine evidence before any suggestion is persisted`() = runTest {
+        targetsBySession[9] = listOf(
+            target(id = 41, orderIndex = 0),
+            target(id = 42, orderIndex = 1)
+        )
+        setsBySession[9] = listOf(
+            set(id = 1, snapshotId = 41),
+            set(id = 2, snapshotId = 42)
+        )
+        engineOutcomes[41] = ProgressionOutcome.KeepTarget(
+            sourceTarget = ProgressionTarget(3, 8, 100.0),
+            reasonCode = ProgressionReasonCode.REPEAT_TARGET,
+            streakEffect = ProgressionStreakEffect.RESET,
+            countedSetIds = listOf(2)
+        )
+
+        val failure = captureFailure { repository.generateOutcomesForSession(9) }
+
+        assertTrue(failure is IllegalStateException)
+        assertEquals(1, transactionRunner.transactionCount)
+        assertFalse(transactionRunner.inTransaction)
+        assertTrue(suggestions.isEmpty())
+    }
+
+    @Test
     fun `single-session generation runs inside one transaction`() = runTest {
         targetsBySession[9] = listOf(target(id = 41))
 
