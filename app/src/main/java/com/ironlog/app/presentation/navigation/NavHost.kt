@@ -111,6 +111,9 @@ fun IronLogNavHost(
                 },
                 onOpenSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onOpenProgressionReview = {
+                    navController.navigate(Screen.ProgressionReview.createRoute(null))
                 }
             )
         }

@@ -3,9 +3,16 @@ package com.ironlog.app.presentation.dashboard
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
 import com.ironlog.app.domain.model.MetaPlanRotationEvent
+import com.ironlog.app.domain.model.ProgressionDecisionResult
+import com.ironlog.app.domain.model.ProgressionGenerationResult
+import com.ironlog.app.domain.model.ProgressionSuggestion
+import com.ironlog.app.domain.model.ProgressionTarget
 import com.ironlog.app.domain.model.TrainingPlan
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
+import com.ironlog.app.domain.repository.ProgressionRepository
+import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
@@ -15,6 +22,7 @@ import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -28,9 +36,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
@@ -42,6 +54,7 @@ class DashboardViewModelTest {
     private lateinit var preferencesRepo: FakeAppPreferencesRepository
     private lateinit var planRepo: FakeTrainingPlanRepository
     private lateinit var metaPlanRepo: MetaTrainingPlanRepository
+    private lateinit var progressionRepository: FakeDashboardProgressionRepository
 
     @Before
     fun setUp() {
@@ -52,6 +65,7 @@ class DashboardViewModelTest {
         preferencesRepo = FakeAppPreferencesRepository()
         planRepo = FakeTrainingPlanRepository()
         metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
+        progressionRepository = FakeDashboardProgressionRepository()
     }
 
     @After
@@ -65,7 +79,8 @@ class DashboardViewModelTest {
         exerciseRepo,
         preferencesRepo,
         planRepo,
-        metaPlanRepo
+        metaPlanRepo,
+        progressionRepository
     )
 
     @Test
@@ -96,6 +111,55 @@ class DashboardViewModelTest {
 
         assertFalse(vm.uiState.value.isLoading)
         assertNull(vm.uiState.value.error)
+    }
+
+    @Test
+    fun `pending suggestion count is exposed in dashboard state`() = runTest {
+        progressionRepository.pendingCount.value = 3
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            3,
+            vm.uiState.first { it.pendingProgressionCount == 3 }.pendingProgressionCount
+        )
+    }
+
+    @Test
+    fun `dashboard startup reconciles stale rows before retrying missing outcomes`() = runTest {
+        createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("reconcile", "generateMissing"), progressionRepository.callLog.take(2))
+    }
+
+    @Test
+    fun `coach startup failure does not hide ordinary dashboard data`() = runTest {
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 501L,
+                startTime = LocalDateTime.now().minusHours(1),
+                endTime = LocalDateTime.now(),
+                durationSeconds = 3600
+            )
+        )
+        progressionRepository.startupError = IOException("disk")
+
+        mockkObject(AppLogger)
+        val state = try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+            val vm = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+            vm.uiState.first { !it.isLoading }
+        } finally {
+            unmockkObject(AppLogger)
+        }
+
+        assertEquals(1, state.workoutsThisWeek)
+        assertNotNull(state.lastWorkout)
+        assertNull(state.error)
+        assertEquals(0, state.pendingProgressionCount)
     }
 
     @Test
@@ -662,5 +726,43 @@ class DashboardViewModelTest {
             kotlinx.coroutines.delay(1000)
             return delegate.skipCurrentSubPlan(metaPlanId, expectedTrainingPlanId)
         }
+    }
+
+    private class FakeDashboardProgressionRepository : ProgressionRepository {
+        val pendingCount = MutableStateFlow(0)
+        val callLog = mutableListOf<String>()
+        var startupError: IOException? = null
+
+        override fun observeTargetsForSession(sessionId: Long): Flow<List<WorkoutPlanTarget>> =
+            MutableStateFlow(emptyList())
+
+        override fun observeReviewItems(sessionId: Long?): Flow<List<ProgressionSuggestion>> =
+            MutableStateFlow(emptyList())
+
+        override fun observePendingCount(): Flow<Int> = pendingCount
+
+        override suspend fun generateOutcomesForSession(
+            sessionId: Long
+        ): ProgressionGenerationResult =
+            ProgressionGenerationResult(insertedCount = 0, reviewItemCount = 0, pendingCount = 0)
+
+        override suspend fun generateMissingOutcomes(): Int {
+            callLog += "generateMissing"
+            startupError?.let { throw it }
+            return 0
+        }
+
+        override suspend fun reconcileOutstandingSuggestions(): Set<Long> {
+            callLog += "reconcile"
+            startupError?.let { throw it }
+            return emptySet()
+        }
+
+        override suspend fun acceptSuggestions(
+            finalTargetsBySuggestionId: Map<Long, ProgressionTarget>
+        ): ProgressionDecisionResult =
+            ProgressionDecisionResult.Accepted(finalTargetsBySuggestionId.keys)
+
+        override suspend fun rejectSuggestion(suggestionId: Long) = Unit
     }
 }

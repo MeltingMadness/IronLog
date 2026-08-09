@@ -31,6 +31,11 @@
     <string name="dashboard_recent_records">Letzte Rekorde</string>
     <string name="dashboard_no_records">Noch keine Rekorde. Logge dein erstes Training.</string>
     <string name="dashboard_last_workout">Letztes Training</string>
+    <plurals name="dashboard_pending_progressions">
+        <item quantity="one">%1$d Progressionsvorschlag offen</item>
+        <item quantity="other">%1$d Progressionsvorschläge offen</item>
+    </plurals>
+    <string name="dashboard_review_progressions">Prüfen</string>
 
     <string name="dashboard_greeting_morning">Guten Morgen</string>
     <string name="dashboard_greeting_day">Guten Tag</string>

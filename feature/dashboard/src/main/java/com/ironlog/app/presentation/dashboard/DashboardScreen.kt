@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -65,6 +66,7 @@ import org.koin.androidx.compose.koinViewModel
 fun DashboardScreen(
     onStartWorkout: (Long, Long?, Long?) -> Unit,
     onContinueWorkout: (Long, Long?, Long?) -> Unit,
+    onOpenProgressionReview: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
 ) {
@@ -127,6 +129,15 @@ fun DashboardScreen(
                         }
                     }
                 )
+            }
+
+            if (state.pendingProgressionCount > 0) {
+                item(key = "pending_progressions") {
+                    PendingProgressionCard(
+                        count = state.pendingProgressionCount,
+                        onOpenProgressionReview = onOpenProgressionReview
+                    )
+                }
             }
 
             if (state.lastWorkout == null && state.recentRecords.isEmpty()) {
@@ -245,6 +256,40 @@ fun DashboardScreen(
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun PendingProgressionCard(
+    count: Int,
+    onOpenProgressionReview: () -> Unit
+) {
+    val dims = ironLogDimens
+
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(
+                text = pluralStringResource(
+                    id = R.plurals.dashboard_pending_progressions,
+                    count = count,
+                    count
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            TextButton(onClick = onOpenProgressionReview) {
+                Text(stringResource(R.string.dashboard_review_progressions))
+            }
         }
     }
 }
