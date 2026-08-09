@@ -296,6 +296,37 @@ class PlanEditorViewModelTest {
     }
 
     @Test
+    fun `double progression reports all simultaneous parse errors without changing plan state`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.addExercise(mockExercise1)
+        viewModel.openProgressionEditor(0)
+        viewModel.selectProgressionScheme(ProgressionScheme.DOUBLE)
+        viewModel.updateProgressionField(ProgressionField.STEP, "")
+        viewModel.updateProgressionField(ProgressionField.MIN_REPS, "")
+        viewModel.updateProgressionField(ProgressionField.MAX_REPS, "")
+        viewModel.updateProgressionField(ProgressionField.STALL_THRESHOLD, "")
+        viewModel.updateProgressionField(ProgressionField.BACKOFF_PERCENT, "")
+
+        viewModel.saveProgressionEditor()
+
+        val draft = requireNotNull(viewModel.uiState.value.progressionEditor)
+        assertEquals(
+            setOf(
+                ProgressionField.STEP,
+                ProgressionField.MIN_REPS,
+                ProgressionField.MAX_REPS,
+                ProgressionField.STALL_THRESHOLD,
+                ProgressionField.BACKOFF_PERCENT
+            ),
+            draft.errors.keys
+        )
+        assertEquals(
+            ProgressionConfig.Manual(),
+            viewModel.uiState.value.exercises.single().planExercise.progressionConfig
+        )
+    }
+
+    @Test
     fun `cancel closes the editor without changing the exercise config`() = runTest {
         val viewModel = createViewModel()
         viewModel.addExercise(mockExercise1)

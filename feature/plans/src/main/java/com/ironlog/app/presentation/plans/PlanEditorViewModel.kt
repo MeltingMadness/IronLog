@@ -620,47 +620,72 @@ class PlanEditorViewModel(
             errors[ProgressionField.BACKOFF_PERCENT] = "config.failurePolicy.backoffPercent"
             null
         }
-        if (step == null || stallThreshold == null || backoffPercent == null) {
-            return ParsedProgressionConfig(null, errors)
-        }
-        val failurePolicy = FailurePolicy(stallThreshold, backoffPercent)
 
-        val config = when (draft.scheme) {
-            ProgressionScheme.MANUAL -> ProgressionConfig.Manual()
-            ProgressionScheme.LINEAR -> ProgressionConfig.Linear(step, failurePolicy)
+        var minReps: Int? = null
+        var maxReps: Int? = null
+        var totalReps: Long? = null
+        var targetRpe: Double? = null
+        var tolerance: Double? = null
+        when (draft.scheme) {
+            ProgressionScheme.MANUAL,
+            ProgressionScheme.LINEAR -> Unit
             ProgressionScheme.DOUBLE -> {
-                val minReps = parseInteger(draft.minReps) ?: run {
+                minReps = parseInteger(draft.minReps) ?: run {
                     errors[ProgressionField.MIN_REPS] = "config.minReps"
                     null
                 }
-                val maxReps = parseInteger(draft.maxReps) ?: run {
+                maxReps = parseInteger(draft.maxReps) ?: run {
                     errors[ProgressionField.MAX_REPS] = "config.maxReps"
                     null
                 }
-                if (minReps == null || maxReps == null) null else {
-                    ProgressionConfig.DoubleProgression(minReps, maxReps, step, failurePolicy)
-                }
             }
             ProgressionScheme.TOTAL_REPS -> {
-                val totalReps = parseLongInteger(draft.totalReps) ?: run {
+                totalReps = parseLongInteger(draft.totalReps) ?: run {
                     errors[ProgressionField.TOTAL_REPS] = "config.targetTotalReps"
                     null
                 }
-                totalReps?.let { ProgressionConfig.TotalReps(it, step, failurePolicy) }
             }
             ProgressionScheme.RPE_RIR -> {
-                val targetRpe = parseDecimal(draft.targetRpe)?.takeIf { it.isFinite() } ?: run {
+                targetRpe = parseDecimal(draft.targetRpe)?.takeIf { it.isFinite() } ?: run {
                     errors[ProgressionField.TARGET_RPE] = "config.targetRpe"
                     null
                 }
-                val tolerance = parseDecimal(draft.rpeTolerance)?.takeIf { it.isFinite() } ?: run {
+                tolerance = parseDecimal(draft.rpeTolerance)?.takeIf { it.isFinite() } ?: run {
                     errors[ProgressionField.RPE_TOLERANCE] = "config.tolerance"
                     null
                 }
-                if (targetRpe == null || tolerance == null) null else {
-                    ProgressionConfig.RpeRir(targetRpe, tolerance, step, failurePolicy)
-                }
             }
+        }
+
+        if (errors.isNotEmpty()) {
+            return ParsedProgressionConfig(null, errors)
+        }
+
+        val validStep = requireNotNull(step)
+        val failurePolicy = FailurePolicy(
+            stallThreshold = requireNotNull(stallThreshold),
+            backoffPercent = requireNotNull(backoffPercent)
+        )
+        val config = when (draft.scheme) {
+            ProgressionScheme.MANUAL -> ProgressionConfig.Manual()
+            ProgressionScheme.LINEAR -> ProgressionConfig.Linear(validStep, failurePolicy)
+            ProgressionScheme.DOUBLE -> ProgressionConfig.DoubleProgression(
+                minReps = requireNotNull(minReps),
+                maxReps = requireNotNull(maxReps),
+                step = validStep,
+                failurePolicy = failurePolicy
+            )
+            ProgressionScheme.TOTAL_REPS -> ProgressionConfig.TotalReps(
+                targetTotalReps = requireNotNull(totalReps),
+                step = validStep,
+                failurePolicy = failurePolicy
+            )
+            ProgressionScheme.RPE_RIR -> ProgressionConfig.RpeRir(
+                targetRpe = requireNotNull(targetRpe),
+                tolerance = requireNotNull(tolerance),
+                step = validStep,
+                failurePolicy = failurePolicy
+            )
         }
         return ParsedProgressionConfig(config, errors)
     }

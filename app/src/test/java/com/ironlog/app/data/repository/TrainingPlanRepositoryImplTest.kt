@@ -6,6 +6,7 @@ import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.domain.model.FailurePolicy
 import com.ironlog.app.domain.model.PlanExercise
 import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.ProgressionScheme
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeightStep
@@ -21,7 +22,7 @@ import kotlin.test.assertFailsWith
 class TrainingPlanRepositoryImplTest {
 
     @Test
-    fun `savePlan round trips every configurable progression variant through plan exercise entities`() = runTest {
+    fun `savePlan round trips every persistable progression variant through plan exercise entities`() = runTest {
         val metricStep = WeightStep(
             originalValue = 2.5,
             originalUnit = UnitSystem.METRIC,
@@ -82,6 +83,46 @@ class TrainingPlanRepositoryImplTest {
             .map { it.progressionConfig }
         assertEquals(configs, entityRoundTrip)
         assertEquals(configs, repositoryRoundTrip)
+    }
+
+    @Test
+    fun `savePlan rejects invalid progression before dao mutation and preserves stored plan`() = runTest {
+        val storedPlan = TrainingPlanEntity(id = 1L, name = "Stored", createdAt = 123L)
+        val storedExercise = PlanExerciseEntity(
+            id = 10L,
+            planId = 1L,
+            exerciseId = 100L,
+            orderIndex = 0
+        )
+        val dao = FakeTrainingPlanDao().apply {
+            plans[1L] = storedPlan
+            exercisesByPlan[1L] = mutableListOf(storedExercise)
+        }
+        val repository = TrainingPlanRepositoryImpl(dao)
+        val invalidPlan = TrainingPlan(
+            id = 1L,
+            name = "Must not replace stored plan",
+            exercises = listOf(
+                PlanExercise(
+                    exerciseId = 101L,
+                    orderIndex = 0,
+                    progressionConfig = ProgressionConfig.Invalid(
+                        scheme = ProgressionScheme.LINEAR,
+                        ruleRevision = 1,
+                        storageReason = "MALFORMED_LINEAR",
+                        rawScheme = "LINEAR"
+                    )
+                )
+            )
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.savePlan(invalidPlan)
+        }
+
+        assertEquals(0, dao.replacePlanAndExercisesCallCount)
+        assertEquals(storedPlan, dao.plans.getValue(1L))
+        assertEquals(listOf(storedExercise), dao.exercisesByPlan.getValue(1L))
     }
 
     @Test
@@ -182,6 +223,7 @@ class TrainingPlanRepositoryImplTest {
         var nextPlanId = 100L
         var nextExerciseId = 1000L
         var failOnInsertExercises = false
+        var replacePlanAndExercisesCallCount = 0
 
         private fun publish() {
             plansFlow.value = plans.values.sortedByDescending { it.createdAt }
@@ -308,6 +350,7 @@ class TrainingPlanRepositoryImplTest {
             plan: TrainingPlanEntity,
             exercises: List<PlanExerciseEntity>
         ): Long {
+            replacePlanAndExercisesCallCount++
             val plansSnapshot = linkedMapOf<Long, TrainingPlanEntity>().apply { putAll(plans) }
             val exercisesSnapshot = linkedMapOf<Long, MutableList<PlanExerciseEntity>>().apply {
                 exercisesByPlan.forEach { (existingPlanId, list) ->
