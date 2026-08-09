@@ -10,11 +10,18 @@ import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.ExerciseEntity
 import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
+import com.ironlog.app.data.local.entity.PlanExerciseEntity
+import com.ironlog.app.data.local.entity.ProgressionConfigColumns
+import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
+import com.ironlog.app.data.local.entity.ProgressionTargetColumns
+import com.ironlog.app.data.local.entity.TrainingPlanEntity
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.repository.RecoveryBackup
@@ -24,11 +31,17 @@ import com.ironlog.shared.backup.BackupMetaPlanItem
 import com.ironlog.shared.backup.BackupMetaPlanSkip
 import com.ironlog.shared.backup.BackupMetaTrainingPlan
 import com.ironlog.shared.backup.BackupPayloadV1
+import com.ironlog.shared.backup.BackupPlanExercise
+import com.ironlog.shared.backup.BackupProgressionConfig
+import com.ironlog.shared.backup.BackupProgressionSuggestion
+import com.ironlog.shared.backup.BackupProgressionTarget
 import com.ironlog.shared.backup.BackupTrainingPlan
+import com.ironlog.shared.backup.BackupWorkoutPlanTarget
 import com.ironlog.shared.backup.BackupWorkoutSession
 import com.ironlog.shared.backup.BackupWorkoutSet
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,35 +77,43 @@ class BackupRepositoryImplTest {
             durationSeconds = 1L,
             name = "Push",
             notes = "notes",
-            planId = null,
+            planId = 5L,
             metaPlanId = null
         )
-        val set = WorkoutSetEntity(
-            id = 20L,
-            sessionId = 10L,
-            exerciseId = 1L,
-            setNumber = 1,
-            reps = 8,
-            weightKg = 80.0,
-            isWarmup = false,
-            completedAt = 1200L,
-            rpe = 8.5
-        )
+        val sets = progressionSetEntities()
         val skip = MetaPlanSkipEntity(
             id = 30L,
             metaPlanId = 40L,
             trainingPlanId = 50L,
             skippedAt = 1500L
         )
-        harness.stubSnapshotReads(exercise = exercise, session = session, set = set, skip = skip)
+        harness.stubSnapshotReads(
+            exercise = exercise,
+            session = session,
+            sets = sets,
+            trainingPlan = progressionPlanEntity(),
+            planExercise = progressionPlanExerciseEntity(),
+            target = progressionTargetEntity(),
+            suggestion = progressionSuggestionEntity(),
+            skip = skip
+        )
 
         runBlocking { harness.repository.exportBackup(URI) }
 
         val written = harness.documentIo.writtenBytes ?: throw AssertionError("no document written")
         val payload = json.decodeFromString(BackupPayloadV1.serializer(), written.decodeToString())
-        assertEquals(10, payload.schemaVersion)
+        assertEquals(11, payload.schemaVersion)
         assertEquals(8.5, payload.workoutSets.single().rpe)
+        assertEquals(30L, payload.workoutSets.single().planTargetSnapshotId)
         assertEquals("notiz", payload.exercises.single().notes)
+        assertEquals("LINEAR", payload.planExercises.single().progression.scheme)
+        assertEquals(listOf(20L), payload.progressionSuggestions.single().countedSetIds)
+        assertEquals(
+            listOf("actualWorkSets", "targetSets"),
+            payload.progressionSuggestions.single().reasonArguments.keys.toList()
+        )
+        assertEquals(1, payload.workoutPlanTargets.size)
+        assertEquals(1, payload.progressionSuggestions.size)
         assertEquals(
             BackupMetaPlanSkip(id = 30L, metaPlanId = 40L, trainingPlanId = 50L, skippedAt = 1500L),
             payload.metaPlanSkips.single()
@@ -139,6 +160,72 @@ class BackupRepositoryImplTest {
         assertTrue(harness.transactionRunner.events.isEmpty())
         coVerify(exactly = 0) { harness.exerciseDao.getAllExercisesList() }
         coVerify(exactly = 0) { harness.exerciseDao.deleteAll() }
+    }
+
+    @Test
+    fun `preview and verified import preserve progression counts mapping and foreign key order`() {
+        val harness = Harness()
+        harness.stubSnapshotReads()
+        harness.stubMutations()
+        val payload = validProgressionPayload()
+        harness.documentIo.bytes = json.encodeToString(
+            BackupPayloadV1.serializer(),
+            payload
+        ).encodeToByteArray()
+
+        val preview = runBlocking { harness.repository.previewImport(URI) }
+
+        assertTrue(preview.isValid)
+        assertEquals(1, preview.counts.workoutPlanTargets)
+        assertEquals(1, preview.counts.progressionSuggestions)
+
+        runBlocking { harness.repository.importBackup(URI, preview.sha256) }
+
+        coVerifyOrder {
+            harness.progressionDao.deleteAllSuggestions()
+            harness.workoutSetDao.deleteAll()
+            harness.progressionDao.deleteAllTargets()
+            harness.progressionDao.replaceAllTargets(any())
+            harness.workoutSetDao.replaceAll(any())
+            harness.progressionDao.replaceAllSuggestions(any())
+        }
+        coVerify(exactly = 1) {
+            harness.progressionDao.replaceAllSuggestions(
+                match { suggestions ->
+                    suggestions.single().reasonArgumentsJson ==
+                        "{\"actualWorkSets\":3.0,\"targetSets\":3.0}" &&
+                        suggestions.single().countedSetIdsJson == "[20,21,22]"
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `progression validation failure performs no progression mutation`() {
+        val harness = Harness()
+        harness.stubSnapshotReads()
+        harness.stubMutations()
+        val valid = validProgressionPayload()
+        val invalid = valid.copy(
+            progressionSuggestions = valid.progressionSuggestions.map {
+                it.copy(countedSetIds = listOf(999L))
+            }
+        )
+        harness.documentIo.bytes = json.encodeToString(
+            BackupPayloadV1.serializer(),
+            invalid
+        ).encodeToByteArray()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex())
+            }
+        }
+
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllSuggestions() }
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllTargets() }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllTargets(any()) }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllSuggestions(any()) }
     }
 
     @Test
@@ -228,6 +315,10 @@ class BackupRepositoryImplTest {
 
         assertTrue(harness.transactionRunner.events.none { it.startsWith("delete-") })
         coVerify(exactly = 0) { harness.exerciseDao.deleteAll() }
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllSuggestions() }
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllTargets() }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllTargets(any()) }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllSuggestions(any()) }
         coVerify(exactly = 0) { harness.exerciseDao.replaceAll(any()) }
     }
 
@@ -253,6 +344,10 @@ class BackupRepositoryImplTest {
         assertTrue(harness.recoveryStore.saved.isEmpty())
         assertTrue(harness.transactionRunner.events.isEmpty())
         coVerify(exactly = 0) { harness.exerciseDao.deleteAll() }
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllSuggestions() }
+        coVerify(exactly = 0) { harness.progressionDao.deleteAllTargets() }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllTargets(any()) }
+        coVerify(exactly = 0) { harness.progressionDao.replaceAllSuggestions(any()) }
     }
 
     @Test
@@ -310,6 +405,96 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `restore recovers exact edited progression state after importing another graph`() {
+        val harness = Harness()
+        val recoveryTarget = progressionTargetEntity()
+        val recoverySuggestion = acceptedEditedProgressionSuggestionEntity()
+        val recoverySets = progressionSetEntities()
+        harness.stubSnapshotReads(
+            exercise = ExerciseEntity(
+                id = 1L,
+                name = "Bankdruecken",
+                primaryMuscleGroup = "BRUST",
+                secondaryMuscleGroups = "TRIZEPS",
+                category = "LANGHANTEL",
+                isCustom = false
+            ),
+            session = WorkoutSessionEntity(
+                id = 10L,
+                startTime = 1000L,
+                endTime = 2000L,
+                durationSeconds = 1L,
+                name = "Push",
+                notes = "",
+                planId = 5L,
+                metaPlanId = null
+            ),
+            sets = recoverySets,
+            trainingPlan = progressionPlanEntity(),
+            planExercise = progressionPlanExerciseEntity(),
+            target = recoveryTarget,
+            suggestion = recoverySuggestion
+        )
+        harness.stubMutations()
+        harness.stubMutableProgressionState(
+            sets = recoverySets,
+            targets = listOf(recoveryTarget),
+            suggestions = listOf(recoverySuggestion)
+        )
+        val importedPayload = validProgressionPayload()
+        harness.documentIo.bytes = json.encodeToString(
+            BackupPayloadV1.serializer(),
+            importedPayload
+        ).encodeToByteArray()
+
+        runBlocking {
+            harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex())
+        }
+
+        assertEquals(1, harness.recoveryStore.saved.size)
+        val recoveryPayload = json.decodeFromString(
+            BackupPayloadV1.serializer(),
+            harness.recoveryStore.saved.single().decodeToString()
+        )
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 80.0), recoveryPayload.workoutPlanTargets.single().target)
+        val savedSuggestion = recoveryPayload.progressionSuggestions.single()
+        assertEquals("ACCEPTED", savedSuggestion.status)
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 82.5), savedSuggestion.suggestedTarget)
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 85.0), savedSuggestion.finalTarget)
+        assertTrue(savedSuggestion.wasEdited)
+        assertEquals(2300L, savedSuggestion.decidedAtEpochMillis)
+        assertTrue(savedSuggestion.decidedAtEpochMillis!! >= savedSuggestion.createdAtEpochMillis)
+
+        assertEquals(importedPayload.workoutPlanTargets.single().target.sets, harness.currentProgressionTargets.single().target.sets)
+        assertEquals("PENDING", harness.currentProgressionSuggestions.single().status)
+        assertEquals(3, harness.currentProgressionSets.size)
+
+        val restored = runBlocking { harness.repository.restoreLatestRecovery() }
+
+        assertTrue(restored != null)
+        assertEquals(listOf(recoveryTarget), harness.currentProgressionTargets)
+        assertEquals(recoverySets, harness.currentProgressionSets)
+        assertEquals(listOf(recoverySuggestion), harness.currentProgressionSuggestions)
+        val restoredSuggestion = harness.currentProgressionSuggestions.single()
+        assertEquals(ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 85.0), restoredSuggestion.finalTarget)
+        assertTrue(restoredSuggestion.wasEdited)
+        assertEquals(2300L, restoredSuggestion.decidedAtEpochMillis)
+        assertTrue(restoredSuggestion.decidedAtEpochMillis!! >= restoredSuggestion.createdAtEpochMillis)
+        val fkCycle = listOf(
+            "delete-suggestions",
+            "delete-sets",
+            "delete-targets",
+            "insert-targets",
+            "insert-sets",
+            "insert-suggestions"
+        )
+        assertEquals(
+            fkCycle + fkCycle,
+            harness.events.filter { it in fkCycle }
+        )
+    }
+
+    @Test
     fun `database change between recovery and guard snapshot aborts with zero deletes and removes recovery`() {
         val harness = Harness()
         var snapshotReadCount = 0
@@ -337,6 +522,9 @@ class BackupRepositoryImplTest {
         coEvery { harness.personalRecordDao.getAllRecordsList() } returns emptyList()
         coEvery { harness.metaTrainingPlanDao.getAllMetaPlansList() } returns emptyList()
         coEvery { harness.metaTrainingPlanDao.getAllMetaPlanItemsList() } returns emptyList()
+        coEvery { harness.metaTrainingPlanDao.getAllMetaPlanSkipsList() } returns emptyList()
+        coEvery { harness.progressionDao.getAllTargets() } returns emptyList()
+        coEvery { harness.progressionDao.getAllSuggestions() } returns emptyList()
         harness.stubMutations()
         harness.documentIo.bytes = json.encodeToString(BackupPayloadV1.serializer(), validPayload()).encodeToByteArray()
 
@@ -366,6 +554,8 @@ class BackupRepositoryImplTest {
 
         coVerify(exactly = 1) { harness.personalRecordDao.deleteAll() }
         coVerify(exactly = 1) { harness.workoutSetDao.deleteAll() }
+        coVerify(exactly = 1) { harness.progressionDao.deleteAllSuggestions() }
+        coVerify(exactly = 1) { harness.progressionDao.deleteAllTargets() }
         coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanSkips() }
         coVerify(exactly = 1) { harness.metaTrainingPlanDao.deleteAllMetaPlanItems() }
         coVerify(exactly = 1) { harness.trainingPlanDao.deleteAllPlanExercises() }
@@ -378,11 +568,16 @@ class BackupRepositoryImplTest {
         assertEquals("txn-start", events.first())
         assertEquals("txn-end", events.last())
         assertTrue("delete-custom-exercises" in events)
+        coVerifyOrder {
+            harness.progressionDao.deleteAllSuggestions()
+            harness.workoutSetDao.deleteAll()
+            harness.progressionDao.deleteAllTargets()
+        }
     }
 
     private fun validPayload(): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = 1,
-        schemaVersion = 10,
+        schemaVersion = 11,
         appVersion = "1.0",
         exportedAtEpochMillis = 42L,
         exercises = listOf(
@@ -426,6 +621,175 @@ class BackupRepositoryImplTest {
         metaPlanSkips = emptyList()
     )
 
+    private fun validProgressionPayload(): BackupPayloadV1 {
+        val progression = backupProgressionConfig()
+        val target = BackupProgressionTarget(sets = 3, reps = 8, weightKg = 80.0)
+        return validPayload().copy(
+            workoutSessions = listOf(
+                BackupWorkoutSession(
+                    id = 10L,
+                    startTime = 1000L,
+                    endTime = 2000L,
+                    durationSeconds = 1L,
+                    name = "Push",
+                    notes = "",
+                    planId = 5L
+                )
+            ),
+            workoutSets = listOf(20L, 21L, 22L).mapIndexed { index, id ->
+                BackupWorkoutSet(
+                    id = id,
+                    sessionId = 10L,
+                    exerciseId = 1L,
+                    setNumber = index + 1,
+                    reps = 8,
+                    weightKg = 80.0,
+                    isWarmup = false,
+                    completedAt = 1200L + index,
+                    rpe = 8.5,
+                    planTargetSnapshotId = 30L
+                )
+            },
+            trainingPlans = listOf(BackupTrainingPlan(id = 5L, name = "Push", createdAt = 1000L)),
+            planExercises = listOf(
+                BackupPlanExercise(
+                    id = 15L,
+                    planId = 5L,
+                    exerciseId = 1L,
+                    orderIndex = 0,
+                    targetSets = 3,
+                    targetReps = 8,
+                    targetWeightKg = 80.0,
+                    progression = progression
+                )
+            ),
+            workoutPlanTargets = listOf(
+                BackupWorkoutPlanTarget(
+                    id = 30L,
+                    sessionId = 10L,
+                    planId = 5L,
+                    exerciseId = 1L,
+                    orderIndex = 0,
+                    target = target,
+                    progression = progression
+                )
+            ),
+            progressionSuggestions = listOf(
+                BackupProgressionSuggestion(
+                    id = 40L,
+                    sourceSessionId = 10L,
+                    sourceTargetSnapshotId = 30L,
+                    planId = 5L,
+                    exerciseId = 1L,
+                    orderIndex = 0,
+                    sourceTarget = target,
+                    sourceProgression = progression,
+                    outcomeType = "PROPOSE_CHANGE",
+                    reasonCode = "LOAD_ADVANCED",
+                    reasonArguments = linkedMapOf("targetSets" to 3.0, "actualWorkSets" to 3.0),
+                    countedSetIds = listOf(20L, 21L, 22L),
+                    streakEffect = "INCREMENT",
+                    suggestedTarget = target.copy(weightKg = 82.5),
+                    status = "PENDING",
+                    createdAtEpochMillis = 2200L
+                )
+            )
+        )
+    }
+
+    private fun backupProgressionConfig() = BackupProgressionConfig(
+        scheme = "LINEAR",
+        incrementValue = 2.5,
+        incrementUnit = "METRIC",
+        incrementKg = 2.5,
+        stallThreshold = 2,
+        backoffPercent = 10.0,
+        ruleRevision = 1
+    )
+
+    private fun progressionConfigColumns() = ProgressionConfigColumns(
+        scheme = "LINEAR",
+        incrementValue = 2.5,
+        incrementUnit = "METRIC",
+        incrementKg = 2.5,
+        stallThreshold = 2,
+        backoffPercent = 10.0,
+        ruleRevision = 1
+    )
+
+    private fun progressionPlanEntity() = TrainingPlanEntity(
+        id = 5L,
+        name = "Push",
+        createdAt = 1000L
+    )
+
+    private fun progressionPlanExerciseEntity() = PlanExerciseEntity(
+        id = 15L,
+        planId = 5L,
+        exerciseId = 1L,
+        orderIndex = 0,
+        targetSets = 1,
+        targetReps = 8,
+        targetWeightKg = 80.0,
+        progression = progressionConfigColumns()
+    )
+
+    private fun progressionTargetEntity() = WorkoutPlanTargetEntity(
+        id = 30L,
+        sessionId = 10L,
+        planId = 5L,
+        exerciseId = 1L,
+        orderIndex = 0,
+        supersetGroupId = null,
+        target = ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 80.0),
+        progression = progressionConfigColumns()
+    )
+
+    private fun progressionSuggestionEntity() = ProgressionSuggestionEntity(
+        id = 40L,
+        sourceSessionId = 10L,
+        sourceTargetSnapshotId = 30L,
+        planId = 5L,
+        exerciseId = 1L,
+        orderIndex = 0,
+        supersetGroupId = null,
+        sourceTarget = ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 80.0),
+        sourceProgression = progressionConfigColumns(),
+        outcomeType = "PROPOSE_CHANGE",
+        reasonCode = "LOAD_ADVANCED",
+        reasonArgumentsJson = "{\"actualWorkSets\":1.0,\"targetSets\":1.0}",
+        countedSetIdsJson = "[20]",
+        streakEffect = "INCREMENT",
+        suggestedTarget = ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 82.5),
+        status = "PENDING",
+        wasEdited = false,
+        finalTarget = null,
+        createdAtEpochMillis = 2200L,
+        decidedAtEpochMillis = null
+    )
+
+    private fun acceptedEditedProgressionSuggestionEntity() = progressionSuggestionEntity().copy(
+        status = "ACCEPTED",
+        wasEdited = true,
+        finalTarget = ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 85.0),
+        decidedAtEpochMillis = 2300L
+    )
+
+    private fun progressionSetEntities() = listOf(
+        WorkoutSetEntity(
+            id = 20L,
+            sessionId = 10L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 8,
+            weightKg = 80.0,
+            isWarmup = false,
+            completedAt = 1200L,
+            rpe = 8.5,
+            planTargetSnapshotId = 30L
+        )
+    )
+
     private class Harness(
         slowDocumentIo: Boolean = false
     ) {
@@ -443,6 +807,13 @@ class BackupRepositoryImplTest {
         val trainingPlanDao = mockk<TrainingPlanDao>(relaxed = true)
         val metaTrainingPlanDao = mockk<MetaTrainingPlanDao>(relaxed = true)
         val personalRecordDao = mockk<PersonalRecordDao>(relaxed = true)
+        val progressionDao = mockk<ProgressionDao>(relaxed = true)
+        var currentProgressionSets = emptyList<WorkoutSetEntity>()
+            private set
+        var currentProgressionTargets = emptyList<WorkoutPlanTargetEntity>()
+            private set
+        var currentProgressionSuggestions = emptyList<ProgressionSuggestionEntity>()
+            private set
         val repository = BackupRepositoryImpl(
             transactionRunner = transactionRunner,
             documentIo = documentIo,
@@ -453,6 +824,7 @@ class BackupRepositoryImplTest {
             trainingPlanDao = trainingPlanDao,
             metaTrainingPlanDao = metaTrainingPlanDao,
             personalRecordDao = personalRecordDao,
+            progressionDao = progressionDao,
             buildInfo = BuildInfo(versionName = "1.0", versionCode = 1)
         )
 
@@ -460,6 +832,11 @@ class BackupRepositoryImplTest {
             exercise: ExerciseEntity? = null,
             session: WorkoutSessionEntity? = null,
             set: WorkoutSetEntity? = null,
+            sets: List<WorkoutSetEntity> = listOfNotNull(set),
+            trainingPlan: TrainingPlanEntity? = null,
+            planExercise: PlanExerciseEntity? = null,
+            target: WorkoutPlanTargetEntity? = null,
+            suggestion: ProgressionSuggestionEntity? = null,
             skip: MetaPlanSkipEntity? = null
         ) {
             coEvery { exerciseDao.getAllExercisesList() } answers {
@@ -472,15 +849,15 @@ class BackupRepositoryImplTest {
             }
             coEvery { workoutSetDao.getAllSetsList() } answers {
                 events += "read-sets"
-                listOfNotNull(set)
+                sets
             }
             coEvery { trainingPlanDao.getAllPlansList() } answers {
                 events += "read-plans"
-                emptyList()
+                listOfNotNull(trainingPlan)
             }
             coEvery { trainingPlanDao.getAllPlanExercisesList() } answers {
                 events += "read-plan-exercises"
-                emptyList()
+                listOfNotNull(planExercise)
             }
             coEvery { personalRecordDao.getAllRecordsList() } answers {
                 events += "read-records"
@@ -498,15 +875,31 @@ class BackupRepositoryImplTest {
                 events += "read-meta-skips"
                 listOfNotNull(skip)
             }
+            coEvery { progressionDao.getAllTargets() } answers {
+                events += "read-targets"
+                listOfNotNull(target)
+            }
+            coEvery { progressionDao.getAllSuggestions() } answers {
+                events += "read-suggestions"
+                listOfNotNull(suggestion)
+            }
         }
 
         fun stubMutations() {
+            coEvery { progressionDao.deleteAllSuggestions() } answers {
+                events += "delete-suggestions"
+                Unit
+            }
             coEvery { personalRecordDao.deleteAll() } answers {
                 events += "delete-records"
                 Unit
             }
             coEvery { workoutSetDao.deleteAll() } answers {
                 events += "delete-sets"
+                Unit
+            }
+            coEvery { progressionDao.deleteAllTargets() } answers {
+                events += "delete-targets"
                 Unit
             }
             coEvery { metaTrainingPlanDao.deleteAllMetaPlanItems() } answers {
@@ -559,6 +952,70 @@ class BackupRepositoryImplTest {
             }
             coEvery { metaTrainingPlanDao.replaceAllItems(any()) } answers {
                 events += "insert-meta-items"
+                Unit
+            }
+            coEvery { progressionDao.replaceAllTargets(any()) } answers {
+                events += "insert-targets"
+                Unit
+            }
+            coEvery { workoutSetDao.replaceAll(any()) } answers {
+                events += "insert-sets"
+                Unit
+            }
+            coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
+                events += "insert-suggestions"
+                Unit
+            }
+        }
+
+        fun stubMutableProgressionState(
+            sets: List<WorkoutSetEntity>,
+            targets: List<WorkoutPlanTargetEntity>,
+            suggestions: List<ProgressionSuggestionEntity>
+        ) {
+            currentProgressionSets = sets
+            currentProgressionTargets = targets
+            currentProgressionSuggestions = suggestions
+            coEvery { workoutSetDao.getAllSetsList() } answers {
+                events += "read-sets"
+                currentProgressionSets
+            }
+            coEvery { progressionDao.getAllTargets() } answers {
+                events += "read-targets"
+                currentProgressionTargets
+            }
+            coEvery { progressionDao.getAllSuggestions() } answers {
+                events += "read-suggestions"
+                currentProgressionSuggestions
+            }
+            coEvery { progressionDao.deleteAllSuggestions() } answers {
+                events += "delete-suggestions"
+                currentProgressionSuggestions = emptyList()
+                Unit
+            }
+            coEvery { workoutSetDao.deleteAll() } answers {
+                events += "delete-sets"
+                currentProgressionSets = emptyList()
+                Unit
+            }
+            coEvery { progressionDao.deleteAllTargets() } answers {
+                events += "delete-targets"
+                currentProgressionTargets = emptyList()
+                Unit
+            }
+            coEvery { progressionDao.replaceAllTargets(any()) } answers {
+                events += "insert-targets"
+                currentProgressionTargets = firstArg()
+                Unit
+            }
+            coEvery { workoutSetDao.replaceAll(any()) } answers {
+                events += "insert-sets"
+                currentProgressionSets = firstArg()
+                Unit
+            }
+            coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
+                events += "insert-suggestions"
+                currentProgressionSuggestions = firstArg()
                 Unit
             }
         }

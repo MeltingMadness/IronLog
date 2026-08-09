@@ -9,7 +9,9 @@ internal data class BackupSnapshot(
     val personalRecords: List<BackupPersonalRecord>,
     val metaTrainingPlans: List<BackupMetaTrainingPlan>,
     val metaPlanItems: List<BackupMetaPlanItem>,
-    val metaPlanSkips: List<BackupMetaPlanSkip>
+    val metaPlanSkips: List<BackupMetaPlanSkip>,
+    val workoutPlanTargets: List<BackupWorkoutPlanTarget> = emptyList(),
+    val progressionSuggestions: List<BackupProgressionSuggestion> = emptyList()
 ) {
     fun canonicalPayload(schemaVersion: Int): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = FORMAT_VERSION,
@@ -24,7 +26,9 @@ internal data class BackupSnapshot(
         personalRecords = personalRecords,
         metaTrainingPlans = metaTrainingPlans,
         metaPlanItems = metaPlanItems,
-        metaPlanSkips = metaPlanSkips
+        metaPlanSkips = metaPlanSkips,
+        workoutPlanTargets = workoutPlanTargets,
+        progressionSuggestions = progressionSuggestions
     )
 
     fun toExportPayload(
@@ -44,7 +48,9 @@ internal data class BackupSnapshot(
         personalRecords = personalRecords,
         metaTrainingPlans = metaTrainingPlans,
         metaPlanItems = metaPlanItems,
-        metaPlanSkips = metaPlanSkips
+        metaPlanSkips = metaPlanSkips,
+        workoutPlanTargets = workoutPlanTargets,
+        progressionSuggestions = progressionSuggestions
     )
 
     private companion object {

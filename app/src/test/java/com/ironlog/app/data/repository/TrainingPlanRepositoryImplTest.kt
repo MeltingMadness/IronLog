@@ -3,8 +3,14 @@ package com.ironlog.app.data.repository
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
+import com.ironlog.app.domain.model.FailurePolicy
 import com.ironlog.app.domain.model.PlanExercise
+import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.ProgressionScheme
 import com.ironlog.app.domain.model.TrainingPlan
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WeightStep
+import com.ironlog.app.domain.util.WeightFormatting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -14,6 +20,110 @@ import org.junit.Test
 import kotlin.test.assertFailsWith
 
 class TrainingPlanRepositoryImplTest {
+
+    @Test
+    fun `savePlan round trips every persistable progression variant through plan exercise entities`() = runTest {
+        val metricStep = WeightStep(
+            originalValue = 2.5,
+            originalUnit = UnitSystem.METRIC,
+            kilograms = 2.5
+        )
+        val imperialStep = WeightStep(
+            originalValue = 5.0,
+            originalUnit = UnitSystem.IMPERIAL,
+            kilograms = WeightFormatting.convertToKg(5.0, UnitSystem.IMPERIAL)
+        )
+        val configs = listOf(
+            ProgressionConfig.Manual(),
+            ProgressionConfig.Linear(
+                step = metricStep,
+                failurePolicy = FailurePolicy(stallThreshold = 3, backoffPercent = 12.5)
+            ),
+            ProgressionConfig.DoubleProgression(
+                minReps = 8,
+                maxReps = 12,
+                step = imperialStep,
+                failurePolicy = FailurePolicy(stallThreshold = 4, backoffPercent = 15.0)
+            ),
+            ProgressionConfig.TotalReps(
+                targetTotalReps = 30,
+                step = metricStep,
+                failurePolicy = FailurePolicy(stallThreshold = 5, backoffPercent = 20.0)
+            ),
+            ProgressionConfig.RpeRir(
+                targetRpe = 8.5,
+                tolerance = 0.5,
+                step = imperialStep,
+                failurePolicy = FailurePolicy(stallThreshold = 6, backoffPercent = 25.0)
+            )
+        )
+        val dao = FakeTrainingPlanDao()
+        val repository = TrainingPlanRepositoryImpl(dao)
+        val plan = TrainingPlan(
+            name = "Progressions",
+            exercises = configs.mapIndexed { index, config ->
+                PlanExercise(
+                    exerciseId = 100L + index,
+                    orderIndex = index,
+                    targetSets = 3,
+                    targetReps = 10,
+                    targetWeightKg = 100.0,
+                    progressionConfig = config
+                )
+            }
+        )
+
+        val planId = repository.savePlan(plan)
+
+        val entityRoundTrip = dao.exercisesByPlan.getValue(planId)
+            .sortedBy { it.orderIndex }
+            .map { it.toDomain().progressionConfig }
+        val repositoryRoundTrip = requireNotNull(repository.getPlanById(planId))
+            .exercises
+            .map { it.progressionConfig }
+        assertEquals(configs, entityRoundTrip)
+        assertEquals(configs, repositoryRoundTrip)
+    }
+
+    @Test
+    fun `savePlan rejects invalid progression before dao mutation and preserves stored plan`() = runTest {
+        val storedPlan = TrainingPlanEntity(id = 1L, name = "Stored", createdAt = 123L)
+        val storedExercise = PlanExerciseEntity(
+            id = 10L,
+            planId = 1L,
+            exerciseId = 100L,
+            orderIndex = 0
+        )
+        val dao = FakeTrainingPlanDao().apply {
+            plans[1L] = storedPlan
+            exercisesByPlan[1L] = mutableListOf(storedExercise)
+        }
+        val repository = TrainingPlanRepositoryImpl(dao)
+        val invalidPlan = TrainingPlan(
+            id = 1L,
+            name = "Must not replace stored plan",
+            exercises = listOf(
+                PlanExercise(
+                    exerciseId = 101L,
+                    orderIndex = 0,
+                    progressionConfig = ProgressionConfig.Invalid(
+                        scheme = ProgressionScheme.LINEAR,
+                        ruleRevision = 1,
+                        storageReason = "MALFORMED_LINEAR",
+                        rawScheme = "LINEAR"
+                    )
+                )
+            )
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.savePlan(invalidPlan)
+        }
+
+        assertEquals(0, dao.replacePlanAndExercisesCallCount)
+        assertEquals(storedPlan, dao.plans.getValue(1L))
+        assertEquals(listOf(storedExercise), dao.exercisesByPlan.getValue(1L))
+    }
 
     @Test
     fun `savePlan preserves createdAt when editing existing plan`() = runTest {
@@ -113,6 +223,7 @@ class TrainingPlanRepositoryImplTest {
         var nextPlanId = 100L
         var nextExerciseId = 1000L
         var failOnInsertExercises = false
+        var replacePlanAndExercisesCallCount = 0
 
         private fun publish() {
             plansFlow.value = plans.values.sortedByDescending { it.createdAt }
@@ -133,6 +244,34 @@ class TrainingPlanRepositoryImplTest {
 
         override suspend fun getExercisesForPlan(planId: Long): List<PlanExerciseEntity> =
             exercisesByPlan[planId]?.sortedBy { it.orderIndex } ?: emptyList()
+
+        override suspend fun getPlanExerciseAt(
+            planId: Long,
+            exerciseId: Long,
+            orderIndex: Int
+        ): PlanExerciseEntity? = exercisesByPlan[planId]?.firstOrNull {
+            it.exerciseId == exerciseId && it.orderIndex == orderIndex
+        }
+
+        override suspend fun updatePlanExerciseTargetsById(
+            id: Long,
+            sets: Int,
+            reps: Int,
+            weightKg: Double
+        ): Int {
+            exercisesByPlan.values.forEach { exercises ->
+                val index = exercises.indexOfFirst { it.id == id }
+                if (index >= 0) {
+                    exercises[index] = exercises[index].copy(
+                        targetSets = sets,
+                        targetReps = reps,
+                        targetWeightKg = weightKg
+                    )
+                    return 1
+                }
+            }
+            return 0
+        }
 
         override suspend fun insertPlan(plan: TrainingPlanEntity): Long {
             val id = nextPlanId++
@@ -211,6 +350,7 @@ class TrainingPlanRepositoryImplTest {
             plan: TrainingPlanEntity,
             exercises: List<PlanExerciseEntity>
         ): Long {
+            replacePlanAndExercisesCallCount++
             val plansSnapshot = linkedMapOf<Long, TrainingPlanEntity>().apply { putAll(plans) }
             val exercisesSnapshot = linkedMapOf<Long, MutableList<PlanExerciseEntity>>().apply {
                 exercisesByPlan.forEach { (existingPlanId, list) ->

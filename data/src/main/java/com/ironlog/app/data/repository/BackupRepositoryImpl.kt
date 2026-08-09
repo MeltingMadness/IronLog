@@ -12,9 +12,13 @@ import com.ironlog.app.data.backup.BackupPayloadValidator
 import com.ironlog.app.data.backup.BackupPayloadV1
 import com.ironlog.app.data.backup.BackupPersonalRecord
 import com.ironlog.app.data.backup.BackupPlanExercise
+import com.ironlog.app.data.backup.BackupProgressionConfig
+import com.ironlog.app.data.backup.BackupProgressionSuggestion
+import com.ironlog.app.data.backup.BackupProgressionTarget
 import com.ironlog.app.data.backup.BackupSnapshot
 import com.ironlog.app.data.backup.BackupTrainingPlan
 import com.ironlog.app.data.backup.BackupWorkoutSession
+import com.ironlog.app.data.backup.BackupWorkoutPlanTarget
 import com.ironlog.app.data.backup.BackupWorkoutSet
 import com.ironlog.app.data.backup.RecoveryBackupStore
 import com.ironlog.app.data.backup.sha256Hex
@@ -22,6 +26,7 @@ import com.ironlog.app.data.db.TransactionRunner
 import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -31,8 +36,12 @@ import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
+import com.ironlog.app.data.local.entity.ProgressionConfigColumns
+import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
+import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.data.seed.ExerciseSeedData
 import com.ironlog.app.domain.repository.BackupContentCounts
@@ -44,6 +53,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 class BackupRepositoryImpl(
@@ -56,6 +68,7 @@ class BackupRepositoryImpl(
     private val trainingPlanDao: TrainingPlanDao,
     private val metaTrainingPlanDao: MetaTrainingPlanDao,
     private val personalRecordDao: PersonalRecordDao,
+    private val progressionDao: ProgressionDao,
     private val buildInfo: BuildInfo
 ) : BackupRepository {
 
@@ -63,6 +76,11 @@ class BackupRepositoryImpl(
 
     private val json = Json {
         prettyPrint = true
+        ignoreUnknownKeys = false
+        encodeDefaults = true
+    }
+
+    private val progressionJson = Json {
         ignoreUnknownKeys = false
         encodeDefaults = true
     }
@@ -114,8 +132,10 @@ class BackupRepositoryImpl(
     override suspend fun resetUserData() {
         mutex.withLock {
             transactionRunner.runInTransaction {
+                progressionDao.deleteAllSuggestions()
                 personalRecordDao.deleteAll()
                 workoutSetDao.deleteAll()
+                progressionDao.deleteAllTargets()
                 metaTrainingPlanDao.deleteAllMetaPlanSkips()
                 metaTrainingPlanDao.deleteAllMetaPlanItems()
                 trainingPlanDao.deleteAllPlanExercises()
@@ -174,7 +194,9 @@ class BackupRepositoryImpl(
         personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
         metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
         metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() },
-        metaPlanSkips = metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() }
+        metaPlanSkips = metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() },
+        workoutPlanTargets = progressionDao.getAllTargets().map { it.toBackup() },
+        progressionSuggestions = progressionDao.getAllSuggestions().map { it.toBackup() }
     )
 
     private suspend fun canonicalBytes(snapshot: BackupSnapshot): ByteArray =
@@ -215,7 +237,9 @@ class BackupRepositoryImpl(
         personalRecords = personalRecords.size,
         metaTrainingPlans = metaTrainingPlans.size,
         metaPlanItems = metaPlanItems.size,
-        metaPlanSkips = metaPlanSkips.size
+        metaPlanSkips = metaPlanSkips.size,
+        workoutPlanTargets = workoutPlanTargets.size,
+        progressionSuggestions = progressionSuggestions.size
     )
 
     private fun BackupPayloadV1.toImportData(): ImportData = ImportData(
@@ -227,12 +251,16 @@ class BackupRepositoryImpl(
         personalRecords = personalRecords.distinctBy { it.id }.map { it.toEntity() },
         metaTrainingPlans = metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() },
         metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() },
-        metaPlanSkips = metaPlanSkips.distinctBy { it.id }.map { it.toEntity() }
+        metaPlanSkips = metaPlanSkips.distinctBy { it.id }.map { it.toEntity() },
+        workoutPlanTargets = workoutPlanTargets.distinctBy { it.id }.map { it.toEntity() },
+        progressionSuggestions = progressionSuggestions.distinctBy { it.id }.map { it.toEntity() }
     )
 
     private suspend fun deleteAllInOrder() {
+        progressionDao.deleteAllSuggestions()
         personalRecordDao.deleteAll()
         workoutSetDao.deleteAll()
+        progressionDao.deleteAllTargets()
         metaTrainingPlanDao.deleteAllMetaPlanSkips()
         metaTrainingPlanDao.deleteAllMetaPlanItems()
         trainingPlanDao.deleteAllPlanExercises()
@@ -254,6 +282,9 @@ class BackupRepositoryImpl(
         if (data.planExercises.isNotEmpty()) {
             trainingPlanDao.replaceAllExercises(data.planExercises)
         }
+        if (data.workoutPlanTargets.isNotEmpty()) {
+            progressionDao.replaceAllTargets(data.workoutPlanTargets)
+        }
         if (data.metaPlanItems.isNotEmpty()) {
             metaTrainingPlanDao.replaceAllItems(data.metaPlanItems)
         }
@@ -261,6 +292,9 @@ class BackupRepositoryImpl(
             metaTrainingPlanDao.replaceAllMetaPlanSkips(data.metaPlanSkips)
         }
         if (data.workoutSets.isNotEmpty()) workoutSetDao.replaceAll(data.workoutSets)
+        if (data.progressionSuggestions.isNotEmpty()) {
+            progressionDao.replaceAllSuggestions(data.progressionSuggestions)
+        }
         if (data.personalRecords.isNotEmpty()) {
             personalRecordDao.replaceAll(data.personalRecords)
         }
@@ -302,8 +336,70 @@ class BackupRepositoryImpl(
         supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
-        targetWeightKg = targetWeightKg
+        targetWeightKg = targetWeightKg,
+        progression = progression.toBackup()
     )
+
+    private fun ProgressionConfigColumns.toBackup(): BackupProgressionConfig =
+        BackupProgressionConfig(
+            scheme = scheme,
+            incrementValue = incrementValue,
+            incrementUnit = incrementUnit,
+            incrementKg = incrementKg,
+            minReps = minReps,
+            maxReps = maxReps,
+            targetTotalReps = targetTotalReps,
+            targetRpe = targetRpe,
+            rpeTolerance = rpeTolerance,
+            stallThreshold = stallThreshold,
+            backoffPercent = backoffPercent,
+            ruleRevision = ruleRevision
+        )
+
+    private fun ProgressionTargetColumns.toBackup(): BackupProgressionTarget =
+        BackupProgressionTarget(sets = sets, reps = reps, weightKg = weightKg)
+
+    private fun WorkoutPlanTargetEntity.toBackup(): BackupWorkoutPlanTarget =
+        BackupWorkoutPlanTarget(
+            id = id,
+            sessionId = sessionId,
+            planId = planId,
+            exerciseId = exerciseId,
+            orderIndex = orderIndex,
+            supersetGroupId = supersetGroupId,
+            target = target.toBackup(),
+            progression = progression.toBackup()
+        )
+
+    private fun ProgressionSuggestionEntity.toBackup(): BackupProgressionSuggestion =
+        BackupProgressionSuggestion(
+            id = id,
+            sourceSessionId = sourceSessionId,
+            sourceTargetSnapshotId = sourceTargetSnapshotId,
+            planId = planId,
+            exerciseId = exerciseId,
+            orderIndex = orderIndex,
+            supersetGroupId = supersetGroupId,
+            sourceTarget = sourceTarget.toBackup(),
+            sourceProgression = sourceProgression.toBackup(),
+            outcomeType = outcomeType,
+            reasonCode = reasonCode,
+            reasonArguments = progressionJson.decodeFromString(
+                REASON_ARGUMENTS_SERIALIZER,
+                reasonArgumentsJson
+            ).toSortedMap(),
+            countedSetIds = progressionJson.decodeFromString(
+                COUNTED_SET_IDS_SERIALIZER,
+                countedSetIdsJson
+            ),
+            streakEffect = streakEffect,
+            suggestedTarget = suggestedTarget?.toBackup(),
+            status = status,
+            wasEdited = wasEdited,
+            finalTarget = finalTarget?.toBackup(),
+            createdAtEpochMillis = createdAtEpochMillis,
+            decidedAtEpochMillis = decidedAtEpochMillis
+        )
 
     private fun PersonalRecordEntity.toBackup(): BackupPersonalRecord = BackupPersonalRecord(
         id = id,
@@ -369,8 +465,70 @@ class BackupRepositoryImpl(
         supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
-        targetWeightKg = targetWeightKg
+        targetWeightKg = targetWeightKg,
+        progression = progression.toEntity()
     )
+
+    private fun BackupProgressionConfig.toEntity(): ProgressionConfigColumns =
+        ProgressionConfigColumns(
+            scheme = scheme,
+            incrementValue = incrementValue,
+            incrementUnit = incrementUnit,
+            incrementKg = incrementKg,
+            minReps = minReps,
+            maxReps = maxReps,
+            targetTotalReps = targetTotalReps,
+            targetRpe = targetRpe,
+            rpeTolerance = rpeTolerance,
+            stallThreshold = stallThreshold,
+            backoffPercent = backoffPercent,
+            ruleRevision = ruleRevision
+        )
+
+    private fun BackupProgressionTarget.toEntity(): ProgressionTargetColumns =
+        ProgressionTargetColumns(sets = sets, reps = reps, weightKg = weightKg)
+
+    private fun BackupWorkoutPlanTarget.toEntity(): WorkoutPlanTargetEntity =
+        WorkoutPlanTargetEntity(
+            id = id,
+            sessionId = sessionId,
+            planId = planId,
+            exerciseId = exerciseId,
+            orderIndex = orderIndex,
+            supersetGroupId = supersetGroupId,
+            target = target.toEntity(),
+            progression = progression.toEntity()
+        )
+
+    private fun BackupProgressionSuggestion.toEntity(): ProgressionSuggestionEntity =
+        ProgressionSuggestionEntity(
+            id = id,
+            sourceSessionId = sourceSessionId,
+            sourceTargetSnapshotId = sourceTargetSnapshotId,
+            planId = planId,
+            exerciseId = exerciseId,
+            orderIndex = orderIndex,
+            supersetGroupId = supersetGroupId,
+            sourceTarget = sourceTarget.toEntity(),
+            sourceProgression = sourceProgression.toEntity(),
+            outcomeType = outcomeType,
+            reasonCode = reasonCode,
+            reasonArgumentsJson = progressionJson.encodeToString(
+                REASON_ARGUMENTS_SERIALIZER,
+                reasonArguments.toSortedMap()
+            ),
+            countedSetIdsJson = progressionJson.encodeToString(
+                COUNTED_SET_IDS_SERIALIZER,
+                countedSetIds
+            ),
+            streakEffect = streakEffect,
+            suggestedTarget = suggestedTarget?.toEntity(),
+            status = status,
+            wasEdited = wasEdited,
+            finalTarget = finalTarget?.toEntity(),
+            createdAtEpochMillis = createdAtEpochMillis,
+            decidedAtEpochMillis = decidedAtEpochMillis
+        )
 
     private fun BackupPersonalRecord.toEntity(): PersonalRecordEntity = PersonalRecordEntity(
         id = id,
@@ -409,11 +567,15 @@ class BackupRepositoryImpl(
         val personalRecords: List<PersonalRecordEntity>,
         val metaTrainingPlans: List<MetaTrainingPlanEntity>,
         val metaPlanItems: List<MetaPlanItemEntity>,
-        val metaPlanSkips: List<MetaPlanSkipEntity>
+        val metaPlanSkips: List<MetaPlanSkipEntity>,
+        val workoutPlanTargets: List<WorkoutPlanTargetEntity>,
+        val progressionSuggestions: List<ProgressionSuggestionEntity>
     )
 
     private companion object {
-        const val SCHEMA_VERSION = 10
+        const val SCHEMA_VERSION = 11
+        val REASON_ARGUMENTS_SERIALIZER = MapSerializer(String.serializer(), Double.serializer())
+        val COUNTED_SET_IDS_SERIALIZER = ListSerializer(Long.serializer())
     }
 }
 
@@ -426,7 +588,8 @@ internal fun WorkoutSetEntity.toBackupWorkoutSet(): BackupWorkoutSet = BackupWor
     weightKg = weightKg,
     isWarmup = isWarmup,
     completedAt = completedAt,
-    rpe = rpe
+    rpe = rpe,
+    planTargetSnapshotId = planTargetSnapshotId
 )
 
 internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity = WorkoutSetEntity(
@@ -438,5 +601,6 @@ internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity = WorkoutSe
     weightKg = weightKg,
     isWarmup = isWarmup,
     completedAt = completedAt,
-    rpe = rpe
+    rpe = rpe,
+    planTargetSnapshotId = planTargetSnapshotId
 )

@@ -64,11 +64,14 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
@@ -106,6 +109,7 @@ private data class ExerciseRenderGroup(
 @Composable
 fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
+    onProgressionReview: (Long) -> Unit,
     viewModel: ActiveWorkoutViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -118,7 +122,6 @@ fun ActiveWorkoutScreen(
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
-    var workoutEndNavigated by remember { mutableStateOf(false) }
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -155,12 +158,11 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    LaunchedEffect(state.sessionPhase, state.workoutFinished) {
-        val session = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
-        val shouldNavigate = state.workoutFinished || session?.endTime != null
-        if (shouldNavigate && !workoutEndNavigated) {
-            workoutEndNavigated = true
-            onWorkoutFinished()
+    LaunchedEffect(state.finishState) {
+        when (val finishState = state.finishState) {
+            is WorkoutFinishState.ReviewReady -> onProgressionReview(finishState.sessionId)
+            WorkoutFinishState.CompletedWithoutReview -> onWorkoutFinished()
+            else -> Unit
         }
     }
 
@@ -229,14 +231,14 @@ fun ActiveWorkoutScreen(
                             horizontalArrangement = Arrangement.Center,
                             verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                         ) {
-                            state.restTimers.forEach { (exerciseId, startTime) ->
-                                val exerciseWithSets = state.exercisesWithSets.find { it.exercise.id == exerciseId }
-                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.exercise.id == exerciseId } }
-                                val indexInSuperset = group?.exercises?.indexOfFirst { it.exercise.id == exerciseId } ?: -1
+                            state.restTimers.forEach { (exerciseKey, startTime) ->
+                                val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
+                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
+                                val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
 
                                 RestTimer(
                                     startTime = startTime,
-                                    onDismiss = { viewModel.dismissRestTimer(exerciseId) },
+                                    onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
                                     titleText = exerciseWithSets?.exercise?.name,
                                     baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
                                     modifier = Modifier.padding(horizontal = dims.spacingXs)
@@ -283,18 +285,19 @@ fun ActiveWorkoutScreen(
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
                                 unitSystem = preferences.unitSystem,
-                                isLogging = (state.logInFlightByExercise[exerciseWithSets.exercise.id] ?: 0) > 0,
+                                isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
                                 logSuccessSubmissions = state.logSuccessSubmissions,
                                 updateInFlightBySet = state.updateInFlightBySet,
                                 updateSuccessCountBySet = state.updateSuccessCountBySet,
                                 onLogSet = { reps, weight, isWarmup, intensity, submissionId ->
                                     viewModel.logSet(
-                                        exerciseWithSets.exercise.id,
-                                        reps,
-                                        weight,
-                                        isWarmup,
-                                        intensity,
-                                        submissionId
+                                        key = exerciseWithSets.key,
+                                        exerciseId = exerciseWithSets.exercise.id,
+                                        reps = reps,
+                                        weightKg = weight,
+                                        isWarmup = isWarmup,
+                                        intensity = intensity,
+                                        submissionId = submissionId
                                     )
                                 },
                                 onUpdateSet = viewModel::updateSet,
@@ -345,7 +348,7 @@ fun ActiveWorkoutScreen(
                 confirmButton = {
                     TextButton(
                         onClick = viewModel::finishWorkout,
-                        enabled = !state.finishInFlight
+                        enabled = state.finishState == WorkoutFinishState.Idle
                     ) {
                         Text(stringResource(id = R.string.workout_finish_dialog_confirm))
                     }
@@ -353,6 +356,31 @@ fun ActiveWorkoutScreen(
                 dismissButton = {
                     TextButton(onClick = viewModel::dismissFinishDialog) {
                         Text(stringResource(id = R.string.workout_finish_dialog_cancel))
+                    }
+                }
+            )
+        }
+
+        if (state.finishState is WorkoutFinishState.GenerationFailed) {
+            AlertDialog(
+                onDismissRequest = {},
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                title = { Text(stringResource(id = R.string.progression_review_title)) },
+                text = {
+                    Text(stringResource(id = R.string.progression_review_message_action_failed))
+                },
+                confirmButton = {
+                    TextButton(onClick = viewModel::retryProgressionGeneration) {
+                        Text(stringResource(id = R.string.common_retry))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onWorkoutFinished) {
+                        Text(stringResource(id = R.string.common_later))
                     }
                 }
             )
@@ -370,7 +398,7 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
         if (groupId == null) {
             val item = exercises[cursor]
             groups += ExerciseRenderGroup(
-                key = "single-${item.exercise.id}-$cursor",
+                key = "single-${item.key.stableListKey()}",
                 supersetGroupId = null,
                 exercises = listOf(item)
             )
@@ -390,13 +418,13 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
         if (run.size < 2) {
             val item = exercises[cursor]
             groups += ExerciseRenderGroup(
-                key = "single-${item.exercise.id}-$cursor",
+                key = "single-${item.key.stableListKey()}",
                 supersetGroupId = null,
                 exercises = listOf(item)
             )
         } else {
             groups += ExerciseRenderGroup(
-                key = "superset-$groupId-$cursor",
+                key = "superset-$groupId-${run.joinToString("-") { it.key.stableListKey() }}",
                 supersetGroupId = groupId,
                 exercises = run
             )
@@ -406,6 +434,11 @@ private fun buildExerciseRenderGroups(exercises: List<ExerciseWithSets>): List<E
     }
 
     return groups
+}
+
+private fun WorkoutExerciseKey.stableListKey(): String = when (this) {
+    is WorkoutExerciseKey.Planned -> "planned-$snapshotId"
+    is WorkoutExerciseKey.AdHoc -> "adhoc-$exerciseId"
 }
 
 @Composable
@@ -508,12 +541,19 @@ private fun ExerciseCard(
     val dims = ironLogDimens
     val planTarget = exerciseWithSets.planTarget
     val previousSession = exerciseWithSets.previousSession
+    val rowIntensitySystem = if (
+        intensitySystem == IntensitySystem.OFF && planTarget?.config is ProgressionConfig.RpeRir
+    ) {
+        IntensitySystem.RPE
+    } else {
+        intensitySystem
+    }
     val showHistoryToggle = previousSession != null
     val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let { formatWeightValue(it, unitSystem) }
-    var showPreviousSession by remember(exerciseWithSets.exercise.id) { mutableStateOf(false) }
+    var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { !it.isWarmup }
-    val targetSetCount = planTarget?.targetSets ?: 0
+    val targetSetCount = planTarget?.target?.sets ?: 0
 
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
@@ -563,24 +603,32 @@ private fun ExerciseCard(
             }
 
             if (planTarget != null) {
-                val targetText = if (planTarget.targetWeightKg > 0) {
+                val targetText = if (planTarget.target.weightKg > 0) {
                     stringResource(
                         id = R.string.workout_target_with_weight,
-                        planTarget.targetSets,
-                        planTarget.targetReps,
-                        formatTargetWeight(planTarget.targetWeightKg, unitSystem)
+                        planTarget.target.sets,
+                        planTarget.target.reps,
+                        formatTargetWeight(planTarget.target.weightKg, unitSystem)
                     )
                 } else {
                     stringResource(
                         id = R.string.workout_target_no_weight,
-                        planTarget.targetSets,
-                        planTarget.targetReps
+                        planTarget.target.sets,
+                        planTarget.target.reps
                     )
                 }
                 Text(
                     text = targetText,
                     style = MaterialTheme.typography.bodySmall,
                     color = tintColor ?: MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(
+                        id = R.string.workout_progression_scheme,
+                        progressionSchemeLabel(planTarget.config)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (previousSession?.lastWorkSetReachedTarget == true) {
                     Text(
@@ -590,7 +638,7 @@ private fun ExerciseCard(
                         color = MaterialTheme.semantic.success
                     )
                 }
-                if (completedWorkSets >= planTarget.targetSets) {
+                if (completedWorkSets >= planTarget.target.sets) {
                     Text(
                         text = stringResource(id = R.string.workout_target_completed),
                         style = MaterialTheme.typography.bodySmall,
@@ -608,7 +656,7 @@ private fun ExerciseCard(
                     if (matchingSet != null) {
                         LoggedSetRow(
                             set = matchingSet,
-                            intensitySystem = intensitySystem,
+                            intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
                             updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
@@ -619,10 +667,10 @@ private fun ExerciseCard(
                     } else {
                         PendingSetRow(
                             setNumber = setIndex,
-                            repsPlaceholder = if (planTarget.targetReps > 0) planTarget.targetReps.toString() else null,
+                            repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
                             defaultWeight = "",
                             weightPlaceholder = previousWeightHint,
-                            intensitySystem = intensitySystem,
+                            intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             locked = isLogging,
                             completedSubmissions = logSuccessSubmissions,
@@ -636,7 +684,7 @@ private fun ExerciseCard(
                 loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -649,7 +697,7 @@ private fun ExerciseCard(
                 loggedSets.filter { it.isWarmup }.forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -666,7 +714,7 @@ private fun ExerciseCard(
                     ExtraSetInput(
                         planTarget = planTarget,
                         defaultWarmupFlag = defaultWarmupFlag,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         weightPlaceholder = previousWeightHint,
                         locked = isLogging,
@@ -684,7 +732,7 @@ private fun ExerciseCard(
                 loggedSets.forEach { set ->
                     LoggedSetRow(
                         set = set,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
@@ -699,7 +747,7 @@ private fun ExerciseCard(
                 ExtraSetInput(
                     planTarget = null,
                     defaultWarmupFlag = defaultWarmupFlag,
-                    intensitySystem = intensitySystem,
+                    intensitySystem = rowIntensitySystem,
                     unitSystem = unitSystem,
                     weightPlaceholder = previousWeightHint,
                     locked = isLogging,
@@ -717,7 +765,7 @@ private fun ExerciseCard(
                 previousSession?.let {
                     PreviousSessionMiniHistory(
                         previousSession = it,
-                        intensitySystem = intensitySystem,
+                        intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -801,23 +849,23 @@ private fun PreviousSessionSetRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             modifier = Modifier.width(20.dp)
         )
-        
+
         val weightText = formatWeightValue(set.weightKg, unitSystem)
-        
+
         LoggedSetBox(
             value = weightText,
             suffix = WeightFormatting.unitLabel(unitSystem),
             isWarmup = set.isWarmup,
             modifier = Modifier.weight(1.2f).alpha(0.7f)
         )
-        
+
         LoggedSetBox(
             value = set.reps.toString(),
             suffix = stringResource(id = R.string.common_reps_short),
             isWarmup = set.isWarmup,
             modifier = Modifier.weight(1f).alpha(0.7f)
         )
-        
+
         if (tracksIntensity) {
             val intensityText = formatIntensity(set.rpe, intensitySystem)
             val accentColor = rpeColor(set.rpe)
@@ -831,7 +879,7 @@ private fun PreviousSessionSetRow(
                 overrideContentColor = accentColor
             )
         }
-        
+
         // Placeholder for the delete button to maintain perfect alignment with LoggedSetRow
         Spacer(modifier = Modifier.size(40.dp))
     }
@@ -959,7 +1007,7 @@ private fun LoggedSetRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(20.dp)
             )
-            
+
             com.ironlog.app.presentation.common.CompactTextField(
                 value = weightInput,
                 onValueChange = { weightInput = it },
@@ -967,7 +1015,7 @@ private fun LoggedSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
                 modifier = Modifier.weight(1.2f)
             )
-            
+
             com.ironlog.app.presentation.common.CompactTextField(
                 value = repsInput,
                 onValueChange = { repsInput = it },
@@ -975,7 +1023,7 @@ private fun LoggedSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (tracksIntensity) ImeAction.Next else ImeAction.Done),
                 modifier = Modifier.weight(1f)
             )
-            
+
             if (tracksIntensity) {
                 com.ironlog.app.presentation.common.CompactTextField(
                     value = intensityInput,
@@ -985,7 +1033,7 @@ private fun LoggedSetRow(
                     modifier = Modifier.weight(1f)
                 )
             }
-            
+
             IconButton(
                 onClick = {
                     val r = repsInput.text.toIntOrNull() ?: set.reps
@@ -1026,21 +1074,21 @@ private fun LoggedSetRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(20.dp)
             )
-            
+
             LoggedSetBox(
                 value = weightText,
                 suffix = WeightFormatting.unitLabel(unitSystem),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1.2f)
             )
-            
+
             LoggedSetBox(
                 value = set.reps.toString(),
                 suffix = stringResource(id = R.string.common_reps_short),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1f)
             )
-            
+
             if (tracksIntensity) {
                 val accentColor = rpeColor(set.rpe)
 
@@ -1053,7 +1101,7 @@ private fun LoggedSetRow(
                     overrideContentColor = accentColor
                 )
             }
-            
+
             IconButton(
                 onClick = { haptic.reject(); onDeleteSet(set.id) },
                 modifier = Modifier.size(ButtonSize.iconButton)
@@ -1112,7 +1160,7 @@ private fun PendingSetRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(20.dp)
         )
-        
+
         com.ironlog.app.presentation.common.CompactTextField(
             value = weightInput,
             onValueChange = { weightInput = it },
@@ -1121,7 +1169,7 @@ private fun PendingSetRow(
             placeholderText = weightPlaceholder ?: "-",
             modifier = Modifier.weight(1.2f)
         )
-        
+
         com.ironlog.app.presentation.common.CompactTextField(
             value = repsInput,
             onValueChange = { repsInput = it },
@@ -1130,7 +1178,7 @@ private fun PendingSetRow(
             placeholderText = repsPlaceholder ?: "-",
             modifier = Modifier.weight(1f)
         )
-        
+
         if (tracksIntensity) {
             com.ironlog.app.presentation.common.CompactTextField(
                 value = intensityInput,
@@ -1140,7 +1188,7 @@ private fun PendingSetRow(
                 modifier = Modifier.weight(1f)
             )
         }
-        
+
         IconButton(
             onClick = {
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
@@ -1175,7 +1223,7 @@ private fun PendingSetRow(
 
 @Composable
 private fun ExtraSetInput(
-    planTarget: PlanTarget?,
+    planTarget: WorkoutPlanTarget?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
@@ -1188,7 +1236,7 @@ private fun ExtraSetInput(
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
     val repsPlaceholder = planTarget?.let {
-        if (it.targetReps > 0) it.targetReps.toString() else null
+        if (it.target.reps > 0) it.target.reps.toString() else null
     }
     var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
@@ -1254,6 +1302,16 @@ private fun ExtraSetInput(
     }
 }
 
+@Composable
+private fun progressionSchemeLabel(config: ProgressionConfig): String = when (config) {
+    is ProgressionConfig.Manual -> stringResource(R.string.workout_progression_manual)
+    is ProgressionConfig.Linear -> stringResource(R.string.workout_progression_linear)
+    is ProgressionConfig.DoubleProgression -> stringResource(R.string.workout_progression_double)
+    is ProgressionConfig.TotalReps -> stringResource(R.string.workout_progression_total_reps)
+    is ProgressionConfig.RpeRir -> stringResource(R.string.workout_progression_rpe_rir)
+    is ProgressionConfig.Invalid -> stringResource(R.string.workout_progression_invalid)
+}
+
 private fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): String {
     if (rpe == null || intensitySystem == IntensitySystem.OFF) return ""
     val displayValue = if (intensitySystem == IntensitySystem.RIR) {
@@ -1274,7 +1332,6 @@ private fun rpeColor(rpe: Double?): Color? {
         else       -> MaterialTheme.semantic.danger     // Rot für RPE 10
     }
 }
-
 
 
 

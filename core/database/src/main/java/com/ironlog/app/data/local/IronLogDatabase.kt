@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -19,9 +20,11 @@ import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
+import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.seed.ExerciseSeedData
 
 @Database(
@@ -34,9 +37,11 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         PlanExerciseEntity::class,
         MetaTrainingPlanEntity::class,
         MetaPlanItemEntity::class,
-        MetaPlanSkipEntity::class
+        MetaPlanSkipEntity::class,
+        WorkoutPlanTargetEntity::class,
+        ProgressionSuggestionEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -46,6 +51,7 @@ abstract class IronLogDatabase : RoomDatabase() {
     abstract fun personalRecordDao(): PersonalRecordDao
     abstract fun trainingPlanDao(): TrainingPlanDao
     abstract fun metaTrainingPlanDao(): MetaTrainingPlanDao
+    abstract fun progressionDao(): ProgressionDao
 
     companion object {
         /** Migration 1 -> 2: Training Plans feature */
@@ -198,6 +204,139 @@ abstract class IronLogDatabase : RoomDatabase() {
             }
         }
 
+        /** Migration 10 -> 11: progression targets, suggestions, and set attribution */
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionScheme` TEXT NOT NULL DEFAULT 'MANUAL'")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionIncrementValue` REAL")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionIncrementUnit` TEXT")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionIncrementKg` REAL")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionMinReps` INTEGER")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionMaxReps` INTEGER")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionTargetTotalReps` INTEGER")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionTargetRpe` REAL")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionRpeTolerance` REAL")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionStallThreshold` INTEGER NOT NULL DEFAULT 2")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionBackoffPercent` REAL NOT NULL DEFAULT 10.0")
+                db.execSQL("ALTER TABLE `plan_exercises` ADD COLUMN `progressionRuleRevision` INTEGER NOT NULL DEFAULT 1")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE `workout_plan_targets` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `sessionId` INTEGER NOT NULL,
+                        `planId` INTEGER NOT NULL,
+                        `exerciseId` INTEGER NOT NULL,
+                        `orderIndex` INTEGER NOT NULL,
+                        `supersetGroupId` INTEGER,
+                        `targetSets` INTEGER NOT NULL,
+                        `targetReps` INTEGER NOT NULL,
+                        `targetWeightKg` REAL NOT NULL,
+                        `progressionScheme` TEXT NOT NULL DEFAULT 'MANUAL',
+                        `progressionIncrementValue` REAL,
+                        `progressionIncrementUnit` TEXT,
+                        `progressionIncrementKg` REAL,
+                        `progressionMinReps` INTEGER,
+                        `progressionMaxReps` INTEGER,
+                        `progressionTargetTotalReps` INTEGER,
+                        `progressionTargetRpe` REAL,
+                        `progressionRpeTolerance` REAL,
+                        `progressionStallThreshold` INTEGER NOT NULL DEFAULT 2,
+                        `progressionBackoffPercent` REAL NOT NULL DEFAULT 10.0,
+                        `progressionRuleRevision` INTEGER NOT NULL DEFAULT 1,
+                        FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`planId`) REFERENCES `training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX `index_workout_plan_targets_sessionId` ON `workout_plan_targets` (`sessionId`)")
+                db.execSQL("CREATE INDEX `index_workout_plan_targets_planId` ON `workout_plan_targets` (`planId`)")
+                db.execSQL("CREATE INDEX `index_workout_plan_targets_exerciseId` ON `workout_plan_targets` (`exerciseId`)")
+                db.execSQL("CREATE INDEX `index_workout_plan_targets_planId_exerciseId_orderIndex` ON `workout_plan_targets` (`planId`, `exerciseId`, `orderIndex`)")
+                db.execSQL("CREATE UNIQUE INDEX `index_workout_plan_targets_sessionId_orderIndex` ON `workout_plan_targets` (`sessionId`, `orderIndex`)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE `progression_suggestions` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `sourceSessionId` INTEGER NOT NULL,
+                        `sourceTargetSnapshotId` INTEGER NOT NULL,
+                        `planId` INTEGER NOT NULL,
+                        `exerciseId` INTEGER NOT NULL,
+                        `orderIndex` INTEGER NOT NULL,
+                        `supersetGroupId` INTEGER,
+                        `sourceSets` INTEGER NOT NULL,
+                        `sourceReps` INTEGER NOT NULL,
+                        `sourceWeightKg` REAL NOT NULL,
+                        `sourceProgressionScheme` TEXT NOT NULL DEFAULT 'MANUAL',
+                        `sourceProgressionIncrementValue` REAL,
+                        `sourceProgressionIncrementUnit` TEXT,
+                        `sourceProgressionIncrementKg` REAL,
+                        `sourceProgressionMinReps` INTEGER,
+                        `sourceProgressionMaxReps` INTEGER,
+                        `sourceProgressionTargetTotalReps` INTEGER,
+                        `sourceProgressionTargetRpe` REAL,
+                        `sourceProgressionRpeTolerance` REAL,
+                        `sourceProgressionStallThreshold` INTEGER NOT NULL DEFAULT 2,
+                        `sourceProgressionBackoffPercent` REAL NOT NULL DEFAULT 10.0,
+                        `sourceProgressionRuleRevision` INTEGER NOT NULL DEFAULT 1,
+                        `outcomeType` TEXT NOT NULL,
+                        `reasonCode` TEXT NOT NULL,
+                        `reasonArgumentsJson` TEXT NOT NULL,
+                        `countedSetIdsJson` TEXT NOT NULL,
+                        `streakEffect` TEXT NOT NULL,
+                        `suggestedSets` INTEGER,
+                        `suggestedReps` INTEGER,
+                        `suggestedWeightKg` REAL,
+                        `status` TEXT NOT NULL,
+                        `wasEdited` INTEGER NOT NULL,
+                        `finalSets` INTEGER,
+                        `finalReps` INTEGER,
+                        `finalWeightKg` REAL,
+                        `createdAtEpochMillis` INTEGER NOT NULL,
+                        `decidedAtEpochMillis` INTEGER,
+                        FOREIGN KEY(`sourceTargetSnapshotId`) REFERENCES `workout_plan_targets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`sourceSessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`planId`) REFERENCES `training_plans`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX `index_progression_suggestions_sourceSessionId` ON `progression_suggestions` (`sourceSessionId`)")
+                db.execSQL("CREATE INDEX `index_progression_suggestions_planId` ON `progression_suggestions` (`planId`)")
+                db.execSQL("CREATE INDEX `index_progression_suggestions_exerciseId` ON `progression_suggestions` (`exerciseId`)")
+                db.execSQL("CREATE UNIQUE INDEX `index_progression_suggestions_sourceTargetSnapshotId_sourceProgressionRuleRevision` ON `progression_suggestions` (`sourceTargetSnapshotId`, `sourceProgressionRuleRevision`)")
+                db.execSQL("CREATE INDEX `index_progression_suggestions_status` ON `progression_suggestions` (`status`)")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE `workout_sets_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `sessionId` INTEGER NOT NULL,
+                        `exerciseId` INTEGER NOT NULL,
+                        `setNumber` INTEGER NOT NULL,
+                        `reps` INTEGER NOT NULL,
+                        `weightKg` REAL NOT NULL,
+                        `isWarmup` INTEGER NOT NULL,
+                        `completedAt` INTEGER NOT NULL,
+                        `rpe` REAL,
+                        `planTargetSnapshotId` INTEGER,
+                        FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT,
+                        FOREIGN KEY(`planTargetSnapshotId`) REFERENCES `workout_plan_targets`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("INSERT INTO `workout_sets_new` (`id`,`sessionId`,`exerciseId`,`setNumber`,`reps`,`weightKg`,`isWarmup`,`completedAt`,`rpe`,`planTargetSnapshotId`) SELECT `id`,`sessionId`,`exerciseId`,`setNumber`,`reps`,`weightKg`,`isWarmup`,`completedAt`,`rpe`,NULL FROM `workout_sets`")
+                db.execSQL("DROP TABLE `workout_sets`")
+                db.execSQL("ALTER TABLE `workout_sets_new` RENAME TO `workout_sets`")
+                db.execSQL("CREATE INDEX `index_workout_sets_sessionId` ON `workout_sets` (`sessionId`)")
+                db.execSQL("CREATE INDEX `index_workout_sets_exerciseId` ON `workout_sets` (`exerciseId`)")
+                db.execSQL("CREATE INDEX `index_workout_sets_planTargetSnapshotId` ON `workout_sets` (`planTargetSnapshotId`)")
+            }
+        }
+
         @VisibleForTesting
         fun migration5To6ForTests(): Migration = MIGRATION_5_6
 
@@ -212,6 +351,9 @@ abstract class IronLogDatabase : RoomDatabase() {
 
         @VisibleForTesting
         fun migration9To10ForTests(): Migration = MIGRATION_9_10
+
+        @VisibleForTesting
+        fun migration10To11ForTests(): Migration = MIGRATION_10_11
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -392,7 +534,8 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8,
                     MIGRATION_8_9,
-                    MIGRATION_9_10
+                    MIGRATION_9_10,
+                    MIGRATION_10_11
                 )
                 .addCallback(SeedCallback())
                 .build()

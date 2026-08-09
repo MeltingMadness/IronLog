@@ -15,6 +15,7 @@ import com.ironlog.app.data.repository.BackupRepositoryImpl
 import com.ironlog.app.data.repository.ExerciseRepositoryImpl
 import com.ironlog.app.data.repository.IncidentReportRepositoryImpl
 import com.ironlog.app.data.repository.MetaTrainingPlanRepositoryImpl
+import com.ironlog.app.data.repository.ProgressionRepositoryImpl
 import com.ironlog.app.data.repository.StatisticsRepositoryImpl
 import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
@@ -23,10 +24,12 @@ import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
+import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.progression.ProgressionEngine
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.app.presentation.dashboard.DashboardViewModel
 import com.ironlog.app.presentation.exercises.ExerciseLibraryViewModel
@@ -36,6 +39,7 @@ import com.ironlog.app.presentation.plans.MetaPlanEditorViewModel
 import com.ironlog.app.presentation.plans.MetaPlanListViewModel
 import com.ironlog.app.presentation.plans.PlanEditorViewModel
 import com.ironlog.app.presentation.plans.TrainingPlanListViewModel
+import com.ironlog.app.presentation.progression.ProgressionReviewViewModel
 import com.ironlog.app.presentation.settings.SettingsViewModel
 import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
@@ -53,6 +57,7 @@ val appModule = module {
     single { get<IronLogDatabase>().personalRecordDao() }
     single { get<IronLogDatabase>().trainingPlanDao() }
     single { get<IronLogDatabase>().metaTrainingPlanDao() }
+    single { get<IronLogDatabase>().progressionDao() }
     single<TransactionRunner> { RoomTransactionRunner(get()) }
     single<BackupDocumentIo> {
         ContentResolverBackupDocumentIo(androidContext().contentResolver)
@@ -60,7 +65,9 @@ val appModule = module {
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get()) }
+    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single { ProgressionEngine() }
+    single<ProgressionRepository> { ProgressionRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
@@ -78,6 +85,7 @@ val appModule = module {
             trainingPlanDao = get(),
             metaTrainingPlanDao = get(),
             personalRecordDao = get(),
+            progressionDao = get(),
             buildInfo = get()
         )
     }
@@ -88,6 +96,7 @@ val appModule = module {
     viewModelOf(::WorkoutDetailViewModel)
     viewModelOf(::ExerciseStatsViewModel)
     viewModelOf(::PlanEditorViewModel)
+    viewModelOf(::ProgressionReviewViewModel)
 
     // ViewModels WITHOUT SavedStateHandle — viewModelOf() for consistency
     viewModelOf(::ExerciseLibraryViewModel)

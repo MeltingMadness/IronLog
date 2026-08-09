@@ -21,7 +21,7 @@ import kotlinx.serialization.json.Json
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 10
+        const val CURRENT_SCHEMA_VERSION = 11
     }
 
     @Test

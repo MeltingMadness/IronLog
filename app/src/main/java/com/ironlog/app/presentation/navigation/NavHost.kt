@@ -27,6 +27,7 @@ import com.ironlog.app.presentation.plans.MetaPlanEditorScreen
 import com.ironlog.app.presentation.plans.MetaPlanListScreen
 import com.ironlog.app.presentation.plans.PlanEditorScreen
 import com.ironlog.app.presentation.plans.TrainingPlanListScreen
+import com.ironlog.app.presentation.progression.ProgressionReviewScreen
 import com.ironlog.app.presentation.settings.SettingsScreen
 import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
 import com.ironlog.app.presentation.theme.ironLogMotion
@@ -34,7 +35,10 @@ import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun IronLogNavHost(navController: NavHostController) {
+fun IronLogNavHost(
+    navController: NavHostController,
+    startDestination: String = Screen.Dashboard.route
+) {
     val motion = ironLogMotion
 
     SharedTransitionLayout {
@@ -43,7 +47,7 @@ fun IronLogNavHost(navController: NavHostController) {
         ) {
             NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route,
+        startDestination = startDestination,
         enterTransition = {
             if (motion.reduced) {
                 fadeIn(animationSpec = snap())
@@ -107,6 +111,9 @@ fun IronLogNavHost(navController: NavHostController) {
                 },
                 onOpenSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onOpenProgressionReview = {
+                    navController.navigate(Screen.ProgressionReview.createRoute(null))
                 }
             )
         }
@@ -127,6 +134,25 @@ fun IronLogNavHost(navController: NavHostController) {
         ) {
             ActiveWorkoutScreen(
                 onWorkoutFinished = {
+                    navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                },
+                onProgressionReview = { sessionId ->
+                    navController.navigate(Screen.ProgressionReview.createRoute(sessionId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ProgressionReview.route,
+            arguments = listOf(
+                navArgument("sessionId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                }
+            )
+        ) {
+            ProgressionReviewScreen(
+                onClose = {
                     navController.popBackStack(Screen.Dashboard.route, inclusive = false)
                 }
             )

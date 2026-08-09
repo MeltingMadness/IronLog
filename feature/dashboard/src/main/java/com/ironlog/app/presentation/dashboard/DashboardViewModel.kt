@@ -13,10 +13,12 @@ import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
+import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.domain.util.catchAndLog
 import com.ironlog.app.domain.util.resolveMetaPlanRotation
 import java.time.DayOfWeek
@@ -63,6 +65,7 @@ data class DashboardUiState(
     val lastWorkoutExerciseCount: Int = 0,
     val muscleHeatmap: Map<MuscleGroup, Int> = emptyMap(),
     val weeklyVolume: List<Pair<String, Double>> = emptyList(),
+    val pendingProgressionCount: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
     val skippingMetaPlanId: Long? = null
@@ -74,7 +77,8 @@ class DashboardViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val trainingPlanRepository: TrainingPlanRepository,
-    private val metaTrainingPlanRepository: MetaTrainingPlanRepository
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
+    private val progressionRepository: ProgressionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -84,6 +88,33 @@ class DashboardViewModel(
         loadDashboard()
         observeActiveSession()
         observeDashboardRefreshSignals()
+        observePendingProgressionCount()
+        recoverProgressions()
+    }
+
+    private fun observePendingProgressionCount() {
+        viewModelScope.launch {
+            progressionRepository.observePendingCount()
+                .catchAndLog("DashboardVM_ProgressionCount")
+                .collect { count ->
+                    _uiState.update { it.copy(pendingProgressionCount = count) }
+                }
+        }
+    }
+
+    private fun recoverProgressions() {
+        viewModelScope.launch {
+            runCatching {
+                progressionRepository.reconcileOutstandingSuggestions()
+                progressionRepository.generateMissingOutcomes()
+            }.onFailure { error ->
+                AppLogger.w(
+                    "DashboardVM",
+                    "Progression recovery failed: ${error.message}",
+                    error
+                )
+            }
+        }
     }
 
     private fun observeActiveSession() {

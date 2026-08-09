@@ -20,11 +20,18 @@ import com.ironlog.app.domain.model.WorkoutSet
             parentColumns = ["id"],
             childColumns = ["exerciseId"],
             onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = WorkoutPlanTargetEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["planTargetSnapshotId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [
         Index("sessionId"),
-        Index("exerciseId")
+        Index("exerciseId"),
+        Index("planTargetSnapshotId")
     ]
 )
 data class WorkoutSetEntity(
@@ -36,7 +43,8 @@ data class WorkoutSetEntity(
     val weightKg: Double,
     val isWarmup: Boolean = false,
     val completedAt: Long, // epoch millis
-    val rpe: Double? = null
+    val rpe: Double? = null,
+    val planTargetSnapshotId: Long? = null
 ) {
     fun toDomain(): WorkoutSet = WorkoutSet(
         id = id,
@@ -47,7 +55,8 @@ data class WorkoutSetEntity(
         weightKg = weightKg,
         isWarmup = isWarmup,
         completedAt = EpochConverter.toLocalDateTime(completedAt),
-        rpe = rpe
+        rpe = rpe,
+        planTargetSnapshotId = planTargetSnapshotId
     )
 
     companion object {
@@ -60,7 +69,8 @@ data class WorkoutSetEntity(
             weightKg = set.weightKg,
             isWarmup = set.isWarmup,
             completedAt = EpochConverter.toLong(set.completedAt),
-            rpe = set.rpe
+            rpe = set.rpe,
+            planTargetSnapshotId = set.planTargetSnapshotId
         )
     }
 }

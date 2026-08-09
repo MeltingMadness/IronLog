@@ -1,6 +1,7 @@
 package com.ironlog.app.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Embedded
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -32,7 +33,9 @@ data class PlanExerciseEntity(
     val supersetGroupId: Int? = null,
     val targetSets: Int = 3,
     val targetReps: Int = 10,
-    val targetWeightKg: Double = 0.0
+    val targetWeightKg: Double = 0.0,
+    @Embedded(prefix = "progression")
+    val progression: ProgressionConfigColumns = ProgressionConfigColumns()
 ) {
     fun toDomain(): PlanExercise = PlanExercise(
         id = id,
@@ -41,7 +44,8 @@ data class PlanExerciseEntity(
         supersetGroupId = supersetGroupId,
         targetSets = targetSets,
         targetReps = targetReps,
-        targetWeightKg = targetWeightKg
+        targetWeightKg = targetWeightKg,
+        progressionConfig = progression.toDomain()
     )
 
     companion object {
@@ -54,7 +58,8 @@ data class PlanExerciseEntity(
                 supersetGroupId = exercise.supersetGroupId,
                 targetSets = exercise.targetSets,
                 targetReps = exercise.targetReps,
-                targetWeightKg = exercise.targetWeightKg
+                targetWeightKg = exercise.targetWeightKg,
+                progression = ProgressionConfigColumns.fromDomain(exercise.progressionConfig)
             )
     }
 }

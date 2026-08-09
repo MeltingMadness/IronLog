@@ -15,7 +15,7 @@ class BackupWorkoutSetRoundTripTest {
     }
 
     @Test
-    fun `non-null RPE survives export JSON import round trip`() {
+    fun `non-null RPE and target snapshot survive export JSON import round trip`() {
         val source = WorkoutSetEntity(
             id = 20L,
             sessionId = 10L,
@@ -25,7 +25,8 @@ class BackupWorkoutSetRoundTripTest {
             weightKg = 80.0,
             isWarmup = false,
             completedAt = 1_200L,
-            rpe = 8.5
+            rpe = 8.5,
+            planTargetSnapshotId = 41L
         )
 
         val exported = source.toBackupWorkoutSet()
@@ -34,6 +35,7 @@ class BackupWorkoutSetRoundTripTest {
         val imported = decoded.toWorkoutSetEntity()
 
         assertEquals(8.5, imported.rpe ?: Double.NaN, 0.0)
+        assertEquals(41L, imported.planTargetSnapshotId)
     }
 
     @Test

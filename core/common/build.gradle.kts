@@ -23,7 +23,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":core:model"))
+    api(project(":core:model"))
     implementation(libs.core.ktx)
     implementation(libs.coroutines.test) // kotlinx.coroutines.flow
 

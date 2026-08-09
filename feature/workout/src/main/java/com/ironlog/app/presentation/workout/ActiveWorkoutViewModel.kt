@@ -6,14 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
-import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -35,11 +38,10 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-data class PlanTarget(
-    val targetSets: Int = 0,
-    val targetReps: Int = 0,
-    val targetWeightKg: Double = 0.0
-)
+sealed interface WorkoutExerciseKey {
+    data class Planned(val snapshotId: Long) : WorkoutExerciseKey
+    data class AdHoc(val exerciseId: Long) : WorkoutExerciseKey
+}
 
 data class PreviousExerciseSessionUi(
     val sessionId: Long,
@@ -50,17 +52,29 @@ data class PreviousExerciseSessionUi(
 )
 
 data class ExerciseWithSets(
+    val key: WorkoutExerciseKey,
     val exercise: Exercise,
     val sets: List<WorkoutSet>,
-    val planTarget: PlanTarget? = null,
-    val supersetGroupId: Int? = null,
+    val planTarget: WorkoutPlanTarget? = null,
     val previousSession: PreviousExerciseSessionUi? = null
-)
+) {
+    val supersetGroupId: Int?
+        get() = planTarget?.supersetGroupId
+}
 
 sealed interface ActiveWorkoutSessionPhase {
     data object Loading : ActiveWorkoutSessionPhase
     data class Active(val session: WorkoutSession) : ActiveWorkoutSessionPhase
     data object Missing : ActiveWorkoutSessionPhase
+}
+
+sealed interface WorkoutFinishState {
+    data object Idle : WorkoutFinishState
+    data object Completing : WorkoutFinishState
+    data object Generating : WorkoutFinishState
+    data class ReviewReady(val sessionId: Long) : WorkoutFinishState
+    data object CompletedWithoutReview : WorkoutFinishState
+    data class GenerationFailed(val sessionId: Long, val message: String) : WorkoutFinishState
 }
 
 /**
@@ -69,6 +83,7 @@ sealed interface ActiveWorkoutSessionPhase {
  */
 sealed interface WorkoutRetryDescriptor {
     data class LogSet(
+        val key: WorkoutExerciseKey,
         val exerciseId: Long,
         val reps: Int,
         val weightKg: Double,
@@ -100,30 +115,28 @@ data class ActiveWorkoutUiState(
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
-    val restTimers: Map<Long, Instant> = emptyMap(),
+    val restTimers: Map<WorkoutExerciseKey, Instant> = emptyMap(),
     val error: WorkoutErrorUi? = null,
-    val logInFlightByExercise: Map<Long, Int> = emptyMap(),
+    val logInFlightByExercise: Map<WorkoutExerciseKey, Int> = emptyMap(),
     val logSuccessSubmissions: Set<Long> = emptySet(),
     val updateInFlightBySet: Map<Long, Int> = emptyMap(),
     val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
-    val finishInFlight: Boolean = false,
-    val workoutFinished: Boolean = false
+    val finishState: WorkoutFinishState = WorkoutFinishState.Idle
 )
 
 private data class ActiveWorkoutChromeState(
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
-    val restTimers: Map<Long, Instant> = emptyMap(),
+    val restTimers: Map<WorkoutExerciseKey, Instant> = emptyMap(),
     val error: WorkoutErrorUi? = null
 )
 
 private data class OperationUiState(
-    val logInFlightByExercise: Map<Long, Int> = emptyMap(),
+    val logInFlightByExercise: Map<WorkoutExerciseKey, Int> = emptyMap(),
     val logSuccessSubmissions: Set<Long> = emptySet(),
     val updateInFlightBySet: Map<Long, Int> = emptyMap(),
     val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
-    val finishInFlight: Boolean = false,
-    val workoutFinished: Boolean = false
+    val finishState: WorkoutFinishState = WorkoutFinishState.Idle
 )
 
 private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
@@ -141,14 +154,14 @@ sealed class WorkoutEvent {
 fun parseDecimal(text: String): Double? = text.trim().replace(",", ".").toDoubleOrNull()
 
 fun lastWorkSetReachedTarget(
-    planTarget: PlanTarget?,
+    planTarget: WorkoutPlanTarget?,
     previousSets: List<WorkoutSet>
 ): Boolean {
     val target = planTarget ?: return false
-    if (target.targetReps <= 0 || target.targetWeightKg <= 0.0) return false
+    if (target.target.reps <= 0 || target.target.weightKg <= 0.0) return false
     val lastWorkSet = previousSets.lastOrNull { !it.isWarmup } ?: return false
-    return lastWorkSet.reps >= target.targetReps &&
-        lastWorkSet.weightKg >= target.targetWeightKg
+    return lastWorkSet.reps >= target.target.reps &&
+        lastWorkSet.weightKg >= target.target.weightKg
 }
 
 class ActiveWorkoutViewModel(
@@ -156,7 +169,7 @@ class ActiveWorkoutViewModel(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
-    private val trainingPlanRepository: TrainingPlanRepository,
+    private val progressionRepository: ProgressionRepository,
     private val appPreferencesRepository: AppPreferencesRepository
 ) : ViewModel() {
 
@@ -168,9 +181,7 @@ class ActiveWorkoutViewModel(
     private val showFinishDialog = MutableStateFlow(false)
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
-    private val _restTimers = MutableStateFlow<Map<Long, Instant>>(emptyMap())
-    private val _planTargets = MutableStateFlow<Map<Long, PlanTarget>>(emptyMap())
-    private val _planSupersetGroups = MutableStateFlow<Map<Long, Int?>>(emptyMap())
+    private val _restTimers = MutableStateFlow<Map<WorkoutExerciseKey, Instant>>(emptyMap())
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
@@ -189,6 +200,9 @@ class ActiveWorkoutViewModel(
     private val sessionSets = workoutRepository.getSetsForSession(sessionId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val planTargets = progressionRepository.observeTargetsForSession(sessionId)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     private val shareWeightHistoryAcrossContexts =
         appPreferencesRepository.preferences
             .map { it.shareWeightHistoryAcrossContexts }
@@ -197,16 +211,21 @@ class ActiveWorkoutViewModel(
     private val exercisesWithSets = combine(
         sessionSets,
         addedExercises,
-        _planTargets,
-        _planSupersetGroups,
+        planTargets,
         shareWeightHistoryAcrossContexts
-    ) { sets, added, targets, supersets, shareAcrossContexts ->
-        val setsByExercise = sets.groupBy { it.exerciseId }
-        val exerciseList = added.distinctBy { it.id }
+    ) { sets, added, targets, shareAcrossContexts ->
+        val orderedTargets = targets.sortedWith(
+            compareBy(WorkoutPlanTarget::orderIndex, WorkoutPlanTarget::id)
+        )
+        val adHocExercises = added.distinctBy { it.id }
+        val exerciseIds = (
+            orderedTargets.map { it.exerciseId } + adHocExercises.map { it.id }
+        ).distinct()
+        val exercisesById = exerciseRepository.getExercisesByIds(exerciseIds).associateBy { it.id }
         val previousSessionsByExercise = try {
             workoutRepository.getPreviousSessionDataForExercises(
                 currentSessionId = sessionId,
-                exerciseIds = exerciseList.map { it.id },
+                exerciseIds = exerciseIds,
                 scope = previousSessionScope(
                     planId = planId,
                     metaPlanId = metaPlanId,
@@ -218,13 +237,15 @@ class ActiveWorkoutViewModel(
             emptyMap()
         }
 
-        exerciseList.map { exercise ->
+        val plannedRows = orderedTargets.mapNotNull { target ->
+            val exercise = exercisesById[target.exerciseId] ?: return@mapNotNull null
             val previousSession = previousSessionsByExercise[exercise.id]
             ExerciseWithSets(
+                key = WorkoutExerciseKey.Planned(target.id),
                 exercise = exercise,
-                sets = (setsByExercise[exercise.id] ?: emptyList()).sortedBy { it.setNumber },
-                planTarget = targets[exercise.id],
-                supersetGroupId = supersets[exercise.id],
+                sets = sets.filter { it.planTargetSnapshotId == target.id }
+                    .sortedBy { it.setNumber },
+                planTarget = target,
                 previousSession = previousSession?.let {
                     PreviousExerciseSessionUi(
                         sessionId = it.sessionId,
@@ -232,13 +253,33 @@ class ActiveWorkoutViewModel(
                         sets = it.sets,
                         lastWorkSetWeightKg = it.lastWorkSetWeightKg,
                         lastWorkSetReachedTarget = lastWorkSetReachedTarget(
-                            planTarget = targets[exercise.id],
+                            planTarget = target,
                             previousSets = it.sets
                         )
                     )
                 }
             )
         }
+        val adHocRows = adHocExercises.mapNotNull { exercise ->
+            val resolvedExercise = exercisesById[exercise.id] ?: exercise
+            val previousSession = previousSessionsByExercise[exercise.id]
+            ExerciseWithSets(
+                key = WorkoutExerciseKey.AdHoc(exercise.id),
+                exercise = resolvedExercise,
+                sets = sets.filter {
+                    it.exerciseId == exercise.id && it.planTargetSnapshotId == null
+                }.sortedBy { it.setNumber },
+                previousSession = previousSession?.let {
+                    PreviousExerciseSessionUi(
+                        sessionId = it.sessionId,
+                        sessionStart = it.sessionStart,
+                        sets = it.sets,
+                        lastWorkSetWeightKg = it.lastWorkSetWeightKg
+                    )
+                }
+            )
+        }
+        plannedRows + adHocRows
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     internal fun previousSessionScope(
@@ -286,8 +327,7 @@ class ActiveWorkoutViewModel(
             logSuccessSubmissions = operation.logSuccessSubmissions,
             updateInFlightBySet = operation.updateInFlightBySet,
             updateSuccessCountBySet = operation.updateSuccessCountBySet,
-            finishInFlight = operation.finishInFlight,
-            workoutFinished = operation.workoutFinished
+            finishState = operation.finishState
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
@@ -295,9 +335,7 @@ class ActiveWorkoutViewModel(
         restoreAddedExercises()
         persistAddedExerciseIds()
         observeExerciseReconciliation()
-        if (planId > 0L) {
-            loadPlanExercises()
-        }
+        recoverCompletedSession()
     }
 
     /**
@@ -336,6 +374,7 @@ class ActiveWorkoutViewModel(
             sessionSets.collect { sets ->
                 val knownIds = addedExercises.value.map { it.id }.toSet()
                 val missingExercises = sets
+                    .filter { it.planTargetSnapshotId == null }
                     .map { it.exerciseId }
                     .distinct()
                     .filterNot { it in knownIds }
@@ -347,40 +386,6 @@ class ActiveWorkoutViewModel(
                         current + missingExercises.filterNot { it.id in currentIds }
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Pre-populate exercises from a training plan (no sets created yet).
-     */
-    private fun loadPlanExercises() {
-        viewModelScope.launch {
-            try {
-                val plan = trainingPlanRepository.getPlanById(planId) ?: return@launch
-                val newTargets = mutableMapOf<Long, PlanTarget>()
-                val newSupersets = mutableMapOf<Long, Int?>()
-                val newExercises = mutableListOf<Exercise>()
-                
-                for (planExercise in plan.exercises.sortedBy { it.orderIndex }) {
-                    val exercise = exerciseRepository.getExerciseById(planExercise.exerciseId)
-                    if (exercise != null) {
-                        newTargets[exercise.id] = PlanTarget(
-                            targetSets = planExercise.targetSets,
-                            targetReps = planExercise.targetReps,
-                            targetWeightKg = planExercise.targetWeightKg
-                        )
-                        newSupersets[exercise.id] = planExercise.supersetGroupId
-                        newExercises.add(exercise)
-                    }
-                }
-                _planTargets.value = newTargets
-                _planSupersetGroups.value = newSupersets
-                addedExercises.update { current ->
-                    (newExercises + current).distinctBy { it.id }
-                }
-            } catch (e: Exception) {
-                setError("Plan-Übungen konnten nicht geladen werden: ${e.message}")
             }
         }
     }
@@ -413,21 +418,33 @@ class ActiveWorkoutViewModel(
         weightKg: Double,
         isWarmup: Boolean = false,
         intensity: String = "",
-        submissionId: Long = nextSubmissionId()
+        submissionId: Long = nextSubmissionId(),
+        key: WorkoutExerciseKey = WorkoutExerciseKey.AdHoc(exerciseId)
     ) {
         viewModelScope.launch {
-            if (operationState.value.logInFlightByExercise[exerciseId] ?: 0 > 0) return@launch
+            if ((operationState.value.logInFlightByExercise[key] ?: 0) > 0) return@launch
             operationState.update {
-                it.copy(logInFlightByExercise = incrementCounter(it.logInFlightByExercise, exerciseId))
+                it.copy(logInFlightByExercise = incrementCounter(it.logInFlightByExercise, key))
             }
             var persisted = false
             try {
                 mutationMutex.withLock {
-                    if (operationState.value.workoutFinished) return@withLock
+                    if (!sessionIsMutable()) return@withLock
+                    require(key !is WorkoutExerciseKey.AdHoc || key.exerciseId == exerciseId) {
+                        "Ad-hoc exercise key does not match exercise"
+                    }
                     val persistedSets = workoutRepository.getSetsForSessionList(sessionId)
-                        .filter { it.exerciseId == exerciseId }
+                        .filter { existing ->
+                            when (key) {
+                                is WorkoutExerciseKey.Planned ->
+                                    existing.planTargetSnapshotId == key.snapshotId
+                                is WorkoutExerciseKey.AdHoc ->
+                                    existing.exerciseId == key.exerciseId &&
+                                        existing.planTargetSnapshotId == null
+                            }
+                        }
                     val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
-                    val parsedRpe = parseIntensity(intensity)
+                    val parsedRpe = parseIntensity(intensity, key)
                     val completedAtInstant = Instant.now()
 
                     val set = WorkoutSet(
@@ -441,7 +458,8 @@ class ActiveWorkoutViewModel(
                             completedAtInstant,
                             ZoneId.systemDefault()
                         ),
-                        rpe = parsedRpe
+                        rpe = parsedRpe,
+                        planTargetSnapshotId = (key as? WorkoutExerciseKey.Planned)?.snapshotId
                     )
                     // The repository owns record recalculation and does it inside the same
                     // transaction as the insert. The ViewModel only compares before/after and
@@ -461,18 +479,20 @@ class ActiveWorkoutViewModel(
                     if (!isWarmup && recordsBefore != null) {
                         emitImprovedRecords(exerciseId, recordsBefore)
                     }
-                    val planTarget = _planTargets.value[exerciseId]
+                    val planTarget = (key as? WorkoutExerciseKey.Planned)?.let { planned ->
+                        planTargets.value.find { it.id == planned.snapshotId }
+                    }
                     val completedWorkSetCount = persistedSets.count { !it.isWarmup } + if (isWarmup) 0 else 1
                     val reachedPlannedSetCount = !isWarmup &&
                         planTarget != null &&
-                        planTarget.targetSets > 0 &&
-                        completedWorkSetCount >= planTarget.targetSets
+                        planTarget.target.sets > 0 &&
+                        completedWorkSetCount >= planTarget.target.sets
 
                     _restTimers.update { currentTimers ->
                         if (reachedPlannedSetCount) {
-                            currentTimers - exerciseId
+                            currentTimers - key
                         } else {
-                            currentTimers + (exerciseId to completedAtInstant)
+                            currentTimers + (key to completedAtInstant)
                         }
                     }
                 }
@@ -485,6 +505,7 @@ class ActiveWorkoutViewModel(
                 setError(
                     message = "Satz konnte nicht gespeichert werden: ${e.message}",
                     retry = WorkoutRetryDescriptor.LogSet(
+                        key = key,
                         exerciseId = exerciseId,
                         reps = reps,
                         weightKg = weightKg,
@@ -498,7 +519,7 @@ class ActiveWorkoutViewModel(
                     it.copy(
                         logInFlightByExercise = decrementCounter(
                             it.logInFlightByExercise,
-                            exerciseId
+                            key
                         )
                     )
                 }
@@ -506,15 +527,29 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    fun dismissRestTimer(exerciseId: Long) {
+    fun dismissRestTimer(key: WorkoutExerciseKey) {
         _restTimers.update { current ->
-            current - exerciseId
+            current - key
         }
     }
 
-    private suspend fun parseIntensity(intensity: String): Double? {
+    private suspend fun parseIntensity(
+        intensity: String,
+        key: WorkoutExerciseKey
+    ): Double? {
         val prefs = appPreferencesRepository.preferences.first()
-        return computeIntensity(intensity, prefs.intensitySystem)
+        return computeIntensity(intensity, effectiveIntensitySystem(prefs.intensitySystem, key))
+    }
+
+    private fun effectiveIntensitySystem(
+        configured: IntensitySystem,
+        key: WorkoutExerciseKey
+    ): IntensitySystem {
+        if (configured != IntensitySystem.OFF || key !is WorkoutExerciseKey.Planned) {
+            return configured
+        }
+        val target = planTargets.value.find { it.id == key.snapshotId }
+        return if (target?.config is ProgressionConfig.RpeRir) IntensitySystem.RPE else configured
     }
 
     private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {
@@ -569,7 +604,7 @@ class ActiveWorkoutViewModel(
     fun deleteSet(setId: Long) {
         viewModelScope.launch {
             mutationMutex.withLock {
-                if (operationState.value.workoutFinished) return@withLock
+                if (!sessionIsMutable()) return@withLock
                 try {
                     workoutRepository.deleteSet(setId)
                 } catch (e: Exception) {
@@ -588,11 +623,10 @@ class ActiveWorkoutViewModel(
                 it.copy(updateInFlightBySet = incrementCounter(it.updateInFlightBySet, setId))
             }
             try {
-                // A cleared/invalid reps field must never persist a stale or zero value.
-                if (reps <= 0) return@launch
-
                 mutationMutex.withLock {
-                    if (operationState.value.workoutFinished) return@withLock
+                    if (!sessionIsMutable()) return@withLock
+                    // A cleared/invalid reps field must never persist a stale or zero value.
+                    if (reps <= 0) return@withLock
 
                     val sets = workoutRepository.getSetsForSessionList(sessionId)
                     val set = sets.find { it.id == setId } ?: return@withLock
@@ -602,10 +636,15 @@ class ActiveWorkoutViewModel(
                     // incoming string is always blank — preserve the existing RPE instead
                     // of wiping it out. When intensity tracking is on, a blank string means
                     // the user intentionally cleared the field.
-                    val newRpe = if (prefs.intensitySystem == IntensitySystem.OFF) {
+                    val intensitySystem = effectiveIntensitySystem(
+                        configured = prefs.intensitySystem,
+                        key = set.planTargetSnapshotId?.let { WorkoutExerciseKey.Planned(it) }
+                            ?: WorkoutExerciseKey.AdHoc(set.exerciseId)
+                    )
+                    val newRpe = if (intensitySystem == IntensitySystem.OFF) {
                         set.rpe
                     } else {
-                        computeIntensity(intensity, prefs.intensitySystem)
+                        computeIntensity(intensity, intensitySystem)
                     }
 
                     val updatedSet = set.copy(
@@ -647,21 +686,50 @@ class ActiveWorkoutViewModel(
 
     fun finishWorkout() {
         viewModelScope.launch {
+            var generateAfterFinish = false
             mutationMutex.withLock {
-                if (operationState.value.workoutFinished || operationState.value.finishInFlight) {
+                if (operationState.value.finishState != WorkoutFinishState.Idle) {
                     return@withLock
                 }
-                operationState.update { it.copy(finishInFlight = true) }
+                operationState.update { it.copy(finishState = WorkoutFinishState.Completing) }
                 var discardEmptySession = false
                 try {
-                    discardEmptySession = workoutRepository.getSetCountForSession(sessionId) == 0
-                    if (discardEmptySession) {
-                        workoutRepository.deleteSession(sessionId)
-                    } else {
-                        workoutRepository.finishWorkout(sessionId)
+                    val session = workoutRepository.getSessionById(sessionId)
+                    when {
+                        session == null -> {
+                            showFinishDialog.value = false
+                            operationState.update {
+                                it.copy(finishState = WorkoutFinishState.CompletedWithoutReview)
+                            }
+                        }
+                        session.endTime != null -> {
+                            showFinishDialog.value = false
+                            operationState.update {
+                                it.copy(finishState = WorkoutFinishState.Generating)
+                            }
+                            generateAfterFinish = true
+                        }
+                        else -> {
+                            discardEmptySession =
+                                workoutRepository.getSetCountForSession(sessionId) == 0
+                            if (discardEmptySession) {
+                                workoutRepository.deleteSession(sessionId)
+                                showFinishDialog.value = false
+                                operationState.update {
+                                    it.copy(
+                                        finishState = WorkoutFinishState.CompletedWithoutReview
+                                    )
+                                }
+                            } else {
+                                workoutRepository.finishWorkout(sessionId)
+                                showFinishDialog.value = false
+                                operationState.update {
+                                    it.copy(finishState = WorkoutFinishState.Generating)
+                                }
+                                generateAfterFinish = true
+                            }
+                        }
                     }
-                    showFinishDialog.value = false
-                    operationState.update { it.copy(workoutFinished = true) }
                 } catch (e: Exception) {
                     setError(
                         message = "Training konnte nicht beendet werden: ${e.message}",
@@ -669,11 +737,91 @@ class ActiveWorkoutViewModel(
                             discardEmptySession = discardEmptySession
                         )
                     )
-                } finally {
-                    operationState.update { it.copy(finishInFlight = false) }
+                    operationState.update { it.copy(finishState = WorkoutFinishState.Idle) }
+                }
+            }
+            if (generateAfterFinish) {
+                generateProgression(sessionId)
+            }
+        }
+    }
+
+    fun retryProgressionGeneration() {
+        viewModelScope.launch {
+            var retrySessionId: Long? = null
+            mutationMutex.withLock {
+                val failed = operationState.value.finishState as? WorkoutFinishState.GenerationFailed
+                    ?: return@withLock
+                retrySessionId = failed.sessionId
+                operationState.update { it.copy(finishState = WorkoutFinishState.Generating) }
+            }
+            retrySessionId?.let { generateProgression(it) }
+        }
+    }
+
+    private fun recoverCompletedSession() {
+        viewModelScope.launch {
+            var completedSessionId: Long? = null
+            try {
+                mutationMutex.withLock {
+                    if (operationState.value.finishState != WorkoutFinishState.Idle) {
+                        return@withLock
+                    }
+                    val session = workoutRepository.getSessionById(sessionId)
+                    if (session?.endTime != null) {
+                        completedSessionId = session.id
+                        operationState.update { it.copy(finishState = WorkoutFinishState.Generating) }
+                    }
+                }
+                completedSessionId?.let { generateProgression(it) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                runCatching {
+                    AppLogger.w(
+                        "ActiveWorkoutVM",
+                        "Recovery-Pruefung fuer beendetes Training fehlgeschlagen: ${e.message}",
+                        e
+                    )
                 }
             }
         }
+    }
+
+    private suspend fun generateProgression(completedSessionId: Long) {
+        try {
+            val result = progressionRepository.generateOutcomesForSession(completedSessionId)
+            operationState.update {
+                it.copy(
+                    finishState = if (result.reviewItemCount > 0) {
+                        WorkoutFinishState.ReviewReady(completedSessionId)
+                    } else {
+                        WorkoutFinishState.CompletedWithoutReview
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            operationState.update {
+                it.copy(
+                    finishState = WorkoutFinishState.GenerationFailed(
+                        sessionId = completedSessionId,
+                        message = GENERATION_FAILURE_MESSAGE
+                    )
+                )
+            }
+            runCatching {
+                AppLogger.w(
+                    "ActiveWorkoutVM",
+                    "Progressionsvorschlaege konnten nicht erzeugt werden: ${e.message}",
+                    e
+                )
+            }
+        }
+    }
+
+    private suspend fun sessionIsMutable(): Boolean {
+        val session = workoutRepository.getSessionById(sessionId)
+        return session != null && session.endTime == null
     }
 
     fun retryLastError() {
@@ -681,6 +829,7 @@ class ActiveWorkoutViewModel(
         _error.value = null
         when (retry) {
             is WorkoutRetryDescriptor.LogSet -> logSet(
+                key = retry.key,
                 exerciseId = retry.exerciseId,
                 reps = retry.reps,
                 weightKg = retry.weightKg,
@@ -711,20 +860,18 @@ class ActiveWorkoutViewModel(
         )
     }
 
-    private fun incrementCounter(counter: Map<Long, Int>, key: Long): Map<Long, Int> =
+    private fun <K> incrementCounter(counter: Map<K, Int>, key: K): Map<K, Int> =
         counter + (key to ((counter[key] ?: 0) + 1))
 
-    private fun decrementCounter(counter: Map<Long, Int>, key: Long): Map<Long, Int> {
+    private fun <K> decrementCounter(counter: Map<K, Int>, key: K): Map<K, Int> {
         val next = (counter[key] ?: 0) - 1
         return if (next <= 0) counter - key else counter + (key to next)
     }
 
     companion object {
         private const val KEY_ADDED_EXERCISE_IDS = "addedExerciseIds"
+        private const val GENERATION_FAILURE_MESSAGE = "progression_generation_failed"
     }
 }
-
-
-
 
 
