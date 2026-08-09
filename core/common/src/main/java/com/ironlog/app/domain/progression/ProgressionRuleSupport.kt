@@ -181,6 +181,7 @@ internal fun repetitionMissOutcome(
     return ProgressionOutcome.KeepTarget(
         sourceTarget = target,
         reasonCode = ProgressionReasonCode.BACKOFF_FLOOR_REACHED,
+        reasonArguments = mapOf("backoffPercent" to failurePolicy.backoffPercent),
         streakEffect = ProgressionStreakEffect.INCREMENT,
         countedSetIds = countedSets.map(WorkoutSet::id)
     )

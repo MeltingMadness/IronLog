@@ -115,6 +115,38 @@ class ProgressionEngineTest {
     }
 
     @Test
+    fun `missing rpe with a repetition miss cannot trigger backoff`() {
+        val result = engine.evaluate(
+            context(
+                rpe(8.0, 0.5),
+                reps = listOf(8, 8, 7),
+                rpes = listOf(8.0, null, 8.0),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            )
+        )
+
+        assertTrue(result is ProgressionOutcome.InsufficientData)
+        assertEquals(ProgressionReasonCode.RPE_MISSING, result.reasonCode)
+        assertEquals(ProgressionStreakEffect.IGNORE, result.streakEffect)
+    }
+
+    @Test
+    fun `invalid rpe with a repetition miss cannot trigger backoff`() {
+        val result = engine.evaluate(
+            context(
+                rpe(8.0, 0.5),
+                reps = listOf(8, 8, 7),
+                rpes = listOf(8.0, 0.0, 8.0),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            )
+        )
+
+        assertTrue(result is ProgressionOutcome.InsufficientData)
+        assertEquals(ProgressionReasonCode.RPE_INVALID, result.reasonCode)
+        assertEquals(ProgressionStreakEffect.IGNORE, result.streakEffect)
+    }
+
+    @Test
     fun `high rpe after completed work resets failure streak without increasing`() {
         val result = engine.evaluate(context(rpe(8.0, 0.5), reps = listOf(8, 8, 8), rpes = listOf(8.0, 9.0, 8.0)))
         assertTrue(result is ProgressionOutcome.KeepTarget)
@@ -172,6 +204,7 @@ class ProgressionEngineTest {
         assertTrue(result is ProgressionOutcome.KeepTarget)
         assertEquals(ProgressionReasonCode.BACKOFF_FLOOR_REACHED, result.reasonCode)
         assertEquals(ProgressionStreakEffect.INCREMENT, result.streakEffect)
+        assertEquals(mapOf("backoffPercent" to 10.0), result.reasonArguments)
     }
 
     @Test
