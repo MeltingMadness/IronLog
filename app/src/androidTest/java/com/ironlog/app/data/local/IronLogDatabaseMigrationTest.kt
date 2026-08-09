@@ -136,11 +136,10 @@ class IronLogDatabaseMigrationTest {
         insertV8Data(legacyHelper)
         legacyHelper.close()
 
-        // The real Room open runs the no-op MIGRATION_8_9 followed by
-        // MIGRATION_9_10, validates the schema against the version 10
-        // identity and rewrites the recorded identity hash. Any schema
-        // mismatch throws here.
-        val database = openMigratedV8To10Database(context, dbName)
+        // The real Room open runs the full 8 -> 9 -> 10 -> 11 chain,
+        // validates the current schema and rewrites the recorded identity
+        // hash. Any schema mismatch throws here.
+        val database = openMigratedV8ToCurrentDatabase(context, dbName)
         runBlocking {
             // Triggers the Room open on a database whose recorded identity is
             // the pre-push v8 hash and whose physical schema has no DEFAULTs.
@@ -148,15 +147,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV10Connection(context, dbName)
+        val rawHelper = openRawV11Connection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(10, cursor.getInt(0))
+                assertEquals(11, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "c6950cf049fba43c8663d55261bd94a1"
+                "e306d69198bb1578052d10f97dd36b72"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -184,7 +183,7 @@ class IronLogDatabaseMigrationTest {
         insertV8Data(pushHelper)
         pushHelper.close()
 
-        val database = openMigratedV8To10Database(context, dbName)
+        val database = openMigratedV8ToCurrentDatabase(context, dbName)
         runBlocking {
             // Triggers the Room open on a database whose recorded identity is
             // the broken v8 hash and whose physical schema carries DEFAULTs.
@@ -192,15 +191,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV10Connection(context, dbName)
+        val rawHelper = openRawV11Connection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(10, cursor.getInt(0))
+                assertEquals(11, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "c6950cf049fba43c8663d55261bd94a1"
+                "e306d69198bb1578052d10f97dd36b72"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -267,24 +266,24 @@ class IronLogDatabaseMigrationTest {
         }
         legacyHelper.close()
 
-        // The real Room open applies MIGRATION_9_10, validates the legacy v9
+        // The real Room open applies 9 -> 10 -> 11, validates the legacy v9
         // schema against the recorded identity and rewrites the identity hash
-        // to the v10 schema. Any mismatch throws here.
-        val database = openMigratedV10Database(context, dbName)
+        // to the current schema. Any mismatch throws here.
+        val database = openMigratedV9ToCurrentDatabase(context, dbName)
         runBlocking {
             database.trainingPlanDao().getAllPlansList()
         }
         database.close()
 
-        val rawHelper = openRawV10Connection(context, dbName)
+        val rawHelper = openRawV11Connection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(10, cursor.getInt(0))
+                assertEquals(11, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "c6950cf049fba43c8663d55261bd94a1"
+                "e306d69198bb1578052d10f97dd36b72"
             )
             assertTrue(tableExists(db, "meta_plan_skips"))
             assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId"))
@@ -410,43 +409,27 @@ class IronLogDatabaseMigrationTest {
         }
     }
 
-    private fun openMigratedV8To10Database(
+    private fun openMigratedV8ToCurrentDatabase(
         context: Context,
         dbName: String
     ): IronLogDatabase {
         return Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
             .addMigrations(IronLogDatabase.migration8To9ForTests())
             .addMigrations(IronLogDatabase.migration9To10ForTests())
+            .addMigrations(IronLogDatabase.migration10To11ForTests())
             .allowMainThreadQueries()
             .build()
     }
 
-    private fun openMigratedV10Database(
+    private fun openMigratedV9ToCurrentDatabase(
         context: Context,
         dbName: String
     ): IronLogDatabase {
         return Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
             .addMigrations(IronLogDatabase.migration9To10ForTests())
+            .addMigrations(IronLogDatabase.migration10To11ForTests())
             .allowMainThreadQueries()
             .build()
-    }
-
-    private fun openRawV10Connection(
-        context: Context,
-        dbName: String
-    ): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
-            override fun onCreate(db: SupportSQLiteDatabase) = Unit
-
-            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
-        }
-
-        return FrameworkSQLiteOpenHelperFactory().create(
-            SupportSQLiteOpenHelper.Configuration.builder(context)
-                .name(dbName)
-                .callback(callback)
-                .build()
-        )
     }
 
     private fun openRawV11Connection(

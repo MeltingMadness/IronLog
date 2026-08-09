@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -34,10 +35,13 @@ import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.presentation.progression.ProgressionReviewViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.koin.compose.KoinApplication
+import org.koin.compose.KoinIsolatedContext
+import org.koin.core.context.GlobalContext
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -229,21 +233,24 @@ class NavigationSmokeTest {
     }
 
     @Test
-    fun progression_review_route_shows_review_top_bar() {
+    fun progression_review_route_shows_review_top_bar_without_stopping_application_koin() {
         lateinit var navController: NavHostController
+        val showReview = mutableStateOf(true)
+        val applicationKoin = GlobalContext.get()
+        val progressionReviewKoin = koinApplication {
+            modules(progressionReviewModule)
+        }
 
         composeRule.setContent {
-            KoinApplication(
-                application = {
-                    modules(progressionReviewModule)
-                }
-            ) {
-                IronLogTheme {
-                    navController = rememberNavController()
-                    IronLogNavHost(
-                        navController = navController,
-                        startDestination = Screen.ProgressionReview.createRoute(0L)
-                    )
+            if (showReview.value) {
+                KoinIsolatedContext(context = progressionReviewKoin) {
+                    IronLogTheme {
+                        navController = rememberNavController()
+                        IronLogNavHost(
+                            navController = navController,
+                            startDestination = Screen.ProgressionReview.createRoute(0L)
+                        )
+                    }
                 }
             }
         }
@@ -257,6 +264,14 @@ class NavigationSmokeTest {
                 navController.currentBackStackEntry?.destination?.route
             )
         }
+
+        composeRule.runOnIdle {
+            showReview.value = false
+        }
+        composeRule.waitForIdle()
+
+        assertSame(applicationKoin, GlobalContext.get())
+        progressionReviewKoin.close()
     }
 }
 
