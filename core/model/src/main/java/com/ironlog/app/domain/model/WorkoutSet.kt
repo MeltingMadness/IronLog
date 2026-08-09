@@ -11,5 +11,6 @@ data class WorkoutSet(
     val weightKg: Double,
     val isWarmup: Boolean = false,
     val completedAt: LocalDateTime = LocalDateTime.now(),
-    val rpe: Double? = null
+    val rpe: Double? = null,
+    val planTargetSnapshotId: Long? = null
 )
