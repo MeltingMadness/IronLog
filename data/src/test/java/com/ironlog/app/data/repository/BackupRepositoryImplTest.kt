@@ -405,6 +405,96 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `restore recovers exact edited progression state after importing another graph`() {
+        val harness = Harness()
+        val recoveryTarget = progressionTargetEntity()
+        val recoverySuggestion = acceptedEditedProgressionSuggestionEntity()
+        val recoverySets = progressionSetEntities()
+        harness.stubSnapshotReads(
+            exercise = ExerciseEntity(
+                id = 1L,
+                name = "Bankdruecken",
+                primaryMuscleGroup = "BRUST",
+                secondaryMuscleGroups = "TRIZEPS",
+                category = "LANGHANTEL",
+                isCustom = false
+            ),
+            session = WorkoutSessionEntity(
+                id = 10L,
+                startTime = 1000L,
+                endTime = 2000L,
+                durationSeconds = 1L,
+                name = "Push",
+                notes = "",
+                planId = 5L,
+                metaPlanId = null
+            ),
+            sets = recoverySets,
+            trainingPlan = progressionPlanEntity(),
+            planExercise = progressionPlanExerciseEntity(),
+            target = recoveryTarget,
+            suggestion = recoverySuggestion
+        )
+        harness.stubMutations()
+        harness.stubMutableProgressionState(
+            sets = recoverySets,
+            targets = listOf(recoveryTarget),
+            suggestions = listOf(recoverySuggestion)
+        )
+        val importedPayload = validProgressionPayload()
+        harness.documentIo.bytes = json.encodeToString(
+            BackupPayloadV1.serializer(),
+            importedPayload
+        ).encodeToByteArray()
+
+        runBlocking {
+            harness.repository.importBackup(URI, harness.documentIo.bytes.sha256Hex())
+        }
+
+        assertEquals(1, harness.recoveryStore.saved.size)
+        val recoveryPayload = json.decodeFromString(
+            BackupPayloadV1.serializer(),
+            harness.recoveryStore.saved.single().decodeToString()
+        )
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 80.0), recoveryPayload.workoutPlanTargets.single().target)
+        val savedSuggestion = recoveryPayload.progressionSuggestions.single()
+        assertEquals("ACCEPTED", savedSuggestion.status)
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 82.5), savedSuggestion.suggestedTarget)
+        assertEquals(BackupProgressionTarget(sets = 1, reps = 8, weightKg = 85.0), savedSuggestion.finalTarget)
+        assertTrue(savedSuggestion.wasEdited)
+        assertEquals(2300L, savedSuggestion.decidedAtEpochMillis)
+        assertTrue(savedSuggestion.decidedAtEpochMillis!! >= savedSuggestion.createdAtEpochMillis)
+
+        assertEquals(importedPayload.workoutPlanTargets.single().target.sets, harness.currentProgressionTargets.single().target.sets)
+        assertEquals("PENDING", harness.currentProgressionSuggestions.single().status)
+        assertEquals(3, harness.currentProgressionSets.size)
+
+        val restored = runBlocking { harness.repository.restoreLatestRecovery() }
+
+        assertTrue(restored != null)
+        assertEquals(listOf(recoveryTarget), harness.currentProgressionTargets)
+        assertEquals(recoverySets, harness.currentProgressionSets)
+        assertEquals(listOf(recoverySuggestion), harness.currentProgressionSuggestions)
+        val restoredSuggestion = harness.currentProgressionSuggestions.single()
+        assertEquals(ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 85.0), restoredSuggestion.finalTarget)
+        assertTrue(restoredSuggestion.wasEdited)
+        assertEquals(2300L, restoredSuggestion.decidedAtEpochMillis)
+        assertTrue(restoredSuggestion.decidedAtEpochMillis!! >= restoredSuggestion.createdAtEpochMillis)
+        val fkCycle = listOf(
+            "delete-suggestions",
+            "delete-sets",
+            "delete-targets",
+            "insert-targets",
+            "insert-sets",
+            "insert-suggestions"
+        )
+        assertEquals(
+            fkCycle + fkCycle,
+            harness.events.filter { it in fkCycle }
+        )
+    }
+
+    @Test
     fun `database change between recovery and guard snapshot aborts with zero deletes and removes recovery`() {
         val harness = Harness()
         var snapshotReadCount = 0
@@ -678,6 +768,13 @@ class BackupRepositoryImplTest {
         decidedAtEpochMillis = null
     )
 
+    private fun acceptedEditedProgressionSuggestionEntity() = progressionSuggestionEntity().copy(
+        status = "ACCEPTED",
+        wasEdited = true,
+        finalTarget = ProgressionTargetColumns(sets = 1, reps = 8, weightKg = 85.0),
+        decidedAtEpochMillis = 2300L
+    )
+
     private fun progressionSetEntities() = listOf(
         WorkoutSetEntity(
             id = 20L,
@@ -711,6 +808,12 @@ class BackupRepositoryImplTest {
         val metaTrainingPlanDao = mockk<MetaTrainingPlanDao>(relaxed = true)
         val personalRecordDao = mockk<PersonalRecordDao>(relaxed = true)
         val progressionDao = mockk<ProgressionDao>(relaxed = true)
+        var currentProgressionSets = emptyList<WorkoutSetEntity>()
+            private set
+        var currentProgressionTargets = emptyList<WorkoutPlanTargetEntity>()
+            private set
+        var currentProgressionSuggestions = emptyList<ProgressionSuggestionEntity>()
+            private set
         val repository = BackupRepositoryImpl(
             transactionRunner = transactionRunner,
             documentIo = documentIo,
@@ -861,6 +964,58 @@ class BackupRepositoryImplTest {
             }
             coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
                 events += "insert-suggestions"
+                Unit
+            }
+        }
+
+        fun stubMutableProgressionState(
+            sets: List<WorkoutSetEntity>,
+            targets: List<WorkoutPlanTargetEntity>,
+            suggestions: List<ProgressionSuggestionEntity>
+        ) {
+            currentProgressionSets = sets
+            currentProgressionTargets = targets
+            currentProgressionSuggestions = suggestions
+            coEvery { workoutSetDao.getAllSetsList() } answers {
+                events += "read-sets"
+                currentProgressionSets
+            }
+            coEvery { progressionDao.getAllTargets() } answers {
+                events += "read-targets"
+                currentProgressionTargets
+            }
+            coEvery { progressionDao.getAllSuggestions() } answers {
+                events += "read-suggestions"
+                currentProgressionSuggestions
+            }
+            coEvery { progressionDao.deleteAllSuggestions() } answers {
+                events += "delete-suggestions"
+                currentProgressionSuggestions = emptyList()
+                Unit
+            }
+            coEvery { workoutSetDao.deleteAll() } answers {
+                events += "delete-sets"
+                currentProgressionSets = emptyList()
+                Unit
+            }
+            coEvery { progressionDao.deleteAllTargets() } answers {
+                events += "delete-targets"
+                currentProgressionTargets = emptyList()
+                Unit
+            }
+            coEvery { progressionDao.replaceAllTargets(any()) } answers {
+                events += "insert-targets"
+                currentProgressionTargets = firstArg()
+                Unit
+            }
+            coEvery { workoutSetDao.replaceAll(any()) } answers {
+                events += "insert-sets"
+                currentProgressionSets = firstArg()
+                Unit
+            }
+            coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
+                events += "insert-suggestions"
+                currentProgressionSuggestions = firstArg()
                 Unit
             }
         }

@@ -132,15 +132,29 @@ class BackupLifecycleRoundTripTest {
             // database was mutated (two-phase flow with a changed local state).
             harness.repository.exportBackup(MEMORY_URI)
 
-            // Mutate the database so the recovery snapshot captures a state that
-            // differs from the exported document (proves restore replaces data).
-            harness.mutateAwayFromSeededState()
+            // Mutate the database to a non-empty decided graph so the recovery
+            // snapshot must preserve edited progression state, not just absence.
+            harness.mutateToAcceptedEditedRecoveryState()
 
-            val preImportPlanName = harness.preImportPlanName
-            val preImportSetCount = harness.preImportSetCount
+            val preImportPlanName = harness.readPlanName()
+            val preImportSetCount = harness.readSetCount()
+            val preImportCustomExerciseIds = harness.readCustomExerciseIds()
             val preImportMetaPlanSkips = harness.readMetaPlanSkips()
             val preImportTargets = harness.readWorkoutPlanTargets()
             val preImportSuggestions = harness.readProgressionSuggestions()
+            assertTrue("pre-import recovery target must be non-empty", preImportTargets.isNotEmpty())
+            val preImportSuggestion = preImportSuggestions.single()
+            assertEquals("ACCEPTED", preImportSuggestion.status)
+            assertTrue("pre-import suggestion must preserve an edit", preImportSuggestion.wasEdited)
+            assertTrue(
+                "edited final target must differ from the suggestion",
+                preImportSuggestion.finalTarget != preImportSuggestion.suggestedTarget
+            )
+            assertTrue(
+                "decision timestamp must not precede creation",
+                requireNotNull(preImportSuggestion.decidedAtEpochMillis) >=
+                    preImportSuggestion.createdAtEpochMillis
+            )
 
             // Two-phase import: preview (document hash) then guarded import.
             val preview = harness.repository.previewImport(MEMORY_URI)
@@ -167,17 +181,18 @@ class BackupLifecycleRoundTripTest {
                 latest.sha256
             )
 
-            // The pre-import (mutated) state differs from the imported state: plan name
-            // and set count prove that restore really replaces the current database.
+            // The imported document contains the original pending graph, proving
+            // that restore later replaces a different, valid progression state.
             assertFalse(
                 "imported state must differ from pre-import state",
                 harness.readPlanName() == preImportPlanName &&
-                    harness.readSetCount() == preImportSetCount
+                    harness.readProgressionSuggestions() == preImportSuggestions
             )
             assertTrue(
                 "import must have restored the exported sets",
                 harness.readSetCount() == harness.exportedSetCount
             )
+            assertEquals("PENDING", harness.readProgressionSuggestions().single().status)
 
             // Mutate again, then restore the latest recovery snapshot.
             harness.mutateAfterImport()
@@ -202,13 +217,18 @@ class BackupLifecycleRoundTripTest {
             assertEquals(preImportPlanName, harness.readPlanName())
             assertEquals(preImportSetCount, harness.readSetCount())
             assertEquals(
-                harness.preImportCustomExerciseIds,
+                preImportCustomExerciseIds,
                 harness.readCustomExerciseIds()
             )
             assertEquals(preImportMetaPlanSkips, harness.readMetaPlanSkips())
             assertEquals(preImportTargets, harness.readWorkoutPlanTargets())
             assertEquals(preImportSuggestions, harness.readProgressionSuggestions())
-            assertFalse("restored sets must be the pre-import (deleted) state", harness.readSetCount() > 0)
+            val restoredSuggestion = harness.readProgressionSuggestions().single()
+            assertEquals("ACCEPTED", restoredSuggestion.status)
+            assertTrue("restored suggestion must remain edited", restoredSuggestion.wasEdited)
+            assertEquals(preImportSuggestion.finalTarget, restoredSuggestion.finalTarget)
+            assertEquals(preImportSuggestion.decidedAtEpochMillis, restoredSuggestion.decidedAtEpochMillis)
+            assertTrue("restored recovery graph must remain non-empty", harness.readSetCount() > 0)
             assertForeignKeyIntegrity()
         }
 
@@ -329,10 +349,7 @@ class BackupLifecycleRoundTripTest {
             buildInfo = BuildInfo(versionName = "test", versionCode = 1)
         )
 
-        lateinit var preImportPlanName: String
-        var preImportSetCount: Int = 0
         var exportedSetCount: Int = 0
-        var preImportCustomExerciseIds: List<Long> = emptyList()
 
         private fun progressionConfigColumns() = ProgressionConfigColumns(
             scheme = "LINEAR",
@@ -494,9 +511,6 @@ class BackupLifecycleRoundTripTest {
             )
 
             exportedSetCount = 3
-            preImportPlanName = MUTATED_PLAN_NAME
-            preImportSetCount = 0
-            preImportCustomExerciseIds = listOf(CUSTOM_SQUAT_ID, CUSTOM_DEADLIFT_ID)
         }
 
         suspend fun mutateAwayFromSeededState() {
@@ -505,6 +519,28 @@ class BackupLifecycleRoundTripTest {
             progressionDao.deleteAllTargets()
             val plan = requireNotNull(trainingPlanDao.getPlanById(PLAN_ID)) {
                 "seeded plan must exist before mutation"
+            }
+            trainingPlanDao.updatePlan(plan.copy(name = MUTATED_PLAN_NAME))
+        }
+
+        suspend fun mutateToAcceptedEditedRecoveryState() {
+            val pending = progressionDao.getAllSuggestions().single()
+            val suggested = requireNotNull(pending.suggestedTarget) {
+                "seeded suggestion must propose a target"
+            }
+            progressionDao.deleteAllSuggestions()
+            progressionDao.replaceAllSuggestions(
+                listOf(
+                    pending.copy(
+                        status = "ACCEPTED",
+                        wasEdited = true,
+                        finalTarget = suggested.copy(weightKg = 125.0),
+                        decidedAtEpochMillis = 3800L
+                    )
+                )
+            )
+            val plan = requireNotNull(trainingPlanDao.getPlanById(PLAN_ID)) {
+                "seeded plan must exist before recovery mutation"
             }
             trainingPlanDao.updatePlan(plan.copy(name = MUTATED_PLAN_NAME))
         }

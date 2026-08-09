@@ -461,6 +461,9 @@ object BackupPayloadValidator {
         val rpeAllNull = config.targetRpe == null && config.rpeTolerance == null
 
         if (config.scheme == "MANUAL") {
+            if (config.ruleRevision != DEFAULT_RULE_REVISION) {
+                errors += "$label manual progression must use rule revision $DEFAULT_RULE_REVISION"
+            }
             if (!incrementFieldsAllNull || !minMaxAllNull ||
                 config.targetTotalReps != null || !rpeAllNull
             ) {
@@ -591,6 +594,7 @@ object BackupPayloadValidator {
     private const val PROGRESSION_SCHEMA_VERSION = 11
     private const val DEFAULT_STALL_THRESHOLD = 2
     private const val DEFAULT_BACKOFF_PERCENT = 10.0
+    private const val DEFAULT_RULE_REVISION = 1
     private const val KG_TO_LB = 2.2046226218
     private const val STEP_STORAGE_TOLERANCE_KG = 0.000001
 }

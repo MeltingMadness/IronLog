@@ -548,6 +548,28 @@ class BackupPayloadValidatorTest {
     }
 
     @Test
+    fun `validator rejects nondefault manual rule revision without suggestion mismatch`() {
+        val valid = validPayloadWithProgression()
+        val target = valid.workoutPlanTargets.single()
+        val broken = valid.copy(
+            workoutPlanTargets = listOf(
+                target.copy(
+                    progression = BackupProgressionConfig(ruleRevision = 2)
+                )
+            ),
+            progressionSuggestions = emptyList()
+        )
+
+        val result = BackupPayloadValidator.validate(broken, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid, result.errors.joinToString())
+        assertEquals(
+            listOf("Workout plan target 30 manual progression must use rule revision 1"),
+            result.errors
+        )
+    }
+
+    @Test
     fun `validator enforces outcome evidence and suggested target matrix`() {
         val valid = validPayloadWithProgression()
         val suggestion = valid.progressionSuggestions.single()
