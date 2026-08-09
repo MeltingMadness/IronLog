@@ -2465,7 +2465,9 @@ git commit -m "feat: surface pending progression reviews"
 
 - [ ] **Step 1: Write failing shared compatibility and integrity tests**
 
-Set both validator test constants to schema `11`, retain the existing raw schema-10 JSON fixture, and add these assertions:
+Set both validator test constants to schema `11`. Retain the existing raw schema-9 JSON fixture and add a frozen raw schema-10 fixture that contains the complete pre-progression V1 payload shape with `schemaVersion = 10` and no Task-12 fields. Use that new fixture for the schema-10 compatibility assertion below; do not relabel the schema-9 fixture.
+
+Add these assertions:
 
 ```kotlin
 @Test
@@ -2612,7 +2614,7 @@ Extend `BackupPayloadValidator` with these fail-closed checks, using literal enu
 - Every target references an existing completed or active session, plan, and exercise; the session's non-null `planId` equals the target plan.
 - Every non-null set snapshot exists and matches the set's session and exercise.
 - Every suggestion references a completed source session plus a target, plan, and exercise that exactly match its duplicated identity, target, and progression values; active sessions may own snapshots but never outcomes.
-- Counted set IDs are unique, exist, reference the suggestion's source snapshot, and match its session and exercise.
+- Counted set IDs are unique, exist, are not warm-ups, reference the suggestion's source snapshot, and match its session and exercise.
 - Schemes are one of `MANUAL`, `LINEAR`, `DOUBLE`, `TOTAL_REPS`, `RPE_RIR`; active configs require all and only their scheme-specific nullable fields and satisfy the same finite/range rules as `ProgressionConfigValidator`. `MANUAL` requires every scheme-specific field to be null, while shared threshold/backoff/revision defaults remain present.
 - Targets require positive sets/reps and finite non-negative weight; rule revisions are positive.
 - Use these literal locked sets: outcomes `{PROPOSE_CHANGE, KEEP_TARGET, INSUFFICIENT_DATA}`; reasons `{REP_TARGET_ADVANCED, LOAD_ADVANCED, TOTAL_REPS_COMPLETED, RPE_WITHIN_TARGET, REPEAT_TARGET, STALL_BACKOFF, BACKOFF_FLOOR_REACHED, MANUAL_WEIGHT_DEVIATION, TOO_FEW_WORK_SETS, RPE_MISSING, RPE_INVALID, CONFIG_INVALID, RULE_REVISION_UNSUPPORTED, SET_NUMBER_INVALID, SET_VALUE_INVALID}`; streak effects `{INCREMENT, RESET, IGNORE}`; statuses `{PENDING, ACCEPTED, REJECTED, STALE, INFORMATIONAL}`. Reject stored `NOT_APPLICABLE`/`MANUAL_SCHEME` rows because manual targets are never persisted as outcomes.
@@ -2710,7 +2712,7 @@ Expected: PASS with canonical export, preview counts, verified import, recovery,
 
 - [ ] **Step 8: Extend the real Room lifecycle gate from nine to eleven tables**
 
-Update `BackupLifecycleRoundTripTest` to seed one linear plan config, its session target, three linked work sets, and one pending suggestion with those exact counted IDs. Rename the main method to `exportMutateImport_restoresAllElevenTablesWithCanonicalParityAndFkIntegrity`, mutate/delete the new rows between export and import, and assert after import and recovery:
+Update `BackupLifecycleRoundTripTest` to open its raw helper with `SupportSQLiteOpenHelper.Callback(11)`, matching the Room schema under test. Seed one linear plan config, its session target, three linked work sets, and one pending suggestion with those exact counted IDs. Rename the main method to `exportMutateImport_restoresAllElevenTablesWithCanonicalParityAndFkIntegrity`, mutate/delete the new rows between export and import, and assert after import and recovery:
 
 ```kotlin
 assertEquals(payload.workoutPlanTargets.size, preview.counts.workoutPlanTargets)
