@@ -12,6 +12,7 @@ import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
+import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -21,8 +22,12 @@ import com.ironlog.app.data.local.entity.MetaPlanSkipEntity
 import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
+import com.ironlog.app.data.local.entity.ProgressionConfigColumns
+import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
+import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.data.repository.BackupRepositoryImpl
 import com.ironlog.app.domain.repository.BackupImportPreview
@@ -34,8 +39,12 @@ import com.ironlog.shared.backup.BackupMetaTrainingPlan
 import com.ironlog.shared.backup.BackupPayloadV1
 import com.ironlog.shared.backup.BackupPersonalRecord
 import com.ironlog.shared.backup.BackupPlanExercise
+import com.ironlog.shared.backup.BackupProgressionConfig
+import com.ironlog.shared.backup.BackupProgressionSuggestion
+import com.ironlog.shared.backup.BackupProgressionTarget
 import com.ironlog.shared.backup.BackupTrainingPlan
 import com.ironlog.shared.backup.BackupWorkoutSession
+import com.ironlog.shared.backup.BackupWorkoutPlanTarget
 import com.ironlog.shared.backup.BackupWorkoutSet
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -58,9 +67,9 @@ import java.util.UUID
  * ContentResolver semantics are covered separately in
  * ContentResolverBackupDocumentIoTest.
  *
- * Flow: seed all nine workout-domain tables -> export -> mutate/empty the
+ * Flow: seed all eleven workout-domain tables -> export -> mutate/empty the
  * database -> preview + hash-guarded import -> full canonical parity of all
- * nine tables plus PRAGMA foreign_key_check. A second test verifies that the
+ * eleven tables plus PRAGMA foreign_key_check. A second test verifies that the
  * import produced a real file in the recovery store and that
  * restoreLatestRecovery brings back the exact pre-import state.
  */
@@ -80,7 +89,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     @Test
-    fun exportMutateImport_restoresAllNineTablesWithCanonicalParityAndFkIntegrity() =
+    fun exportMutateImport_restoresAllElevenTablesWithCanonicalParityAndFkIntegrity() =
         runBlocking {
             harness = Harness(context)
             harness.seedFullDomain()
@@ -94,20 +103,22 @@ class BackupLifecycleRoundTripTest {
             assertTrue("export must contain RPE", payload.workoutSets.any { it.rpe == 9.0 })
             assertTrue("export must contain notes", payload.exercises.any { it.notes.isNotBlank() })
             assertTrue("export must contain skip", payload.metaPlanSkips.any { it.id == SKIP_ID })
-            assertEquals(10, payload.schemaVersion)
+            assertTrue("export must contain targets", payload.workoutPlanTargets.any { it.id == TARGET_ID })
+            assertTrue("export must contain suggestions", payload.progressionSuggestions.any { it.id == SUGGESTION_ID })
+            assertEquals(11, payload.schemaVersion)
 
             // Mutate/empty the database so the imported document must prove itself.
             harness.mutateAwayFromSeededState()
 
             val preview = harness.repository.previewImport(MEMORY_URI)
             assertTrue("preview must validate", preview.isValid)
-            assertEquals(10, preview.schemaVersion)
+            assertEquals(11, preview.schemaVersion)
             assertEquals(sha256Hex(exported), preview.sha256)
             assertPreviewCounts(preview, payload)
 
             harness.repository.importBackup(MEMORY_URI, preview.sha256)
 
-            assertNineTableParity(harness, payload)
+            assertElevenTableParity(harness, payload)
             assertForeignKeyIntegrity()
         }
 
@@ -128,6 +139,8 @@ class BackupLifecycleRoundTripTest {
             val preImportPlanName = harness.preImportPlanName
             val preImportSetCount = harness.preImportSetCount
             val preImportMetaPlanSkips = harness.readMetaPlanSkips()
+            val preImportTargets = harness.readWorkoutPlanTargets()
+            val preImportSuggestions = harness.readProgressionSuggestions()
 
             // Two-phase import: preview (document hash) then guarded import.
             val preview = harness.repository.previewImport(MEMORY_URI)
@@ -193,6 +206,8 @@ class BackupLifecycleRoundTripTest {
                 harness.readCustomExerciseIds()
             )
             assertEquals(preImportMetaPlanSkips, harness.readMetaPlanSkips())
+            assertEquals(preImportTargets, harness.readWorkoutPlanTargets())
+            assertEquals(preImportSuggestions, harness.readProgressionSuggestions())
             assertFalse("restored sets must be the pre-import (deleted) state", harness.readSetCount() > 0)
             assertForeignKeyIntegrity()
         }
@@ -207,9 +222,11 @@ class BackupLifecycleRoundTripTest {
         assertEquals(payload.metaTrainingPlans.size, preview.counts.metaTrainingPlans)
         assertEquals(payload.metaPlanItems.size, preview.counts.metaPlanItems)
         assertEquals(payload.metaPlanSkips.size, preview.counts.metaPlanSkips)
+        assertEquals(payload.workoutPlanTargets.size, preview.counts.workoutPlanTargets)
+        assertEquals(payload.progressionSuggestions.size, preview.counts.progressionSuggestions)
     }
 
-    private suspend fun assertNineTableParity(harness: Harness, payload: BackupPayloadV1) {
+    private suspend fun assertElevenTableParity(harness: Harness, payload: BackupPayloadV1) {
         assertEquals(payload.exercises, harness.readExercises())
         assertEquals(payload.workoutSessions, harness.readWorkoutSessions())
         assertEquals(payload.workoutSets, harness.readWorkoutSets())
@@ -219,6 +236,8 @@ class BackupLifecycleRoundTripTest {
         assertEquals(payload.metaTrainingPlans, harness.readMetaTrainingPlans())
         assertEquals(payload.metaPlanItems, harness.readMetaPlanItems())
         assertEquals(payload.metaPlanSkips, harness.readMetaPlanSkips())
+        assertEquals(payload.workoutPlanTargets, harness.readWorkoutPlanTargets())
+        assertEquals(payload.progressionSuggestions, harness.readProgressionSuggestions())
     }
 
     private fun assertForeignKeyIntegrity() {
@@ -238,7 +257,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     private fun openRawConnection(dbName: String): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(10) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(11) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(
@@ -294,6 +313,7 @@ class BackupLifecycleRoundTripTest {
         val trainingPlanDao: TrainingPlanDao = database.trainingPlanDao()
         val metaTrainingPlanDao: MetaTrainingPlanDao = database.metaTrainingPlanDao()
         val personalRecordDao: PersonalRecordDao = database.personalRecordDao()
+        val progressionDao: ProgressionDao = database.progressionDao()
 
         val repository: BackupRepositoryImpl = BackupRepositoryImpl(
             transactionRunner = transactionRunner,
@@ -305,6 +325,7 @@ class BackupLifecycleRoundTripTest {
             trainingPlanDao = trainingPlanDao,
             metaTrainingPlanDao = metaTrainingPlanDao,
             personalRecordDao = personalRecordDao,
+            progressionDao = progressionDao,
             buildInfo = BuildInfo(versionName = "test", versionCode = 1)
         )
 
@@ -313,8 +334,18 @@ class BackupLifecycleRoundTripTest {
         var exportedSetCount: Int = 0
         var preImportCustomExerciseIds: List<Long> = emptyList()
 
+        private fun progressionConfigColumns() = ProgressionConfigColumns(
+            scheme = "LINEAR",
+            incrementValue = 2.5,
+            incrementUnit = "METRIC",
+            incrementKg = 2.5,
+            stallThreshold = 2,
+            backoffPercent = 10.0,
+            ruleRevision = 1
+        )
+
         suspend fun seedFullDomain() {
-            // Explicit, referentially valid IDs across all nine tables.
+            // Explicit, referentially valid IDs across all eleven tables.
             val squat = ExerciseEntity(
                 id = CUSTOM_SQUAT_ID,
                 name = "Custom Squat",
@@ -370,9 +401,24 @@ class BackupLifecycleRoundTripTest {
                     exerciseId = CUSTOM_SQUAT_ID,
                     orderIndex = 0,
                     supersetGroupId = 7,
-                    targetSets = 4,
+                    targetSets = 3,
                     targetReps = 6,
-                    targetWeightKg = 120.0
+                    targetWeightKg = 120.0,
+                    progression = progressionConfigColumns()
+                )
+            )
+            progressionDao.replaceAllTargets(
+                listOf(
+                    WorkoutPlanTargetEntity(
+                        id = TARGET_ID,
+                        sessionId = SESSION_ID,
+                        planId = PLAN_ID,
+                        exerciseId = CUSTOM_SQUAT_ID,
+                        orderIndex = 0,
+                        supersetGroupId = 7,
+                        target = ProgressionTargetColumns(sets = 3, reps = 6, weightKg = 120.0),
+                        progression = progressionConfigColumns()
+                    )
                 )
             )
             metaTrainingPlanDao.insertItems(
@@ -393,30 +439,46 @@ class BackupLifecycleRoundTripTest {
                     skippedAt = 2500L
                 )
             )
-            workoutSetDao.insert(
-                WorkoutSetEntity(
-                    id = SET_1_ID,
-                    sessionId = SESSION_ID,
-                    exerciseId = CUSTOM_SQUAT_ID,
-                    setNumber = 1,
-                    reps = 5,
-                    weightKg = 100.0,
-                    isWarmup = true,
-                    completedAt = 3100L,
-                    rpe = 7.5
+            listOf(SET_1_ID, SET_2_ID, SET_3_ID).forEachIndexed { index, id ->
+                workoutSetDao.insert(
+                    WorkoutSetEntity(
+                        id = id,
+                        sessionId = SESSION_ID,
+                        exerciseId = CUSTOM_SQUAT_ID,
+                        setNumber = index + 1,
+                        reps = 6,
+                        weightKg = 120.0,
+                        isWarmup = false,
+                        completedAt = 3100L + index,
+                        rpe = if (id == SET_2_ID) 9.0 else 8.0,
+                        planTargetSnapshotId = TARGET_ID
+                    )
                 )
-            )
-            workoutSetDao.insert(
-                WorkoutSetEntity(
-                    id = SET_2_ID,
-                    sessionId = SESSION_ID,
-                    exerciseId = CUSTOM_SQUAT_ID,
-                    setNumber = 2,
-                    reps = 3,
-                    weightKg = 130.0,
-                    isWarmup = false,
-                    completedAt = 3200L,
-                    rpe = 9.0
+            }
+            progressionDao.replaceAllSuggestions(
+                listOf(
+                    ProgressionSuggestionEntity(
+                        id = SUGGESTION_ID,
+                        sourceSessionId = SESSION_ID,
+                        sourceTargetSnapshotId = TARGET_ID,
+                        planId = PLAN_ID,
+                        exerciseId = CUSTOM_SQUAT_ID,
+                        orderIndex = 0,
+                        supersetGroupId = 7,
+                        sourceTarget = ProgressionTargetColumns(sets = 3, reps = 6, weightKg = 120.0),
+                        sourceProgression = progressionConfigColumns(),
+                        outcomeType = "PROPOSE_CHANGE",
+                        reasonCode = "LOAD_ADVANCED",
+                        reasonArgumentsJson = "{\"actualWeightKg\":120.0,\"expectedWeightKg\":120.0}",
+                        countedSetIdsJson = "[$SET_1_ID,$SET_2_ID,$SET_3_ID]",
+                        streakEffect = "INCREMENT",
+                        suggestedTarget = ProgressionTargetColumns(sets = 3, reps = 6, weightKg = 122.5),
+                        status = "PENDING",
+                        wasEdited = false,
+                        finalTarget = null,
+                        createdAtEpochMillis = 3700L,
+                        decidedAtEpochMillis = null
+                    )
                 )
             )
             personalRecordDao.replaceAll(
@@ -431,14 +493,16 @@ class BackupLifecycleRoundTripTest {
                 )
             )
 
-            exportedSetCount = 2
+            exportedSetCount = 3
             preImportPlanName = MUTATED_PLAN_NAME
             preImportSetCount = 0
             preImportCustomExerciseIds = listOf(CUSTOM_SQUAT_ID, CUSTOM_DEADLIFT_ID)
         }
 
         suspend fun mutateAwayFromSeededState() {
+            progressionDao.deleteAllSuggestions()
             workoutSetDao.deleteAll()
+            progressionDao.deleteAllTargets()
             val plan = requireNotNull(trainingPlanDao.getPlanById(PLAN_ID)) {
                 "seeded plan must exist before mutation"
             }
@@ -448,6 +512,9 @@ class BackupLifecycleRoundTripTest {
         suspend fun mutateAfterImport() {
             // Change sets and skips so the post-import state clearly differs
             // from the pre-import recovery snapshot.
+            progressionDao.deleteAllSuggestions()
+            workoutSetDao.deleteAll()
+            progressionDao.deleteAllTargets()
             metaTrainingPlanDao.deleteAllMetaPlanSkips()
             workoutSetDao.insert(
                 WorkoutSetEntity(
@@ -491,6 +558,12 @@ class BackupLifecycleRoundTripTest {
         suspend fun readMetaPlanSkips(): List<BackupMetaPlanSkip> =
             metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() }
 
+        suspend fun readWorkoutPlanTargets(): List<BackupWorkoutPlanTarget> =
+            progressionDao.getAllTargets().map { it.toBackup() }
+
+        suspend fun readProgressionSuggestions(): List<BackupProgressionSuggestion> =
+            progressionDao.getAllSuggestions().map { it.toBackup() }
+
         suspend fun readPlanName(): String =
             trainingPlanDao.getAllPlansList().single().name
 
@@ -530,8 +603,11 @@ class BackupLifecycleRoundTripTest {
         const val SKIP_ID = 9001L
         const val SET_1_ID = 7001L
         const val SET_2_ID = 7002L
+        const val SET_3_ID = 7003L
+        const val TARGET_ID = 10_001L
+        const val SUGGESTION_ID = 10_002L
         const val RECORD_ID = 8001L
-        const val POST_IMPORT_SET_ID = 7003L
+        const val POST_IMPORT_SET_ID = 7004L
         const val MUTATED_PLAN_NAME = "Gate3 Renamed Before Import"
         val RECOVERY_FILE_NAME = Regex("^recovery-(\\d+)-([0-9a-f]{64})\\.json$")
     }
@@ -568,7 +644,8 @@ private fun WorkoutSetEntity.toBackup() = BackupWorkoutSet(
     weightKg = weightKg,
     isWarmup = isWarmup,
     completedAt = completedAt,
-    rpe = rpe
+    rpe = rpe,
+    planTargetSnapshotId = planTargetSnapshotId
 )
 
 private fun TrainingPlanEntity.toBackup() = BackupTrainingPlan(
@@ -585,7 +662,63 @@ private fun PlanExerciseEntity.toBackup() = BackupPlanExercise(
     supersetGroupId = supersetGroupId,
     targetSets = targetSets,
     targetReps = targetReps,
-    targetWeightKg = targetWeightKg
+    targetWeightKg = targetWeightKg,
+    progression = progression.toBackup()
+)
+
+private fun ProgressionConfigColumns.toBackup() = BackupProgressionConfig(
+    scheme = scheme,
+    incrementValue = incrementValue,
+    incrementUnit = incrementUnit,
+    incrementKg = incrementKg,
+    minReps = minReps,
+    maxReps = maxReps,
+    targetTotalReps = targetTotalReps,
+    targetRpe = targetRpe,
+    rpeTolerance = rpeTolerance,
+    stallThreshold = stallThreshold,
+    backoffPercent = backoffPercent,
+    ruleRevision = ruleRevision
+)
+
+private fun ProgressionTargetColumns.toBackup() = BackupProgressionTarget(
+    sets = sets,
+    reps = reps,
+    weightKg = weightKg
+)
+
+private fun WorkoutPlanTargetEntity.toBackup() = BackupWorkoutPlanTarget(
+    id = id,
+    sessionId = sessionId,
+    planId = planId,
+    exerciseId = exerciseId,
+    orderIndex = orderIndex,
+    supersetGroupId = supersetGroupId,
+    target = target.toBackup(),
+    progression = progression.toBackup()
+)
+
+private fun ProgressionSuggestionEntity.toBackup() = BackupProgressionSuggestion(
+    id = id,
+    sourceSessionId = sourceSessionId,
+    sourceTargetSnapshotId = sourceTargetSnapshotId,
+    planId = planId,
+    exerciseId = exerciseId,
+    orderIndex = orderIndex,
+    supersetGroupId = supersetGroupId,
+    sourceTarget = sourceTarget.toBackup(),
+    sourceProgression = sourceProgression.toBackup(),
+    outcomeType = outcomeType,
+    reasonCode = reasonCode,
+    reasonArguments = lifecycleJson.decodeFromString<Map<String, Double>>(reasonArgumentsJson).toSortedMap(),
+    countedSetIds = lifecycleJson.decodeFromString<List<Long>>(countedSetIdsJson),
+    streakEffect = streakEffect,
+    suggestedTarget = suggestedTarget?.toBackup(),
+    status = status,
+    wasEdited = wasEdited,
+    finalTarget = finalTarget?.toBackup(),
+    createdAtEpochMillis = createdAtEpochMillis,
+    decidedAtEpochMillis = decidedAtEpochMillis
 )
 
 private fun PersonalRecordEntity.toBackup() = BackupPersonalRecord(
@@ -620,3 +753,5 @@ private fun sha256Hex(bytes: ByteArray): String =
     MessageDigest.getInstance("SHA-256")
         .digest(bytes)
         .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xFF) }
+
+private val lifecycleJson = Json { ignoreUnknownKeys = false }

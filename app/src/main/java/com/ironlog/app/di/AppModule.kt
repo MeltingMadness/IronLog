@@ -85,6 +85,7 @@ val appModule = module {
             trainingPlanDao = get(),
             metaTrainingPlanDao = get(),
             personalRecordDao = get(),
+            progressionDao = get(),
             buildInfo = get()
         )
     }
