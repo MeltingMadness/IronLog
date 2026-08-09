@@ -77,6 +77,25 @@ class ProgressionReviewViewModelTest {
     }
 
     @Test
+    fun `init reconciliation failure exposes only a code and preserves review items`() = runTest(dispatcher) {
+        val leakPayload = "INIT_RECONCILE_SECRET_PAYLOAD"
+        val originalItems = listOf(pendingChange(id = 2L))
+        repository.reviewItems.value = originalItems
+        repository.reconcileError = IllegalStateException(leakPayload)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(ProgressionReviewMessage.ACTION_FAILED, state.message)
+        assertFalse(state.toString().contains(leakPayload))
+        assertEquals(listOf(2L), state.items.map(ProgressionReviewItemUi::id))
+        assertEquals(ProgressionSuggestionStatus.PENDING, state.items.single().status)
+        assertEquals(originalItems, repository.reviewItems.value)
+        assertEquals(ProgressionSuggestionStatus.PENDING, repository.reviewItems.value.single().status)
+    }
+
+    @Test
     fun `zero session id observes the all pending scope`() = runTest(dispatcher) {
         createViewModel(sessionId = 0L)
         advanceUntilIdle()
@@ -360,6 +379,29 @@ class ProgressionReviewViewModelTest {
     }
 
     @Test
+    fun `accept failure exposes only a code clears working and preserves review status`() = runTest(dispatcher) {
+        val leakPayload = "ACCEPT_SECRET_PAYLOAD"
+        val originalItems = listOf(pendingChange(id = 2L))
+        repository.reviewItems.value = originalItems
+        repository.acceptError = IllegalStateException(leakPayload)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.reconcileCalls = 0
+
+        viewModel.acceptOne(2L)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(ProgressionReviewMessage.ACTION_FAILED, state.message)
+        assertFalse(state.isWorking)
+        assertFalse(state.toString().contains(leakPayload))
+        assertEquals(ProgressionSuggestionStatus.PENDING, state.items.single().status)
+        assertEquals(originalItems, repository.reviewItems.value)
+        assertEquals(ProgressionSuggestionStatus.PENDING, repository.reviewItems.value.single().status)
+        assertEquals(0, repository.reconcileCalls)
+    }
+
+    @Test
     fun `reject exposes working state and waits for repository flow to change status`() = runTest(dispatcher) {
         repository.reviewItems.value = listOf(pendingChange(id = 2L))
         repository.rejectGate = CompletableDeferred()
@@ -533,6 +575,7 @@ private class FakeProgressionRepository : ProgressionRepository {
     val reviewItems = MutableStateFlow<List<ProgressionSuggestion>>(emptyList())
     val observedSessionIds = mutableListOf<Long?>()
     var reconcileCalls = 0
+    var reconcileError: Throwable? = null
     var acceptCalls = 0
     var lastAccepted: Map<Long, ProgressionTarget> = emptyMap()
     var acceptResult: ProgressionDecisionResult? = null
@@ -559,6 +602,7 @@ private class FakeProgressionRepository : ProgressionRepository {
 
     override suspend fun reconcileOutstandingSuggestions(): Set<Long> {
         reconcileCalls += 1
+        reconcileError?.let { throw it }
         return emptySet()
     }
 
