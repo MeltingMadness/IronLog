@@ -3,8 +3,13 @@ package com.ironlog.app.data.repository
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
+import com.ironlog.app.domain.model.FailurePolicy
 import com.ironlog.app.domain.model.PlanExercise
+import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.TrainingPlan
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WeightStep
+import com.ironlog.app.domain.util.WeightFormatting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -14,6 +19,70 @@ import org.junit.Test
 import kotlin.test.assertFailsWith
 
 class TrainingPlanRepositoryImplTest {
+
+    @Test
+    fun `savePlan round trips every configurable progression variant through plan exercise entities`() = runTest {
+        val metricStep = WeightStep(
+            originalValue = 2.5,
+            originalUnit = UnitSystem.METRIC,
+            kilograms = 2.5
+        )
+        val imperialStep = WeightStep(
+            originalValue = 5.0,
+            originalUnit = UnitSystem.IMPERIAL,
+            kilograms = WeightFormatting.convertToKg(5.0, UnitSystem.IMPERIAL)
+        )
+        val configs = listOf(
+            ProgressionConfig.Manual(),
+            ProgressionConfig.Linear(
+                step = metricStep,
+                failurePolicy = FailurePolicy(stallThreshold = 3, backoffPercent = 12.5)
+            ),
+            ProgressionConfig.DoubleProgression(
+                minReps = 8,
+                maxReps = 12,
+                step = imperialStep,
+                failurePolicy = FailurePolicy(stallThreshold = 4, backoffPercent = 15.0)
+            ),
+            ProgressionConfig.TotalReps(
+                targetTotalReps = 30,
+                step = metricStep,
+                failurePolicy = FailurePolicy(stallThreshold = 5, backoffPercent = 20.0)
+            ),
+            ProgressionConfig.RpeRir(
+                targetRpe = 8.5,
+                tolerance = 0.5,
+                step = imperialStep,
+                failurePolicy = FailurePolicy(stallThreshold = 6, backoffPercent = 25.0)
+            )
+        )
+        val dao = FakeTrainingPlanDao()
+        val repository = TrainingPlanRepositoryImpl(dao)
+        val plan = TrainingPlan(
+            name = "Progressions",
+            exercises = configs.mapIndexed { index, config ->
+                PlanExercise(
+                    exerciseId = 100L + index,
+                    orderIndex = index,
+                    targetSets = 3,
+                    targetReps = 10,
+                    targetWeightKg = 100.0,
+                    progressionConfig = config
+                )
+            }
+        )
+
+        val planId = repository.savePlan(plan)
+
+        val entityRoundTrip = dao.exercisesByPlan.getValue(planId)
+            .sortedBy { it.orderIndex }
+            .map { it.toDomain().progressionConfig }
+        val repositoryRoundTrip = requireNotNull(repository.getPlanById(planId))
+            .exercises
+            .map { it.progressionConfig }
+        assertEquals(configs, entityRoundTrip)
+        assertEquals(configs, repositoryRoundTrip)
+    }
 
     @Test
     fun `savePlan preserves createdAt when editing existing plan`() = runTest {
