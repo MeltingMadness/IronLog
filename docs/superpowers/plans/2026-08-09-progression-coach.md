@@ -2746,11 +2746,11 @@ git commit -m "feat: preserve progression data in backups"
 
 - [ ] **Step 1: Write the failing lifecycle instrumentation test**
 
-Use `Room.inMemoryDatabaseBuilder`, `RoomTransactionRunner`, `WorkoutRepositoryImpl`, `ProgressionRepositoryImpl`, and `TrainingPlanRepositoryImpl`; no DAO or engine fake is allowed. Seed one exercise and a plan whose only position is `3 × 8 @ 100 kg` with linear `2.5 kg`, then execute this exact flow:
+Use `Room.inMemoryDatabaseBuilder`, `RoomTransactionRunner`, `WorkoutRepositoryImpl`, `ProgressionRepositoryImpl`, and `TrainingPlanRepositoryImpl`; no DAO or engine fake is allowed. Use `runBlocking`, matching the existing Room instrumentation tests and keeping this test-only task within its declared file ownership (`kotlinx-coroutines-test` is not an `androidTest` dependency). Seed one exercise and a plan whose only position is `3 × 8 @ 100 kg` with linear `2.5 kg`, then execute this exact flow:
 
 ```kotlin
 @Test
-fun acceptedLinearSuggestionUpdatesReopenedPlanButPreservesSourceSnapshot() = runTest {
+fun acceptedLinearSuggestionUpdatesReopenedPlanButPreservesSourceSnapshot() = runBlocking {
     val planId = trainingPlanRepository.savePlan(linearPlan(weightKg = 100.0, stepKg = 2.5))
     val sessionId = workoutRepository.startWorkout("Progression lifecycle", planId, null)
     val source = database.progressionDao().getTargetsForSession(sessionId).single()
@@ -2813,7 +2813,7 @@ Expected: PASS and `app/build/outputs/apk/debug/app-debug.apk` exists. Do not re
 
 - [ ] **Step 5: Check the existing remote PR gates before merge readiness**
 
-Confirm the branch's existing GitHub checks report success for `test`, `lintDebug`, `assembleDebug`, and `connectedDebugAndroidTest`. Inspect the connected-test log and require a non-zero executed-test count that includes the migration, backup lifecycle, navigation smoke, snapshot transaction, and progression lifecycle classes. Do not claim merge or release readiness from local compilation alone.
+Confirm the branch's existing GitHub jobs report success for `unit-lint-build` and `android-smoke`. Within those job logs, require successful execution of the four Gradle gates `test`, `lintDebug`, `assembleDebug`, and `connectedDebugAndroidTest`. Inspect the connected-test log and require a non-zero executed-test count that includes the migration, backup lifecycle, navigation smoke, snapshot transaction, and progression lifecycle classes. Do not claim merge or release readiness from local compilation alone.
 
 - [ ] **Step 6: Commit the lifecycle gate**
 
@@ -2826,4 +2826,4 @@ git commit -m "test: cover progression coach lifecycle"
 
 ## Completion Evidence
 
-Implementation is complete only when every task checkbox has direct evidence, the final APK exists, the lifecycle test has executed remotely, and all four required PR gates are green. Report any locally unavailable emulator checks separately from passing local unit/compile/build checks; do not collapse them into a generic success claim.
+Implementation is complete only when every task checkbox has direct evidence, the final APK exists, the lifecycle test has executed remotely, both required PR jobs are green, and their logs prove all four Gradle gates ran successfully. Report any locally unavailable emulator checks separately from passing local unit/compile/build checks; do not collapse them into a generic success claim.
