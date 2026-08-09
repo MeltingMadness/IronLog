@@ -2241,6 +2241,7 @@ git commit -m "feat: add progression review screen"
 - Modify: `feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutScreen.kt`
 - Modify: `app/src/main/java/com/ironlog/app/presentation/navigation/Screen.kt`
 - Modify: `app/src/main/java/com/ironlog/app/presentation/navigation/NavHost.kt`
+- Modify: `feature/progression/src/main/java/com/ironlog/app/presentation/progression/ProgressionReviewScreen.kt`
 - Modify: `core/designsystem/src/main/res/values/strings.xml`
 - Modify: `app/src/test/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModelTest.kt`
 - Modify: `app/src/androidTest/java/com/ironlog/app/presentation/navigation/NavigationSmokeTest.kt`
@@ -2361,7 +2362,7 @@ Expected: unit tests PASS and navigation instrumentation compiles. The remote co
 - [ ] **Step 8: Commit finish and navigation flow**
 
 ```bash
-git add feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutScreen.kt app/src/main/java/com/ironlog/app/presentation/navigation/Screen.kt app/src/main/java/com/ironlog/app/presentation/navigation/NavHost.kt core/designsystem/src/main/res/values/strings.xml app/src/test/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModelTest.kt app/src/androidTest/java/com/ironlog/app/presentation/navigation/NavigationSmokeTest.kt
+git add feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutScreen.kt app/src/main/java/com/ironlog/app/presentation/navigation/Screen.kt app/src/main/java/com/ironlog/app/presentation/navigation/NavHost.kt feature/progression/src/main/java/com/ironlog/app/presentation/progression/ProgressionReviewScreen.kt core/designsystem/src/main/res/values/strings.xml app/src/test/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModelTest.kt app/src/androidTest/java/com/ironlog/app/presentation/navigation/NavigationSmokeTest.kt
 git commit -m "feat: review progression after workout completion"
 ```
 
