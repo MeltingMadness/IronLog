@@ -1999,7 +1999,7 @@ fun `reorder preserves each exercises progression config`() {
 }
 ```
 
-Extend `TrainingPlanRepositoryImplTest` to round-trip every `ProgressionConfig` variant through `PlanExerciseEntity`.
+Extend `TrainingPlanRepositoryImplTest` to round-trip every persistable `ProgressionConfig` variant through `PlanExerciseEntity`. Add a fail-closed test that `ProgressionConfig.Invalid` is rejected before repository mutation, because the compact domain marker intentionally cannot reconstruct malformed nullable storage columns losslessly.
 
 - [ ] **Step 2: Run the editor and repository tests**
 
