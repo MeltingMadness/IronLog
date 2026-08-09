@@ -178,7 +178,11 @@ data class ProgressionSuggestion(
     val finalTarget: ProgressionTarget?,
     val createdAtEpochMillis: Long,
     val decidedAtEpochMillis: Long?
-)
+) {
+    init {
+        require(outcome.sourceTarget == sourceTarget.target)
+    }
+}
 
 data class ProgressionGenerationResult(
     val insertedCount: Int,
