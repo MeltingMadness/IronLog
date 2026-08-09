@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,28 +89,41 @@ class ProgressionCoachLifecycleTest {
         val planId = trainingPlanRepository.savePlan(linearPlan(weightKg = 100.0, stepKg = 2.5))
         val sessionId = workoutRepository.startWorkout("Progression lifecycle", planId, null)
         val source = database.progressionDao().getTargetsForSession(sessionId).single()
+        assertEquals(exerciseId, source.exerciseId)
         assertEquals(ProgressionTarget(sets = 3, reps = 8, weightKg = 100.0), source.target.toDomain())
         assertEquals(linearConfig(stepKg = 2.5), source.progression.toDomain())
 
-        val setIds = (1..3).map { setNumber ->
-            workoutRepository.addSet(
-                workoutSet(
-                    sessionId = sessionId,
-                    exerciseId = source.exerciseId,
-                    setNumber = setNumber,
-                    reps = 8,
-                    weightKg = 100.0,
-                    snapshotId = source.id
-                )
+        val sets = (1..3).map { setNumber ->
+            workoutSet(
+                sessionId = sessionId,
+                exerciseId = source.exerciseId,
+                setNumber = setNumber,
+                reps = 8,
+                weightKg = 100.0,
+                snapshotId = source.id
             )
         }
+        val setIds = sets.map { set -> workoutRepository.addSet(set) }
+        val persistedSets = database.workoutSetDao().getSetsForSessionList(sessionId)
+        assertEquals(setIds, persistedSets.map { it.id })
+        assertEquals(List(3) { exerciseId }, persistedSets.map { it.exerciseId })
+        assertEquals(List(3) { source.id }, persistedSets.map { it.planTargetSnapshotId })
+        assertEquals(sets.map { it.completedAt }, persistedSets.map { it.toDomain().completedAt })
+        assertEquals(persistedSets.map { it.completedAt }.sorted(), persistedSets.map { it.completedAt })
+
         workoutRepository.finishWorkout(sessionId)
+        val completedSession = requireNotNull(database.workoutSessionDao().getSessionById(sessionId))
+        assertNotNull(completedSession.endTime)
 
         val generated = progressionRepository.generateOutcomesForSession(sessionId)
+        assertEquals(1, generated.insertedCount)
         assertEquals(1, generated.reviewItemCount)
         assertEquals(1, generated.pendingCount)
+        val persistedAfterFirstGeneration = database.progressionDao().getAllSuggestions().single()
         val repeated = progressionRepository.generateOutcomesForSession(sessionId)
         assertEquals(0, repeated.insertedCount)
+        val persistedAfterSecondGeneration = database.progressionDao().getAllSuggestions().single()
+        assertEquals(persistedAfterFirstGeneration, persistedAfterSecondGeneration)
         assertEquals(1, progressionRepository.observeReviewItems(sessionId).first().size)
         val suggestion = progressionRepository.observeReviewItems(sessionId).first().single()
         assertEquals(setIds, suggestion.countedSets.map { it.id })
