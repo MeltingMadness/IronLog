@@ -39,6 +39,7 @@ import com.ironlog.app.presentation.plans.MetaPlanEditorViewModel
 import com.ironlog.app.presentation.plans.MetaPlanListViewModel
 import com.ironlog.app.presentation.plans.PlanEditorViewModel
 import com.ironlog.app.presentation.plans.TrainingPlanListViewModel
+import com.ironlog.app.presentation.progression.ProgressionReviewViewModel
 import com.ironlog.app.presentation.settings.SettingsViewModel
 import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
@@ -94,6 +95,7 @@ val appModule = module {
     viewModelOf(::WorkoutDetailViewModel)
     viewModelOf(::ExerciseStatsViewModel)
     viewModelOf(::PlanEditorViewModel)
+    viewModelOf(::ProgressionReviewViewModel)
 
     // ViewModels WITHOUT SavedStateHandle — viewModelOf() for consistency
     viewModelOf(::ExerciseLibraryViewModel)
