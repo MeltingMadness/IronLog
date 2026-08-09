@@ -13,7 +13,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,6 +31,7 @@ import com.ironlog.app.presentation.plans.MetaPlanEditorScreen
 import com.ironlog.app.presentation.plans.MetaPlanListScreen
 import com.ironlog.app.presentation.plans.PlanEditorScreen
 import com.ironlog.app.presentation.plans.TrainingPlanListScreen
+import com.ironlog.app.presentation.progression.ProgressionReviewScreen
 import com.ironlog.app.presentation.settings.SettingsScreen
 import com.ironlog.app.presentation.statistics.ExerciseStatsScreen
 import com.ironlog.app.presentation.theme.ironLogMotion
@@ -128,8 +133,33 @@ fun IronLogNavHost(navController: NavHostController) {
             ActiveWorkoutScreen(
                 onWorkoutFinished = {
                     navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                },
+                onProgressionReview = { sessionId ->
+                    navController.navigate(Screen.ProgressionReview.createRoute(sessionId))
                 }
             )
+        }
+
+        composable(
+            route = Screen.ProgressionReview.route,
+            arguments = listOf(
+                navArgument("sessionId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                }
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("progression_review_top_bar")
+            ) {
+                ProgressionReviewScreen(
+                    onClose = {
+                        navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                    }
+                )
+            }
         }
 
         composable(Screen.ExerciseLibrary.route) {

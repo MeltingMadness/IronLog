@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
@@ -108,6 +109,7 @@ private data class ExerciseRenderGroup(
 @Composable
 fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
+    onProgressionReview: (Long) -> Unit,
     viewModel: ActiveWorkoutViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -120,7 +122,6 @@ fun ActiveWorkoutScreen(
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
-    var workoutEndNavigated by remember { mutableStateOf(false) }
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -157,12 +158,11 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    LaunchedEffect(state.sessionPhase, state.workoutFinished) {
-        val session = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
-        val shouldNavigate = state.workoutFinished || session?.endTime != null
-        if (shouldNavigate && !workoutEndNavigated) {
-            workoutEndNavigated = true
-            onWorkoutFinished()
+    LaunchedEffect(state.finishState) {
+        when (val finishState = state.finishState) {
+            is WorkoutFinishState.ReviewReady -> onProgressionReview(finishState.sessionId)
+            WorkoutFinishState.CompletedWithoutReview -> onWorkoutFinished()
+            else -> Unit
         }
     }
 
@@ -348,7 +348,7 @@ fun ActiveWorkoutScreen(
                 confirmButton = {
                     TextButton(
                         onClick = viewModel::finishWorkout,
-                        enabled = !state.finishInFlight
+                        enabled = state.finishState == WorkoutFinishState.Idle
                     ) {
                         Text(stringResource(id = R.string.workout_finish_dialog_confirm))
                     }
@@ -356,6 +356,31 @@ fun ActiveWorkoutScreen(
                 dismissButton = {
                     TextButton(onClick = viewModel::dismissFinishDialog) {
                         Text(stringResource(id = R.string.workout_finish_dialog_cancel))
+                    }
+                }
+            )
+        }
+
+        if (state.finishState is WorkoutFinishState.GenerationFailed) {
+            AlertDialog(
+                onDismissRequest = {},
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                title = { Text(stringResource(id = R.string.progression_review_title)) },
+                text = {
+                    Text(stringResource(id = R.string.progression_review_message_action_failed))
+                },
+                confirmButton = {
+                    TextButton(onClick = viewModel::retryProgressionGeneration) {
+                        Text(stringResource(id = R.string.common_retry))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onWorkoutFinished) {
+                        Text(stringResource(id = R.string.common_later))
                     }
                 }
             )
@@ -824,23 +849,23 @@ private fun PreviousSessionSetRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             modifier = Modifier.width(20.dp)
         )
-        
+
         val weightText = formatWeightValue(set.weightKg, unitSystem)
-        
+
         LoggedSetBox(
             value = weightText,
             suffix = WeightFormatting.unitLabel(unitSystem),
             isWarmup = set.isWarmup,
             modifier = Modifier.weight(1.2f).alpha(0.7f)
         )
-        
+
         LoggedSetBox(
             value = set.reps.toString(),
             suffix = stringResource(id = R.string.common_reps_short),
             isWarmup = set.isWarmup,
             modifier = Modifier.weight(1f).alpha(0.7f)
         )
-        
+
         if (tracksIntensity) {
             val intensityText = formatIntensity(set.rpe, intensitySystem)
             val accentColor = rpeColor(set.rpe)
@@ -854,7 +879,7 @@ private fun PreviousSessionSetRow(
                 overrideContentColor = accentColor
             )
         }
-        
+
         // Placeholder for the delete button to maintain perfect alignment with LoggedSetRow
         Spacer(modifier = Modifier.size(40.dp))
     }
@@ -982,7 +1007,7 @@ private fun LoggedSetRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(20.dp)
             )
-            
+
             com.ironlog.app.presentation.common.CompactTextField(
                 value = weightInput,
                 onValueChange = { weightInput = it },
@@ -990,7 +1015,7 @@ private fun LoggedSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
                 modifier = Modifier.weight(1.2f)
             )
-            
+
             com.ironlog.app.presentation.common.CompactTextField(
                 value = repsInput,
                 onValueChange = { repsInput = it },
@@ -998,7 +1023,7 @@ private fun LoggedSetRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (tracksIntensity) ImeAction.Next else ImeAction.Done),
                 modifier = Modifier.weight(1f)
             )
-            
+
             if (tracksIntensity) {
                 com.ironlog.app.presentation.common.CompactTextField(
                     value = intensityInput,
@@ -1008,7 +1033,7 @@ private fun LoggedSetRow(
                     modifier = Modifier.weight(1f)
                 )
             }
-            
+
             IconButton(
                 onClick = {
                     val r = repsInput.text.toIntOrNull() ?: set.reps
@@ -1049,21 +1074,21 @@ private fun LoggedSetRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(20.dp)
             )
-            
+
             LoggedSetBox(
                 value = weightText,
                 suffix = WeightFormatting.unitLabel(unitSystem),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1.2f)
             )
-            
+
             LoggedSetBox(
                 value = set.reps.toString(),
                 suffix = stringResource(id = R.string.common_reps_short),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1f)
             )
-            
+
             if (tracksIntensity) {
                 val accentColor = rpeColor(set.rpe)
 
@@ -1076,7 +1101,7 @@ private fun LoggedSetRow(
                     overrideContentColor = accentColor
                 )
             }
-            
+
             IconButton(
                 onClick = { haptic.reject(); onDeleteSet(set.id) },
                 modifier = Modifier.size(ButtonSize.iconButton)
@@ -1135,7 +1160,7 @@ private fun PendingSetRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(20.dp)
         )
-        
+
         com.ironlog.app.presentation.common.CompactTextField(
             value = weightInput,
             onValueChange = { weightInput = it },
@@ -1144,7 +1169,7 @@ private fun PendingSetRow(
             placeholderText = weightPlaceholder ?: "-",
             modifier = Modifier.weight(1.2f)
         )
-        
+
         com.ironlog.app.presentation.common.CompactTextField(
             value = repsInput,
             onValueChange = { repsInput = it },
@@ -1153,7 +1178,7 @@ private fun PendingSetRow(
             placeholderText = repsPlaceholder ?: "-",
             modifier = Modifier.weight(1f)
         )
-        
+
         if (tracksIntensity) {
             com.ironlog.app.presentation.common.CompactTextField(
                 value = intensityInput,
@@ -1163,7 +1188,7 @@ private fun PendingSetRow(
                 modifier = Modifier.weight(1f)
             )
         }
-        
+
         IconButton(
             onClick = {
                 val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
@@ -1307,7 +1332,6 @@ private fun rpeColor(rpe: Double?): Color? {
         else       -> MaterialTheme.semantic.danger     // Rot für RPE 10
     }
 }
-
 
 
 

@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.ProgressionGenerationResult
 import com.ironlog.app.domain.model.ProgressionTarget
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeightStep
@@ -48,6 +49,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDateTime
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActiveWorkoutViewModelTest {
@@ -60,6 +62,15 @@ class ActiveWorkoutViewModelTest {
     private lateinit var progressionRepo: ProgressionRepository
     private lateinit var progressionTargets: MutableStateFlow<List<WorkoutPlanTarget>>
     private lateinit var prefsRepo: FakeAppPreferencesRepository
+    private var progressionGenerateCalls = 0
+    private var progressionGenerateError: Throwable? = null
+    private var progressionGenerateGate: CompletableDeferred<Unit>? = null
+    private var progressionGenerationResult = ProgressionGenerationResult(
+        insertedCount = 0,
+        reviewItemCount = 0,
+        pendingCount = 0
+    )
+    private val finishCallLog = mutableListOf<String>()
 
     private val testExercise = Exercise(
         id = 1L,
@@ -77,9 +88,22 @@ class ActiveWorkoutViewModelTest {
         exerciseRepo = FakeExerciseRepository()
         statsRepo = FakeStatisticsRepository()
         planRepo = FakeTrainingPlanRepository()
-        progressionRepo = mockk()
+        progressionRepo = mockk(relaxed = true)
         progressionTargets = MutableStateFlow(emptyList())
         every { progressionRepo.observeTargetsForSession(any()) } returns progressionTargets
+        coEvery { progressionRepo.generateOutcomesForSession(any()) } coAnswers {
+            val generatedSessionId = firstArg<Long>()
+            progressionGenerateCalls += 1
+            finishCallLog += if (workoutRepo.getSessionById(generatedSessionId)?.endTime != null) {
+                "finish:$generatedSessionId"
+            } else {
+                "generate-before-finish:$generatedSessionId"
+            }
+            finishCallLog += "generate:$generatedSessionId"
+            progressionGenerateGate?.await()
+            progressionGenerateError?.let { throw it }
+            progressionGenerationResult
+        }
         prefsRepo = FakeAppPreferencesRepository()
 
         exerciseRepo.addExercise(testExercise)
@@ -1533,9 +1557,10 @@ class ActiveWorkoutViewModelTest {
 
         assertEquals(1, workoutRepo.deleteSessionCallCount)
         assertEquals(0, workoutRepo.finishWorkoutCallCount)
+        assertEquals(0, progressionGenerateCalls)
         assertNull(workoutRepo.getSessionById(sessionId))
         assertFalse(vm.uiState.value.showFinishDialog)
-        assertTrue(vm.uiState.value.workoutFinished)
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
 
         collector.cancel()
     }
@@ -1554,13 +1579,165 @@ class ActiveWorkoutViewModelTest {
             )
         )
         val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
 
         vm.finishWorkout()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, workoutRepo.finishWorkoutCallCount)
         assertEquals(0, workoutRepo.deleteSessionCallCount)
+        assertEquals(1, progressionGenerateCalls)
         assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `workout is durably finished before progression generation starts`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 410L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        progressionGenerateGate = CompletableDeferred()
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("finish:$sessionId", "generate:$sessionId"), finishCallLog.take(2))
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        assertEquals(WorkoutFinishState.Generating, vm.uiState.value.finishState)
+
+        progressionGenerateGate?.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+        collector.cancel()
+    }
+
+    @Test
+    fun `generation result with review items becomes ReviewReady`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 420L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        progressionGenerationResult = ProgressionGenerationResult(
+            insertedCount = 2,
+            reviewItemCount = 2,
+            pendingCount = 1
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(WorkoutFinishState.ReviewReady(sessionId), vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `generation result without review items becomes CompletedWithoutReview`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 430L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        progressionGenerationResult = ProgressionGenerationResult(
+            insertedCount = 0,
+            reviewItemCount = 0,
+            pendingCount = 0
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `generation failure leaves workout completed and exposes retry plus later state`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 440L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        progressionGenerateError = IOException("disk failure must not be rendered")
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        val state = vm.uiState.value.finishState
+        assertTrue(state is WorkoutFinishState.GenerationFailed)
+        assertEquals(sessionId, (state as WorkoutFinishState.GenerationFailed).sessionId)
+        collector.cancel()
+    }
+
+    @Test
+    fun `generation retry does not finish workout a second time`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 450L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        progressionGenerateError = IOException("disk")
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+        progressionGenerateError = null
+        vm.retryProgressionGeneration()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertEquals(2, progressionGenerateCalls)
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
+        collector.cancel()
     }
 
     @Test
@@ -1588,7 +1765,7 @@ class ActiveWorkoutViewModelTest {
         assertEquals(1, workoutRepo.finishWorkoutCallCount)
         assertTrue(vm.uiState.value.showFinishDialog)
         assertNotNull(workoutRepo.getSessionById(sessionId))
-        assertFalse(vm.uiState.value.workoutFinished)
+        assertEquals(WorkoutFinishState.Idle, vm.uiState.value.finishState)
         val error = vm.uiState.value.error
         assertNotNull(error)
         assertTrue(error!!.retry is WorkoutRetryDescriptor.FinishWorkout)
@@ -1599,7 +1776,7 @@ class ActiveWorkoutViewModelTest {
 
         assertEquals(2, workoutRepo.finishWorkoutCallCount)
         assertFalse(vm.uiState.value.showFinishDialog)
-        assertTrue(vm.uiState.value.workoutFinished)
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
         assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
 
         collector.cancel()
@@ -1793,6 +1970,158 @@ class ActiveWorkoutViewModelTest {
         assertTrue(emitted.isEmpty())
 
         eventCollector.cancel()
+    }
+
+    @Test
+    fun `restored completed session starts one recovery generation and locks all set mutations`() = runTest {
+        workoutRepo = FakeWorkoutRepository().also { repository ->
+            repository.addSession(
+                WorkoutSession(
+                    id = sessionId,
+                    startTime = LocalDateTime.now().minusHours(1),
+                    endTime = LocalDateTime.now(),
+                    durationSeconds = 3600
+                ),
+                isActive = false
+            )
+            repository.addSetDirectly(
+                WorkoutSet(
+                    id = 900L,
+                    sessionId = sessionId,
+                    exerciseId = testExercise.id,
+                    setNumber = 1,
+                    reps = 10,
+                    weightKg = 100.0
+                )
+            )
+        }
+        progressionGenerateGate = CompletableDeferred()
+        val vm = createViewModel()
+        val firstCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+        val secondCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 105.0)
+        vm.updateSet(setId = 900L, reps = 12, weightKg = 110.0)
+        vm.deleteSet(setId = 900L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, progressionGenerateCalls)
+        assertEquals(0, workoutRepo.addSetCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        assertEquals(WorkoutFinishState.Generating, vm.uiState.value.finishState)
+
+        progressionGenerateGate?.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+        firstCollector.cancel()
+        secondCollector.cancel()
+    }
+
+    @Test
+    fun `mutations re-read a newly completed session instead of trusting idle finish state`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 910L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(WorkoutFinishState.Idle, vm.uiState.value.finishState)
+
+        workoutRepo.finishWorkout(sessionId)
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 105.0)
+        vm.updateSet(setId = 910L, reps = 12, weightKg = 110.0)
+        vm.deleteSet(setId = 910L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.addSetCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        assertEquals(10, workoutRepo.getSetsForSessionList(sessionId).single().reps)
+        collector.cancel()
+    }
+
+    @Test
+    fun `mutations re-read a missing session and never call set repositories`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 920L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        workoutRepo.deleteSession(sessionId)
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 105.0)
+        vm.updateSet(setId = 920L, reps = 12, weightKg = 110.0)
+        vm.deleteSet(setId = 920L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.addSetCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        collector.cancel()
+    }
+
+    @Test
+    fun `queued mutations re-read completion only after entering mutation mutex`() = runTest {
+        val comparisonGate = CompletableDeferred<Unit>()
+        var statisticsReadCount = 0
+        val blockingStats = mockk<StatisticsRepository>(relaxed = true)
+        coEvery { blockingStats.getRecordsForExercisesList(listOf(testExercise.id)) } coAnswers {
+            statisticsReadCount += 1
+            if (statisticsReadCount > 1) comparisonGate.await()
+            emptyList()
+        }
+        val secondExercise = testExercise.copy(id = 2L, name = "Schulterdruecken")
+        exerciseRepo.addExercise(secondExercise)
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            blockingStats,
+            progressionRepo,
+            prefsRepo
+        )
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val persistedSetId = workoutRepo.getSetsForSessionList(sessionId).single().id
+
+        vm.logSet(exerciseId = secondExercise.id, reps = 8, weightKg = 50.0)
+        vm.updateSet(setId = persistedSetId, reps = 12, weightKg = 110.0)
+        vm.deleteSet(setId = persistedSetId)
+        testDispatcher.scheduler.advanceUntilIdle()
+        workoutRepo.finishWorkout(sessionId)
+
+        comparisonGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, workoutRepo.addSetCallCount)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, workoutRepo.deleteSetCallCount)
+        assertEquals(10, workoutRepo.getSetsForSessionList(sessionId).single().reps)
     }
 
     @Test

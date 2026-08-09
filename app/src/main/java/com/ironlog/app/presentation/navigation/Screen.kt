@@ -21,6 +21,10 @@ sealed class Screen(val route: String) {
             }
         }
     }
+    data object ProgressionReview : Screen("progression_review?sessionId={sessionId}") {
+        fun createRoute(sessionId: Long? = null): String =
+            "progression_review?sessionId=${sessionId ?: 0L}"
+    }
     data object ExerciseLibrary : Screen("exercises")
     data object WorkoutHistory : Screen("history")
     data object WorkoutDetail : Screen("workout_detail/{sessionId}") {

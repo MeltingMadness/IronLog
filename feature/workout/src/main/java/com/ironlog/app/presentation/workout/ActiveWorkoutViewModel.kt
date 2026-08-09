@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -65,6 +66,15 @@ sealed interface ActiveWorkoutSessionPhase {
     data object Loading : ActiveWorkoutSessionPhase
     data class Active(val session: WorkoutSession) : ActiveWorkoutSessionPhase
     data object Missing : ActiveWorkoutSessionPhase
+}
+
+sealed interface WorkoutFinishState {
+    data object Idle : WorkoutFinishState
+    data object Completing : WorkoutFinishState
+    data object Generating : WorkoutFinishState
+    data class ReviewReady(val sessionId: Long) : WorkoutFinishState
+    data object CompletedWithoutReview : WorkoutFinishState
+    data class GenerationFailed(val sessionId: Long, val message: String) : WorkoutFinishState
 }
 
 /**
@@ -111,8 +121,7 @@ data class ActiveWorkoutUiState(
     val logSuccessSubmissions: Set<Long> = emptySet(),
     val updateInFlightBySet: Map<Long, Int> = emptyMap(),
     val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
-    val finishInFlight: Boolean = false,
-    val workoutFinished: Boolean = false
+    val finishState: WorkoutFinishState = WorkoutFinishState.Idle
 )
 
 private data class ActiveWorkoutChromeState(
@@ -127,8 +136,7 @@ private data class OperationUiState(
     val logSuccessSubmissions: Set<Long> = emptySet(),
     val updateInFlightBySet: Map<Long, Int> = emptyMap(),
     val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
-    val finishInFlight: Boolean = false,
-    val workoutFinished: Boolean = false
+    val finishState: WorkoutFinishState = WorkoutFinishState.Idle
 )
 
 private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
@@ -319,8 +327,7 @@ class ActiveWorkoutViewModel(
             logSuccessSubmissions = operation.logSuccessSubmissions,
             updateInFlightBySet = operation.updateInFlightBySet,
             updateSuccessCountBySet = operation.updateSuccessCountBySet,
-            finishInFlight = operation.finishInFlight,
-            workoutFinished = operation.workoutFinished
+            finishState = operation.finishState
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
 
@@ -328,6 +335,7 @@ class ActiveWorkoutViewModel(
         restoreAddedExercises()
         persistAddedExerciseIds()
         observeExerciseReconciliation()
+        recoverCompletedSession()
     }
 
     /**
@@ -421,7 +429,7 @@ class ActiveWorkoutViewModel(
             var persisted = false
             try {
                 mutationMutex.withLock {
-                    if (operationState.value.workoutFinished) return@withLock
+                    if (!sessionIsMutable()) return@withLock
                     require(key !is WorkoutExerciseKey.AdHoc || key.exerciseId == exerciseId) {
                         "Ad-hoc exercise key does not match exercise"
                     }
@@ -596,7 +604,7 @@ class ActiveWorkoutViewModel(
     fun deleteSet(setId: Long) {
         viewModelScope.launch {
             mutationMutex.withLock {
-                if (operationState.value.workoutFinished) return@withLock
+                if (!sessionIsMutable()) return@withLock
                 try {
                     workoutRepository.deleteSet(setId)
                 } catch (e: Exception) {
@@ -615,11 +623,10 @@ class ActiveWorkoutViewModel(
                 it.copy(updateInFlightBySet = incrementCounter(it.updateInFlightBySet, setId))
             }
             try {
-                // A cleared/invalid reps field must never persist a stale or zero value.
-                if (reps <= 0) return@launch
-
                 mutationMutex.withLock {
-                    if (operationState.value.workoutFinished) return@withLock
+                    if (!sessionIsMutable()) return@withLock
+                    // A cleared/invalid reps field must never persist a stale or zero value.
+                    if (reps <= 0) return@withLock
 
                     val sets = workoutRepository.getSetsForSessionList(sessionId)
                     val set = sets.find { it.id == setId } ?: return@withLock
@@ -679,21 +686,50 @@ class ActiveWorkoutViewModel(
 
     fun finishWorkout() {
         viewModelScope.launch {
+            var generateAfterFinish = false
             mutationMutex.withLock {
-                if (operationState.value.workoutFinished || operationState.value.finishInFlight) {
+                if (operationState.value.finishState != WorkoutFinishState.Idle) {
                     return@withLock
                 }
-                operationState.update { it.copy(finishInFlight = true) }
+                operationState.update { it.copy(finishState = WorkoutFinishState.Completing) }
                 var discardEmptySession = false
                 try {
-                    discardEmptySession = workoutRepository.getSetCountForSession(sessionId) == 0
-                    if (discardEmptySession) {
-                        workoutRepository.deleteSession(sessionId)
-                    } else {
-                        workoutRepository.finishWorkout(sessionId)
+                    val session = workoutRepository.getSessionById(sessionId)
+                    when {
+                        session == null -> {
+                            showFinishDialog.value = false
+                            operationState.update {
+                                it.copy(finishState = WorkoutFinishState.CompletedWithoutReview)
+                            }
+                        }
+                        session.endTime != null -> {
+                            showFinishDialog.value = false
+                            operationState.update {
+                                it.copy(finishState = WorkoutFinishState.Generating)
+                            }
+                            generateAfterFinish = true
+                        }
+                        else -> {
+                            discardEmptySession =
+                                workoutRepository.getSetCountForSession(sessionId) == 0
+                            if (discardEmptySession) {
+                                workoutRepository.deleteSession(sessionId)
+                                showFinishDialog.value = false
+                                operationState.update {
+                                    it.copy(
+                                        finishState = WorkoutFinishState.CompletedWithoutReview
+                                    )
+                                }
+                            } else {
+                                workoutRepository.finishWorkout(sessionId)
+                                showFinishDialog.value = false
+                                operationState.update {
+                                    it.copy(finishState = WorkoutFinishState.Generating)
+                                }
+                                generateAfterFinish = true
+                            }
+                        }
                     }
-                    showFinishDialog.value = false
-                    operationState.update { it.copy(workoutFinished = true) }
                 } catch (e: Exception) {
                     setError(
                         message = "Training konnte nicht beendet werden: ${e.message}",
@@ -701,11 +737,91 @@ class ActiveWorkoutViewModel(
                             discardEmptySession = discardEmptySession
                         )
                     )
-                } finally {
-                    operationState.update { it.copy(finishInFlight = false) }
+                    operationState.update { it.copy(finishState = WorkoutFinishState.Idle) }
+                }
+            }
+            if (generateAfterFinish) {
+                generateProgression(sessionId)
+            }
+        }
+    }
+
+    fun retryProgressionGeneration() {
+        viewModelScope.launch {
+            var retrySessionId: Long? = null
+            mutationMutex.withLock {
+                val failed = operationState.value.finishState as? WorkoutFinishState.GenerationFailed
+                    ?: return@withLock
+                retrySessionId = failed.sessionId
+                operationState.update { it.copy(finishState = WorkoutFinishState.Generating) }
+            }
+            retrySessionId?.let { generateProgression(it) }
+        }
+    }
+
+    private fun recoverCompletedSession() {
+        viewModelScope.launch {
+            var completedSessionId: Long? = null
+            try {
+                mutationMutex.withLock {
+                    if (operationState.value.finishState != WorkoutFinishState.Idle) {
+                        return@withLock
+                    }
+                    val session = workoutRepository.getSessionById(sessionId)
+                    if (session?.endTime != null) {
+                        completedSessionId = session.id
+                        operationState.update { it.copy(finishState = WorkoutFinishState.Generating) }
+                    }
+                }
+                completedSessionId?.let { generateProgression(it) }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                runCatching {
+                    AppLogger.w(
+                        "ActiveWorkoutVM",
+                        "Recovery-Pruefung fuer beendetes Training fehlgeschlagen: ${e.message}",
+                        e
+                    )
                 }
             }
         }
+    }
+
+    private suspend fun generateProgression(completedSessionId: Long) {
+        try {
+            val result = progressionRepository.generateOutcomesForSession(completedSessionId)
+            operationState.update {
+                it.copy(
+                    finishState = if (result.reviewItemCount > 0) {
+                        WorkoutFinishState.ReviewReady(completedSessionId)
+                    } else {
+                        WorkoutFinishState.CompletedWithoutReview
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            operationState.update {
+                it.copy(
+                    finishState = WorkoutFinishState.GenerationFailed(
+                        sessionId = completedSessionId,
+                        message = GENERATION_FAILURE_MESSAGE
+                    )
+                )
+            }
+            runCatching {
+                AppLogger.w(
+                    "ActiveWorkoutVM",
+                    "Progressionsvorschlaege konnten nicht erzeugt werden: ${e.message}",
+                    e
+                )
+            }
+        }
+    }
+
+    private suspend fun sessionIsMutable(): Boolean {
+        val session = workoutRepository.getSessionById(sessionId)
+        return session != null && session.endTime == null
     }
 
     fun retryLastError() {
@@ -754,10 +870,8 @@ class ActiveWorkoutViewModel(
 
     companion object {
         private const val KEY_ADDED_EXERCISE_IDS = "addedExerciseIds"
+        private const val GENERATION_FAILURE_MESSAGE = "progression_generation_failed"
     }
 }
-
-
-
 
 
