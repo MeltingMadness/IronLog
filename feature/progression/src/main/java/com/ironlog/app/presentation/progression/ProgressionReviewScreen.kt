@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -70,6 +71,7 @@ fun ProgressionReviewScreen(
     IronLogScreenScaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.testTag("progression_review_top_bar"),
                 title = { Text(stringResource(R.string.progression_review_title)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {

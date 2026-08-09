@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -18,7 +17,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ironlog.app.presentation.theme.IronLogTheme
-import com.ironlog.app.di.appModule
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ProgressionDecisionResult
@@ -36,7 +34,6 @@ import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.presentation.progression.ProgressionReviewViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.koin.android.ext.koin.androidContext
 import org.koin.compose.KoinApplication
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -236,24 +233,21 @@ class NavigationSmokeTest {
         lateinit var navController: NavHostController
 
         composeRule.setContent {
-            val context = LocalContext.current
             KoinApplication(
                 application = {
-                    androidContext(context)
-                    allowOverride(true)
-                    modules(appModule, progressionReviewModule)
+                    modules(progressionReviewModule)
                 }
             ) {
                 IronLogTheme {
                     navController = rememberNavController()
-                    IronLogNavHost(navController = navController)
+                    IronLogNavHost(
+                        navController = navController,
+                        startDestination = Screen.ProgressionReview.createRoute(0L)
+                    )
                 }
             }
         }
 
-        composeRule.runOnIdle {
-            navController.navigate(Screen.ProgressionReview.createRoute(0L))
-        }
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("progression_review_top_bar").assertIsDisplayed()

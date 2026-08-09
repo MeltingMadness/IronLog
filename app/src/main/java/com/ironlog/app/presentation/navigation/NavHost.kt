@@ -13,11 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,7 +35,10 @@ import com.ironlog.app.presentation.workout.ActiveWorkoutScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun IronLogNavHost(navController: NavHostController) {
+fun IronLogNavHost(
+    navController: NavHostController,
+    startDestination: String = Screen.Dashboard.route
+) {
     val motion = ironLogMotion
 
     SharedTransitionLayout {
@@ -48,7 +47,7 @@ fun IronLogNavHost(navController: NavHostController) {
         ) {
             NavHost(
         navController = navController,
-        startDestination = Screen.Dashboard.route,
+        startDestination = startDestination,
         enterTransition = {
             if (motion.reduced) {
                 fadeIn(animationSpec = snap())
@@ -149,17 +148,11 @@ fun IronLogNavHost(navController: NavHostController) {
                 }
             )
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("progression_review_top_bar")
-            ) {
-                ProgressionReviewScreen(
-                    onClose = {
-                        navController.popBackStack(Screen.Dashboard.route, inclusive = false)
-                    }
-                )
-            }
+            ProgressionReviewScreen(
+                onClose = {
+                    navController.popBackStack(Screen.Dashboard.route, inclusive = false)
+                }
+            )
         }
 
         composable(Screen.ExerciseLibrary.route) {

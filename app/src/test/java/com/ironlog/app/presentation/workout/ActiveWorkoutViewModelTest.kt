@@ -16,6 +16,7 @@ import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
+import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
@@ -1595,6 +1596,69 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `two finish taps while finish is suspended complete and generate exactly once in order`() = runTest {
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 405L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0
+            )
+        )
+        val finishGate = CompletableDeferred<Unit>()
+        val callLog = mutableListOf<String>()
+        val gatedWorkoutRepo = object : WorkoutRepository by workoutRepo {
+            var finishCalls = 0
+
+            override suspend fun finishWorkout(sessionId: Long) {
+                finishCalls += 1
+                finishGate.await()
+                workoutRepo.finishWorkout(sessionId)
+                callLog += "finish:$sessionId"
+            }
+        }
+        var generateCalls = 0
+        val gatedProgressionRepo = mockk<ProgressionRepository>(relaxed = true)
+        every { gatedProgressionRepo.observeTargetsForSession(any()) } returns MutableStateFlow(emptyList())
+        coEvery { gatedProgressionRepo.generateOutcomesForSession(any()) } coAnswers {
+            val generatedSessionId = firstArg<Long>()
+            generateCalls += 1
+            callLog += "generate:$generatedSessionId"
+            ProgressionGenerationResult(insertedCount = 0, reviewItemCount = 0, pendingCount = 0)
+        }
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            gatedWorkoutRepo,
+            exerciseRepo,
+            statsRepo,
+            gatedProgressionRepo,
+            prefsRepo
+        )
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.finishWorkout()
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, gatedWorkoutRepo.finishCalls)
+        assertEquals(0, generateCalls)
+
+        finishGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, gatedWorkoutRepo.finishCalls)
+        assertEquals(1, workoutRepo.finishWorkoutCallCount)
+        assertEquals(1, generateCalls)
+        assertEquals(listOf("finish:$sessionId", "generate:$sessionId"), callLog)
+        collector.cancel()
+    }
+
+    @Test
     fun `workout is durably finished before progression generation starts`() = runTest {
         workoutRepo.addSetDirectly(
             WorkoutSet(
@@ -2011,6 +2075,7 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, progressionGenerateCalls)
+        assertEquals(0, workoutRepo.finishWorkoutCallCount)
         assertEquals(0, workoutRepo.addSetCallCount)
         assertEquals(0, workoutRepo.updateSetCallCount)
         assertEquals(0, workoutRepo.deleteSetCallCount)
