@@ -5,7 +5,9 @@ import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
+import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.domain.model.PreviousProgressionOutcome
 import com.ironlog.app.domain.model.ProgressionConfig
@@ -13,12 +15,14 @@ import com.ironlog.app.domain.model.ProgressionContext
 import com.ironlog.app.domain.model.ProgressionDecisionResult
 import com.ironlog.app.domain.model.ProgressionGenerationResult
 import com.ironlog.app.domain.model.ProgressionOutcome
+import com.ironlog.app.domain.model.ProgressionOutcomeType
 import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionSuggestion
 import com.ironlog.app.domain.model.ProgressionSuggestionStatus
 import com.ironlog.app.domain.model.ProgressionTarget
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.model.WorkoutPlanTarget
+import com.ironlog.app.domain.progression.ProgressionConfigValidator
 import com.ironlog.app.domain.progression.ProgressionEngine
 import com.ironlog.app.domain.repository.ProgressionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,7 +34,7 @@ class ProgressionRepositoryImpl(
     private val progressionDao: ProgressionDao,
     private val sessionDao: WorkoutSessionDao,
     private val setDao: WorkoutSetDao,
-    @Suppress("unused") private val trainingPlanDao: TrainingPlanDao,
+    private val trainingPlanDao: TrainingPlanDao,
     private val engine: ProgressionEngine,
     private val transactionRunner: TransactionRunner,
     private val nowEpochMillis: () -> Long = System::currentTimeMillis
@@ -67,16 +71,129 @@ class ProgressionRepositoryImpl(
         progressionDao.getCompletedSessionIdsWithMissingOutcomes()
             .sumOf { sessionId -> generateSingleSession(sessionId).insertedCount }
 
-    override suspend fun reconcileOutstandingSuggestions(): Set<Long> =
-        throw UnsupportedOperationException("Progression decisions are implemented in Task 6")
+    override suspend fun reconcileOutstandingSuggestions(): Set<Long> {
+        val staleRows = progressionDao.getPendingSuggestions().filter { suggestion ->
+            val current = trainingPlanDao.getPlanExerciseAt(
+                suggestion.planId,
+                suggestion.exerciseId,
+                suggestion.orderIndex
+            )
+            current == null || !current.matches(suggestion)
+        }
+        staleRows.forEach { row ->
+            progressionDao.updateSuggestion(
+                row.copy(
+                    status = ProgressionSuggestionStatus.STALE.name,
+                    decidedAtEpochMillis = nowEpochMillis()
+                )
+            )
+        }
+        return staleRows.mapTo(linkedSetOf()) { it.id }
+    }
 
     override suspend fun acceptSuggestions(
         finalTargetsBySuggestionId: Map<Long, ProgressionTarget>
-    ): ProgressionDecisionResult =
-        throw UnsupportedOperationException("Progression decisions are implemented in Task 6")
+    ): ProgressionDecisionResult = transactionRunner.runInTransaction {
+        if (finalTargetsBySuggestionId.isEmpty()) {
+            return@runInTransaction ProgressionDecisionResult.Invalid(
+                "Select at least one suggestion"
+            )
+        }
+
+        val rows = progressionDao.getSuggestionsByIds(finalTargetsBySuggestionId.keys)
+        if (rows.size != finalTargetsBySuggestionId.size ||
+            rows.any { it.status != ProgressionSuggestionStatus.PENDING.name }
+        ) {
+            return@runInTransaction ProgressionDecisionResult.Invalid(
+                "Every selected suggestion must still be PENDING"
+            )
+        }
+        if (rows.any {
+                it.outcomeType != ProgressionOutcomeType.PROPOSE_CHANGE.name ||
+                    it.suggestedTarget == null
+            }
+        ) {
+            return@runInTransaction ProgressionDecisionResult.Invalid(
+                "Every selected suggestion must contain a proposed target"
+            )
+        }
+        if (rows.groupBy { Triple(it.planId, it.exerciseId, it.orderIndex) }
+                .any { it.value.size > 1 }
+        ) {
+            return@runInTransaction ProgressionDecisionResult.Invalid(
+                "Select only one suggestion per plan position"
+            )
+        }
+
+        val currentRowsBySuggestionId = rows.associate { row ->
+            row.id to trainingPlanDao.getPlanExerciseAt(
+                row.planId,
+                row.exerciseId,
+                row.orderIndex
+            )
+        }
+        val staleIds = rows.filterTo(mutableListOf()) { row ->
+            val current = currentRowsBySuggestionId[row.id]
+            current == null || !current.matches(row)
+        }.mapTo(linkedSetOf()) { it.id }
+        if (staleIds.isNotEmpty()) {
+            rows.filter { it.id in staleIds }.forEach { row ->
+                progressionDao.updateSuggestion(
+                    row.copy(
+                        status = ProgressionSuggestionStatus.STALE.name,
+                        decidedAtEpochMillis = nowEpochMillis()
+                    )
+                )
+            }
+            return@runInTransaction ProgressionDecisionResult.Stale(staleIds)
+        }
+
+        val validationErrors = rows.flatMap { row ->
+            val finalTarget = requireNotNull(finalTargetsBySuggestionId[row.id])
+            ProgressionConfigValidator.validationErrors(
+                finalTarget,
+                row.sourceProgression.toDomain()
+            )
+        }.distinct()
+        if (validationErrors.isNotEmpty()) {
+            return@runInTransaction ProgressionDecisionResult.Invalid(
+                validationErrors.joinToString()
+            )
+        }
+
+        rows.forEach { row ->
+            val finalTarget = requireNotNull(finalTargetsBySuggestionId[row.id])
+            val current = requireNotNull(currentRowsBySuggestionId[row.id])
+            check(
+                trainingPlanDao.updatePlanExerciseTargetsById(
+                    current.id,
+                    finalTarget.sets,
+                    finalTarget.reps,
+                    finalTarget.weightKg
+                ) == 1
+            ) { "Expected to update exactly one plan exercise ${current.id}" }
+            val proposedTarget = requireNotNull(row.suggestedTarget).toDomain()
+            progressionDao.updateSuggestion(
+                row.copy(
+                    status = ProgressionSuggestionStatus.ACCEPTED.name,
+                    wasEdited = finalTarget != proposedTarget,
+                    finalTarget = ProgressionTargetColumns.fromDomain(finalTarget),
+                    decidedAtEpochMillis = nowEpochMillis()
+                )
+            )
+        }
+        ProgressionDecisionResult.Accepted(rows.mapTo(linkedSetOf()) { it.id })
+    }
 
     override suspend fun rejectSuggestion(suggestionId: Long) {
-        throw UnsupportedOperationException("Progression decisions are implemented in Task 6")
+        val row = progressionDao.getSuggestionsByIds(setOf(suggestionId)).singleOrNull() ?: return
+        if (row.status != ProgressionSuggestionStatus.PENDING.name) return
+        progressionDao.updateSuggestion(
+            row.copy(
+                status = ProgressionSuggestionStatus.REJECTED.name,
+                decidedAtEpochMillis = nowEpochMillis()
+            )
+        )
     }
 
     private suspend fun generateSingleSession(sessionId: Long): ProgressionGenerationResult =
@@ -286,6 +403,16 @@ class ProgressionRepositoryImpl(
             supersetGroupId == target.supersetGroupId &&
             sourceTarget == target.target &&
             sourceProgression == target.progression
+
+    private fun PlanExerciseEntity.matches(source: ProgressionSuggestionEntity): Boolean =
+        planId == source.planId &&
+            exerciseId == source.exerciseId &&
+            orderIndex == source.orderIndex &&
+            supersetGroupId == source.supersetGroupId &&
+            targetSets == source.sourceTarget.sets &&
+            targetReps == source.sourceTarget.reps &&
+            targetWeightKg == source.sourceTarget.weightKg &&
+            progression == source.sourceProgression
 
     private companion object {
         val EMPTY_GENERATION_RESULT = ProgressionGenerationResult(

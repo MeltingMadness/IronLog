@@ -5,6 +5,7 @@ import com.ironlog.app.data.local.dao.ProgressionDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
+import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.ProgressionConfigColumns
 import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
@@ -14,6 +15,7 @@ import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.FailurePolicy
 import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.ProgressionContext
+import com.ironlog.app.domain.model.ProgressionDecisionResult
 import com.ironlog.app.domain.model.ProgressionOutcome
 import com.ironlog.app.domain.model.ProgressionOutcomeType
 import com.ironlog.app.domain.model.ProgressionReasonCode
@@ -56,6 +58,7 @@ class ProgressionRepositoryImplTest {
     private val previousTargetBounds = mutableListOf<Pair<Long, Long>>()
     private val suggestionQueries = mutableListOf<List<Long>>()
     private val suggestions = mutableListOf<ProgressionSuggestionEntity>()
+    private val planExercises = mutableListOf<PlanExerciseEntity>()
     private val contexts = mutableListOf<ProgressionContext>()
     private val engineOutcomes = mutableMapOf<Long, ProgressionOutcome>()
     private val pendingRows = MutableStateFlow<List<ProgressionSuggestionEntity>>(emptyList())
@@ -65,6 +68,7 @@ class ProgressionRepositoryImplTest {
     private var hydratedSets: List<WorkoutSetEntity> = emptyList()
     private var hydratedSetQueryCount = 0
     private var nextSuggestionId = 1L
+    private var failPlanExerciseUpdateForId: Long? = null
 
     @Before
     fun setUp() {
@@ -73,7 +77,15 @@ class ProgressionRepositoryImplTest {
         setDao = mockk(relaxed = true)
         trainingPlanDao = mockk(relaxed = true)
         engine = mockk()
-        transactionRunner = RecordingTransactionRunner()
+        transactionRunner = RecordingTransactionRunner(
+            snapshot = { TransactionSnapshot(suggestions.toList(), planExercises.toList()) },
+            restore = { snapshot ->
+                suggestions.clear()
+                suggestions += snapshot.suggestions
+                planExercises.clear()
+                planExercises += snapshot.planExercises
+            }
+        )
 
         sessions[9] = completedSession(id = 9, endTime = 1_000)
 
@@ -118,6 +130,20 @@ class ProgressionRepositoryImplTest {
                 id
             }
         }
+        coEvery { progressionDao.getSuggestionsByIds(any()) } answers {
+            val ids = firstArg<Set<Long>>()
+            suggestions.filter { it.id in ids }.sortedBy { it.id }
+        }
+        coEvery { progressionDao.getPendingSuggestions() } answers {
+            suggestions.filter { it.status == ProgressionSuggestionStatus.PENDING.name }
+                .sortedBy { it.id }
+        }
+        coEvery { progressionDao.updateSuggestion(any()) } answers {
+            val updated = firstArg<ProgressionSuggestionEntity>()
+            val index = suggestions.indexOfFirst { it.id == updated.id }
+            check(index >= 0) { "Missing suggestion ${updated.id}" }
+            suggestions[index] = updated
+        }
         coEvery { progressionDao.getCompletedSessionIdsWithMissingOutcomes() } answers {
             missingSessionIds
         }
@@ -133,6 +159,31 @@ class ProgressionRepositoryImplTest {
             hydratedSetQueryCount += 1
             val ids = firstArg<List<Long>>()
             hydratedSets.filter { it.id in ids }
+        }
+        coEvery { trainingPlanDao.getPlanExerciseAt(any(), any(), any()) } answers {
+            val planId = firstArg<Long>()
+            val exerciseId = secondArg<Long>()
+            val orderIndex = arg<Int>(2)
+            planExercises.singleOrNull {
+                it.planId == planId && it.exerciseId == exerciseId && it.orderIndex == orderIndex
+            }
+        }
+        coEvery { trainingPlanDao.updatePlanExerciseTargetsById(any(), any(), any(), any()) } answers {
+            val id = firstArg<Long>()
+            if (id == failPlanExerciseUpdateForId) {
+                throw IllegalStateException("Injected plan exercise update failure for $id")
+            }
+            val index = planExercises.indexOfFirst { it.id == id }
+            if (index < 0) {
+                0
+            } else {
+                planExercises[index] = planExercises[index].copy(
+                    targetSets = arg(1),
+                    targetReps = arg(2),
+                    targetWeightKg = arg(3)
+                )
+                1
+            }
         }
         every { engine.evaluate(any()) } answers {
             val context = firstArg<ProgressionContext>()
@@ -647,14 +698,370 @@ class ProgressionRepositoryImplTest {
         assertEquals(0, hydratedSetQueryCount)
     }
 
-    private fun newRepository(progressionEngine: ProgressionEngine) = ProgressionRepositoryImpl(
+    @Test
+    fun `single acceptance updates the exact plan position and records final target`() = runTest {
+        seedPending(
+            id = 1,
+            planId = 3,
+            exerciseId = 7,
+            orderIndex = 1,
+            sourceWeight = 100.0,
+            proposedWeight = 102.5
+        )
+        planExercises += matchingPlanExercise(
+            id = 11,
+            planId = 3,
+            exerciseId = 7,
+            orderIndex = 1,
+            weight = 100.0
+        )
+        planExercises += matchingPlanExercise(
+            id = 12,
+            planId = 4,
+            exerciseId = 7,
+            orderIndex = 1,
+            weight = 70.0
+        )
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertEquals(ProgressionDecisionResult.Accepted(setOf(1L)), result)
+        assertEquals(102.5, planExercises.single { it.id == 11L }.targetWeightKg, 0.0)
+        assertEquals(70.0, planExercises.single { it.id == 12L }.targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.ACCEPTED.name, suggestions.single().status)
+        assertFalse(suggestions.single().wasEdited)
+        assertEquals(ProgressionTargetColumns(3, 8, 102.5), suggestions.single().finalTarget)
+        assertEquals(7_000L, suggestions.single().decidedAtEpochMillis)
+        assertEquals(1, transactionRunner.transactionCount)
+    }
+
+    @Test
+    fun `edited acceptance records the actual final target`() = runTest {
+        seedPending(id = 1, sourceWeight = 100.0, proposedWeight = 102.5)
+        planExercises += matchingPlanExercise(weight = 100.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(4, 6, 103.0))
+        )
+
+        assertEquals(ProgressionDecisionResult.Accepted(setOf(1L)), result)
+        assertEquals(4, planExercises.single().targetSets)
+        assertEquals(6, planExercises.single().targetReps)
+        assertEquals(103.0, planExercises.single().targetWeightKg, 0.0)
+        assertTrue(suggestions.single().wasEdited)
+        assertEquals(ProgressionTargetColumns(4, 6, 103.0), suggestions.single().finalTarget)
+    }
+
+    @Test
+    fun `batch conflict changes no plan row and marks conflicting suggestions stale`() = runTest {
+        seedPending(id = 1, orderIndex = 0, sourceWeight = 100.0, proposedWeight = 102.5)
+        seedPending(id = 2, orderIndex = 1, sourceWeight = 80.0, proposedWeight = 82.5)
+        planExercises += matchingPlanExercise(id = 11, orderIndex = 0, weight = 100.0)
+        planExercises += matchingPlanExercise(id = 12, orderIndex = 1, weight = 90.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(
+                1L to ProgressionTarget(3, 8, 102.5),
+                2L to ProgressionTarget(3, 8, 82.5)
+            )
+        )
+
+        assertEquals(ProgressionDecisionResult.Stale(setOf(2L)), result)
+        assertEquals(listOf(100.0, 90.0), planExercises.map { it.targetWeightKg })
+        assertEquals(
+            listOf(ProgressionSuggestionStatus.PENDING.name, ProgressionSuggestionStatus.STALE.name),
+            suggestions.map { it.status }
+        )
+        assertEquals(listOf(null, 7_000L), suggestions.map { it.decidedAtEpochMillis })
+    }
+
+    @Test
+    fun `invalid edited target changes neither plan nor status`() = runTest {
+        seedPending(id = 1, sourceWeight = 100.0, proposedWeight = 102.5)
+        planExercises += matchingPlanExercise(weight = 100.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(0, 8, Double.NaN))
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        result as ProgressionDecisionResult.Invalid
+        assertTrue("target.sets" in result.message)
+        assertTrue("target.weightKg" in result.message)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, suggestions.single().status)
+        assertEquals(null, suggestions.single().decidedAtEpochMillis)
+    }
+
+    @Test
+    fun `all final targets are validated before the first plan write`() = runTest {
+        seedPending(id = 1, orderIndex = 0, sourceWeight = 100.0, proposedWeight = 102.5)
+        seedPending(id = 2, orderIndex = 1, sourceWeight = 80.0, proposedWeight = 82.5)
+        planExercises += matchingPlanExercise(id = 11, orderIndex = 0, weight = 100.0)
+        planExercises += matchingPlanExercise(id = 12, orderIndex = 1, weight = 80.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(
+                1L to ProgressionTarget(3, 8, 102.5),
+                2L to ProgressionTarget(3, 0, 82.5)
+            )
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(listOf(100.0, 80.0), planExercises.map { it.targetWeightKg })
+        assertEquals(
+            listOf(ProgressionSuggestionStatus.PENDING.name, ProgressionSuggestionStatus.PENDING.name),
+            suggestions.map { it.status }
+        )
+    }
+
+    @Test
+    fun `batch rejects two suggestions for the same current plan position`() = runTest {
+        seedPending(
+            id = 1,
+            sourceSessionId = 9,
+            orderIndex = 0,
+            sourceWeight = 100.0,
+            proposedWeight = 102.5
+        )
+        seedPending(
+            id = 2,
+            sourceSessionId = 12,
+            orderIndex = 0,
+            sourceWeight = 100.0,
+            proposedWeight = 105.0
+        )
+        planExercises += matchingPlanExercise(orderIndex = 0, weight = 100.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(
+                1L to ProgressionTarget(3, 8, 102.5),
+                2L to ProgressionTarget(3, 8, 105.0)
+            )
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(
+            listOf(ProgressionSuggestionStatus.PENDING.name, ProgressionSuggestionStatus.PENDING.name),
+            suggestions.map { it.status }
+        )
+    }
+
+    @Test
+    fun `empty acceptance selection is invalid without changing stored state`() = runTest {
+        seedPending(id = 1)
+        planExercises += matchingPlanExercise()
+
+        val result = repository.acceptSuggestions(emptyMap())
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, suggestions.single().status)
+    }
+
+    @Test
+    fun `acceptance rejects a selected suggestion that is no longer pending`() = runTest {
+        seedPending(id = 1)
+        suggestions[0] = suggestions[0].copy(
+            status = ProgressionSuggestionStatus.REJECTED.name,
+            decidedAtEpochMillis = 6_500L
+        )
+        planExercises += matchingPlanExercise()
+
+        val decidedResult = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertTrue(decidedResult is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.REJECTED.name, suggestions.single().status)
+        assertEquals(6_500L, suggestions.single().decidedAtEpochMillis)
+    }
+
+    @Test
+    fun `acceptance rejects an unknown selected suggestion`() = runTest {
+        planExercises += matchingPlanExercise()
+
+        val result = repository.acceptSuggestions(
+            mapOf(404L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertTrue(suggestions.isEmpty())
+    }
+
+    @Test
+    fun `acceptance rejects a pending non proposal outcome`() = runTest {
+        suggestions += suggestion(id = 1).copy(status = ProgressionSuggestionStatus.PENDING.name)
+        planExercises += matchingPlanExercise()
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, suggestions.single().status)
+    }
+
+    @Test
+    fun `acceptance rejects a proposal with no stored target`() = runTest {
+        suggestions += suggestion(
+            id = 1,
+            outcomeType = ProgressionOutcomeType.PROPOSE_CHANGE
+        ).copy(status = ProgressionSuggestionStatus.PENDING.name)
+        planExercises += matchingPlanExercise()
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertTrue(result is ProgressionDecisionResult.Invalid)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, suggestions.single().status)
+    }
+
+    @Test
+    fun `mid batch write failure rolls back plan targets and decisions`() = runTest {
+        seedPending(id = 1, orderIndex = 0, sourceWeight = 100.0, proposedWeight = 102.5)
+        seedPending(id = 2, orderIndex = 1, sourceWeight = 80.0, proposedWeight = 82.5)
+        planExercises += matchingPlanExercise(id = 11, orderIndex = 0, weight = 100.0)
+        planExercises += matchingPlanExercise(id = 12, orderIndex = 1, weight = 80.0)
+        failPlanExerciseUpdateForId = 12
+
+        val failure = captureFailure {
+            repository.acceptSuggestions(
+                mapOf(
+                    1L to ProgressionTarget(3, 8, 102.5),
+                    2L to ProgressionTarget(3, 8, 82.5)
+                )
+            )
+        }
+
+        assertTrue(failure is IllegalStateException)
+        assertEquals(listOf(100.0, 80.0), planExercises.map { it.targetWeightKg })
+        assertEquals(
+            listOf(ProgressionSuggestionStatus.PENDING.name, ProgressionSuggestionStatus.PENDING.name),
+            suggestions.map { it.status }
+        )
+        assertEquals(listOf(null, null), suggestions.map { it.decidedAtEpochMillis })
+    }
+
+    @Test
+    fun `reconcile marks disabled or raw edited schemes stale and leaves matches pending`() = runTest {
+        seedPending(id = 1, orderIndex = 0, sourceWeight = 100.0)
+        seedPending(id = 2, orderIndex = 1, sourceWeight = 80.0)
+        seedPending(id = 3, orderIndex = 2, sourceWeight = 60.0)
+        planExercises += matchingPlanExercise(
+            id = 11,
+            orderIndex = 0,
+            weight = 100.0,
+            config = ProgressionConfig.Manual()
+        )
+        planExercises += matchingPlanExercise(
+            id = 12,
+            orderIndex = 1,
+            weight = 80.0,
+            progression = linearColumns().copy(backoffPercent = 11.0)
+        )
+        planExercises += matchingPlanExercise(id = 13, orderIndex = 2, weight = 60.0)
+
+        val staleIds = repository.reconcileOutstandingSuggestions()
+
+        assertEquals(setOf(1L, 2L), staleIds)
+        assertEquals(
+            listOf(
+                ProgressionSuggestionStatus.STALE.name,
+                ProgressionSuggestionStatus.STALE.name,
+                ProgressionSuggestionStatus.PENDING.name
+            ),
+            suggestions.map { it.status }
+        )
+        assertEquals(listOf(7_000L, 7_000L, null), suggestions.map { it.decidedAtEpochMillis })
+    }
+
+    @Test
+    fun `rejection is idempotent and never reads the current plan`() = runTest {
+        var now = 7_000L
+        repository = newRepository(engine, nowEpochMillis = { now++ })
+        seedPending(id = 1)
+        planExercises += matchingPlanExercise()
+
+        repository.rejectSuggestion(1)
+        repository.rejectSuggestion(1)
+
+        assertEquals(ProgressionSuggestionStatus.REJECTED.name, suggestions.single().status)
+        assertEquals(7_000L, suggestions.single().decidedAtEpochMillis)
+        coVerify(exactly = 0) { trainingPlanDao.getPlanExerciseAt(any(), any(), any()) }
+        coVerify(exactly = 0) { trainingPlanDao.updatePlanExerciseTargetsById(any(), any(), any(), any()) }
+    }
+
+    private fun newRepository(
+        progressionEngine: ProgressionEngine,
+        nowEpochMillis: () -> Long = { 7_000L }
+    ) = ProgressionRepositoryImpl(
         progressionDao = progressionDao,
         sessionDao = sessionDao,
         setDao = setDao,
         trainingPlanDao = trainingPlanDao,
         engine = progressionEngine,
         transactionRunner = transactionRunner,
-        nowEpochMillis = { 7_000L }
+        nowEpochMillis = nowEpochMillis
+    )
+
+    private fun seedPending(
+        id: Long,
+        sourceSessionId: Long = 9,
+        planId: Long = 3,
+        exerciseId: Long = 7,
+        orderIndex: Int = 0,
+        sourceSets: Int = 3,
+        sourceReps: Int = 8,
+        sourceWeight: Double = 100.0,
+        proposedSets: Int = sourceSets,
+        proposedReps: Int = sourceReps,
+        proposedWeight: Double = sourceWeight + 2.5,
+        sourceProgression: ProgressionConfigColumns = linearColumns()
+    ) {
+        suggestions += suggestion(
+            id = id,
+            sourceSessionId = sourceSessionId,
+            sourceWeightKg = sourceWeight,
+            sourceProgression = sourceProgression,
+            outcomeType = ProgressionOutcomeType.PROPOSE_CHANGE
+        ).copy(
+            planId = planId,
+            exerciseId = exerciseId,
+            orderIndex = orderIndex,
+            sourceTarget = ProgressionTargetColumns(sourceSets, sourceReps, sourceWeight),
+            suggestedTarget = ProgressionTargetColumns(proposedSets, proposedReps, proposedWeight),
+            status = ProgressionSuggestionStatus.PENDING.name
+        )
+    }
+
+    private fun matchingPlanExercise(
+        id: Long = 11,
+        planId: Long = 3,
+        exerciseId: Long = 7,
+        orderIndex: Int = 0,
+        sets: Int = 3,
+        reps: Int = 8,
+        weight: Double = 100.0,
+        config: ProgressionConfig = linearConfig(),
+        progression: ProgressionConfigColumns = ProgressionConfigColumns.fromDomain(config)
+    ) = PlanExerciseEntity(
+        id = id,
+        planId = planId,
+        exerciseId = exerciseId,
+        orderIndex = orderIndex,
+        targetSets = sets,
+        targetReps = reps,
+        targetWeightKg = weight,
+        progression = progression
     )
 
     private fun target(
@@ -755,7 +1162,15 @@ class ProgressionRepositoryImplTest {
         throwable
     }
 
-    private class RecordingTransactionRunner : TransactionRunner {
+    private data class TransactionSnapshot(
+        val suggestions: List<ProgressionSuggestionEntity>,
+        val planExercises: List<PlanExerciseEntity>
+    )
+
+    private class RecordingTransactionRunner(
+        private val snapshot: () -> TransactionSnapshot,
+        private val restore: (TransactionSnapshot) -> Unit
+    ) : TransactionRunner {
         var transactionCount = 0
             private set
         var inTransaction = false
@@ -765,8 +1180,12 @@ class ProgressionRepositoryImplTest {
             check(!inTransaction)
             transactionCount += 1
             inTransaction = true
+            val before = snapshot()
             return try {
                 block()
+            } catch (failure: Throwable) {
+                restore(before)
+                throw failure
             } finally {
                 inTransaction = false
             }
