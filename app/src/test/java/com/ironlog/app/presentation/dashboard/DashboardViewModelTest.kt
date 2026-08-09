@@ -114,16 +114,18 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun `pending suggestion count is exposed in dashboard state`() = runTest {
-        progressionRepository.pendingCount.value = 3
-
+    fun `pending suggestion count updates live in dashboard state`() = runTest {
         val vm = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.pendingProgressionCount)
 
-        assertEquals(
-            3,
-            vm.uiState.first { it.pendingProgressionCount == 3 }.pendingProgressionCount
-        )
+        progressionRepository.pendingCount.value = 3
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(3, vm.uiState.value.pendingProgressionCount)
+
+        progressionRepository.pendingCount.value = 0
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.pendingProgressionCount)
     }
 
     @Test
