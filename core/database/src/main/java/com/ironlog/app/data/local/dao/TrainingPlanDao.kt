@@ -28,6 +28,21 @@ interface TrainingPlanDao {
     @Query("SELECT * FROM plan_exercises WHERE planId = :planId ORDER BY orderIndex ASC")
     suspend fun getExercisesForPlan(planId: Long): List<PlanExerciseEntity>
 
+    @Query("SELECT * FROM plan_exercises WHERE planId = :planId AND exerciseId = :exerciseId AND orderIndex = :orderIndex LIMIT 1")
+    suspend fun getPlanExerciseAt(
+        planId: Long,
+        exerciseId: Long,
+        orderIndex: Int
+    ): PlanExerciseEntity?
+
+    @Query("UPDATE plan_exercises SET targetSets = :sets, targetReps = :reps, targetWeightKg = :weightKg WHERE id = :id")
+    suspend fun updatePlanExerciseTargetsById(
+        id: Long,
+        sets: Int,
+        reps: Int,
+        weightKg: Double
+    ): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlan(plan: TrainingPlanEntity): Long
 
