@@ -36,6 +36,15 @@ object BackupPayloadValidator {
         checkDuplicateIds(errors, payload.metaPlanSkips.map { it.id }, "meta plan skip")
         checkDuplicateIds(errors, payload.workoutPlanTargets.map { it.id }, "workout plan target")
         checkDuplicateIds(errors, payload.progressionSuggestions.map { it.id }, "progression suggestion")
+        checkPositiveIds(errors, payload.exercises.map { it.id }, "exercise")
+        checkPositiveIds(errors, payload.workoutSessions.map { it.id }, "workout session")
+        checkPositiveIds(errors, payload.workoutSets.map { it.id }, "workout set")
+        checkPositiveIds(errors, payload.trainingPlans.map { it.id }, "training plan")
+        checkPositiveIds(errors, payload.planExercises.map { it.id }, "plan exercise")
+        checkPositiveIds(errors, payload.personalRecords.map { it.id }, "personal record")
+        checkPositiveIds(errors, payload.metaTrainingPlans.map { it.id }, "meta training plan")
+        checkPositiveIds(errors, payload.metaPlanItems.map { it.id }, "meta plan item")
+        checkPositiveIds(errors, payload.metaPlanSkips.map { it.id }, "meta plan skip")
         checkPositiveIds(errors, payload.workoutPlanTargets.map { it.id }, "workout plan target")
         checkPositiveIds(errors, payload.progressionSuggestions.map { it.id }, "progression suggestion")
 
@@ -97,6 +106,12 @@ object BackupPayloadValidator {
             }
         }
 
+        checkDuplicateKeys(
+            errors = errors,
+            values = payload.planExercises,
+            key = { it.planId to it.orderIndex },
+            label = "plan exercise plan/order"
+        )
         payload.planExercises.forEach { planExercise ->
             if (planExercise.planId !in planIds) {
                 errors += "Plan exercise ${planExercise.id} references missing plan ${planExercise.planId}"
@@ -122,6 +137,12 @@ object BackupPayloadValidator {
             }
         }
 
+        checkDuplicateKeys(
+            errors = errors,
+            values = payload.metaPlanItems,
+            key = { it.metaPlanId to it.orderIndex },
+            label = "meta plan item meta plan/order"
+        )
         payload.metaPlanItems.forEach { item ->
             if (item.metaPlanId !in metaPlanIds) {
                 errors += "Meta plan item ${item.id} references missing meta plan ${item.metaPlanId}"

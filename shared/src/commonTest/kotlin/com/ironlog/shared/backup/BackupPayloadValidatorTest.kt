@@ -772,6 +772,115 @@ class BackupPayloadValidatorTest {
         assertTrue(result.errors.any { it.contains("duplicate meta plan skip id: 12", ignoreCase = true) })
     }
 
+    @Test
+    fun `duplicate plan exercise plan and order positions fail validation`() {
+        val payload = validPayload().copy(
+            planExercises = listOf(
+                BackupPlanExercise(
+                    id = 15L,
+                    planId = 5L,
+                    exerciseId = 1L,
+                    orderIndex = 0,
+                    targetSets = 3,
+                    targetReps = 8,
+                    targetWeightKg = 80.0
+                ),
+                BackupPlanExercise(
+                    id = 16L,
+                    planId = 5L,
+                    exerciseId = 1L,
+                    orderIndex = 0,
+                    targetSets = 3,
+                    targetReps = 8,
+                    targetWeightKg = 80.0
+                )
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(
+            result.errors.any { it.contains("duplicate plan exercise plan/order", ignoreCase = true) },
+            result.errors.joinToString()
+        )
+    }
+
+    @Test
+    fun `duplicate meta plan item meta plan and order positions fail validation`() {
+        val payload = validPayload().copy(
+            metaTrainingPlans = listOf(
+                BackupMetaTrainingPlan(id = 7L, name = "Meta 1", createdAt = 1000L)
+            ),
+            metaPlanItems = listOf(
+                BackupMetaPlanItem(id = 11L, metaPlanId = 7L, trainingPlanId = 5L, orderIndex = 0),
+                BackupMetaPlanItem(id = 12L, metaPlanId = 7L, trainingPlanId = 5L, orderIndex = 0)
+            )
+        )
+
+        val result = BackupPayloadValidator.validate(payload, CURRENT_SCHEMA_VERSION)
+
+        assertFalse(result.isValid)
+        assertTrue(
+            result.errors.any { it.contains("duplicate meta plan item meta plan/order", ignoreCase = true) },
+            result.errors.joinToString()
+        )
+    }
+
+    @Test
+    fun `non positive ids fail validation on every table`() {
+        val base = validPayload()
+        val zeroIdPayloads = listOf(
+            base.copy(exercises = base.exercises.map { it.copy(id = 0L) }),
+            base.copy(workoutSessions = base.workoutSessions.map { it.copy(id = 0L) }),
+            base.copy(workoutSets = base.workoutSets.map { it.copy(id = 0L) }),
+            base.copy(trainingPlans = base.trainingPlans.map { it.copy(id = 0L) }),
+            base.copy(
+                planExercises = listOf(
+                    BackupPlanExercise(
+                        id = 0L,
+                        planId = 5L,
+                        exerciseId = 1L,
+                        orderIndex = 0,
+                        targetSets = 3,
+                        targetReps = 8,
+                        targetWeightKg = 80.0
+                    )
+                )
+            ),
+            base.copy(
+                personalRecords = listOf(
+                    BackupPersonalRecord(id = 0L, exerciseId = 1L, type = "MAX", value = 100.0, achievedAt = 1000L)
+                )
+            ),
+            base.copy(
+                metaTrainingPlans = listOf(BackupMetaTrainingPlan(id = 0L, name = "Meta 1", createdAt = 1000L))
+            ),
+            base.copy(
+                metaPlanItems = listOf(
+                    BackupMetaPlanItem(id = 0L, metaPlanId = 0L, trainingPlanId = 5L, orderIndex = 0)
+                )
+            ),
+            base.copy(
+                metaPlanSkips = listOf(
+                    BackupMetaPlanSkip(id = 0L, metaPlanId = 0L, trainingPlanId = 5L, skippedAt = 1000L)
+                )
+            )
+        )
+
+        zeroIdPayloads.forEachIndexed { index, broken ->
+            val result = BackupPayloadValidator.validate(broken, CURRENT_SCHEMA_VERSION)
+            assertFalse(
+                result.isValid,
+                "case $index must fail with a positive-id error, got: ${result.errors.joinToString()}"
+            )
+            assertTrue(
+                result.errors.any { it.contains("id must be positive", ignoreCase = true) },
+                "case $index must report a non-positive id, got: ${result.errors.joinToString()}"
+            )
+        }
+    }
+
     private fun validPayload(): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = 1,
         schemaVersion = CURRENT_SCHEMA_VERSION,

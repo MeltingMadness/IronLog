@@ -2,8 +2,11 @@ package com.ironlog.app.data.preferences
 
 import android.content.Context
 import com.ironlog.app.domain.model.ReminderConfig
+import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.UnitSystem
 import io.mockk.every
 import io.mockk.mockk
+import java.io.File
 import java.nio.file.Files
 import java.time.DayOfWeek
 import kotlinx.coroutines.flow.first
@@ -61,6 +64,25 @@ class AppPreferencesDataStoreTest {
         repository.updateShareWeightHistoryAcrossContexts(true)
 
         assertTrue(repository.preferences.first().shareWeightHistoryAcrossContexts)
+    }
+
+    @Test
+    fun `corrupted preferences file falls back to defaults instead of crashing`() = runTest {
+        val context = createContextWithTempDataStore()
+        val dataStoreDir = File(context.filesDir, "datastore")
+        dataStoreDir.mkdirs()
+        File(dataStoreDir, "app_preferences.preferences_pb").writeBytes(
+            "definitely-not-a-valid-preferences-file".encodeToByteArray()
+        )
+
+        val repository = AppPreferencesRepositoryImpl(context)
+
+        // A corrupt preferences file must never crash app start; the flow emits defaults.
+        val prefs = repository.preferences.first()
+
+        assertEquals(UnitSystem.METRIC, prefs.unitSystem)
+        assertEquals(ThemeMode.DARK, prefs.themeMode)
+        assertFalse(prefs.reminderConfig.enabled)
     }
 
     private fun createContextWithTempDataStore(): Context {

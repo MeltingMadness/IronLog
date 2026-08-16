@@ -4,6 +4,7 @@ import android.net.Uri
 import com.ironlog.app.data.backup.BackupConcurrentModificationException
 import com.ironlog.app.data.backup.BackupDocumentIo
 import com.ironlog.app.data.backup.BackupHashMismatchException
+import com.ironlog.app.data.backup.BackupSchemaTooNewException
 import com.ironlog.app.data.backup.RecoveryBackupStore
 import com.ironlog.app.data.backup.sha256Hex
 import com.ironlog.app.data.db.TransactionRunner
@@ -139,6 +140,55 @@ class BackupRepositoryImplTest {
 
         assertNull(harness.documentIo.writtenBytes)
         assertTrue(harness.recoveryStore.saved.isEmpty())
+    }
+
+    @Test
+    fun `preview of a backup from a newer schema fails with a clear error instead of a serialization exception`() {
+        val harness = Harness()
+        val newerJson = """
+            {
+              "formatVersion": 1,
+              "schemaVersion": 12,
+              "appVersion": "2.0",
+              "exportedAtEpochMillis": 1000,
+              "exercises": [
+                {
+                  "id": 1,
+                  "name": "Bankdruecken",
+                  "primaryMuscleGroup": "BRUST",
+                  "secondaryMuscleGroups": "TRIZEPS",
+                  "category": "LANGHANTEL",
+                  "isCustom": false,
+                  "notes": "",
+                  "isArchived": false,
+                  "someFutureField": true
+                }
+              ],
+              "workoutSessions": [],
+              "workoutSets": [],
+              "trainingPlans": [],
+              "planExercises": [],
+              "personalRecords": [],
+              "metaTrainingPlans": [],
+              "metaPlanItems": [],
+              "metaPlanSkips": [],
+              "workoutPlanTargets": [],
+              "progressionSuggestions": [],
+              "anotherFutureField": "value"
+            }
+        """.trimIndent()
+        harness.documentIo.bytes = newerJson.encodeToByteArray()
+
+        val error = assertThrows(BackupSchemaTooNewException::class.java) {
+            runBlocking { harness.repository.previewImport(URI) }
+        }
+
+        assertEquals(12, error.backupSchemaVersion)
+        assertEquals(11, error.appSchemaVersion)
+        assertTrue(error.message.orEmpty().contains("newer than this app", ignoreCase = true))
+        assertTrue(harness.transactionRunner.events.isEmpty())
+        coVerify(exactly = 0) { harness.exerciseDao.getAllExercisesList() }
+        coVerify(exactly = 0) { harness.exerciseDao.deleteAll() }
     }
 
     @Test

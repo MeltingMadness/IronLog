@@ -2,6 +2,7 @@
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
@@ -11,13 +12,16 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 class AppPreferencesRepositoryImpl(
     private val context: Context
 ) : AppPreferencesRepository {
 
-    override val preferences: Flow<AppPreferences> = context.appPreferencesDataStore.data.map { prefs ->
+    override val preferences: Flow<AppPreferences> = context.appPreferencesDataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { prefs ->
         val unitSystem = prefs[AppPreferenceKeys.UNIT_SYSTEM]
             ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() }
             ?: UnitSystem.METRIC
