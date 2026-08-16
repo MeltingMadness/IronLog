@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -354,14 +353,13 @@ class NavigationSmokeTest {
             composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // 8) Verlauf pruefen: erst auf die Bottom-Bar warten — die Pop-Transition
-        //    kann die Bar eine Framespanne nach dem Dashboard-Inhalt komponieren,
-        //    ein sofortiger Klick faende das Tag noch nicht (CI-Emulator, deterministisch).
-        composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodes(hasTestTag("bottom_nav_history"), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        // 8) Verlauf pruefen: die Test-Komposition zeichnet wie alle Smoke-Tests
+        //    nur IronLogNavHost ohne Scaffold/Bottom-Bar (die Bar existiert nur in
+        //    MainActivity), daher direkt zur History-Route navigieren und die
+        //    abgeschlossene Session mit heutigem Datum verifizieren.
+        composeRule.runOnIdle {
+            navController.navigate(Screen.WorkoutHistory.route)
         }
-        composeRule.onNodeWithTag("bottom_nav_history", useUnmergedTree = true).performClick()
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText("Trainingsverlauf").fetchSemanticsNodes().isNotEmpty()
