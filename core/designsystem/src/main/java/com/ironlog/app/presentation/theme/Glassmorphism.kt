@@ -3,7 +3,9 @@ package com.ironlog.app.presentation.theme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -21,16 +23,22 @@ fun Modifier.glassmorphism(
     borderColor: Color = Color(0xFFFFB464).copy(alpha = 0.18f),
     borderWidth: Dp = 1.dp,
     specularHighlight: Boolean = true
-): Modifier = this.then(
-    Modifier
+): Modifier = composed {
+    val scheme = MaterialTheme.colorScheme
+    // Amber stays as the neutral fallback via the default parameter colors above;
+    // the tint layers follow the active scheme (primary/onSurface with alpha).
+    val highlight = scheme.primary
+    val shadow = scheme.onSurface
+
+    this
         .clip(shape)
         .background(backgroundColor, shape)
         .background(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFFFFB464).copy(alpha = 0.07f),
+                    highlight.copy(alpha = 0.07f),
                     Color.Transparent,
-                    Color(0xFF2E1A00).copy(alpha = 0.10f)
+                    shadow.copy(alpha = 0.10f)
                 )
             ),
             shape = shape
@@ -52,8 +60,8 @@ fun Modifier.glassmorphism(
             if (specularHighlight) {
                 val specularBrush = Brush.linearGradient(
                     colorStops = arrayOf(
-                        0f to Color(0xFFFFD080).copy(alpha = 0.16f),
-                        0.25f to Color(0xFFFFD080).copy(alpha = 0.05f),
+                        0f to highlight.copy(alpha = 0.16f),
+                        0.25f to highlight.copy(alpha = 0.05f),
                         1f to Color.Transparent
                     ),
                     start = Offset.Zero,
@@ -62,7 +70,7 @@ fun Modifier.glassmorphism(
                 drawRect(specularBrush)
             }
         }
-)
+}
 
 fun Modifier.glow(
     color: Color,

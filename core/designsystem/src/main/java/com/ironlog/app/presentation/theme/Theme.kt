@@ -34,7 +34,12 @@ private val AmberLightColorScheme = lightColorScheme(
     onSurface = EmberOnSurface,
     surfaceVariant = EmberSurfaceVariant,
     onSurfaceVariant = EmberOnSurfaceVariant,
-    error = EmberDanger,
+    surfaceContainerLowest = EmberSurface,
+    surfaceContainerLow = EmberSurfaceElevated,
+    surfaceContainer = EmberSurfaceMuted,
+    surfaceContainerHigh = EmberSurfaceVariant,
+    surfaceContainerHighest = EmberSurfaceContainerHighest,
+    error = Error,
     onError = OnError
 )
 
@@ -57,6 +62,11 @@ private val CyanLightColorScheme = lightColorScheme(
     onSurface = OnSurface,
     surfaceVariant = SurfaceVariant,
     onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = SurfaceElevated,
+    surfaceContainerLow = Surface,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceVariant,
     error = Error,
     onError = OnError
 )
@@ -80,6 +90,11 @@ private val RedLightColorScheme = lightColorScheme(
     onSurface = OnSurface,
     surfaceVariant = SurfaceVariant,
     onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = SurfaceElevated,
+    surfaceContainerLow = Surface,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceVariant,
     error = Error,
     onError = OnError
 )
@@ -103,6 +118,11 @@ private val AmberDarkColorScheme = darkColorScheme(
     onSurface = EmberDarkOnSurface,
     surfaceVariant = EmberDarkSurfaceVariant,
     onSurfaceVariant = EmberDarkOnSurfaceVariant,
+    surfaceContainerLowest = EmberDarkBackground,
+    surfaceContainerLow = EmberDarkSurface,
+    surfaceContainer = EmberDarkSurfaceMuted,
+    surfaceContainerHigh = EmberDarkSurfaceVariant,
+    surfaceContainerHighest = EmberDarkSurfaceElevated,
     error = EmberDanger,
     onError = DarkOnError
 )
@@ -126,6 +146,11 @@ private val CyanDarkColorScheme = darkColorScheme(
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
+    surfaceContainerLowest = DarkBackground,
+    surfaceContainerLow = DarkSurface,
+    surfaceContainer = DarkSurfaceMuted,
+    surfaceContainerHigh = DarkSurfaceElevated,
+    surfaceContainerHighest = DarkSurfaceVariant,
     error = DarkError,
     onError = DarkOnError
 )
@@ -149,6 +174,11 @@ private val RedDarkColorScheme = darkColorScheme(
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
+    surfaceContainerLowest = DarkBackground,
+    surfaceContainerLow = DarkSurface,
+    surfaceContainer = DarkSurfaceMuted,
+    surfaceContainerHigh = DarkSurfaceElevated,
+    surfaceContainerHighest = DarkSurfaceVariant,
     error = DarkError,
     onError = DarkOnError
 )
@@ -201,19 +231,35 @@ fun IronLogTheme(
         }
     }
 
-    val semanticColors = EmberSemanticColors(
-        success = EmberSuccess,
-        danger = EmberDanger,
-        warning = EmberWarning,
-        rose = EmberRose,
-        roseLight = EmberRoseLight,
-        sky = EmberSky,
-        skyLight = EmberSkyLight,
-        violet = EmberViolet,
-        violetLight = EmberVioletLight,
-        teal = EmberTeal,
-        tealLight = EmberTealLight
-    )
+    val semanticColors = if (isDarkTheme) {
+        EmberSemanticColors(
+            success = EmberSuccess,
+            danger = EmberDanger,
+            warning = EmberWarning,
+            rose = EmberRose,
+            roseLight = EmberRoseLight,
+            sky = EmberSky,
+            skyLight = EmberSkyLight,
+            violet = EmberViolet,
+            violetLight = EmberVioletLight,
+            teal = EmberTeal,
+            tealLight = EmberTealLight
+        )
+    } else {
+        EmberSemanticColors(
+            success = EmberSuccessDeep,
+            danger = EmberDanger,
+            warning = EmberWarningDeep,
+            rose = EmberRose,
+            roseLight = EmberRoseLight,
+            sky = EmberSky,
+            skyLight = EmberSkyLight,
+            violet = EmberViolet,
+            violetLight = EmberVioletLight,
+            teal = EmberTeal,
+            tealLight = EmberTealLight
+        )
+    }
 
     val surfaceRoles = if (isDynamic) {
         deriveSurfaceRoles(colorScheme, isDarkTheme)
