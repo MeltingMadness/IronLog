@@ -32,3 +32,6 @@ replay_pid*.log
 *.xcworkspace/xcuserdata/
 
 .kotlin/
+
+# Lokale Fremd-Daten (Desktop-Tools)
+.freebuff/
