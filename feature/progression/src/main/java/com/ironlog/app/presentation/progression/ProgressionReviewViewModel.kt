@@ -173,8 +173,8 @@ class ProgressionReviewViewModel(
     fun reject(suggestionId: Long) {
         val state = _uiState.value
         if (state.isWorking || state.items.none { it.id == suggestionId && it.canDecide }) return
+        setWorking(true)
         viewModelScope.launch {
-            setWorking(true)
             try {
                 progressionRepository.rejectSuggestion(suggestionId)
                 _uiState.update { it.copy(edits = it.edits - suggestionId) }
@@ -187,8 +187,8 @@ class ProgressionReviewViewModel(
     }
 
     private fun accept(finalTargets: Map<Long, ProgressionTarget>) {
+        setWorking(true)
         viewModelScope.launch {
-            setWorking(true)
             try {
                 when (val result = progressionRepository.acceptSuggestions(finalTargets)) {
                     is ProgressionDecisionResult.Accepted -> {

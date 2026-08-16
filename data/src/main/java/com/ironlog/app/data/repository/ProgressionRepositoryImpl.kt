@@ -281,8 +281,7 @@ class ProgressionRepositoryImpl(
             ProgressionGenerationResult(
                 insertedCount = insertedCount,
                 reviewItemCount = statuses.count {
-                    it == ProgressionSuggestionStatus.PENDING ||
-                        it == ProgressionSuggestionStatus.INFORMATIONAL
+                    it == ProgressionSuggestionStatus.PENDING
                 },
                 pendingCount = statuses.count { it == ProgressionSuggestionStatus.PENDING }
             )
@@ -374,21 +373,18 @@ class ProgressionRepositoryImpl(
     }
 
     private suspend fun hydrate(rows: List<ProgressionSuggestionEntity>): List<ProgressionSuggestion> {
-        val idsByRow = rows.associateWith(mapper::decodeCountedSetIds)
-        val allIds = idsByRow.values.flatten().distinct()
+        val rowsWithIds = rows.mapNotNull { row ->
+            runCatching { row to mapper.decodeCountedSetIds(row) }.getOrNull()
+        }
+        val allIds = rowsWithIds.flatMap { (_, ids) -> ids }.distinct()
         val setsById = if (allIds.isEmpty()) {
             emptyMap()
         } else {
             setDao.getSetsByIds(allIds).associateBy { it.id }
         }
-        return rows.map { row ->
-            val expectedIds = idsByRow.getValue(row)
-            val countedSets = expectedIds.map { id ->
-                checkNotNull(setsById[id]) {
-                    "Missing counted workout set $id for suggestion ${row.id}"
-                }.toDomain()
-            }
-            mapper.toDomain(row, countedSets)
+        return rowsWithIds.mapNotNull { (row, expectedIds) ->
+            val countedSets = expectedIds.mapNotNull { id -> setsById[id]?.toDomain() }
+            runCatching { mapper.toDomain(row, countedSets) }.getOrNull()
         }
     }
 

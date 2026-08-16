@@ -226,7 +226,7 @@ class ProgressionRepositoryImplTest {
 
         assertEquals(1, first.insertedCount)
         assertEquals(0, second.insertedCount)
-        assertEquals(1, second.reviewItemCount)
+        assertEquals(0, second.reviewItemCount)
         assertEquals(1, suggestions.size)
     }
 
@@ -263,7 +263,7 @@ class ProgressionRepositoryImplTest {
         val result = newRepository(ProgressionEngine()).generateOutcomesForSession(9)
 
         assertEquals(2, result.insertedCount)
-        assertEquals(2, result.reviewItemCount)
+        assertEquals(0, result.reviewItemCount)
         assertEquals(0, result.pendingCount)
         assertEquals(listOf(malformed, unsupported), suggestions.map { it.sourceProgression })
         assertEquals(
@@ -292,7 +292,7 @@ class ProgressionRepositoryImplTest {
         val result = repository.generateOutcomesForSession(9)
 
         assertEquals(2, result.insertedCount)
-        assertEquals(2, result.reviewItemCount)
+        assertEquals(1, result.reviewItemCount)
         assertEquals(1, result.pendingCount)
         assertEquals(
             listOf(ProgressionSuggestionStatus.PENDING.name, ProgressionSuggestionStatus.INFORMATIONAL.name),
@@ -603,55 +603,56 @@ class ProgressionRepositoryImplTest {
     }
 
     @Test
-    fun `review fails closed when a stored evidence set is missing`() = runTest {
+    fun `review skips a missing evidence set but keeps the suggestion with the surviving sets`() = runTest {
         pendingRows.value = listOf(suggestion(id = 1, countedSetIdsJson = "[10,20]"))
         hydratedSets = listOf(set(id = 10, snapshotId = 41))
 
-        val failure = captureFailure { repository.observeReviewItems(null).first() }
+        val item = repository.observeReviewItems(null).first().single()
 
-        assertTrue(failure is IllegalStateException)
+        assertEquals(listOf(10L), item.countedSets.map { it.id })
+        assertEquals(listOf(10L), item.outcome.countedSetIds)
     }
 
     @Test
-    fun `review fails closed when hydrated evidence identity differs from the stored source`() = runTest {
+    fun `review skips suggestions whose hydrated evidence identity differs from the stored source`() = runTest {
         pendingRows.value = listOf(suggestion(id = 1, countedSetIdsJson = "[10]"))
         hydratedSets = listOf(set(id = 10, exerciseId = 8, snapshotId = 41))
 
-        val failure = captureFailure { repository.observeReviewItems(null).first() }
+        val items = repository.observeReviewItems(null).first()
 
-        assertTrue(failure is IllegalStateException)
+        assertTrue(items.isEmpty())
     }
 
     @Test
-    fun `review rejects duplicate and non-positive evidence ids before hydration`() = runTest {
+    fun `review skips rows with duplicate or non-positive evidence ids without a set query`() = runTest {
         pendingRows.value = listOf(suggestion(id = 1, countedSetIdsJson = "[10,10]"))
-        val duplicateFailure = captureFailure { repository.observeReviewItems(null).first() }
+        val duplicateItems = repository.observeReviewItems(null).first()
         pendingRows.value = listOf(suggestion(id = 2, countedSetIdsJson = "[0]"))
-        val nonPositiveFailure = captureFailure { repository.observeReviewItems(null).first() }
+        val nonPositiveItems = repository.observeReviewItems(null).first()
 
-        assertTrue(duplicateFailure is IllegalArgumentException)
-        assertTrue(nonPositiveFailure is IllegalArgumentException)
+        assertTrue(duplicateItems.isEmpty())
+        assertTrue(nonPositiveItems.isEmpty())
         assertEquals(0, hydratedSetQueryCount)
     }
 
     @Test
-    fun `review rejects malformed non-canonical or non-finite stored JSON`() = runTest {
+    fun `review skips rows with malformed non-canonical or non-finite stored JSON`() = runTest {
         pendingRows.value = listOf(suggestion(id = 1, countedSetIdsJson = "not-json"))
-        val malformed = captureFailure { repository.observeReviewItems(null).first() }
+        val malformed = repository.observeReviewItems(null).first()
         pendingRows.value = listOf(suggestion(id = 2, countedSetIdsJson = "[10] "))
-        val nonCanonical = captureFailure { repository.observeReviewItems(null).first() }
+        val nonCanonical = repository.observeReviewItems(null).first()
         pendingRows.value = listOf(
             suggestion(id = 3, reasonArgumentsJson = "{\"value\":1e999}")
         )
-        val nonFinite = captureFailure { repository.observeReviewItems(null).first() }
+        val nonFinite = repository.observeReviewItems(null).first()
 
-        assertTrue(malformed is IllegalArgumentException)
-        assertTrue(nonCanonical is IllegalArgumentException)
-        assertTrue(nonFinite is IllegalArgumentException)
+        assertTrue(malformed.isEmpty())
+        assertTrue(nonCanonical.isEmpty())
+        assertTrue(nonFinite.isEmpty())
     }
 
     @Test
-    fun `review rejects unknown persisted enum values`() = runTest {
+    fun `review skips rows with unknown persisted enum values`() = runTest {
         val base = suggestion(id = 1)
         val rows = listOf(
             base.copy(outcomeType = "FUTURE_OUTCOME"),
@@ -660,16 +661,16 @@ class ProgressionRepositoryImplTest {
             base.copy(status = "FUTURE_STATUS")
         )
 
-        val failures = rows.map { row ->
+        val results = rows.map { row ->
             pendingRows.value = listOf(row)
-            captureFailure { repository.observeReviewItems(null).first() }
+            repository.observeReviewItems(null).first()
         }
 
-        assertTrue(failures.all { it is IllegalArgumentException })
+        assertTrue(results.all { it.isEmpty() })
     }
 
     @Test
-    fun `review rejects contradictory outcome shapes`() = runTest {
+    fun `review skips contradictory outcome rows`() = runTest {
         val missingProposal = suggestion(id = 1).copy(
             outcomeType = ProgressionOutcomeType.PROPOSE_CHANGE.name,
             suggestedTarget = null
@@ -680,12 +681,12 @@ class ProgressionRepositoryImplTest {
         )
 
         pendingRows.value = listOf(missingProposal)
-        val missing = captureFailure { repository.observeReviewItems(null).first() }
+        val missing = repository.observeReviewItems(null).first()
         pendingRows.value = listOf(unexpectedProposal)
-        val unexpected = captureFailure { repository.observeReviewItems(null).first() }
+        val unexpected = repository.observeReviewItems(null).first()
 
-        assertTrue(missing is IllegalArgumentException)
-        assertTrue(unexpected is IllegalArgumentException)
+        assertTrue(missing.isEmpty())
+        assertTrue(unexpected.isEmpty())
     }
 
     @Test

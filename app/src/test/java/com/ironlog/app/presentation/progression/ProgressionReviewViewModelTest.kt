@@ -402,6 +402,29 @@ class ProgressionReviewViewModelTest {
     }
 
     @Test
+    fun `double tap accepts once while the first acceptance is in flight`() = runTest(dispatcher) {
+        repository.reviewItems.value = listOf(pendingChange(id = 2L))
+        repository.acceptGate = CompletableDeferred()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        repository.reconcileCalls = 0
+
+        viewModel.acceptOne(2L)
+        viewModel.acceptOne(2L)
+        runCurrent()
+
+        assertEquals(1, repository.acceptCalls)
+        assertTrue(viewModel.uiState.value.isWorking)
+
+        repository.acceptGate?.complete(Unit)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isWorking)
+        assertEquals(setOf(2L), repository.lastAccepted.keys)
+        assertEquals(1, repository.reconcileCalls)
+    }
+
+    @Test
     fun `reject exposes working state and waits for repository flow to change status`() = runTest(dispatcher) {
         repository.reviewItems.value = listOf(pendingChange(id = 2L))
         repository.rejectGate = CompletableDeferred()
