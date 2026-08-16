@@ -17,9 +17,26 @@ class FakeExerciseRepository : ExerciseRepository {
     /** When set, [getAllExercises] emits this failure instead of the exercise list. */
     var errorToThrow: Throwable? = null
 
+    /** When set, [deleteCustomExercise] throws this failure instead of deleting/archiving. */
+    var deleteErrorToThrow: Throwable? = null
+
+    /**
+     * Exercise-IDs, die als referenziert gelten. Real zaehlt die Datenbank
+     * plan_exercises, workout_sets, personal_records, progression_suggestions
+     * und workout_plan_targets (ExerciseDao.isExerciseReferenced). Referenzierte
+     * Uebungen werden beim Loeschen archiviert statt entfernt - wie im echten
+     * ExerciseRepositoryImpl. Tests koennen IDs hier ueber [markReferenced] eintragen.
+     */
+    val referencedExerciseIds = mutableSetOf<Long>()
+
     fun addExercise(exercise: Exercise) {
         val e = if (exercise.id == 0L) exercise.copy(id = nextId++) else exercise
         exercises.value = exercises.value + e
+    }
+
+    /** Markiert die Uebung als referenziert; [deleteCustomExercise] archiviert sie dann. */
+    fun markReferenced(exerciseId: Long) {
+        referencedExerciseIds += exerciseId
     }
 
     override fun getAllExercises(): Flow<List<Exercise>> {
@@ -60,11 +77,11 @@ class FakeExerciseRepository : ExerciseRepository {
     }
 
     override suspend fun deleteCustomExercise(id: Long) {
-        val isReferenced = false
+        deleteErrorToThrow?.let { throw it }
         exercises.value = exercises.value.mapNotNull { current ->
             if (current.id != id) return@mapNotNull current
             if (!current.isCustom) return@mapNotNull current
-            if (isReferenced) current.copy(isArchived = true) else null
+            if (id in referencedExerciseIds) current.copy(isArchived = true) else null
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.fakes
+package com.ironlog.app.fakes
 
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
@@ -68,6 +68,13 @@ class FakeAppPreferencesRepository(
     }
 
     override suspend fun updateReminderConfig(config: ReminderConfig) {
-        state.value = state.value.copy(reminderConfig = config)
+        // Paritaet mit AppPreferencesRepositoryImpl: Stunden/Minuten werden
+        // dort beim Persistieren in den gueltigen Bereich gezwungen.
+        state.value = state.value.copy(
+            reminderConfig = config.copy(
+                hour = config.hour.coerceIn(0, 23),
+                minute = config.minute.coerceIn(0, 59)
+            )
+        )
     }
 }

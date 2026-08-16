@@ -1,5 +1,6 @@
 package com.ironlog.app.fakes
 
+import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.WorkoutSet
@@ -15,6 +16,9 @@ class FakeStatisticsRepository : StatisticsRepository {
     private val exerciseSets = MutableStateFlow<List<WorkoutSet>>(emptyList())
     private var nextId = 1L
 
+    /** Session-IDs, deren Session beendet ist (real: `endTime IS NOT NULL`). */
+    private val completedSessionIds = mutableSetOf<Long>()
+
     val updatedRecords = mutableListOf<Triple<Long, RecordType, Double>>()
 
     fun addRecord(record: PersonalRecord) {
@@ -23,6 +27,11 @@ class FakeStatisticsRepository : StatisticsRepository {
 
     fun addExerciseSet(set: WorkoutSet) {
         exerciseSets.value = exerciseSets.value + set
+    }
+
+    /** Markiert die Session als beendet, damit ihre Sets in [getWorkSetsCompletedSince] zaehlen. */
+    fun markSessionCompleted(sessionId: Long) {
+        completedSessionIds += sessionId
     }
 
     override suspend fun checkAndUpdateRecord(exerciseId: Long, type: RecordType, value: Double): Boolean {
@@ -69,5 +78,9 @@ class FakeStatisticsRepository : StatisticsRepository {
         exerciseSets.value.filter { it.exerciseId == exerciseId }.maxByOrNull { it.reps }?.reps
 
     override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> =
-        exerciseSets.value
+        exerciseSets.value.filter { set ->
+            set.sessionId in completedSessionIds &&
+                !set.isWarmup &&
+                EpochConverter.toLong(set.completedAt) >= sinceEpochMillis
+        }
 }
