@@ -52,6 +52,8 @@ interface ExerciseDao {
         SELECT CASE WHEN EXISTS(SELECT 1 FROM plan_exercises WHERE exerciseId = :exerciseId)
             OR EXISTS(SELECT 1 FROM workout_sets WHERE exerciseId = :exerciseId)
             OR EXISTS(SELECT 1 FROM personal_records WHERE exerciseId = :exerciseId)
+            OR EXISTS(SELECT 1 FROM workout_plan_targets WHERE exerciseId = :exerciseId)
+            OR EXISTS(SELECT 1 FROM progression_suggestions WHERE exerciseId = :exerciseId)
         THEN 1 ELSE 0 END
         """
     )
@@ -59,13 +61,13 @@ interface ExerciseDao {
 
     @Query(
         """
-        SELECT COUNT(*) FROM exercises
+        SELECT name FROM exercises
         WHERE isArchived = 0
-          AND lower(trim(name)) = lower(trim(:name))
           AND (:excludeId IS NULL OR id != :excludeId)
+        ORDER BY name ASC
         """
     )
-    suspend fun countExercisesWithNormalizedName(name: String, excludeId: Long?): Int
+    suspend fun getActiveExerciseNames(excludeId: Long?): List<String>
 
     @Query("DELETE FROM exercises WHERE isCustom = 1")
     suspend fun deleteAllCustomExercises()

@@ -358,6 +358,16 @@ class IronLogDatabaseMigrationTest {
             assertEquals(8, queryInt(db, "SELECT targetReps FROM plan_exercises WHERE id = 1"))
             assertEquals(100.0, queryDouble(db, "SELECT targetWeightKg FROM plan_exercises WHERE id = 1"), 0.0)
             assertEquals(80.0, queryDouble(db, "SELECT targetWeightKg FROM plan_exercises WHERE id = 2"), 0.0)
+
+            // The workout_sets table recreation must preserve the previously inserted row:
+            assertEquals(1, queryInt(db, "SELECT COUNT(*) FROM workout_sets"))
+            assertEquals(1, queryInt(db, "SELECT id FROM workout_sets"))
+            assertEquals(1, queryInt(db, "SELECT sessionId FROM workout_sets"))
+            assertEquals(1, queryInt(db, "SELECT exerciseId FROM workout_sets"))
+            assertEquals(8, queryInt(db, "SELECT reps FROM workout_sets"))
+            assertEquals(100.0, queryDouble(db, "SELECT weightKg FROM workout_sets"), 0.0)
+            assertEquals(8.0, queryDouble(db, "SELECT rpe FROM workout_sets"), 0.0)
+
             assertTrue(hasColumn(db, "workout_sets", "planTargetSnapshotId"))
             assertTrue(tableExists(db, "workout_plan_targets"))
             assertTrue(tableExists(db, "progression_suggestions"))
