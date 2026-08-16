@@ -42,15 +42,21 @@ EXPECTED_TEST_CLASSES = (
 MIN_TEST_COUNT = 15
 
 
-def _class_name(xml_file, root):
-    """Class name of an executed suite: XML name attribute, then file name."""
+def _executed_classes(root):
+    """Distinct names of classes that executed at least one test.
+
+    The connected runner on emulators can merge every class into a single
+    TEST-<device>.xml whose <testsuite> name is only the alphabetically first
+    class; the real class names then live in each <testcase classname=...>.
+    Prefer those, falling back to the suite name for reports without
+    testcase elements (e.g. empty suites).
+    """
+    classnames = {tc.get("classname") for tc in root.iter("testcase")}
+    classnames.discard(None)
+    if classnames:
+        return classnames
     name = root.get("name")
-    if name:
-        return name
-    stem = xml_file.name
-    if stem.startswith("TEST-") and stem.endswith(".xml"):
-        return stem[len("TEST-"):-len(".xml")]
-    return stem
+    return {name} if name else set()
 
 
 def test_summary(directory):
@@ -73,7 +79,7 @@ def test_summary(directory):
         failures += int(root.get("failures", 0))
         errors += int(root.get("errors", 0))
         if file_tests > 0:
-            ran_classes.add(_class_name(xml_file, root))
+            ran_classes |= _executed_classes(root)
     return tests, failures, errors, len(xml_files), ran_classes
 
 
@@ -153,6 +159,46 @@ def _selftest():
         assert tests == len(EXPECTED_TEST_CLASSES) * 2
         assert ran == set(EXPECTED_TEST_CLASSES)
         verify(ok_dir)
+
+        merged_dir = root / "merged"
+        merged_dir.mkdir()
+        # The emulator runner can merge every class into ONE report whose
+        # <testsuite> name is only the first class; the class names live in
+        # the <testcase classname=...> attributes.
+        merged_dir.mkdir(exist_ok=True)
+        merged_cases = "".join(
+            f'<testcase classname="{cls}" name="t{i}a" time="0.1"/>'
+            f'<testcase classname="{cls}" name="t{i}b" time="0.1"/>'
+            for i, cls in enumerate(EXPECTED_TEST_CLASSES)
+        )
+        (merged_dir / "TEST-emulator-5554 - 15-_app-.xml").write_text(
+            f'<testsuite name="{EXPECTED_TEST_CLASSES[0]}" tests="'
+            f'{len(EXPECTED_TEST_CLASSES) * 2}" failures="0" errors="0">'
+            f"{merged_cases}</testsuite>",
+            encoding="utf-8",
+        )
+        tests, _, _, _, ran = test_summary(merged_dir)
+        assert tests == len(EXPECTED_TEST_CLASSES) * 2
+        assert ran == set(EXPECTED_TEST_CLASSES)
+        verify(merged_dir)
+
+        merged_partial_dir = root / "merged-partial"
+        merged_partial_dir.mkdir()
+        partial_cases = "".join(
+            f'<testcase classname="{cls}" name="t{i}" time="0.1"/>'
+            for i, cls in enumerate(EXPECTED_TEST_CLASSES[:-1])
+        )
+        (merged_partial_dir / "TEST-emulator-5554 - 15-_app-.xml").write_text(
+            f'<testsuite name="{EXPECTED_TEST_CLASSES[0]}" tests="'
+            f'{len(EXPECTED_TEST_CLASSES) - 1}" failures="0" errors="0">'
+            f"{partial_cases}</testsuite>",
+            encoding="utf-8",
+        )
+        try:
+            verify(merged_partial_dir)
+            raise AssertionError("a merged run missing a class must fail the gate")
+        except SystemExit:
+            pass
 
         partial_dir = root / "partial"
         partial_dir.mkdir()
