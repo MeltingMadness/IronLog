@@ -21,8 +21,9 @@ import androidx.compose.ui.unit.dp
 import com.ironlog.app.presentation.theme.semantic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.util.Locale
 
 private val RING_SIZE = 120.dp
@@ -37,9 +38,14 @@ fun WorkoutTimer(
     var elapsed by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(startTime) {
+        // Epoch-based time: interpreting LocalDateTime.now() as UTC (as
+        // toEpochSecond(ZoneOffset.UTC) does) skews the elapsed time by the DST offset.
+        val startEpochMillis = startTime
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
         while (isActive) {
-            val now = LocalDateTime.now()
-            elapsed = now.toEpochSecond(ZoneOffset.UTC) - startTime.toEpochSecond(ZoneOffset.UTC)
+            elapsed = (Instant.now().toEpochMilli() - startEpochMillis) / 1000
             delay(1000)
         }
     }

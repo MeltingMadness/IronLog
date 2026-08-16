@@ -54,6 +54,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.core.designsystem.R
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
@@ -109,6 +110,7 @@ fun ExercisePickerSheet(
             }.map { exercises ->
                 exercises.filterNot { it.isArchived }
             }.catch { throwable ->
+                if (throwable is CancellationException) throw throwable
                 onCreationError?.invoke(
                     "Übungen konnten nicht geladen werden: ${throwable.message ?: "Unbekannter Fehler"}"
                 )

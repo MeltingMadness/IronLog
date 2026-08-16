@@ -479,17 +479,13 @@ class ActiveWorkoutViewModel(
                     if (!isWarmup && recordsBefore != null) {
                         emitImprovedRecords(exerciseId, recordsBefore)
                     }
-                    val planTarget = (key as? WorkoutExerciseKey.Planned)?.let { planned ->
-                        planTargets.value.find { it.id == planned.snapshotId }
-                    }
-                    val completedWorkSetCount = persistedSets.count { !it.isWarmup } + if (isWarmup) 0 else 1
-                    val reachedPlannedSetCount = !isWarmup &&
-                        planTarget != null &&
-                        planTarget.target.sets > 0 &&
-                        completedWorkSetCount >= planTarget.target.sets
-
+                    // The rest timer runs after every work set - no matter whether the
+                    // planned set count is already reached (extra sets, sets re-added after a
+                    // delete). Warmup sets never start a timer and cancel a pending one for
+                    // the same exercise. Timers are cleared when the workout is finished
+                    // (see finishWorkout).
                     _restTimers.update { currentTimers ->
-                        if (reachedPlannedSetCount) {
+                        if (isWarmup) {
                             currentTimers - key
                         } else {
                             currentTimers + (key to completedAtInstant)
@@ -625,8 +621,30 @@ class ActiveWorkoutViewModel(
             try {
                 mutationMutex.withLock {
                     if (!sessionIsMutable()) return@withLock
-                    // A cleared/invalid reps field must never persist a stale or zero value.
-                    if (reps <= 0) return@withLock
+                    // A cleared/invalid reps or a negative/non-finite weight must never be
+                    // persisted. Raise an error instead of silently returning; for reps the
+                    // edit still counts as handled so the edit row leaves edit mode and the
+                    // user sees the feedback via the error snackbar.
+                    if (reps <= 0 || weightKg < 0.0 || !weightKg.isFinite()) {
+                        setError(
+                            message = if (reps <= 0) {
+                                "Wiederholungen müssen größer als 0 sein"
+                            } else {
+                                "Ungültiges Gewicht"
+                            }
+                        )
+                        if (reps <= 0) {
+                            operationState.update {
+                                it.copy(
+                                    updateSuccessCountBySet = incrementCounter(
+                                        it.updateSuccessCountBySet,
+                                        setId
+                                    )
+                                )
+                            }
+                        }
+                        return@withLock
+                    }
 
                     val sets = workoutRepository.getSetsForSessionList(sessionId)
                     val set = sets.find { it.id == setId } ?: return@withLock
@@ -701,6 +719,8 @@ class ActiveWorkoutViewModel(
                             operationState.update {
                                 it.copy(finishState = WorkoutFinishState.CompletedWithoutReview)
                             }
+                            // No session left to rest between sets of.
+                            _restTimers.value = emptyMap()
                         }
                         session.endTime != null -> {
                             showFinishDialog.value = false
@@ -708,6 +728,8 @@ class ActiveWorkoutViewModel(
                                 it.copy(finishState = WorkoutFinishState.Generating)
                             }
                             generateAfterFinish = true
+                            // The session is over; pending rest timers must not linger.
+                            _restTimers.value = emptyMap()
                         }
                         else -> {
                             discardEmptySession =
@@ -727,6 +749,8 @@ class ActiveWorkoutViewModel(
                                     it.copy(finishState = WorkoutFinishState.Generating)
                                 }
                                 generateAfterFinish = true
+                                // The session is over; pending rest timers must not linger.
+                                _restTimers.value = emptyMap()
                             }
                         }
                     }
@@ -850,6 +874,15 @@ class ActiveWorkoutViewModel(
 
     fun clearError() {
         _error.value = null
+    }
+
+    /**
+     * Surfaces picker-level failures (loading or creating exercises) through the regular
+     * error snackbar. Method reference is stable across recompositions, so the picker's
+     * exercise flow is not restarted on every recomposition.
+     */
+    fun reportPickerError(message: String) {
+        setError(message = message)
     }
 
     private fun setError(message: String, retry: WorkoutRetryDescriptor? = null) {

@@ -316,7 +316,8 @@ fun ActiveWorkoutScreen(
                 onExerciseSelected = { exercise ->
                     viewModel.addExercise(exercise)
                     viewModel.dismissExercisePicker()
-                }
+                },
+                onCreationError = viewModel::reportPickerError
             )
         }
 
@@ -1039,7 +1040,12 @@ private fun LoggedSetRow(
                     val r = repsInput.text.toIntOrNull() ?: set.reps
                     val enteredWeight = parseDecimal(weightInput.text)
                     val w = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) } ?: set.weightKg
-                    onUpdateSet(set.id, r, w, intensityInput.text)
+                    // Same weight guard as PendingSetRow/ExtraSetInput: never edit a set to a
+                    // negative, NaN or infinite weight. Invalid reps are forwarded to the
+                    // ViewModel so the user gets explicit feedback instead of a silent no-op.
+                    if (w.isFinite() && w >= 0) {
+                        onUpdateSet(set.id, r, w, intensityInput.text)
+                    }
                 },
                 enabled = !isUpdating,
                 modifier = Modifier.size(ButtonSize.iconButton),

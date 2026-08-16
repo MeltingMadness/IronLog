@@ -290,6 +290,8 @@ class WorkoutRepositoryImplTest {
                 completedAt = 1_000L
             )
         )
+        // The remaining set belongs to a completed session and therefore counts for records.
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
         coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_WEIGHT.name) } returns
             PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
         coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_REPS.name) } returns null
@@ -351,6 +353,7 @@ class WorkoutRepositoryImplTest {
         )
         coEvery { setDao.getSetById(10L) } returns set
         coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(set)
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
         coEvery { personalRecordDao.getRecord(1L, RecordType.MAX_WEIGHT.name) } returns
             PersonalRecordEntity(id = 9L, exerciseId = 1L, type = RecordType.MAX_WEIGHT.name, value = 100.0, achievedAt = 500L)
 
@@ -385,6 +388,7 @@ class WorkoutRepositoryImplTest {
                 completedAt = 1_000L
             )
         )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
         coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_WEIGHT.name) } returns
             PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
 
@@ -456,6 +460,7 @@ class WorkoutRepositoryImplTest {
         )
         coEvery { setDao.getSetById(10L) } returns set
         coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(set)
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
 
         repo.updateSet(set.toDomain())
 
@@ -559,6 +564,11 @@ class WorkoutRepositoryImplTest {
                 completedAt = 2_000L
             )
         )
+        // Both sessions are completed, so all sets are eligible for personal records.
+        coEvery { sessionDao.getSessionsByIds(listOf(2L, 3L)) } returns listOf(
+            completedSession(2L),
+            completedSession(3L)
+        )
 
         repo.addSet(newSet)
 
@@ -622,6 +632,7 @@ class WorkoutRepositoryImplTest {
                 completedAt = 1_000L
             )
         )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
 
         repository.addSet(
             WorkoutSet(
@@ -670,6 +681,188 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
         coVerify(exactly = 0) { personalRecordDao.insert(any()) }
         coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `aktive Session zaehlt fuer Einzel-Rekorde aber nicht fuer MAX_VOLUME`() = runTest {
+        // Session 3L is still active (endTime null): its heavy set counts for the per-set
+        // records (weight/reps/E1RM are live achievements) but must never set the
+        // per-session MAX_VOLUME record.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 120.0,
+                isWarmup = false,
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(3L)) } returns listOf(activeSession(3L))
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 120.0,
+                isWarmup = false
+            )
+        )
+
+        // Per-set records derive from the active session's set ...
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_WEIGHT.name && it.value == 120.0 }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_REPS.name && it.value == 10.0 }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_E1RM.name }
+            )
+        }
+        // ... but the volume record requires a completed session.
+        coVerify(exactly = 0) {
+            personalRecordDao.insert(match { it.type == RecordType.MAX_VOLUME.name })
+        }
+    }
+
+    @Test
+    fun `addSet uebernimmt MAX_VOLUME nur aus abgeschlossener Session`() = runTest {
+        // Completed session 2L holds 5x100 = 500 volume; active session 3L holds 10x100 = 1000.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 100.0,
+                isWarmup = false,
+                completedAt = 1_000L
+            ),
+            WorkoutSetEntity(
+                id = 2L,
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0,
+                isWarmup = false,
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L, 3L)) } returns listOf(
+            completedSession(2L),
+            activeSession(3L)
+        )
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 100.0,
+                isWarmup = false
+            )
+        )
+
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_VOLUME.name &&
+                        it.value == 500.0 &&
+                        it.achievedAt == 1_000L
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `Wert 0 wird als kein Rekord behandelt und raeumt bestehenden Rekord`() = runTest {
+        // A zero-weight work set produces 0.0 volume - must clear instead of "Rekord: 0,0 kg".
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 0.0,
+                isWarmup = false,
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+        coEvery { personalRecordDao.getRecord(1L, RecordType.MAX_VOLUME.name) } returns
+            PersonalRecordEntity(
+                id = 9L,
+                exerciseId = 1L,
+                type = RecordType.MAX_VOLUME.name,
+                value = 500.0,
+                achievedAt = 500L
+            )
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 0.0,
+                isWarmup = false
+            )
+        )
+
+        coVerify { personalRecordDao.deleteRecord(1L, RecordType.MAX_VOLUME.name) }
+        coVerify(exactly = 0) {
+            personalRecordDao.insert(match { it.type == RecordType.MAX_VOLUME.name })
+        }
+    }
+
+    @Test
+    fun `finishWorkout rechnet Rekorde nach Session-Abschluss neu`() = runTest {
+        val finishedSessionId = 2L
+        coEvery { sessionDao.getSessionById(finishedSessionId) } returns activeSession(finishedSessionId)
+        coEvery { sessionDao.update(any()) } returns Unit
+        coEvery { setDao.getExerciseIdsForSession(finishedSessionId) } returns listOf(1L)
+        // After finishing, the session is completed: its sets become eligible for records.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = finishedSessionId,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 100.0,
+                isWarmup = false,
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(finishedSessionId)) } returns
+            listOf(completedSession(finishedSessionId))
+
+        repository.finishWorkout(finishedSessionId)
+
+        coVerify(exactly = 1) { sessionDao.update(match { it.endTime != null }) }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_VOLUME.name &&
+                        it.value == 800.0 &&
+                        it.achievedAt == 1_000L
+                }
+            )
+        }
     }
 
     @Test
