@@ -3,6 +3,7 @@ package com.ironlog.app.data.repository
 import android.net.Uri
 import com.ironlog.app.data.backup.BackupConcurrentModificationException
 import com.ironlog.app.data.backup.BackupDocumentIo
+import com.ironlog.app.data.backup.BackupSchemaTooNewException
 import com.ironlog.app.data.backup.BackupExercise
 import com.ironlog.app.data.backup.BackupHashMismatchException
 import com.ironlog.app.data.backup.BackupMetaPlanItem
@@ -43,7 +44,6 @@ import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
-import com.ironlog.app.data.seed.ExerciseSeedData
 import com.ironlog.app.domain.repository.BackupContentCounts
 import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
@@ -53,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -83,6 +84,10 @@ class BackupRepositoryImpl(
     private val progressionJson = Json {
         ignoreUnknownKeys = false
         encodeDefaults = true
+    }
+
+    private val probeJson = Json {
+        ignoreUnknownKeys = true
     }
 
     override suspend fun exportBackup(uri: Uri) {
@@ -218,7 +223,18 @@ class BackupRepositoryImpl(
 
     private suspend fun decodePayload(bytes: ByteArray): BackupPayloadV1 =
         withContext(Dispatchers.IO) {
-            json.decodeFromString(BackupPayloadV1.serializer(), bytes.decodeToString())
+            val text = bytes.decodeToString()
+            // A backup written by a newer app may carry fields this app does not
+            // know, so the strict decode below would fail with an unhelpful
+            // SerializationException. Probe schemaVersion leniently first and
+            // fail with a clear message when the backup is newer than the app.
+            val probe = runCatching {
+                probeJson.decodeFromString(BackupSchemaProbe.serializer(), text)
+            }.getOrNull()
+            if (probe != null && probe.schemaVersion > SCHEMA_VERSION) {
+                throw BackupSchemaTooNewException(probe.schemaVersion, SCHEMA_VERSION)
+            }
+            json.decodeFromString(BackupPayloadV1.serializer(), text)
         }
 
     private fun validateOrThrow(payload: BackupPayloadV1) {
@@ -271,7 +287,7 @@ class BackupRepositoryImpl(
     }
 
     private suspend fun insertAllInOrder(data: ImportData) {
-        exerciseDao.replaceAll(data.exercises.ifEmpty { ExerciseSeedData.getAll() })
+        exerciseDao.replaceAll(data.exercises)
         if (data.trainingPlans.isNotEmpty()) trainingPlanDao.replaceAllPlans(data.trainingPlans)
         if (data.metaTrainingPlans.isNotEmpty()) {
             metaTrainingPlanDao.replaceAllMetaPlans(data.metaTrainingPlans)
@@ -557,6 +573,9 @@ class BackupRepositoryImpl(
         trainingPlanId = trainingPlanId,
         skippedAt = skippedAt
     )
+
+    @Serializable
+    private data class BackupSchemaProbe(val schemaVersion: Int)
 
     private data class ImportData(
         val exercises: List<ExerciseEntity>,

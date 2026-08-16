@@ -1498,7 +1498,7 @@ Every rule outcome stores the exact sorted/taken work-set IDs it evaluated; insu
 6. Load suggestions only for that comparable target-prefix, require exactly one row at the snapshot's stored rule revision for every ID, and require its duplicated source target to equal the target-table row before building `previousComparableOutcomesNewestFirst` in target order. Bypass the `IN ()` query when the prefix is empty. Missing or contradictory rows after completion-ordered catch-up are invariant failures, not permission to shorten the streak silently.
 7. Insert `PENDING` for `ProposeChange`; insert `INFORMATIONAL` for `KeepTarget` and `InsufficientData`; do not store `NotApplicable`.
 8. Use `OnConflictStrategy.IGNORE` and count only positive returned IDs.
-9. Re-read the session's stored suggestions after insertion; return `reviewItemCount` as all `PENDING` plus `INFORMATIONAL` rows and `pendingCount` as only `PENDING`, so an idempotent retry still opens an already-created review.
+9. Re-read the session's stored suggestions after insertion; return `reviewItemCount` as only `PENDING` rows (INFORMATIONAL entries are never decidable and must not open a review) and `pendingCount` as only `PENDING`, so an idempotent retry still opens an already-created review.
 
 The persisted row must set `sourceTargetSnapshotId`, duplicate `target` and raw `progression` columns directly from `WorkoutPlanTargetEntity`, store the exact rule revision, and use `createdAtEpochMillis = nowEpochMillis()`. Never rebuild source columns from a domain `Invalid` marker.
 

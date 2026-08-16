@@ -17,6 +17,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -133,5 +134,64 @@ class ExerciseLibraryViewModelTest {
         assertFalse("isLoading must not stay stuck at true after a load error", viewModel.uiState.value.isLoading)
         assertNotNull(viewModel.uiState.value.error)
         assertTrue(viewModel.uiState.value.exercises.isEmpty())
+    }
+
+    @Test
+    fun `deleteCustomExercise failure surfaces an error and keeps the exercise`() = runTest {
+        exerciseRepository.addExercise(
+            Exercise(
+                id = 5L,
+                name = "Kurzhantel Curl",
+                primaryMuscleGroup = MuscleGroup.BIZEPS,
+                category = ExerciseCategory.KURZHANTEL,
+                isCustom = true
+            )
+        )
+
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        exerciseRepository.deleteErrorToThrow = RuntimeException("DB kaputt")
+        viewModel.deleteCustomExercise(5L)
+        advanceUntilIdle()
+
+        assertTrue(
+            "delete failure must surface an error",
+            viewModel.uiState.value.error?.contains("Übung konnte nicht gelöscht werden") == true
+        )
+        assertNotNull("exercise must survive a failed delete", exerciseRepository.getExerciseById(5L))
+    }
+
+    @Test
+    fun `deleteCustomExercise archives a referenced exercise instead of removing it`() = runTest {
+        exerciseRepository.addExercise(
+            Exercise(
+                id = 6L,
+                name = "Rudern",
+                primaryMuscleGroup = MuscleGroup.RUECKEN,
+                category = ExerciseCategory.LANGHANTEL,
+                isCustom = true
+            )
+        )
+        // Real referenziert die Uebung z.B. ueber progression_suggestions oder
+        // workout_plan_targets - dann wird archiviert statt geloescht.
+        exerciseRepository.markReferenced(6L)
+
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.deleteCustomExercise(6L)
+        advanceUntilIdle()
+
+        val after = exerciseRepository.getExerciseById(6L)
+        assertNotNull("referenced exercise must remain, archived", after)
+        assertTrue("referenced exercise must be archived, not deleted", after?.isArchived == true)
+        assertNull(viewModel.uiState.value.error)
+        assertTrue(
+            "archived exercise must disappear from the library list",
+            viewModel.uiState.value.exercises.none { it.id == 6L }
+        )
     }
 }

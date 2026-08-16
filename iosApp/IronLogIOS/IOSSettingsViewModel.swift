@@ -160,13 +160,16 @@ final class IOSSettingsViewModel: ObservableObject {
             do {
                 isBusy = true
                 let data = try Data(contentsOf: url)
-                feature.importBackup(base64Data: data.base64EncodedString()) { [weak self] success, error in
+                feature.importBackup(base64Data: data.base64EncodedString()) { [weak self] _, error in
                     Task { @MainActor in
                         guard let self else { return }
                         self.isBusy = false
+                        // Der Erfolgspfad ist toter Code: importBackup wirft auf iOS immer eine
+                        // BackupNotSupportedException. Statt einer irrefuehrenden Erfolgsmeldung
+                        // wird der tatsaechliche Zustand angezeigt: noch nicht unterstuetzt.
                         self.activeAlert = SettingsAlert(
-                            title: success ? "Backup importiert" : "Import fehlgeschlagen",
-                            message: success ? "Das Backup wurde validiert und fuer spaetere iOS-Migrationen gespeichert." : (error ?? "Backup konnte nicht importiert werden.")
+                            title: "Import nicht unterstuetzt",
+                            message: error ?? "Backup-Import wird auf iOS noch nicht unterstuetzt."
                         )
                     }
                 }

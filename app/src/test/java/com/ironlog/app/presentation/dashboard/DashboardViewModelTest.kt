@@ -37,9 +37,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -409,32 +412,51 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun `weekly volume groups ISO week days across a year boundary together`() = runTest {
-        // Dec 30 2024 (Mon) and Jan 1 2025 (Wed) fall in the same ISO-style week
-        // (week 1 of week-based-year 2025). Grouping by calendar year instead of
-        // week-based-year would incorrectly split them into "2024/KW1" and "2025/KW1".
-        val dec30 = LocalDateTime.of(2024, 12, 30, 10, 0)
-        val jan1 = LocalDateTime.of(2025, 1, 1, 10, 0)
+    fun `weekly volume groups sets of the same ISO week into one entry`() = runTest {
+        // Datumswerte relativ zu heute, damit die Saetze im 8-Wochen-Fenster des
+        // Dashboards liegen: Das Fake-Repository filtert getWorkSetsCompletedSince
+        // seit der Fenster-Paritaet wie die echte Query (sinceEpochMillis,
+        // endTime IS NOT NULL, isWarmup = 0).
+        val anchor = DayOfWeek.MONDAY // AppPreferences-Default: WeekStart.MONDAY
+        val startOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(anchor))
+        val monday = startOfWeek.atTime(10, 0)
+        val wednesday = startOfWeek.plusDays(2).atTime(10, 0)
+        val previousSaturday = startOfWeek.minusDays(2).atTime(10, 0)
+
+        statsRepo.markSessionCompleted(1L)
         statsRepo.addExerciseSet(
             com.ironlog.app.domain.model.WorkoutSet(
                 sessionId = 1L, exerciseId = 1L, setNumber = 1, reps = 10,
-                weightKg = 100.0, completedAt = dec30
+                weightKg = 100.0, completedAt = monday
             )
         )
         statsRepo.addExerciseSet(
             com.ironlog.app.domain.model.WorkoutSet(
-                sessionId = 1L, exerciseId = 1L, setNumber = 1, reps = 10,
-                weightKg = 50.0, completedAt = jan1
+                sessionId = 1L, exerciseId = 1L, setNumber = 2, reps = 10,
+                weightKg = 50.0, completedAt = wednesday
+            )
+        )
+        statsRepo.addExerciseSet(
+            com.ironlog.app.domain.model.WorkoutSet(
+                sessionId = 1L, exerciseId = 1L, setNumber = 3, reps = 10,
+                weightKg = 20.0, completedAt = previousSaturday
             )
         )
 
         val vm = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val kw1Entries = vm.uiState.value.weeklyVolume.filter { it.first == "KW1" }
-        assertEquals(1, kw1Entries.size)
-        // volume = weight * reps, summed across both sessions: (100*10) + (50*10)
-        assertEquals(1500.0, kw1Entries.first().second, 0.0001)
+        val entries = vm.uiState.value.weeklyVolume
+        // Monday + Wednesday liegen in derselben ISO-Woche -> EIN Eintrag,
+        // der Samstag davor in der Vorwoche -> zweiter, getrennter Eintrag.
+        assertEquals(2, entries.size)
+        val weekFields = WeekFields.of(anchor, 1)
+        val thisWeekLabel = "KW${startOfWeek.get(weekFields.weekOfWeekBasedYear())}"
+        val thisWeekEntry = entries.first { it.first == thisWeekLabel }
+        // volume = weight * reps, summiert ueber beide Saetze der Woche: (100*10) + (50*10)
+        assertEquals(1500.0, thisWeekEntry.second, 0.0001)
+        val lastWeekEntry = entries.first { it.first != thisWeekLabel }
+        assertEquals(200.0, lastWeekEntry.second, 0.0001)
     }
 
     @Test

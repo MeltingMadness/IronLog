@@ -34,7 +34,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Unit tests + lint + debug build
-        run: ./gradlew --no-daemon test lintDebug assembleDebug
+        run: ./gradlew --no-daemon test :shared:testAndroidHostTest lintDebug assembleDebug
 
       - name: Upload unit/lint reports
         if: always()

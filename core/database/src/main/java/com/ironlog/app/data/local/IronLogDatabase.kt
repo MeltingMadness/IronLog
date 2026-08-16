@@ -417,6 +417,14 @@ abstract class IronLogDatabase : RoomDatabase() {
         /**
          * Defensively repairs legacy schemas from early pre-release builds that were
          * version-bumped without all expected tables/columns.
+         *
+         * Runs from the Room `onOpen` callback, i.e. AFTER Room has validated the
+         * database against `room_master_table` via `checkIdentity`. For every valid
+         * database — freshly created or fully migrated — all tables, columns and
+         * indexes guarded below already exist, so this method is a no-op in that
+         * case. It only has an effect on legacy pre-release databases whose recorded
+         * identity hash no longer matches the current schema and that therefore
+         * never pass Room's identity validation.
          */
         private fun ensureRuntimeSchemaCompatibility(db: SupportSQLiteDatabase) {
             addColumnIfMissing(
@@ -549,6 +557,22 @@ abstract class IronLogDatabase : RoomDatabase() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
             createSingleActiveSessionTriggers(db)
+            seedExercisesIfEmpty(db)
+        }
+
+        /**
+         * Seeds the default exercise catalog. INSERT OR IGNORE only deduplicates
+         * via PK/UNIQUE constraints, and `exercises.name` has no UNIQUE index, so
+         * the loop alone is a no-op against duplicates. Seeding is therefore only
+         * performed while the exercises table is empty, which keeps the callback
+         * idempotent even if onCreate is invoked for a database that already
+         * carries exercise rows.
+         */
+        private fun seedExercisesIfEmpty(db: SupportSQLiteDatabase) {
+            val isEmpty = db.query("SELECT COUNT(*) FROM exercises").use { cursor ->
+                cursor.moveToFirst() && cursor.getInt(0) == 0
+            }
+            if (!isEmpty) return
 
             val exercises = ExerciseSeedData.getAll()
             for (exercise in exercises) {

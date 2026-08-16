@@ -16,4 +16,28 @@ class IncidentReportSanitizerTest {
             sanitized,
         )
     }
+
+    @Test
+    fun `redacts word plus number ids`() {
+        val sanitized = IncidentReportSanitizer.sanitizeText(
+            "Training plan 5 does not exist; Workout set 42 failed",
+        )
+
+        assertEquals(
+            "Training plan <redacted> does not exist; Workout set <redacted> failed",
+            sanitized,
+        )
+    }
+
+    @Test
+    fun `passes through screen labels and text without ids`() {
+        val sanitized = IncidentReportSanitizer.sanitizeText(
+            "currentScreen=settings, sessionId=42",
+        )
+
+        assertEquals(
+            "currentScreen=settings, sessionId=<redacted>",
+            sanitized,
+        )
+    }
 }

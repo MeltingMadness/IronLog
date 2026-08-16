@@ -128,7 +128,7 @@
     <string name="plan_editor_superset_none">Kein Supersatz</string>
     <string name="plan_editor_superset_label">Supersatz S%1$d</string>
     <string name="plan_editor_group_with_previous">Mit vorheriger gruppieren</string>
-    <string name="plan_editor_ungroup">Aus Supersatz loesen</string>
+    <string name="plan_editor_ungroup">Aus Supersatz lösen</string>
     <string name="plan_editor_progression_summary">Progression: %1$s</string>
     <string name="plan_editor_progression_off">Aus</string>
     <string name="plan_editor_progression_invalid">Ungültig</string>
@@ -189,7 +189,7 @@
     <string name="stats_progress_title">Verlauf</string>
     <string name="stats_chart_min_points">Mindestens 2 Einträge für den Verlauf nötig.</string>
     <string name="stats_metric_weight">Gewicht</string>
-    <string name="stats_metric_e1rm">Geschaetztes 1RM</string>
+    <string name="stats_metric_e1rm">Geschätztes 1RM</string>
     <string name="stats_metric_volume">Volumen</string>
 
     <string name="settings_title">Einstellungen</string>
@@ -239,10 +239,10 @@
     <string name="settings_backup_recovery_restore">Letztes Sicherheitsbackup wiederherstellen</string>
     <string name="settings_recovery_backup_available">Internes Sicherheitsbackup vom %1$s verfügbar</string>
     <string name="settings_recovery_backup_none">Kein internes Sicherheitsbackup vorhanden.</string>
-    <string name="settings_data_reset">Nutzerdaten zuruecksetzen</string>
+    <string name="settings_data_reset">Nutzerdaten zurücksetzen</string>
     <string name="settings_build_info">Version %1$s (%2$d)</string>
 
-    <string name="settings_reset_dialog_title">Nutzerdaten zuruecksetzen?</string>
+    <string name="settings_reset_dialog_title">Nutzerdaten zurücksetzen?</string>
     <string name="settings_reset_dialog_text">Alle Sessions, Sätze, Pläne, Rekorde und selbst erstellte Übungen werden gelöscht. Der integrierte Übungskatalog bleibt erhalten.</string>
     <string name="settings_reset_dialog_confirm">Zurücksetzen</string>
     <string name="settings_reset_dialog_cancel">Abbrechen</string>

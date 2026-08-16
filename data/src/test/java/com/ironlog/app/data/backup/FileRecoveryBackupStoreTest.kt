@@ -4,6 +4,7 @@ import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -145,6 +146,26 @@ class FileRecoveryBackupStoreTest {
         assertThrows(IOException::class.java) {
             runBlocking { store.loadLatestBytes() }
         }
+    }
+
+    @Test
+    fun `orphaned temp file is cleaned up and never surfaces as a backup`() = runBlocking {
+        val dir = tempFolder.root
+        val orphanName = "recovery-1000-${"c".repeat(64)}.tmp"
+        seed(dir, orphanName, "partial-write")
+
+        val store = FileRecoveryBackupStore(backupDir = dir)
+
+        assertNull(store.latest())
+        assertFalse(File(dir, orphanName).exists())
+
+        val saved = store.save(snapshotBytes)
+        assertTrue(File(dir, "recovery-${saved.timestampMillis}-$snapshotHash.json").exists())
+        val leftoverTemps = dir.listFiles()!!.filter { it.name.endsWith(".tmp") }
+        assertTrue(
+            "no .tmp files may remain after save: $leftoverTemps",
+            leftoverTemps.isEmpty()
+        )
     }
 
     private fun seed(dir: File, name: String, content: String) {

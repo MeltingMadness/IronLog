@@ -93,7 +93,15 @@ internal fun priorConsecutiveFailures(context: ProgressionContext): Int {
     return failures
 }
 
-internal fun increasedWeight(targetKg: Double, step: WeightStep): Double = targetKg + step.kilograms
+internal fun increasedWeight(targetKg: Double, step: WeightStep): Double {
+    val currentDisplay = WeightFormatting.convertToDisplay(targetKg, step.originalUnit)
+    val rawDisplay = currentDisplay + step.originalValue
+    val lower = floor(rawDisplay / step.originalValue) * step.originalValue
+    val upper = ceil(rawDisplay / step.originalValue) * step.originalValue
+    val rounded = if (rawDisplay - lower <= upper - rawDisplay) lower else upper
+    val increasing = if (rounded > currentDisplay) rounded else currentDisplay + step.originalValue
+    return WeightFormatting.convertToKg(increasing, step.originalUnit)
+}
 
 internal fun backedOffWeight(targetKg: Double, step: WeightStep, backoffPercent: Double): Double {
     val currentDisplay = WeightFormatting.convertToDisplay(targetKg, step.originalUnit)

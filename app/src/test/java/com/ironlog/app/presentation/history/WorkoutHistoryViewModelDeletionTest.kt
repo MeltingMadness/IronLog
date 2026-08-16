@@ -59,4 +59,30 @@ class WorkoutHistoryViewModelDeletionTest {
         // error state should be null
         assertTrue(vm.uiState.value.error == null)
     }
+
+    @Test
+    fun `deleteSession failure sets an error and keeps the session`() = runTest {
+        val now = LocalDateTime.now()
+        workoutRepo.addSession(
+            WorkoutSession(id = 2L, startTime = now.minusDays(1), endTime = now.minusDays(1).plusHours(1), durationSeconds = 3600),
+            isActive = false
+        )
+
+        val vm = WorkoutHistoryViewModel(workoutRepo)
+
+        workoutRepo.failDeleteSession = true
+        vm.deleteSession(2L)
+        advanceUntilIdle()
+
+        // session must survive a failed delete
+        val sessions = workoutRepo.getAllCompletedSessionsList()
+        assertEquals(1, sessions.size)
+        assertEquals(2L, sessions.single().id)
+
+        // error state must be set (toAppError: IllegalStateException -> Conflict)
+        assertTrue(
+            "delete failure must surface an error",
+            vm.uiState.value.error?.contains("Training löschen") == true
+        )
+    }
 }

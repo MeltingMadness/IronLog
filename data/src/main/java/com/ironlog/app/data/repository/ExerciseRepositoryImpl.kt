@@ -64,8 +64,13 @@ class ExerciseRepositoryImpl(
     }
 
     private suspend fun validateUniqueName(name: String, excludeId: Long?) {
-        val duplicates = exerciseDao.countExercisesWithNormalizedName(name = name, excludeId = excludeId)
-        require(duplicates == 0) { "Eine aktive Uebung mit diesem Namen existiert bereits" }
+        // SQLite lower()/NOCASE fold only ASCII, so umlaut variants like
+        // "BANKDRÜCKEN" vs "Bankdrücken" are compared unicode-aware in Kotlin.
+        // The DAO therefore returns all active candidate names for comparison.
+        val normalized = name.trim().lowercase()
+        val hasDuplicate = exerciseDao.getActiveExerciseNames(excludeId = excludeId)
+            .any { it.trim().lowercase() == normalized }
+        require(!hasDuplicate) { "Eine aktive Uebung mit diesem Namen existiert bereits" }
     }
 
     private fun sanitizeAndValidate(exercise: Exercise): Exercise {

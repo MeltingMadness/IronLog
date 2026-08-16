@@ -106,7 +106,11 @@ class ProgressionEntityMapper(
         countedSets: List<WorkoutSet>
     ): ProgressionSuggestion {
         val countedSetIds = decodeCountedSetIds(row)
-        check(countedSets.map { it.id } == countedSetIds) {
+        val hydratedIds = countedSets.map(WorkoutSet::id)
+        check(hydratedIds.distinct().size == hydratedIds.size) {
+            "Duplicate counted workout sets for suggestion ${row.id}"
+        }
+        check(hydratedIds.all { it in countedSetIds }) {
             "Hydrated counted sets do not match suggestion ${row.id}"
         }
         countedSets.forEach { set ->
@@ -132,22 +136,22 @@ class ProgressionEntityMapper(
                 reason,
                 arguments,
                 streak,
-                countedSetIds
+                hydratedIds
             )
 
             ProgressionOutcomeType.KEEP_TARGET -> {
                 require(suggested == null) { "Unexpected proposed target for suggestion ${row.id}" }
-                ProgressionOutcome.KeepTarget(source, reason, arguments, streak, countedSetIds)
+                ProgressionOutcome.KeepTarget(source, reason, arguments, streak, hydratedIds)
             }
 
             ProgressionOutcomeType.INSUFFICIENT_DATA -> {
                 require(suggested == null) { "Unexpected proposed target for suggestion ${row.id}" }
-                ProgressionOutcome.InsufficientData(source, reason, arguments, streak, countedSetIds)
+                ProgressionOutcome.InsufficientData(source, reason, arguments, streak, hydratedIds)
             }
 
             ProgressionOutcomeType.NOT_APPLICABLE -> {
                 require(suggested == null) { "Unexpected proposed target for suggestion ${row.id}" }
-                ProgressionOutcome.NotApplicable(source, reason, arguments, streak, countedSetIds)
+                ProgressionOutcome.NotApplicable(source, reason, arguments, streak, hydratedIds)
             }
         }
         return ProgressionSuggestion(

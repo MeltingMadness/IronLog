@@ -105,6 +105,7 @@ val OnSurfaceVariant = Color(0xFF404754)
 
 val SurfaceElevated = Color(0xFFFCFDFF)
 val SurfaceMuted = Color(0xFFECF1F8)
+val SurfaceContainerHigh = Color(0xFFE5EAF2)
 
 val AccentSuccess = Color(0xFF2E7D32)
 val AccentWarning = Color(0xFFEF6C00)
@@ -121,6 +122,7 @@ val EmberSurfaceVariant = Color(0xFFFFF0E0)
 val EmberOnSurfaceVariant = Color(0xFF6B4A2A)
 val EmberSurfaceElevated = Color(0xFFFFFCF7)
 val EmberSurfaceMuted = Color(0xFFFFF3E5)
+val EmberSurfaceContainerHighest = Color(0xFFFFEBD8)
 
 // Universal Dark Background / Surface
 val DarkBackground = Color(0xFF0E1117)
@@ -160,3 +162,7 @@ val EmberViolet = Color(0xFF7C3AED)
 val EmberVioletLight = Color(0xFFA78BFA)
 val EmberTeal = Color(0xFF0D9488)
 val EmberTealLight = Color(0xFF14B8A6)
+
+// Ember semantic accents - deep variants for light theme surfaces (WCAG AA >= 4.5:1 on white/cream)
+val EmberSuccessDeep = Color(0xFF166534)
+val EmberWarningDeep = Color(0xFF92400E)

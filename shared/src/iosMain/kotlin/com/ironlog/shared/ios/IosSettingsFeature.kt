@@ -54,6 +54,11 @@ import platform.posix.memcpy
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+// Sentinel stored when the user explicitly deselects every reminder day. Mirrors the
+// Android REMINDER_DAYS_NONE_SENTINEL so a reload can distinguish "user chose no
+// days" from "preference was never written" instead of snapping back to Mon/Wed/Fri.
+private const val REMINDER_DAYS_NONE_SENTINEL = "none"
+
 class IosSettingsFeature {
     private val scope: CoroutineScope = MainScope()
     private val buildInfo = currentBuildInfo()
@@ -67,7 +72,8 @@ class IosSettingsFeature {
         reminderScheduler = reminderScheduler,
     )
 
-    fun currentState(): IosSettingsState = controller.state.value.toIosState(buildInfo)
+    fun currentState(): IosSettingsState =
+        SettingsPreferencesState(preferencesRepository.currentPreferences).toIosState(buildInfo)
 
     fun watchState(onState: (IosSettingsState) -> Unit): IosCloseable {
         val job = scope.launch {
@@ -221,6 +227,7 @@ class IosSettingsState(
     val defaultWarmupFlag: Boolean,
     val timerKeepScreenOn: Boolean,
     val betaDiagnosticsOptIn: Boolean,
+    val shareWeightHistoryAcrossContexts: Boolean,
     val reminderEnabled: Boolean,
     val reminderHour: Int,
     val reminderMinute: Int,
@@ -248,6 +255,7 @@ private class IosAppPreferencesRepository(
     override suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean) = persist { it.copy(betaDiagnosticsOptIn = enabled) }
     override suspend fun updateReminderConfig(config: ReminderConfig) = persist { it.copy(reminderConfig = config) }
     override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) = persist { it.copy(intensitySystem = intensitySystem) }
+    override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) = persist { it.copy(shareWeightHistoryAcrossContexts = enabled) }
 
     private fun persist(transform: (AppPreferences) -> AppPreferences) {
         val updated = transform(mutablePreferences.value)
@@ -279,16 +287,45 @@ private class IosAppPreferencesRepository(
                 enabled = userDefaults.boolOrDefault(Keys.reminderEnabled, defaults.reminderConfig.enabled),
                 hour = userDefaults.intOrDefault(Keys.reminderHour, defaults.reminderConfig.hour),
                 minute = userDefaults.intOrDefault(Keys.reminderMinute, defaults.reminderConfig.minute),
-                daysOfWeek = userDefaults.stringList(Keys.reminderDays)
-                    ?.mapNotNull { value -> Weekday.entries.firstOrNull { it.name == value } }
-                    ?.toSet()
-                    ?.takeIf { it.isNotEmpty() }
-                    ?: defaults.reminderConfig.daysOfWeek,
+                daysOfWeek = loadReminderDays(),
             ),
             intensitySystem = userDefaults.stringForKey(Keys.intensitySystem)
                 ?.let { value -> IntensitySystem.entries.firstOrNull { it.name == value } }
                 ?: defaults.intensitySystem,
+            shareWeightHistoryAcrossContexts = userDefaults.boolOrDefault(
+                Keys.shareWeightHistoryAcrossContexts,
+                defaults.shareWeightHistoryAcrossContexts
+            ),
         )
+    }
+
+    val currentPreferences: AppPreferences
+        get() = mutablePreferences.value
+
+    private fun loadReminderDays(): Set<Weekday> {
+        val stored = userDefaults.objectForKey(Keys.reminderDays)
+        return when (stored) {
+            // Key has never been written — fall back to the Mon/Wed/Fri default.
+            null -> ReminderConfig().daysOfWeek
+            // Explicitly persisted empty selection — respect it instead of snapping back.
+            REMINDER_DAYS_NONE_SENTINEL -> emptySet()
+            is List<*> -> stored
+                .mapNotNull { value ->
+                    (value as? String)?.let { name -> Weekday.entries.firstOrNull { it.name == name } }
+                }
+                .toSet()
+            else -> ReminderConfig().daysOfWeek
+        }
+    }
+
+    private fun saveReminderDays(days: Set<Weekday>) {
+        if (days.isEmpty()) {
+            // Distinguish "user chose no days" from "preference was never written" so a
+            // reload cannot reset an explicit empty selection to the Mon/Wed/Fri default.
+            userDefaults.setObject(REMINDER_DAYS_NONE_SENTINEL, Keys.reminderDays)
+        } else {
+            userDefaults.setObject(days.map { it.name }, Keys.reminderDays)
+        }
     }
 
     private fun savePreferences(preferences: AppPreferences) {
@@ -304,8 +341,9 @@ private class IosAppPreferencesRepository(
         userDefaults.setBool(preferences.reminderConfig.enabled, Keys.reminderEnabled)
         userDefaults.setInteger(preferences.reminderConfig.hour.toLong(), Keys.reminderHour)
         userDefaults.setInteger(preferences.reminderConfig.minute.toLong(), Keys.reminderMinute)
-        userDefaults.setObject(preferences.reminderConfig.daysOfWeek.map { it.name }, Keys.reminderDays)
+        saveReminderDays(preferences.reminderConfig.daysOfWeek)
         userDefaults.setObject(preferences.intensitySystem.name, Keys.intensitySystem)
+        userDefaults.setBool(preferences.shareWeightHistoryAcrossContexts, Keys.shareWeightHistoryAcrossContexts)
     }
 
     private object Keys {
@@ -323,6 +361,7 @@ private class IosAppPreferencesRepository(
         const val reminderMinute = "settings.reminderMinute"
         const val reminderDays = "settings.reminderDays"
         const val intensitySystem = "settings.intensitySystem"
+        const val shareWeightHistoryAcrossContexts = "settings.shareWeightHistoryAcrossContexts"
     }
 }
 
@@ -476,6 +515,7 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
     defaultWarmupFlag = preferences.defaultWarmupFlag,
     timerKeepScreenOn = preferences.timerKeepScreenOn,
     betaDiagnosticsOptIn = preferences.betaDiagnosticsOptIn,
+    shareWeightHistoryAcrossContexts = preferences.shareWeightHistoryAcrossContexts,
     reminderEnabled = preferences.reminderConfig.enabled,
     reminderHour = preferences.reminderConfig.hour,
     reminderMinute = preferences.reminderConfig.minute,
@@ -504,9 +544,6 @@ private fun NSUserDefaults.boolOrDefault(key: String, defaultValue: Boolean): Bo
 
 private fun NSUserDefaults.intOrDefault(key: String, defaultValue: Int): Int =
     if (objectForKey(key) == null) defaultValue else integerForKey(key).toInt()
-
-private fun NSUserDefaults.stringList(key: String): List<String>? =
-    (arrayForKey(key) as? List<*>)?.mapNotNull { it as? String }
 
 private fun Weekday.toIosWeekday(): Int = when (this) {
     Weekday.SUNDAY -> 1

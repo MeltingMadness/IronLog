@@ -464,6 +464,40 @@ class ActiveWorkoutViewModelTest {
         assertEquals(9.0, updated.rpe)
     }
 
+    @Test
+    fun `updateSet mit negativem oder nicht-endlichem Gewicht persistiert nicht`() = runTest {
+        val vm = createViewModel()
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 901L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                isWarmup = false,
+                completedAt = LocalDateTime.now()
+            )
+        )
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.updateSet(setId = 901L, reps = 10, weightKg = -5.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.updateSet(setId = 901L, reps = 10, weightKg = Double.POSITIVE_INFINITY)
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.updateSet(setId = 901L, reps = 10, weightKg = Double.NaN)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        val stored = workoutRepo.getSetsForSessionList(sessionId).first { it.id == 901L }
+        assertEquals(10, stored.reps)
+        assertEquals(80.0, stored.weightKg, 0.01)
+        assertNotNull(vm.uiState.value.error)
+
+        collector.cancel()
+    }
+
     // --- Finish Workout ---
 
     @Test
@@ -1358,7 +1392,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `rest timer disappears automatically after logging last planned work set`() = runTest {
+    fun `rest timer bleibt auch nach letztem geplanten Arbeitssatz aktiv`() = runTest {
         val planId = 88L
         val plan = com.ironlog.app.domain.model.TrainingPlan(
             id = planId,
@@ -1400,6 +1434,8 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
 
+        // The planned set count (2) is now reached - the rest timer must keep running so the
+        // athlete can rest before extra sets instead of being dismissed prematurely.
         vm.logSet(
             key = WorkoutExerciseKey.Planned(881L),
             exerciseId = testExercise.id,
@@ -1408,7 +1444,58 @@ class ActiveWorkoutViewModelTest {
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
+        assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
+
+        // An extra set beyond the plan keeps the timer running too.
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `warmup Satz startet keinen Rest Timer und raeumt bestehenden`() = runTest {
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, isWarmup = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(vm.uiState.value.restTimers.isEmpty())
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0, isWarmup = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(WorkoutExerciseKey.AdHoc(testExercise.id) in vm.uiState.value.restTimers)
+
+        // A subsequent warmup set cancels the pending timer for the same exercise.
+        vm.logSet(exerciseId = testExercise.id, reps = 5, weightKg = 40.0, isWarmup = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(WorkoutExerciseKey.AdHoc(testExercise.id) !in vm.uiState.value.restTimers)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout raeumt laufende Rest Timer`() = runTest {
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(WorkoutExerciseKey.AdHoc(testExercise.id) in vm.uiState.value.restTimers)
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.restTimers.isEmpty())
 
         collector.cancel()
     }
@@ -1531,8 +1618,9 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `updateSet ignores reps kleiner gleich null without persisting`() = runTest {
+    fun `updateSet bei reps kleiner gleich 0 persistiert nicht, setzt Fehler und beendet Edit`() = runTest {
         val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
         vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
         testDispatcher.scheduler.advanceUntilIdle()
         val logged = workoutRepo.getSetsForSessionList(sessionId).first()
@@ -1540,10 +1628,16 @@ class ActiveWorkoutViewModelTest {
         vm.updateSet(setId = logged.id, reps = 0, weightKg = 90.0, intensity = "")
         testDispatcher.scheduler.advanceUntilIdle()
 
+        // Nothing was persisted...
         assertEquals(0, workoutRepo.updateSetCallCount)
         val unchanged = workoutRepo.getSetsForSessionList(sessionId).first()
         assertEquals(10, unchanged.reps)
         assertEquals(80.0, unchanged.weightKg, 0.01)
+        // ...but the user gets an error and the edit row leaves edit mode (success count).
+        assertNotNull(vm.uiState.value.error)
+        assertEquals(1, vm.uiState.value.updateSuccessCountBySet[logged.id])
+
+        collector.cancel()
     }
 
     @Test

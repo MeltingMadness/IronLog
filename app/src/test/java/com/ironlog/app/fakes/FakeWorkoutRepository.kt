@@ -89,8 +89,10 @@ class FakeWorkoutRepository : WorkoutRepository {
         sessions.value = sessions.value.map {
             if (it.session.id == sessionId) {
                 val now = java.time.LocalDateTime.now()
+                val durationSeconds =
+                    java.time.Duration.between(it.session.startTime, now).seconds
                 it.copy(
-                    session = it.session.copy(endTime = now, durationSeconds = 3600),
+                    session = it.session.copy(endTime = now, durationSeconds = durationSeconds),
                     isActive = false
                 )
             } else it
@@ -151,17 +153,25 @@ class FakeWorkoutRepository : WorkoutRepository {
         return kotlinx.coroutines.flow.flowOf(PagingData.from(completed))
     }
 
-    override fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>> {
-        val completed = sessions.value.filter { !it.isActive }.map {
+    /**
+     * Completed-session summaries computed from the real set list (work sets only for
+     * volume, matching [com.ironlog.app.data.repository.WorkoutRepositoryImpl]).
+     * Kept separate from the PagingData wrapper so unit tests can assert the values
+     * without consuming [PagingData].
+     */
+    fun completedWorkoutSummaries(): List<CompletedWorkoutSummary> =
+        sessions.value.filter { !it.isActive }.map { sessionData ->
+            val sessionSets = sets.value.filter { it.sessionId == sessionData.session.id }
             CompletedWorkoutSummary(
-                session = it.session,
-                exerciseCount = 0,
-                setCount = 0,
-                totalVolume = 0.0
+                session = sessionData.session,
+                exerciseCount = sessionSets.map { it.exerciseId }.distinct().size,
+                setCount = sessionSets.size,
+                totalVolume = sessionSets.filter { !it.isWarmup }.sumOf { it.weightKg * it.reps }
             )
         }
-        return kotlinx.coroutines.flow.flowOf(PagingData.from(completed))
-    }
+
+    override fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>> =
+        kotlinx.coroutines.flow.flowOf(PagingData.from(completedWorkoutSummaries()))
 
     override suspend fun getSessionById(id: Long): WorkoutSession? =
         sessions.value.find { it.session.id == id }?.session
@@ -190,11 +200,15 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     override suspend fun getTotalVolumeForSession(sessionId: Long): Double {
         getTotalVolumeForSessionCallCount++
-        return sets.value.filter { it.sessionId == sessionId }.sumOf { it.weightKg * it.reps }
+        return sets.value
+            .filter { it.sessionId == sessionId && !it.isWarmup }
+            .sumOf { it.weightKg * it.reps }
     }
 
     override suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int =
-        sessions.value.count { !it.isActive }
+        sessions.value.count {
+            !it.isActive && it.session.startTime.toEpochMillis() >= sinceEpochMillis
+        }
 
     override suspend fun getLastCompletedSession(): WorkoutSession? =
         sessions.value.filter { !it.isActive }.maxByOrNull { it.session.startTime }?.session

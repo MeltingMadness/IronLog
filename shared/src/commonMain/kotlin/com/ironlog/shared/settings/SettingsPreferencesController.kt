@@ -29,7 +29,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateBetaDiagnosticsOptIn(enabled: Boolean)
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
-    suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) = Unit
+    suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
 }
 
 interface SharedReminderScheduler {
@@ -96,7 +96,9 @@ class SettingsPreferencesController(
     fun updateReminderConfig(config: ReminderConfig) {
         controllerScope.launch {
             appPreferencesRepository.updateReminderConfig(config)
-            reminderScheduler.sync(config)
+            // Scheduler implementations (e.g. iOS notification scheduling) can fail; a
+            // reminder-sync error must never become an uncaught crash in the caller's scope.
+            runCatching { reminderScheduler.sync(config) }
         }
     }
 

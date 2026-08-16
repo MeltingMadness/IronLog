@@ -1,6 +1,7 @@
 package com.ironlog.shared.model
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -70,8 +71,101 @@ data class WorkoutSet(
     val weightKg: Double,
     val isWarmup: Boolean = false,
     val completedAt: LocalDateTime,
-    val rpe: Double? = null
+    val rpe: Double? = null,
+    val planTargetSnapshotId: Long? = null
 )
+
+const val CURRENT_PROGRESSION_RULE_REVISION = 1
+
+@Serializable
+enum class ProgressionScheme {
+    MANUAL,
+    LINEAR,
+    DOUBLE,
+    TOTAL_REPS,
+    RPE_RIR
+}
+
+@Serializable
+data class WeightStep(
+    val originalValue: Double,
+    val originalUnit: UnitSystem,
+    val kilograms: Double
+)
+
+@Serializable
+data class FailurePolicy(
+    val stallThreshold: Int = 2,
+    val backoffPercent: Double = 10.0
+)
+
+@Serializable
+sealed interface ProgressionConfig {
+    val scheme: ProgressionScheme
+    val ruleRevision: Int
+
+    @Serializable
+    @SerialName("manual")
+    data class Manual(
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+    ) : ProgressionConfig {
+        override val scheme = ProgressionScheme.MANUAL
+    }
+
+    @Serializable
+    @SerialName("linear")
+    data class Linear(
+        val step: WeightStep,
+        val failurePolicy: FailurePolicy = FailurePolicy(),
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+    ) : ProgressionConfig {
+        override val scheme = ProgressionScheme.LINEAR
+    }
+
+    @Serializable
+    @SerialName("double")
+    data class DoubleProgression(
+        val minReps: Int,
+        val maxReps: Int,
+        val step: WeightStep,
+        val failurePolicy: FailurePolicy = FailurePolicy(),
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+    ) : ProgressionConfig {
+        override val scheme = ProgressionScheme.DOUBLE
+    }
+
+    @Serializable
+    @SerialName("totalReps")
+    data class TotalReps(
+        val targetTotalReps: Long,
+        val step: WeightStep,
+        val failurePolicy: FailurePolicy = FailurePolicy(),
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+    ) : ProgressionConfig {
+        override val scheme = ProgressionScheme.TOTAL_REPS
+    }
+
+    @Serializable
+    @SerialName("rpeRir")
+    data class RpeRir(
+        val targetRpe: Double,
+        val tolerance: Double,
+        val step: WeightStep,
+        val failurePolicy: FailurePolicy = FailurePolicy(),
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+    ) : ProgressionConfig {
+        override val scheme = ProgressionScheme.RPE_RIR
+    }
+
+    @Serializable
+    @SerialName("invalid")
+    data class Invalid(
+        override val scheme: ProgressionScheme,
+        override val ruleRevision: Int,
+        val storageReason: String,
+        val rawScheme: String = scheme.name
+    ) : ProgressionConfig
+}
 
 @Serializable
 data class PlanExercise(
@@ -82,7 +176,8 @@ data class PlanExercise(
     val supersetGroupId: Int? = null,
     val targetSets: Int = 3,
     val targetReps: Int = 10,
-    val targetWeightKg: Double = 0.0
+    val targetWeightKg: Double = 0.0,
+    val progressionConfig: ProgressionConfig = ProgressionConfig.Manual()
 )
 
 @Serializable

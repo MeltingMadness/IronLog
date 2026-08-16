@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Fail CI when connected test reports are missing, ran zero tests, or
-report failures/errors.
+"""Fail CI when connected test reports are missing, ran zero tests, ran only
+a partial subset of the smoke suite, or report failures/errors.
 
 connectedDebugAndroidTest can exit successfully while running no tests
 at all (emulator/install failures, bad instrumentation config). Gradle
 writes one XML result per test class, so a zero-TEST-file or zero-test
 run is unambiguous evidence that the smoke gate did not actually smoke;
 aggregated failures/errors are explicit smoke failures.
+
+Additionally, a run that executes only a subset of the suite (for example
+a single class or a single method) must not pass the gate either: every
+class in EXPECTED_TEST_CLASSES has to appear with at least one executed
+test, and the total executed-test count has to reach MIN_TEST_COUNT.
 
 Usage:
   guard-zero-tests.py [--results-dir DIR]
@@ -19,11 +24,43 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
+# Smoke gate contract: these classes MUST have executed at least one test.
+EXPECTED_TEST_CLASSES = (
+    "com.ironlog.app.presentation.navigation.NavigationSmokeTest",
+    "com.ironlog.app.data.local.IronLogDatabaseMigrationTest",
+    "com.ironlog.app.data.backup.BackupLifecycleRoundTripTest",
+    "com.ironlog.app.data.local.ProgressionCoachLifecycleTest",
+    "com.ironlog.app.data.local.MetaPlanSkipDaoTest",
+    "com.ironlog.app.data.local.WorkoutSetDaoContextScopeTest",
+    "com.ironlog.app.data.local.ProgressionSnapshotTransactionTest",
+    "com.ironlog.app.data.local.WorkoutSessionDateFilterTest",
+)
+
+# Absolute floor for the total number of executed tests. Comfortably above
+# "one test per expected class" so a run that only scratches each class
+# still fails the gate.
+MIN_TEST_COUNT = 15
+
+
+def _class_name(xml_file, root):
+    """Class name of an executed suite: XML name attribute, then file name."""
+    name = root.get("name")
+    if name:
+        return name
+    stem = xml_file.name
+    if stem.startswith("TEST-") and stem.endswith(".xml"):
+        return stem[len("TEST-"):-len(".xml")]
+    return stem
+
 
 def test_summary(directory):
-    """Return (test_count, failure_count, error_count, xml_count)."""
+    """Return (test_count, failure_count, error_count, xml_count, ran_classes).
+
+    ran_classes contains the names of classes that executed at least one test.
+    """
     xml_files = sorted(pathlib.Path(directory).rglob("TEST-*.xml"))
     tests = failures = errors = 0
+    ran_classes = set()
     for xml_file in xml_files:
         try:
             root = ET.parse(xml_file).getroot()
@@ -31,15 +68,18 @@ def test_summary(directory):
             raise SystemExit(
                 f"guard-zero-tests: unparseable result XML {xml_file}: {exc}"
             ) from exc
-        tests += int(root.get("tests", 0))
+        file_tests = int(root.get("tests", 0))
+        tests += file_tests
         failures += int(root.get("failures", 0))
         errors += int(root.get("errors", 0))
-    return tests, failures, errors, len(xml_files)
+        if file_tests > 0:
+            ran_classes.add(_class_name(xml_file, root))
+    return tests, failures, errors, len(xml_files), ran_classes
 
 
 def verify(directory):
-    """Run the smoke gate; exits nonzero on missing, empty or failing runs."""
-    tests, failures, errors, xml_count = test_summary(directory)
+    """Run the smoke gate; exits nonzero on missing, empty or partial runs."""
+    tests, failures, errors, xml_count, ran_classes = test_summary(directory)
     if xml_count == 0:
         raise SystemExit(
             f"guard-zero-tests: no TEST-*.xml reports under {directory}; "
@@ -49,6 +89,18 @@ def verify(directory):
         raise SystemExit(
             f"guard-zero-tests: {xml_count} report(s) found but 0 tests ran; "
             "smoke gate is empty and must not pass"
+        )
+    missing = sorted(set(EXPECTED_TEST_CLASSES) - ran_classes)
+    if missing:
+        raise SystemExit(
+            "guard-zero-tests: expected smoke test classes missing from the "
+            f"results ({missing}); a partial run must not pass"
+        )
+    if tests < MIN_TEST_COUNT:
+        raise SystemExit(
+            f"guard-zero-tests: only {tests} tests ran across {xml_count} "
+            f"report(s), expected at least {MIN_TEST_COUNT}; "
+            "a partial run must not pass"
         )
     if failures > 0 or errors > 0:
         raise SystemExit(
@@ -61,40 +113,70 @@ def verify(directory):
     )
 
 
+def _seed_full_suite(directory, tests_per_class, failures=0, errors=0):
+    """Write one report per expected class so class/count checks pass."""
+    directory.mkdir()
+    for index, cls in enumerate(EXPECTED_TEST_CLASSES):
+        (directory / f"TEST-{cls}.xml").write_text(
+            f'<testsuite name="{cls}" tests="{tests_per_class}" '
+            f'failures="{failures if index == 0 else 0}" '
+            f'errors="{errors if index == 0 else 0}"/>',
+            encoding="utf-8",
+        )
+
+
 def _selftest():
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
+
         empty_dir = root / "no-reports"
         empty_dir.mkdir()
-        assert test_summary(empty_dir) == (0, 0, 0, 0)
+        assert test_summary(empty_dir) == (0, 0, 0, 0, set())
 
         zero_dir = root / "zero-tests"
         zero_dir.mkdir()
         (zero_dir / "TEST-empty.xml").write_text(
             '<testsuite name="empty" tests="0"/>', encoding="utf-8"
         )
-        assert test_summary(zero_dir) == (0, 0, 0, 1)
+        tests, failures, errors, xml_count, ran = test_summary(zero_dir)
+        assert (tests, failures, errors, xml_count) == (0, 0, 0, 1)
+        assert ran == set()
+        try:
+            verify(zero_dir)
+            raise AssertionError("zero-test run must fail the gate")
+        except SystemExit:
+            pass
 
         ok_dir = root / "ok"
-        ok_dir.mkdir()
-        (ok_dir / "TEST-a.xml").write_text(
-            '<testsuite name="a" tests="3" failures="0" errors="0"/>',
-            encoding="utf-8",
-        )
-        (ok_dir / "TEST-b.xml").write_text(
-            '<testsuite name="b" tests="2" failures="0" errors="0"/>',
-            encoding="utf-8",
-        )
-        assert test_summary(ok_dir) == (5, 0, 0, 2)
+        _seed_full_suite(ok_dir, tests_per_class=2)
+        tests, _, _, _, ran = test_summary(ok_dir)
+        assert tests == len(EXPECTED_TEST_CLASSES) * 2
+        assert ran == set(EXPECTED_TEST_CLASSES)
         verify(ok_dir)
 
-        fail_dir = root / "failures"
-        fail_dir.mkdir()
-        (fail_dir / "TEST-fail.xml").write_text(
-            '<testsuite name="f" tests="2" failures="1" errors="0"/>',
+        partial_dir = root / "partial"
+        partial_dir.mkdir()
+        (partial_dir / "TEST-com.ironlog.app.presentation.navigation.NavigationSmokeTest.xml").write_text(
+            '<testsuite name="com.ironlog.app.presentation.navigation.NavigationSmokeTest" '
+            'tests="1" failures="0" errors="0"/>',
             encoding="utf-8",
         )
-        assert test_summary(fail_dir) == (2, 1, 0, 1)
+        try:
+            verify(partial_dir)
+            raise AssertionError("a single-class run must fail the gate")
+        except SystemExit:
+            pass
+
+        thin_dir = root / "thin"
+        _seed_full_suite(thin_dir, tests_per_class=1)
+        try:
+            verify(thin_dir)
+            raise AssertionError("one test per class must fail the gate")
+        except SystemExit:
+            pass
+
+        fail_dir = root / "failures"
+        _seed_full_suite(fail_dir, tests_per_class=2, failures=1)
         try:
             verify(fail_dir)
             raise AssertionError("reported failures must fail the gate")
@@ -102,12 +184,7 @@ def _selftest():
             pass
 
         err_dir = root / "errors"
-        err_dir.mkdir()
-        (err_dir / "TEST-error.xml").write_text(
-            '<testsuite name="e" tests="1" failures="0" errors="1"/>',
-            encoding="utf-8",
-        )
-        assert test_summary(err_dir) == (1, 0, 1, 1)
+        _seed_full_suite(err_dir, tests_per_class=2, errors=1)
         try:
             verify(err_dir)
             raise AssertionError("reported errors must fail the gate")

@@ -106,6 +106,11 @@ class WorkoutRepositoryImpl(
                 durationSeconds = durationSeconds
             )
         )
+        // Personal records only count finished workouts (see recalculatePersonalRecords), so
+        // this session's sets become eligible for records exactly now that it is completed.
+        setDao.getExerciseIdsForSession(sessionId).forEach { exerciseId ->
+            recalculatePersonalRecords(exerciseId)
+        }
     }
 
     override suspend fun getActiveSession(): WorkoutSession? =
@@ -237,15 +242,20 @@ class WorkoutRepositoryImpl(
      * from whatever work sets remain, updating or removing PR rows as needed.
      */
     private suspend fun recalculatePersonalRecords(exerciseId: Long) {
-        val workSets = setDao.getSetsForExerciseList(exerciseId).filterNot { it.isWarmup }
+        val allWorkSets = setDao.getSetsForExerciseList(exerciseId).filterNot { it.isWarmup }
 
-        val bestWeightSet = workSets.maxByOrNull { it.weightKg }
+        // Weight/reps/E1RM records are per-set achievements and stay live during a
+        // session (a set just completed IS a personal record). Volume is per-session
+        // and must only reflect finished workouts: the partial volume of an active or
+        // abandoned session must never set or hold the MAX_VOLUME record. finishWorkout()
+        // triggers this rebuild once the session is completed.
+        val bestWeightSet = allWorkSets.maxByOrNull { it.weightKg }
         upsertOrClearRecord(exerciseId, RecordType.MAX_WEIGHT, bestWeightSet?.weightKg, bestWeightSet?.completedAt)
 
-        val bestRepsSet = workSets.maxByOrNull { it.reps }
+        val bestRepsSet = allWorkSets.maxByOrNull { it.reps }
         upsertOrClearRecord(exerciseId, RecordType.MAX_REPS, bestRepsSet?.reps?.toDouble(), bestRepsSet?.completedAt)
 
-        val bestE1rmSet = workSets.maxByOrNull { WorkoutCalculations.calculateE1RM(it.weightKg, it.reps) }
+        val bestE1rmSet = allWorkSets.maxByOrNull { WorkoutCalculations.calculateE1RM(it.weightKg, it.reps) }
         upsertOrClearRecord(
             exerciseId,
             RecordType.MAX_E1RM,
@@ -253,13 +263,24 @@ class WorkoutRepositoryImpl(
             bestE1rmSet?.completedAt
         )
 
-        val volumeBySession = workSets
+        val completedSessionIds = if (allWorkSets.isEmpty()) {
+            emptySet()
+        } else {
+            sessionDao
+                .getSessionsByIds(allWorkSets.map { it.sessionId }.distinct())
+                .filter { it.endTime != null }
+                .map { it.id }
+                .toSet()
+        }
+        val completedWorkSets = allWorkSets.filter { it.sessionId in completedSessionIds }
+
+        val volumeBySession = completedWorkSets
             .groupBy { it.sessionId }
             .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
         val bestVolumeSessionId = volumeBySession.maxByOrNull { it.value }?.key
         val bestVolume = bestVolumeSessionId?.let { volumeBySession[it] }
         val bestVolumeAchievedAt = bestVolumeSessionId
-            ?.let { sid -> workSets.filter { it.sessionId == sid }.maxOfOrNull(WorkoutSetEntity::completedAt) }
+            ?.let { sid -> completedWorkSets.filter { it.sessionId == sid }.maxOfOrNull(WorkoutSetEntity::completedAt) }
         upsertOrClearRecord(exerciseId, RecordType.MAX_VOLUME, bestVolume, bestVolumeAchievedAt)
     }
 
@@ -270,7 +291,10 @@ class WorkoutRepositoryImpl(
         achievedAt: Long?
     ) {
         val existing = personalRecordDao.getRecord(exerciseId, type.name)
-        if (value == null || achievedAt == null) {
+        // A non-positive value (e.g. 0.0 volume from zero-weight sets) is no record at all:
+        // clear the row instead of persisting a bogus "Rekord: 0,0 kg".
+        val recordValue = value?.takeIf { it > 0.0 }
+        if (recordValue == null || achievedAt == null) {
             if (existing != null) personalRecordDao.deleteRecord(exerciseId, type.name)
             return
         }
@@ -279,7 +303,7 @@ class WorkoutRepositoryImpl(
                 id = existing?.id ?: 0,
                 exerciseId = exerciseId,
                 type = type.name,
-                value = value,
+                value = recordValue,
                 achievedAt = achievedAt
             )
         )

@@ -60,7 +60,7 @@ val appModule = module {
     single { get<IronLogDatabase>().progressionDao() }
     single<TransactionRunner> { RoomTransactionRunner(get()) }
     single<BackupDocumentIo> {
-        ContentResolverBackupDocumentIo(androidContext().contentResolver)
+        ContentResolverBackupDocumentIo(androidContext())
     }
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 

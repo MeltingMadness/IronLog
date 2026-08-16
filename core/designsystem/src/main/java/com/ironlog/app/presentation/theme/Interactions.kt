@@ -39,9 +39,11 @@ fun Modifier.pressScale(
             detectTapGestures(
                 onPress = {
                     scale.animateTo(targetScale, spring(dampingRatio = 0.65f, stiffness = 600f))
-                    tryAwaitRelease()
+                    val released = tryAwaitRelease()
                     scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
-                    onClick()
+                    if (released) {
+                        onClick()
+                    }
                 }
             )
         }

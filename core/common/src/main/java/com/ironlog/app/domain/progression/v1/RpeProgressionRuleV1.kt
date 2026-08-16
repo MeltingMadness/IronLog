@@ -25,6 +25,15 @@ internal object RpeProgressionRuleV1 : ProgressionRule {
         firstWeightDeviation(countedSets, target.weightKg)?.let {
             return weightDeviationOutcome(target, countedSets, it)
         }
+        val actualReps = countedSets.minOf(WorkoutSet::reps)
+        if (actualReps < target.reps) {
+            return repetitionMissOutcome(
+                context,
+                countedSets,
+                config.failurePolicy,
+                mapOf("targetReps" to target.reps.toDouble(), "actualReps" to actualReps.toDouble())
+            )
+        }
         if (countedSets.any { it.rpe == null }) {
             return ProgressionOutcome.InsufficientData(
                 sourceTarget = target,
@@ -40,22 +49,13 @@ internal object RpeProgressionRuleV1 : ProgressionRule {
                 countedSetIds = countedSets.map(WorkoutSet::id)
             )
         }
-        val actualReps = countedSets.minOf(WorkoutSet::reps)
-        if (actualReps < target.reps) {
-            return repetitionMissOutcome(
-                context,
-                countedSets,
-                config.failurePolicy,
-                mapOf("targetReps" to target.reps.toDouble(), "actualReps" to actualReps.toDouble())
-            )
-        }
         val highestRpe = rpes.max()
         if (highestRpe > config.targetRpe + config.tolerance) {
             return ProgressionOutcome.KeepTarget(
                 sourceTarget = target,
                 reasonCode = ProgressionReasonCode.REPEAT_TARGET,
                 reasonArguments = mapOf("highestRpe" to highestRpe),
-                streakEffect = ProgressionStreakEffect.RESET,
+                streakEffect = ProgressionStreakEffect.INCREMENT,
                 countedSetIds = countedSets.map(WorkoutSet::id)
             )
         }

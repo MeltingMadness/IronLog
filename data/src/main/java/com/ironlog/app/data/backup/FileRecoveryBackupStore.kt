@@ -134,10 +134,16 @@ class FileRecoveryBackupStore(
 
     private fun listStored(): List<StoredRecovery> {
         if (!backupDir.isDirectory) return emptyList()
-        return backupDir.listFiles()
-            ?.mapNotNull { it.toStored() }
-            ?.sortedBy { it.timestampMillis }
-            ?: emptyList()
+        val files = backupDir.listFiles() ?: return emptyList()
+
+        // A crash between writing the temp file and renameTo leaves an orphaned
+        // recovery-*.tmp behind. Every operation runs under the store mutex, so
+        // no save can be mid-write here; any leftover temp file is stale and is
+        // removed eagerly instead of accumulating forever.
+        files.filter { TEMP_FILE_NAME_REGEX.matches(it.name) }.forEach { it.delete() }
+
+        return files.mapNotNull { it.toStored() }
+            .sortedBy { it.timestampMillis }
     }
 
     private fun File.toStored(): StoredRecovery? {
@@ -175,6 +181,7 @@ class FileRecoveryBackupStore(
         const val TEMP_SUFFIX = ".tmp"
         const val FINAL_SUFFIX = ".json"
         val FILE_NAME_REGEX = Regex("^recovery-(\\d+)-([0-9a-f]{64})\\.json$")
+        val TEMP_FILE_NAME_REGEX = Regex("^recovery-\\d+-[0-9a-f]{64}\\.tmp$")
 
         fun fileName(timestamp: Long, sha256: String, suffix: String): String =
             "recovery-$timestamp-$sha256$suffix"
