@@ -8,6 +8,7 @@ import com.ironlog.shared.model.ThemeScheme
 import com.ironlog.shared.model.UnitSystem
 import com.ironlog.shared.model.WeekStart
 import com.ironlog.shared.model.Weekday
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -55,6 +56,30 @@ class SettingsPreferencesControllerTest {
 
         assertEquals(config, repository.current.reminderConfig)
         assertEquals(config, reminderScheduler.syncedConfig)
+    }
+
+    @Test
+    fun updateReminderConfig_swallowsReminderSchedulerFailures() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FailingSharedReminderScheduler()
+        val uncaught = mutableListOf<Throwable>()
+        val scope = CoroutineScope(
+            StandardTestDispatcher(testScheduler) + CoroutineExceptionHandler { _, throwable ->
+                uncaught += throwable
+            }
+        )
+        val controller = SettingsPreferencesController(
+            scope = scope,
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+        val config = ReminderConfig(enabled = true, daysOfWeek = setOf(Weekday.MONDAY))
+
+        controller.updateReminderConfig(config)
+        advanceUntilIdle()
+
+        assertTrue(uncaught.isEmpty())
+        assertEquals(config, repository.current.reminderConfig)
     }
 
     @Test
@@ -131,6 +156,14 @@ private class FakeSharedAppPreferencesRepository(
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
     }
+}
+
+private class FailingSharedReminderScheduler : SharedReminderScheduler {
+    override suspend fun sync(config: ReminderConfig) {
+        throw IllegalStateException("scheduler kaputt")
+    }
+
+    override suspend fun cancel() = Unit
 }
 
 private class FakeSharedReminderScheduler : SharedReminderScheduler {
