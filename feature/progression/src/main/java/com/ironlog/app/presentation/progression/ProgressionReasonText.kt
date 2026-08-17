@@ -17,11 +17,11 @@ fun ProgressionReasonText(
     val arguments = item.reasonArguments
     return when (item.reasonCode) {
         ProgressionReasonCode.REP_TARGET_ADVANCED ->
-            stringResource(R.string.progression_review_reason_rep_advanced)
+            stringResource(R.string.progression_review_reason_rep_advanced) + weightBasisSuffix(item, displayUnitSystem)
 
-        ProgressionReasonCode.LOAD_ADVANCED -> loadAdvancedText(item)
-        ProgressionReasonCode.TOTAL_REPS_COMPLETED -> totalRepsCompletedText(item)
-        ProgressionReasonCode.RPE_WITHIN_TARGET -> rpeWithinTargetText(item)
+        ProgressionReasonCode.LOAD_ADVANCED -> loadAdvancedText(item, displayUnitSystem)
+        ProgressionReasonCode.TOTAL_REPS_COMPLETED -> totalRepsCompletedText(item, displayUnitSystem)
+        ProgressionReasonCode.RPE_WITHIN_TARGET -> rpeWithinTargetText(item, displayUnitSystem)
         ProgressionReasonCode.REPEAT_TARGET -> repeatTargetText(arguments)
 
         ProgressionReasonCode.STALL_BACKOFF -> {
@@ -94,17 +94,17 @@ fun ProgressionReasonText(
 }
 
 @Composable
-private fun loadAdvancedText(item: ProgressionReviewItemUi): String {
+private fun loadAdvancedText(item: ProgressionReviewItemUi, displayUnitSystem: UnitSystem): String {
     val step = item.validConfiguredStep() ?: return unavailableReason()
     return stringResource(
         R.string.progression_review_reason_load_advanced,
         formatNumber(step.originalValue),
         WeightFormatting.unitLabel(step.originalUnit)
-    )
+    ) + weightBasisSuffix(item, displayUnitSystem)
 }
 
 @Composable
-private fun totalRepsCompletedText(item: ProgressionReviewItemUi): String {
+private fun totalRepsCompletedText(item: ProgressionReviewItemUi, displayUnitSystem: UnitSystem): String {
     val achieved = item.reasonArguments.validWholeNumber("achievedTotalReps")
     val target = item.reasonArguments.validWholeNumber("targetTotalReps")
     val step = item.validConfiguredStep()
@@ -115,14 +115,14 @@ private fun totalRepsCompletedText(item: ProgressionReviewItemUi): String {
             target.toString(),
             formatNumber(step.originalValue),
             WeightFormatting.unitLabel(step.originalUnit)
-        )
+        ) + weightBasisSuffix(item, displayUnitSystem)
     } else {
         unavailableReason()
     }
 }
 
 @Composable
-private fun rpeWithinTargetText(item: ProgressionReviewItemUi): String {
+private fun rpeWithinTargetText(item: ProgressionReviewItemUi, displayUnitSystem: UnitSystem): String {
     val highest = item.reasonArguments.validNumber("highestRpe")
     val target = item.reasonArguments.validNumber("targetRpe")
     val tolerance = item.reasonArguments.validNumber("tolerance")
@@ -140,10 +140,29 @@ private fun rpeWithinTargetText(item: ProgressionReviewItemUi): String {
             formatNumber(tolerance),
             formatNumber(step.originalValue),
             WeightFormatting.unitLabel(step.originalUnit)
-        )
+        ) + weightBasisSuffix(item, displayUnitSystem)
     } else {
         unavailableReason()
     }
+}
+
+/**
+ * Explains a proposal whose weight basis differs from the plan target: the
+ * suggestion was derived from the actually trained weight, not from the
+ * (stale) plan target. Empty when both agree.
+ */
+@Composable
+private fun weightBasisSuffix(item: ProgressionReviewItemUi, displayUnitSystem: UnitSystem): String {
+    val actual = item.reasonArguments.validNumber("actualWeightKg") ?: return ""
+    val expected = item.source.weightKg
+    if (actual < 0.0 || expected < 0.0 || abs(actual - expected) <= WEIGHT_BASIS_TOLERANCE_KG) {
+        return ""
+    }
+    return stringResource(
+        R.string.progression_review_reason_weight_basis,
+        WeightFormatting.formatWeight(actual, displayUnitSystem),
+        WeightFormatting.formatWeight(expected, displayUnitSystem)
+    )
 }
 
 @Composable
@@ -208,3 +227,4 @@ private fun unavailableReason(): String =
     stringResource(R.string.progression_review_reason_unavailable)
 
 private const val STEP_TOLERANCE = 0.000001
+private const val WEIGHT_BASIS_TOLERANCE_KG = 0.1
