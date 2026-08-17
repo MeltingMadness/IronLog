@@ -29,7 +29,12 @@ class ProgressionEngineTest {
         assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
         assertEquals(ProgressionStreakEffect.RESET, change.streakEffect)
         assertEquals(
-            mapOf("targetReps" to 8.0, "actualReps" to 8.0, "stepOriginalValue" to 2.5),
+            mapOf(
+                "targetReps" to 8.0,
+                "actualReps" to 8.0,
+                "stepOriginalValue" to 2.5,
+                "actualWeightKg" to 100.0
+            ),
             change.reasonArguments
         )
     }
@@ -99,7 +104,13 @@ class ProgressionEngineTest {
         assertTrue(result is ProgressionOutcome.ProposeChange)
         assertEquals(ProgressionReasonCode.RPE_WITHIN_TARGET, result.reasonCode)
         assertEquals(
-            mapOf("highestRpe" to 8.5, "targetRpe" to 8.0, "tolerance" to 0.5, "stepOriginalValue" to 2.5),
+            mapOf(
+                "highestRpe" to 8.5,
+                "targetRpe" to 8.0,
+                "tolerance" to 0.5,
+                "stepOriginalValue" to 2.5,
+                "actualWeightKg" to 100.0
+            ),
             result.reasonArguments
         )
     }
@@ -121,11 +132,11 @@ class ProgressionEngineTest {
     }
 
     @Test
-    fun `manual weight deviation is insufficient data`() {
-        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.5, 100.0)))
+    fun `mixed weights within a session are insufficient data`() {
+        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 102.5, 100.0)))
         assertEquals(ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION, result.reasonCode)
         assertEquals(
-            mapOf("expectedWeightKg" to 100.0, "actualWeightKg" to 100.5),
+            mapOf("expectedWeightKg" to 100.0, "actualWeightKg" to 102.5),
             result.reasonArguments
         )
     }
@@ -137,6 +148,33 @@ class ProgressionEngineTest {
         val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.09, 99.91)))
 
         assertTrue(result is ProgressionOutcome.ProposeChange)
+    }
+
+    @Test
+    fun `consistent weight above target proposes from the actual weight`() {
+        // The user trains 102.5 kg although the plan target is 100 kg: the
+        // proposal must step up from the actually trained weight (105 kg),
+        // not silently stall on a stale plan target.
+        val result = engine.evaluate(
+            context(linear(), targetWeightKg = 100.0, weights = listOf(102.5, 102.5, 102.5))
+        )
+        val change = result as ProgressionOutcome.ProposeChange
+        assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
+        assertEquals(105.0, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(102.5, requireNotNull(change.reasonArguments["actualWeightKg"]), 0.000001)
+    }
+
+    @Test
+    fun `consistent weight below target proposes from the actual weight`() {
+        // Deload scenario: the user trains 90 kg against a 100 kg plan target;
+        // the plan should converge to reality instead of freezing.
+        val result = engine.evaluate(
+            context(linear(), targetWeightKg = 100.0, weights = listOf(90.0, 90.0, 90.0))
+        )
+        val change = result as ProgressionOutcome.ProposeChange
+        assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
+        assertEquals(92.5, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(90.0, requireNotNull(change.reasonArguments["actualWeightKg"]), 0.000001)
     }
 
     @Test

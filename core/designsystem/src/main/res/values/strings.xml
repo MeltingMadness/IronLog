@@ -360,13 +360,14 @@
 
     <string name="progression_review_reason_rep_advanced">Das Wiederholungsziel wurde erreicht und wird erhöht.</string>
     <string name="progression_review_reason_load_advanced">Das Zielgewicht steigt um %1$s %2$s.</string>
+    <string name="progression_review_reason_weight_basis"> — Basis: trainierte %1$s statt Ziel %2$s</string>
     <string name="progression_review_reason_total_completed">%1$s von %2$s Zielwiederholungen wurden erreicht; das Gewicht steigt um %3$s %4$s.</string>
     <string name="progression_review_reason_rpe_within_target">Die höchste RPE war %1$s bei Ziel %2$s ± %3$s; das Gewicht steigt um %4$s %5$s.</string>
     <string name="progression_review_reason_repeat_reps">Mindestens %1$s Wiederholungen waren erwartet, erreicht wurden %2$s. Das Ziel bleibt gleich.</string>
     <string name="progression_review_reason_repeat_total">%1$s von %2$s Zielwiederholungen wurden erreicht. Das Ziel bleibt gleich.</string>
     <string name="progression_review_reason_repeat_rpe">Die höchste RPE war %1$s. Das Ziel bleibt gleich.</string>
     <string name="progression_review_reason_stall_backoff">Nach wiederholten Fehlversuchen sinkt das Gewicht um %1$s Prozent.</string>
-    <string name="progression_review_reason_weight_deviation">Erwartet waren %1$s, tatsächlich verwendet wurden %2$s. Deshalb wird nichts automatisch geändert.</string>
+    <string name="progression_review_reason_weight_deviation">Die gewerteten Sätze haben unterschiedliche Gewichte (%1$s und %2$s); deshalb wird nichts automatisch geändert.</string>
     <string name="progression_review_reason_too_few_sets">Für die Auswertung waren %1$s Arbeitssätze nötig, vorhanden waren %2$s.</string>
     <string name="progression_review_reason_rpe_missing">Mindestens einem gewerteten Satz fehlt die RPE.</string>
     <string name="progression_review_reason_rpe_invalid">Mindestens eine RPE liegt außerhalb des gültigen Bereichs.</string>

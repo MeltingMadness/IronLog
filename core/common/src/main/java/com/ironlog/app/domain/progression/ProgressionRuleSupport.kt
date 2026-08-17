@@ -149,25 +149,46 @@ internal fun firstWeightDeviation(sets: List<WorkoutSet>, expectedWeightKg: Doub
             .abs() > BigDecimal.valueOf(WEIGHT_TOLERANCE_KG)
     }
 
-internal fun weightDeviationOutcome(
+/**
+ * The weight the counted sets were actually performed at, when all counted
+ * sets agree within [WEIGHT_TOLERANCE_KG]. Progression proposals are based on
+ * this actual weight (the plan target only describes the default load), so a
+ * consistently higher or lower load still yields a suggestion. Mixed weights
+ * within one session are not comparable to a single training weight and
+ * return null; callers fall back to [mixedWeightOutcome].
+ */
+internal fun evaluationWeightKg(countedSets: List<WorkoutSet>): Double? {
+    val first = countedSets.firstOrNull() ?: return null
+    return if (firstWeightDeviation(countedSets.drop(1), first.weightKg) == null) {
+        first.weightKg
+    } else {
+        null
+    }
+}
+
+internal fun mixedWeightOutcome(
     target: ProgressionTarget,
-    countedSets: List<WorkoutSet>,
-    deviatingSet: WorkoutSet
-): ProgressionOutcome = ProgressionOutcome.InsufficientData(
-    sourceTarget = target,
-    reasonCode = ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION,
-    reasonArguments = mapOf(
-        "expectedWeightKg" to target.weightKg,
-        "actualWeightKg" to deviatingSet.weightKg
-    ),
-    countedSetIds = countedSets.map(WorkoutSet::id)
-)
+    countedSets: List<WorkoutSet>
+): ProgressionOutcome {
+    val expected = countedSets.first().weightKg
+    val actual = firstWeightDeviation(countedSets.drop(1), expected)?.weightKg ?: expected
+    return ProgressionOutcome.InsufficientData(
+        sourceTarget = target,
+        reasonCode = ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION,
+        reasonArguments = mapOf(
+            "expectedWeightKg" to expected,
+            "actualWeightKg" to actual
+        ),
+        countedSetIds = countedSets.map(WorkoutSet::id)
+    )
+}
 
 internal fun repetitionMissOutcome(
     context: ProgressionContext,
     countedSets: List<WorkoutSet>,
     failurePolicy: FailurePolicy,
-    repeatReasonArguments: Map<String, Double>
+    repeatReasonArguments: Map<String, Double>,
+    baseWeightKg: Double
 ): ProgressionOutcome {
     val target = context.sourceTarget.target
     val failuresIncludingCurrent = priorConsecutiveFailures(context) + 1
@@ -181,8 +202,10 @@ internal fun repetitionMissOutcome(
         )
     }
 
-    val backedOffWeight = backedOffWeight(target.weightKg, stepFor(context), failurePolicy.backoffPercent)
-    if (backedOffWeight < target.weightKg) {
+    // The backoff is based on the actually trained weight, mirroring the
+    // proposal basis of the success paths.
+    val backedOffWeight = backedOffWeight(baseWeightKg, stepFor(context), failurePolicy.backoffPercent)
+    if (backedOffWeight < baseWeightKg) {
         return ProgressionOutcome.ProposeChange(
             sourceTarget = target,
             proposedTarget = target.copy(weightKg = backedOffWeight),

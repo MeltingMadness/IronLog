@@ -71,7 +71,7 @@ RPE/RIR ist wegen seiner Messunsicherheit ein ergänzendes Signal. Das Schema da
 
 - Für eine Auswertung müssen mindestens `targetSets > 0`, `targetReps > 0` und die jeweils schemaspezifischen Werte gültig sein.
 - Alle Gewichte, Schrittweiten, Prozent- und RPE-Werte müssen endlich sein. Zielgewichte dürfen nicht negativ sein, Schrittweiten müssen größer als 0 sein, Wiederholungsgrenzen und Gesamtwiederholungsziele müssen positive Ganzzahlen sein; Summen werden über einen überlaufsicheren Ganzzahltyp berechnet.
-- Die gezählten Sätze müssen dasselbe Gewicht wie `targetWeightKg` innerhalb einer technischen Toleranz von 0,1 kg verwenden (die Eingabe-Auflösung rundet auf eine Dezimalstelle in der Anzeigeeinheit, kg ≈ 0,05 kg / lb ≈ 0,023 kg Fehler; 0,01 kg war enger als die Eingabepipeline und blockierte Progression still). Höhere oder niedrigere manuelle Lasten erzeugen `MANUAL_WEIGHT_DEVIATION`, damit der Coach keinen Zielwert aus nicht vergleichbaren Daten ableitet.
+- Die gezählten Sätze müssen untereinander dasselbe Gewicht innerhalb einer technischen Toleranz von 0,1 kg verwenden (die Eingabe-Auflösung rundet auf eine Dezimalstelle in der Anzeigeeinheit, kg ≈ 0,05 kg / lb ≈ 0,023 kg Fehler). Vorschläge basieren auf dem tatsächlich trainierten Gewicht: weicht es konsistent vom Planziel ab (höher oder niedriger), wird von diesem Wert progressiert, damit der Plan zur Realität konvergiert. Sätze mit gemischten Gewichten innerhalb einer Session sind nicht vergleichbar und erzeugen `MANUAL_WEIGHT_DEVIATION`, damit der Coach keinen Zielwert aus nicht vergleichbaren Daten ableitet.
 - Eine Folge von Fehlversuchen wird nur über vergleichbare Workouts mit identischem Ziel-Snapshot gezählt. Erfolg, angenommene Änderung, manuelle Planbearbeitung oder geänderte Schemakonfiguration setzt die Folge zurück.
 - Die Fehlversuchsschwelle ist ganzzahlig und liegt zwischen 1 und 6; der voreingestellte Wert ist 2. `backoffPercent` liegt zwischen 1 und 30; der voreingestellte Wert ist 10.
 - Ein Backoff berechnet `currentWeight * (1 - backoffPercent / 100)`. Das Ergebnis wird zuerst in die sichtbare Einheit umgerechnet und auf das nächste Vielfache der dort konfigurierten Schrittweite gerundet; bei exakt gleichem Abstand gewinnt der niedrigere Wert. Erst das gerundete Ergebnis wird zurück in kg konvertiert. Ergibt die Rundung keine Absenkung, wird genau eine sichtbare Schrittweite abgezogen, jedoch nie unter 0.
@@ -199,7 +199,7 @@ Ein kompakter Hinweis erscheint, solange `PENDING`-Vorschläge existieren, und �
 - **Zu wenige geplante Arbeitssätze:** Es gibt keine Steigerung und keinen Fehlversuch, weil das Workout keine vergleichbare Leistung belegt.
 - **Zusatzsätze oder Warm-ups:** Sie bleiben sichtbar, werden aber nicht gezählt.
 - **Neue Übung während eines laufenden Workouts:** Sätze ohne Plan-Zielsnapshot bleiben vollständig in der Historie, erzeugen aber keine Progressionsauswertung.
-- **Abweichendes Arbeitsgewicht:** Es entsteht `MANUAL_WEIGHT_DEVIATION`, keine automatische Interpretation.
+- **Abweichendes, aber konsistentes Arbeitsgewicht:** Es wird von dem tatsächlich trainierten Gewicht progressiert (Vorschlag inkl. Basis-Angabe); gemischte Gewichte innerhalb einer Session erzeugen `MANUAL_WEIGHT_DEVIATION`, keine automatische Interpretation.
 - **Ungültige importierte Konfiguration:** Der Validator meldet den konkreten Pfad; der Import bleibt wie bisher fail-closed.
 - **Coach-Fehler nach erfolgreichem Workout-Abschluss:** Die UI zeigt Retry/Später; der Workout-Datensatz bleibt abgeschlossen.
 
