@@ -122,17 +122,19 @@ class ProgressionEngineTest {
 
     @Test
     fun `manual weight deviation is insufficient data`() {
-        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.02, 100.0)))
+        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.5, 100.0)))
         assertEquals(ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION, result.reasonCode)
         assertEquals(
-            mapOf("expectedWeightKg" to 100.0, "actualWeightKg" to 100.02),
+            mapOf("expectedWeightKg" to 100.0, "actualWeightKg" to 100.5),
             result.reasonArguments
         )
     }
 
     @Test
-    fun `weight tolerance includes exactly one hundredth kilogram`() {
-        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.01, 99.99)))
+    fun `weight tolerance covers display rounding noise`() {
+        // Display rounding (one decimal in the display unit, then back to kg)
+        // introduces up to ~0.05 kg; the gate must not trip on that.
+        val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.09, 99.91)))
 
         assertTrue(result is ProgressionOutcome.ProposeChange)
     }
