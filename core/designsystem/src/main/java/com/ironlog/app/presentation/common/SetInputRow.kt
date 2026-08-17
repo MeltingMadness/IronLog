@@ -32,6 +32,7 @@ fun SetInputRow(
     intensity: TextFieldValue,
     onIntensityChange: (TextFieldValue) -> Unit,
     intensityLabel: String,
+    intensityPlaceholder: String? = null,
     weightPlaceholder: String? = null,
     repsPlaceholder: String? = null,
     showIntensityField: Boolean = true,
@@ -67,6 +68,7 @@ fun SetInputRow(
                 value = intensity,
                 onValueChange = onIntensityChange,
                 suffix = intensityLabel,
+                placeholderText = intensityPlaceholder ?: "-",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 modifier = Modifier.weight(1f)
             )

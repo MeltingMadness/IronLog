@@ -551,6 +551,17 @@ private fun ExerciseCard(
     }
     val showHistoryToggle = previousSession != null
     val previousWeightHint = previousSession?.lastWorkSetWeightKg?.let { formatWeightValue(it, unitSystem) }
+    // RPE_RIR plan targets show what to enter into the intensity field; the
+    // stored RPE is 10 - RIR when the RIR scale is active, so the hint mirrors
+    // the displayed scale. A missing value would otherwise surface as
+    // RPE_MISSING with no indication that the field needs input.
+    val intensityPlaceholder = (planTarget?.config as? ProgressionConfig.RpeRir)?.let { config ->
+        val hint = when (rowIntensitySystem) {
+            IntensitySystem.RIR -> 10.0 - config.targetRpe
+            else -> config.targetRpe
+        }
+        formatRpeValue(hint)
+    }
     var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { !it.isWarmup }
@@ -671,6 +682,7 @@ private fun ExerciseCard(
                             repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
                             defaultWeight = "",
                             weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                            intensityPlaceholder = intensityPlaceholder,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             locked = isLogging,
@@ -718,6 +730,7 @@ private fun ExerciseCard(
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
                         weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                        intensityPlaceholder = intensityPlaceholder,
                         locked = isLogging,
                         logSuccessSubmissions = logSuccessSubmissions,
                         onLogSet = onLogSet,
@@ -896,21 +909,27 @@ private fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String 
     }
 }
 
+private fun formatRpeValue(value: Double): String =
+    if (value % 1.0 == 0.0) {
+        value.toInt().toString()
+    } else {
+        String.format(Locale.ROOT, "%.1f", value)
+    }
+
 /**
- * Weight hint for plan-based workout rows: the current plan target weight, so
- * logging "as hinted" hits the progression target and the deviation gate can
- * pass. Falls back to the previous session's weight (or null) when the plan
- * has no weight target.
+ * Weight hint for plan-based workout rows: the last trained weight first
+ * (continuity with what the user actually lifted), falling back to the current
+ * plan target weight for a first-time exercise. With actual-weight-based
+ * progression both sources yield valid suggestions.
  */
 private fun targetWeightHint(
     planTarget: WorkoutPlanTarget?,
     unitSystem: UnitSystem,
     previousWeightHint: String?
-): String? =
-    planTarget
+): String? = previousWeightHint
+    ?: planTarget
         ?.takeIf { it.target.weightKg > 0 }
         ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
-        ?: previousWeightHint
 
 /** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
 fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {
@@ -1145,6 +1164,7 @@ private fun PendingSetRow(
     repsPlaceholder: String? = null,
     defaultWeight: String,
     weightPlaceholder: String? = null,
+    intensityPlaceholder: String? = null,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
     locked: Boolean,
@@ -1206,6 +1226,7 @@ private fun PendingSetRow(
                 value = intensityInput,
                 onValueChange = { intensityInput = it },
                 suffix = intensitySystem.displayName,
+                placeholderText = intensityPlaceholder ?: "-",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 modifier = Modifier.weight(1f)
             )
@@ -1250,6 +1271,7 @@ private fun ExtraSetInput(
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
     weightPlaceholder: String? = null,
+    intensityPlaceholder: String? = null,
     locked: Boolean,
     logSuccessSubmissions: Set<Long>,
     onLogSet: (Int, Double, Boolean, String, Long) -> Unit,
@@ -1299,6 +1321,7 @@ private fun ExtraSetInput(
             intensity = intensityInput,
             onIntensityChange = { intensityInput = it },
             intensityLabel = intensitySystem.displayName,
+            intensityPlaceholder = intensityPlaceholder,
             weightPlaceholder = weightPlaceholder,
             repsPlaceholder = repsPlaceholder,
             showIntensityField = tracksIntensity,
