@@ -459,7 +459,7 @@ Use one `context(...)` builder that creates a valid snapshot and snapshot-linked
 }
 
 @Test fun `manual weight deviation is insufficient data`() {
-    val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.02, 100.0)))
+    val result = engine.evaluate(context(linear(), reps = listOf(8, 8, 8), weights = listOf(100.0, 100.5, 100.0)))
     assertEquals(ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION, result.reasonCode)
 }
 
@@ -2041,8 +2041,8 @@ val defaultStep = if (unitSystem == UnitSystem.IMPERIAL) "5" else "2.5"
 val minReps = planExercise.targetReps.toString()
 val maxReps = (planExercise.targetReps + 2).toString()
 val totalReps = planExercise.targetSets.toLong().times(planExercise.targetReps).toString()
-val targetRpe = ""
-val rpeTolerance = ""
+val targetRpe = "8"
+val rpeTolerance = "0.5"
 val stallThreshold = "2"
 val backoffPercent = "10"
 ```

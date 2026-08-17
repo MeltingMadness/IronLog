@@ -13,7 +13,13 @@ import java.math.BigDecimal
 import kotlin.math.ceil
 import kotlin.math.floor
 
-internal const val WEIGHT_TOLERANCE_KG = 0.01
+// Weight inputs are rounded to one decimal place in the display unit before
+// being converted back to kg (kg: up to 0.05 kg error; lb: up to ~0.023 kg).
+// The old 0.01 kg tolerance was tighter than the input pipeline, so logging
+// the displayed target (or previous) weight often tripped MANUAL_WEIGHT_DEVIATION
+// and silently blocked progression. 0.1 kg covers all display-rounding noise
+// while still catching every real deviation (plate granularity is >= 0.5 kg).
+internal const val WEIGHT_TOLERANCE_KG = 0.1
 
 internal sealed interface CountedWorkSetsResult {
     data class Valid(val sets: List<WorkoutSet>) : CountedWorkSetsResult

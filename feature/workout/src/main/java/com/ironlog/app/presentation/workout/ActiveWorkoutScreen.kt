@@ -670,7 +670,7 @@ private fun ExerciseCard(
                             setNumber = setIndex,
                             repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
                             defaultWeight = "",
-                            weightPlaceholder = previousWeightHint,
+                            weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             locked = isLogging,
@@ -717,7 +717,7 @@ private fun ExerciseCard(
                         defaultWarmupFlag = defaultWarmupFlag,
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
-                        weightPlaceholder = previousWeightHint,
+                        weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
                         locked = isLogging,
                         logSuccessSubmissions = logSuccessSubmissions,
                         onLogSet = onLogSet,
@@ -895,6 +895,22 @@ private fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String 
         String.format(Locale.ROOT, "%.1f", displayValue)
     }
 }
+
+/**
+ * Weight hint for plan-based workout rows: the current plan target weight, so
+ * logging "as hinted" hits the progression target and the deviation gate can
+ * pass. Falls back to the previous session's weight (or null) when the plan
+ * has no weight target.
+ */
+private fun targetWeightHint(
+    planTarget: WorkoutPlanTarget?,
+    unitSystem: UnitSystem,
+    previousWeightHint: String?
+): String? =
+    planTarget
+        ?.takeIf { it.target.weightKg > 0 }
+        ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
+        ?: previousWeightHint
 
 /** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
 fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {
