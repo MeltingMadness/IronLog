@@ -74,6 +74,7 @@ class NavigationSmokeTest {
     private val progressionReviewModule = module {
         single<ProgressionRepository> { progressionRepository }
         single<AppPreferencesRepository> { preferencesRepository }
+        single<ExerciseRepository> { NavigationSmokeExerciseRepository() }
         viewModelOf(::ProgressionReviewViewModel)
     }
 
@@ -415,6 +416,37 @@ class NavigationSmokeTest {
 
         assertSame(applicationKoin, GlobalContext.get())
         progressionReviewKoin.close()
+    }
+}
+
+private class NavigationSmokeExerciseRepository : ExerciseRepository {
+    private val exercises = MutableStateFlow<List<Exercise>>(emptyList())
+
+    override fun getAllExercises(): Flow<List<Exercise>> = exercises
+
+    override fun getExercisesByMuscleGroup(muscleGroup: MuscleGroup): Flow<List<Exercise>> =
+        exercises
+
+    override fun searchExercises(query: String): Flow<List<Exercise>> = exercises
+
+    override suspend fun getExerciseById(id: Long): Exercise? =
+        exercises.value.firstOrNull { it.id == id }
+
+    override suspend fun getExercisesByIds(ids: List<Long>): List<Exercise> =
+        exercises.value.filter { it.id in ids }
+
+    override suspend fun addCustomExercise(exercise: Exercise): Long {
+        val nextId = (exercises.value.maxOfOrNull { it.id } ?: 0L) + 1L
+        exercises.value = exercises.value + exercise.copy(id = nextId)
+        return nextId
+    }
+
+    override suspend fun updateCustomExercise(exercise: Exercise) {
+        exercises.value = exercises.value.map { if (it.id == exercise.id) exercise else it }
+    }
+
+    override suspend fun deleteCustomExercise(id: Long) {
+        exercises.value = exercises.value.filterNot { it.id == id }
     }
 }
 

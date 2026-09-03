@@ -168,7 +168,8 @@ private fun ProgressionReviewCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(R.string.progression_review_exercise, item.exerciseId),
+                text = item.exerciseName
+                    ?: stringResource(R.string.progression_review_exercise, item.exerciseId),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

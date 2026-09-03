@@ -917,19 +917,19 @@ private fun formatRpeValue(value: Double): String =
     }
 
 /**
- * Weight hint for plan-based workout rows: the last trained weight first
- * (continuity with what the user actually lifted), falling back to the current
- * plan target weight for a first-time exercise. With actual-weight-based
- * progression both sources yield valid suggestions.
+ * Weight hint for plan-based workout rows: the current plan target weight
+ * first (the plan is the source of truth after a progression step), falling
+ * back to the last trained weight when the plan carries no weight target.
+ * With actual-weight-based progression both sources yield valid suggestions.
  */
-private fun targetWeightHint(
+internal fun targetWeightHint(
     planTarget: WorkoutPlanTarget?,
     unitSystem: UnitSystem,
     previousWeightHint: String?
-): String? = previousWeightHint
-    ?: planTarget
-        ?.takeIf { it.target.weightKg > 0 }
-        ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
+): String? = planTarget
+    ?.takeIf { it.target.weightKg > 0 }
+    ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
+    ?: previousWeightHint
 
 /** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
 fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {

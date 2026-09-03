@@ -15,6 +15,7 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.util.WeightFormatting
 import java.math.BigDecimal
@@ -30,6 +31,8 @@ data class ProgressionReviewItemUi(
     val sourceSessionId: Long,
     val planId: Long,
     val exerciseId: Long,
+    /** Resolved display name; null when the exercise is unknown to the repository. */
+    val exerciseName: String? = null,
     val orderIndex: Int,
     val scheme: ProgressionScheme,
     val source: ProgressionTarget,
@@ -68,7 +71,8 @@ data class ProgressionReviewUiState(
 class ProgressionReviewViewModel(
     savedStateHandle: SavedStateHandle,
     private val progressionRepository: ProgressionRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    private val exerciseRepository: ExerciseRepository
 ) : ViewModel() {
     private val sessionId = savedStateHandle.get<Long>(SESSION_ID_KEY)?.takeIf { it > 0L }
     private val _uiState = MutableStateFlow(ProgressionReviewUiState())
@@ -81,9 +85,13 @@ class ProgressionReviewViewModel(
 
             combine(
                 progressionRepository.observeReviewItems(sessionId),
-                appPreferencesRepository.preferences
-            ) { suggestions, preferences ->
-                suggestions.map { suggestion -> suggestion.toUi() } to preferences.unitSystem
+                appPreferencesRepository.preferences,
+                exerciseRepository.getAllExercises()
+            ) { suggestions, preferences, exercises ->
+                val exerciseNames = exercises.associate { it.id to it.name }
+                suggestions.map { suggestion ->
+                    suggestion.toUi(exerciseNames[suggestion.sourceTarget.exerciseId])
+                } to preferences.unitSystem
             }.collect { (items, unitSystem) ->
                 _uiState.update { current ->
                     current.copy(
@@ -270,13 +278,14 @@ class ProgressionReviewViewModel(
         _uiState.update { it.copy(message = ProgressionReviewMessage.ACTION_FAILED) }
     }
 
-    private fun ProgressionSuggestion.toUi(): ProgressionReviewItemUi {
+    private fun ProgressionSuggestion.toUi(exerciseName: String?): ProgressionReviewItemUi {
         val proposed = (outcome as? ProgressionOutcome.ProposeChange)?.proposedTarget
         return ProgressionReviewItemUi(
             id = id,
             sourceSessionId = sourceTarget.sessionId,
             planId = sourceTarget.planId,
             exerciseId = sourceTarget.exerciseId,
+            exerciseName = exerciseName,
             orderIndex = sourceTarget.orderIndex,
             scheme = sourceTarget.config.scheme,
             source = sourceTarget.target,

@@ -2,7 +2,10 @@ package com.ironlog.app.presentation.progression
 
 import androidx.lifecycle.SavedStateHandle
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.Exercise
+import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.ProgressionDecisionResult
 import com.ironlog.app.domain.model.ProgressionGenerationResult
@@ -21,6 +24,7 @@ import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.util.WeightFormatting
 import kotlinx.coroutines.CompletableDeferred
@@ -47,12 +51,14 @@ class ProgressionReviewViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var repository: FakeProgressionRepository
     private lateinit var preferences: FakePreferencesRepository
+    private lateinit var exerciseRepository: FakeExerciseRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         repository = FakeProgressionRepository()
         preferences = FakePreferencesRepository()
+        exerciseRepository = FakeExerciseRepository()
     }
 
     @After
@@ -482,13 +488,55 @@ class ProgressionReviewViewModelTest {
         assertNull(viewModel.uiState.value.message)
     }
 
+    @Test
+    fun `review items resolve exercise names from the repository`() = runTest(dispatcher) {
+        exerciseRepository.seed(
+            Exercise(
+                id = 7L,
+                name = "Bankdrücken",
+                primaryMuscleGroup = MuscleGroup.BRUST,
+                category = ExerciseCategory.LANGHANTEL
+            )
+        )
+        repository.reviewItems.value = listOf(
+            pendingChange(id = 2L, exerciseId = 7L),
+            pendingChange(id = 3L, exerciseId = 99L)
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val items = viewModel.uiState.value.items
+        assertEquals("Bankdrücken", items.first { it.id == 2L }.exerciseName)
+        assertNull(items.first { it.id == 3L }.exerciseName)
+    }
+
+    @Test
+    fun `renamed exercises refresh the displayed names reactively`() = runTest(dispatcher) {
+        val renamed = Exercise(
+            id = 7L,
+            name = "Bankdrücken",
+            primaryMuscleGroup = MuscleGroup.BRUST,
+            category = ExerciseCategory.LANGHANTEL
+        )
+        exerciseRepository.seed(renamed.copy(name = "Alter Name"))
+        repository.reviewItems.value = listOf(pendingChange(id = 2L, exerciseId = 7L))
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals("Alter Name", viewModel.uiState.value.items.single().exerciseName)
+
+        exerciseRepository.exercises.value = listOf(renamed)
+        advanceUntilIdle()
+
+        assertEquals("Bankdrücken", viewModel.uiState.value.items.single().exerciseName)
+    }
+
     private fun createViewModel(sessionId: Long? = 42L): ProgressionReviewViewModel {
         val handle = if (sessionId == null) {
             SavedStateHandle()
         } else {
             SavedStateHandle(mapOf("sessionId" to sessionId))
         }
-        return ProgressionReviewViewModel(handle, repository, preferences)
+        return ProgressionReviewViewModel(handle, repository, preferences, exerciseRepository)
     }
 
     private fun pendingChange(
@@ -643,6 +691,41 @@ private class FakeProgressionRepository : ProgressionRepository {
         rejectedIds += suggestionId
         rejectGate?.await()
         rejectError?.let { throw it }
+    }
+}
+
+private class FakeExerciseRepository : ExerciseRepository {
+    val exercises = MutableStateFlow<List<Exercise>>(emptyList())
+
+    fun seed(vararg seeded: Exercise) {
+        exercises.value = seeded.toList()
+    }
+
+    override fun getAllExercises(): Flow<List<Exercise>> = exercises
+
+    override fun getExercisesByMuscleGroup(muscleGroup: MuscleGroup): Flow<List<Exercise>> =
+        exercises
+
+    override fun searchExercises(query: String): Flow<List<Exercise>> = exercises
+
+    override suspend fun getExerciseById(id: Long): Exercise? =
+        exercises.value.firstOrNull { it.id == id }
+
+    override suspend fun getExercisesByIds(ids: List<Long>): List<Exercise> =
+        exercises.value.filter { it.id in ids }
+
+    override suspend fun addCustomExercise(exercise: Exercise): Long {
+        val nextId = (exercises.value.maxOfOrNull { it.id } ?: 0L) + 1L
+        exercises.value = exercises.value + exercise.copy(id = nextId)
+        return nextId
+    }
+
+    override suspend fun updateCustomExercise(exercise: Exercise) {
+        exercises.value = exercises.value.map { if (it.id == exercise.id) exercise else it }
+    }
+
+    override suspend fun deleteCustomExercise(id: Long) {
+        exercises.value = exercises.value.filterNot { it.id == id }
     }
 }
 
