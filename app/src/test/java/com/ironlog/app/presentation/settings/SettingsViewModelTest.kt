@@ -111,6 +111,22 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `updateAutoRestTimerEnabled persists flag`() = runTest {
+        viewModel.updateAutoRestTimerEnabled(true)
+        advanceUntilIdle()
+
+        assertTrue(preferencesRepository.current.autoRestTimerEnabled)
+    }
+
+    @Test
+    fun `updateDefaultRestTimeSeconds persists duration`() = runTest {
+        viewModel.updateDefaultRestTimeSeconds(180)
+        advanceUntilIdle()
+
+        assertEquals(180, preferencesRepository.current.defaultRestTimeSeconds)
+    }
+
+    @Test
     fun `import selection previews without importing and shows confirmation`() = runTest {
         startUiStateCollector(backgroundScope)
         val uri = mockk<Uri>()

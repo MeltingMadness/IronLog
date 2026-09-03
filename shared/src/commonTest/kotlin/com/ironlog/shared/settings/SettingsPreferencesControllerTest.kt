@@ -97,6 +97,38 @@ class SettingsPreferencesControllerTest {
 
         assertTrue(repository.current.shareWeightHistoryAcrossContexts)
     }
+
+    @Test
+    fun updateAutoRestTimerEnabled_persistsFlag() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updateAutoRestTimerEnabled(true)
+        advanceUntilIdle()
+
+        assertTrue(repository.current.autoRestTimerEnabled)
+    }
+
+    @Test
+    fun updateDefaultRestTimeSeconds_persistsDuration() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updateDefaultRestTimeSeconds(180)
+        advanceUntilIdle()
+
+        assertEquals(180, repository.current.defaultRestTimeSeconds)
+    }
 }
 
 private class FakeSharedAppPreferencesRepository(
@@ -155,6 +187,14 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
+    }
+
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        state.value = state.value.copy(autoRestTimerEnabled = enabled)
+    }
+
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
+        state.value = state.value.copy(defaultRestTimeSeconds = seconds)
     }
 }
 

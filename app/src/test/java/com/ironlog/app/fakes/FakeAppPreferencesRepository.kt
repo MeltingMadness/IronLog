@@ -67,6 +67,16 @@ class FakeAppPreferencesRepository(
         state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
     }
 
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        state.value = state.value.copy(autoRestTimerEnabled = enabled)
+    }
+
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
+        // Paritaet mit AppPreferencesRepositoryImpl: die Dauer wird dort beim
+        // Persistieren in den gueltigen Bereich gezwungen.
+        state.value = state.value.copy(defaultRestTimeSeconds = seconds.coerceIn(30, 600))
+    }
+
     override suspend fun updateReminderConfig(config: ReminderConfig) {
         // Paritaet mit AppPreferencesRepositoryImpl: Stunden/Minuten werden
         // dort beim Persistieren in den gueltigen Bereich gezwungen.

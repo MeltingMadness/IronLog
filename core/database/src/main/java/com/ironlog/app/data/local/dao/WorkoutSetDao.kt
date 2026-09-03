@@ -169,19 +169,19 @@ interface WorkoutSetDao {
     @Query("SELECT COUNT(*) FROM workout_sets WHERE sessionId = :sessionId")
     suspend fun getSetCountForSession(sessionId: Long): Int
 
-    @Query("SELECT SUM(weightKg * reps) FROM workout_sets WHERE sessionId = :sessionId AND isWarmup = 0")
+    @Query("SELECT SUM(weightKg * reps) FROM workout_sets WHERE sessionId = :sessionId AND setType != 'WARMUP'")
     suspend fun getTotalVolumeForSession(sessionId: Long): Double?
 
-    @Query("SELECT MAX(weightKg) FROM workout_sets WHERE exerciseId = :exerciseId AND isWarmup = 0")
+    @Query("SELECT MAX(weightKg) FROM workout_sets WHERE exerciseId = :exerciseId AND setType != 'WARMUP'")
     suspend fun getMaxWeightForExercise(exerciseId: Long): Double?
 
-    @Query("SELECT MAX(reps) FROM workout_sets WHERE exerciseId = :exerciseId AND isWarmup = 0")
+    @Query("SELECT MAX(reps) FROM workout_sets WHERE exerciseId = :exerciseId AND setType != 'WARMUP'")
     suspend fun getMaxRepsForExercise(exerciseId: Long): Int?
 
     @Query("""
         SELECT ws.* FROM workout_sets ws
         INNER JOIN workout_sessions s ON ws.sessionId = s.id
-        WHERE s.startTime >= :sinceEpochMillis AND s.endTime IS NOT NULL AND ws.isWarmup = 0
+        WHERE s.startTime >= :sinceEpochMillis AND s.endTime IS NOT NULL AND ws.setType != 'WARMUP'
         ORDER BY s.startTime ASC
     """)
     suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSetEntity>

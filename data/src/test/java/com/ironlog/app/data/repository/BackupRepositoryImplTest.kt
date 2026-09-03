@@ -833,7 +833,7 @@ class BackupRepositoryImplTest {
             setNumber = 1,
             reps = 8,
             weightKg = 80.0,
-            isWarmup = false,
+            setType = "NORMAL",
             completedAt = 1200L,
             rpe = 8.5,
             planTargetSnapshotId = 30L

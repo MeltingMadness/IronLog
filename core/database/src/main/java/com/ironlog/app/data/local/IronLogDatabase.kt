@@ -41,7 +41,7 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         WorkoutPlanTargetEntity::class,
         ProgressionSuggestionEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -352,8 +352,47 @@ abstract class IronLogDatabase : RoomDatabase() {
         @VisibleForTesting
         fun migration9To10ForTests(): Migration = MIGRATION_9_10
 
+        /** Migration 11 -> 12: Set types replace the boolean warmup flag */
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `workout_sets_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `sessionId` INTEGER NOT NULL,
+                        `exerciseId` INTEGER NOT NULL,
+                        `setNumber` INTEGER NOT NULL,
+                        `reps` INTEGER NOT NULL,
+                        `weightKg` REAL NOT NULL,
+                        `setType` TEXT NOT NULL,
+                        `completedAt` INTEGER NOT NULL,
+                        `rpe` REAL,
+                        `planTargetSnapshotId` INTEGER,
+                        FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT,
+                        FOREIGN KEY(`planTargetSnapshotId`) REFERENCES `workout_plan_targets`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `workout_sets_new` (`id`,`sessionId`,`exerciseId`,`setNumber`,`reps`,`weightKg`,`setType`,`completedAt`,`rpe`,`planTargetSnapshotId`)
+                    SELECT `id`,`sessionId`,`exerciseId`,`setNumber`,`reps`,`weightKg`,CASE WHEN `isWarmup` = 1 THEN 'WARMUP' ELSE 'NORMAL' END,`completedAt`,`rpe`,`planTargetSnapshotId` FROM `workout_sets`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE `workout_sets`")
+                db.execSQL("ALTER TABLE `workout_sets_new` RENAME TO `workout_sets`")
+                db.execSQL("CREATE INDEX `index_workout_sets_sessionId` ON `workout_sets` (`sessionId`)")
+                db.execSQL("CREATE INDEX `index_workout_sets_exerciseId` ON `workout_sets` (`exerciseId`)")
+                db.execSQL("CREATE INDEX `index_workout_sets_planTargetSnapshotId` ON `workout_sets` (`planTargetSnapshotId`)")
+            }
+        }
+
         @VisibleForTesting
         fun migration10To11ForTests(): Migration = MIGRATION_10_11
+
+        @VisibleForTesting
+        fun migration11To12ForTests(): Migration = MIGRATION_11_12
 
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
@@ -543,7 +582,8 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_7_8,
                     MIGRATION_8_9,
                     MIGRATION_9_10,
-                    MIGRATION_10_11
+                    MIGRATION_10_11,
+                    MIGRATION_11_12
                 )
                 .addCallback(SeedCallback())
                 .build()

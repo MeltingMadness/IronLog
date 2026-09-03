@@ -148,7 +148,7 @@ class WorkoutSetDaoContextScopeTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = weightKg,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = sessionId * 1_000L
             )
         )

@@ -346,6 +346,39 @@ fun SettingsScreen(
             }
 
             item {
+                PreferenceCard(title = stringResource(id = R.string.settings_section_rest_timer)) {
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_auto_rest_timer_title),
+                        subtitle = stringResource(id = R.string.settings_auto_rest_timer_subtitle),
+                        checked = state.preferences.autoRestTimerEnabled,
+                        onCheckedChange = viewModel::updateAutoRestTimerEnabled
+                    )
+
+                    if (state.preferences.autoRestTimerEnabled) {
+                        Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                        Text(
+                            text = stringResource(id = R.string.settings_rest_time_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            REST_TIME_OPTIONS_SECONDS.forEach { option ->
+                                FilterChip(
+                                    selected = state.preferences.defaultRestTimeSeconds == option,
+                                    onClick = { viewModel.updateDefaultRestTimeSeconds(option) },
+                                    label = { Text(formatRestTimeOption(option)) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_reminder)) {
                     val reminder = state.preferences.reminderConfig
 
@@ -637,6 +670,11 @@ private fun formatEpochMillis(millis: Long): String =
     Instant.ofEpochMilli(millis)
         .atZone(ZoneId.systemDefault())
         .format(DateFormatting.DATE_TIME)
+
+private val REST_TIME_OPTIONS_SECONDS = listOf(30, 60, 90, 120, 180, 300)
+
+private fun formatRestTimeOption(seconds: Int): String =
+    String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60)
 
 @Composable
 private fun SchemeColorDot(color: Color) {

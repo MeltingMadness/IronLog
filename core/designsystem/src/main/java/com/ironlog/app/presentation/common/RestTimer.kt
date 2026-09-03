@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,19 +51,47 @@ fun RestTimer(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     titleText: String? = null,
-    baseColor: Color? = null
+    baseColor: Color? = null,
+    durationSeconds: Long = 0L,
+    onComplete: () -> Unit = {}
 ) {
-    var elapsed by remember { mutableLongStateOf(0L) }
+    var elapsed by remember(startTime) { mutableLongStateOf(0L) }
+    var completed by remember(startTime, durationSeconds) { mutableStateOf(false) }
+    val haptic = rememberHapticFeedback()
 
-    LaunchedEffect(startTime) {
-        while (isActive) {
-            elapsed = Duration.between(startTime, Instant.now()).seconds
-            delay(1000)
+    LaunchedEffect(startTime, durationSeconds) {
+        if (durationSeconds > 0L) {
+            // Countdown mode: tick down from the configured rest duration and fire
+            // haptics once the time is up. The chip then dismisses itself (onComplete)
+            // so the athlete can keep training without watching it.
+            val durationMillis = durationSeconds * 1000L
+            while (isActive && !completed) {
+                val elapsedMillis = Duration.between(startTime, Instant.now()).toMillis()
+                if (elapsedMillis >= durationMillis) {
+                    completed = true
+                    haptic.confirm()
+                    onComplete()
+                    break
+                }
+                elapsed = elapsedMillis / 1000L
+                delay(1000)
+            }
+        } else {
+            // Legacy count-up mode: keep showing the elapsed time.
+            while (isActive) {
+                elapsed = Duration.between(startTime, Instant.now()).seconds
+                delay(1000)
+            }
         }
     }
 
-    val minutes = elapsed / 60
-    val seconds = elapsed % 60
+    val displayed = if (durationSeconds > 0L) {
+        (durationSeconds - elapsed).coerceAtLeast(0L)
+    } else {
+        elapsed
+    }
+    val minutes = displayed / 60
+    val seconds = displayed % 60
     val timeText = String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")

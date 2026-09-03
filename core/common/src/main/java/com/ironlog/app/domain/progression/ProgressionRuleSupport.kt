@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.ProgressionOutcome
 import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionStreakEffect
 import com.ironlog.app.domain.model.ProgressionTarget
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.util.WeightFormatting
@@ -55,7 +56,7 @@ internal fun countedWorkSets(context: ProgressionContext): CountedWorkSetsResult
     }
 
     val workSets = context.setsForTarget
-        .filterNot(WorkoutSet::isWarmup)
+        .filter { it.setType == SetType.NORMAL }
         .sortedWith(compareBy(WorkoutSet::setNumber, WorkoutSet::completedAt, WorkoutSet::id))
     val workSetNumbers = workSets.map(WorkoutSet::setNumber)
     if (workSetNumbers.any { it <= 0 } || workSetNumbers.distinct().size != workSetNumbers.size) {
@@ -225,7 +226,7 @@ internal fun repetitionMissOutcome(
 }
 
 private fun availableWorkSetIds(context: ProgressionContext): List<Long> = context.setsForTarget
-    .filterNot(WorkoutSet::isWarmup)
+    .filter { it.setType == SetType.NORMAL }
     .sortedWith(compareBy(WorkoutSet::setNumber, WorkoutSet::completedAt, WorkoutSet::id))
     .map(WorkoutSet::id)
     .filter { it > 0 }

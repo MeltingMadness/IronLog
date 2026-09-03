@@ -9,6 +9,7 @@ import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
@@ -77,6 +78,11 @@ sealed interface WorkoutFinishState {
     data class GenerationFailed(val sessionId: Long, val message: String) : WorkoutFinishState
 }
 
+data class RestTimerUi(
+    val startTime: Instant,
+    val durationSeconds: Int
+)
+
 /**
  * Describes the last failed mutation so the UI can offer a real retry without
  * storing composable callbacks inside the ViewModel.
@@ -87,7 +93,7 @@ sealed interface WorkoutRetryDescriptor {
         val exerciseId: Long,
         val reps: Int,
         val weightKg: Double,
-        val isWarmup: Boolean,
+        val setType: SetType,
         val intensity: String,
         val submissionId: Long
     ) : WorkoutRetryDescriptor
@@ -115,7 +121,7 @@ data class ActiveWorkoutUiState(
     val exercisesWithSets: List<ExerciseWithSets> = emptyList(),
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
-    val restTimers: Map<WorkoutExerciseKey, Instant> = emptyMap(),
+    val restTimers: Map<WorkoutExerciseKey, RestTimerUi> = emptyMap(),
     val error: WorkoutErrorUi? = null,
     val logInFlightByExercise: Map<WorkoutExerciseKey, Int> = emptyMap(),
     val logSuccessSubmissions: Set<Long> = emptySet(),
@@ -127,7 +133,7 @@ data class ActiveWorkoutUiState(
 private data class ActiveWorkoutChromeState(
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
-    val restTimers: Map<WorkoutExerciseKey, Instant> = emptyMap(),
+    val restTimers: Map<WorkoutExerciseKey, RestTimerUi> = emptyMap(),
     val error: WorkoutErrorUi? = null
 )
 
@@ -181,7 +187,7 @@ class ActiveWorkoutViewModel(
     private val showFinishDialog = MutableStateFlow(false)
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
-    private val _restTimers = MutableStateFlow<Map<WorkoutExerciseKey, Instant>>(emptyMap())
+    private val _restTimers = MutableStateFlow<Map<WorkoutExerciseKey, RestTimerUi>>(emptyMap())
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
@@ -416,7 +422,7 @@ class ActiveWorkoutViewModel(
         exerciseId: Long,
         reps: Int,
         weightKg: Double,
-        isWarmup: Boolean = false,
+        setType: SetType = SetType.NORMAL,
         intensity: String = "",
         submissionId: Long = nextSubmissionId(),
         key: WorkoutExerciseKey = WorkoutExerciseKey.AdHoc(exerciseId)
@@ -444,7 +450,11 @@ class ActiveWorkoutViewModel(
                             }
                         }
                     val setNumber = (persistedSets.maxOfOrNull { it.setNumber } ?: 0) + 1
-                    val parsedRpe = parseIntensity(intensity, key)
+                    val prefs = appPreferencesRepository.preferences.first()
+                    val parsedRpe = computeIntensity(
+                        intensity,
+                        effectiveIntensitySystem(prefs.intensitySystem, key)
+                    )
                     val completedAtInstant = Instant.now()
 
                     val set = WorkoutSet(
@@ -453,7 +463,7 @@ class ActiveWorkoutViewModel(
                         setNumber = setNumber,
                         reps = reps,
                         weightKg = weightKg,
-                        isWarmup = isWarmup,
+                        setType = setType,
                         completedAt = LocalDateTime.ofInstant(
                             completedAtInstant,
                             ZoneId.systemDefault()
@@ -469,26 +479,33 @@ class ActiveWorkoutViewModel(
                     // Best-effort snapshot: a statistics-read failure must never block the
                     // repository mutation. Without a snapshot no NewRecord event is emitted,
                     // because an unknown baseline could otherwise produce false positives.
-                    val recordsBefore: Map<RecordType, PersonalRecord>? = if (!isWarmup) {
+                    val recordsBefore: Map<RecordType, PersonalRecord>? = if (setType != SetType.WARMUP) {
                         snapshotRecordsBefore(exerciseId)
                     } else {
                         null
                     }
                     workoutRepository.addSet(set)
                     persisted = true
-                    if (!isWarmup && recordsBefore != null) {
+                    if (setType != SetType.WARMUP && recordsBefore != null) {
                         emitImprovedRecords(exerciseId, recordsBefore)
                     }
-                    // The rest timer runs after every work set - no matter whether the
-                    // planned set count is already reached (extra sets, sets re-added after a
-                    // delete). Warmup sets never start a timer and cancel a pending one for
-                    // the same exercise. Timers are cleared when the workout is finished
-                    // (see finishWorkout).
+                    // With auto-rest enabled in settings, a countdown timer starts after
+                    // every work set - no matter whether the planned set count is already
+                    // reached (extra sets, sets re-added after a delete). Warmup sets never
+                    // start a timer and cancel a pending one for the same exercise. Timers
+                    // are cleared when the workout is finished (see finishWorkout).
                     _restTimers.update { currentTimers ->
-                        if (isWarmup) {
+                        if (setType == SetType.WARMUP) {
                             currentTimers - key
+                        } else if (prefs.autoRestTimerEnabled) {
+                            currentTimers + (
+                                key to RestTimerUi(
+                                    startTime = completedAtInstant,
+                                    durationSeconds = prefs.defaultRestTimeSeconds
+                                )
+                            )
                         } else {
-                            currentTimers + (key to completedAtInstant)
+                            currentTimers
                         }
                     }
                 }
@@ -505,7 +522,7 @@ class ActiveWorkoutViewModel(
                         exerciseId = exerciseId,
                         reps = reps,
                         weightKg = weightKg,
-                        isWarmup = isWarmup,
+                        setType = setType,
                         intensity = intensity,
                         submissionId = submissionId
                     )
@@ -527,14 +544,6 @@ class ActiveWorkoutViewModel(
         _restTimers.update { current ->
             current - key
         }
-    }
-
-    private suspend fun parseIntensity(
-        intensity: String,
-        key: WorkoutExerciseKey
-    ): Double? {
-        val prefs = appPreferencesRepository.preferences.first()
-        return computeIntensity(intensity, effectiveIntensitySystem(prefs.intensitySystem, key))
     }
 
     private fun effectiveIntensitySystem(
@@ -816,7 +825,11 @@ class ActiveWorkoutViewModel(
             val result = progressionRepository.generateOutcomesForSession(completedSessionId)
             operationState.update {
                 it.copy(
-                    finishState = if (result.reviewItemCount > 0) {
+                    finishState = if (result.reviewItemCount > 0 || result.insertedCount > 0) {
+                        // Fresh outcomes exist: either decisions are pending or the coach
+                        // evaluated the session and recorded informational results
+                        // (KEEP_TARGET / INSUFFICIENT_DATA). Both deserve the review
+                        // screen instead of a silent close without feedback.
                         WorkoutFinishState.ReviewReady(completedSessionId)
                     } else {
                         WorkoutFinishState.CompletedWithoutReview
@@ -857,7 +870,7 @@ class ActiveWorkoutViewModel(
                 exerciseId = retry.exerciseId,
                 reps = retry.reps,
                 weightKg = retry.weightKg,
-                isWarmup = retry.isWarmup,
+                setType = retry.setType,
                 intensity = retry.intensity,
                 submissionId = retry.submissionId
             )

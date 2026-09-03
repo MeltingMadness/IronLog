@@ -20,6 +20,7 @@ import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionSuggestion
 import com.ironlog.app.domain.model.ProgressionSuggestionStatus
 import com.ironlog.app.domain.model.ProgressionTarget
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.progression.ProgressionConfigValidator
@@ -302,7 +303,7 @@ class ProgressionRepositoryImpl(
         }
 
         val orderedWorkSets = setsForTarget
-            .filterNot(WorkoutSet::isWarmup)
+            .filter { it.setType == SetType.NORMAL }
             .sortedWith(compareBy(WorkoutSet::setNumber, WorkoutSet::completedAt, WorkoutSet::id))
         val availableEvidenceIds = orderedWorkSets
             .map(WorkoutSet::id)

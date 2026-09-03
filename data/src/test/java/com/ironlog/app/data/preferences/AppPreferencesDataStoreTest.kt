@@ -67,6 +67,22 @@ class AppPreferencesDataStoreTest {
     }
 
     @Test
+    fun `auto rest timer defaults to 120s disabled and persists enabled flag with duration`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        val defaults = repository.preferences.first()
+        assertFalse(defaults.autoRestTimerEnabled)
+        assertEquals(120, defaults.defaultRestTimeSeconds)
+
+        repository.updateAutoRestTimerEnabled(true)
+        repository.updateDefaultRestTimeSeconds(240)
+
+        val persisted = repository.preferences.first()
+        assertTrue(persisted.autoRestTimerEnabled)
+        assertEquals(240, persisted.defaultRestTimeSeconds)
+    }
+
+    @Test
     fun `corrupted preferences file falls back to defaults instead of crashing`() = runTest {
         val context = createContextWithTempDataStore()
         val dataStoreDir = File(context.filesDir, "datastore")

@@ -524,5 +524,13 @@ private class NavigationSmokePreferencesRepository : AppPreferencesRepository {
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         state.value = state.value.copy(shareWeightHistoryAcrossContexts = enabled)
     }
+
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        state.value = state.value.copy(autoRestTimerEnabled = enabled)
+    }
+
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
+        state.value = state.value.copy(defaultRestTimeSeconds = seconds)
+    }
 }
 

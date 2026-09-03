@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
 
 @Entity(
@@ -41,11 +42,14 @@ data class WorkoutSetEntity(
     val setNumber: Int,
     val reps: Int,
     val weightKg: Double,
-    val isWarmup: Boolean = false,
+    val setType: String,
     val completedAt: Long, // epoch millis
     val rpe: Double? = null,
     val planTargetSnapshotId: Long? = null
 ) {
+    val isWarmup: Boolean
+        get() = setType == SetType.WARMUP.name
+
     fun toDomain(): WorkoutSet = WorkoutSet(
         id = id,
         sessionId = sessionId,
@@ -53,7 +57,7 @@ data class WorkoutSetEntity(
         setNumber = setNumber,
         reps = reps,
         weightKg = weightKg,
-        isWarmup = isWarmup,
+        setType = runCatching { SetType.valueOf(setType) }.getOrDefault(SetType.NORMAL),
         completedAt = EpochConverter.toLocalDateTime(completedAt),
         rpe = rpe,
         planTargetSnapshotId = planTargetSnapshotId
@@ -67,7 +71,7 @@ data class WorkoutSetEntity(
             setNumber = set.setNumber,
             reps = set.reps,
             weightKg = set.weightKg,
-            isWarmup = set.isWarmup,
+            setType = set.setType.name,
             completedAt = EpochConverter.toLong(set.completedAt),
             rpe = set.rpe,
             planTargetSnapshotId = set.planTargetSnapshotId

@@ -9,8 +9,12 @@ data class WorkoutSet(
     val setNumber: Int,
     val reps: Int,
     val weightKg: Double,
-    val isWarmup: Boolean = false,
+    val setType: SetType = SetType.NORMAL,
     val completedAt: LocalDateTime = LocalDateTime.now(),
     val rpe: Double? = null,
     val planTargetSnapshotId: Long? = null
-)
+) {
+    /** Convenience view for legacy call sites: only [SetType.WARMUP] is a warmup. */
+    val isWarmup: Boolean
+        get() = setType == SetType.WARMUP
+}

@@ -71,7 +71,9 @@ data class AppPreferences(
     val betaDiagnosticsOptIn: Boolean = false,
     val reminderConfig: ReminderConfig = ReminderConfig(),
     val intensitySystem: IntensitySystem = IntensitySystem.RPE,
-    val shareWeightHistoryAcrossContexts: Boolean = false
+    val shareWeightHistoryAcrossContexts: Boolean = false,
+    val autoRestTimerEnabled: Boolean = false,
+    val defaultRestTimeSeconds: Int = 120
 )
 
 @Serializable

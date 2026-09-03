@@ -5,6 +5,7 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
@@ -47,12 +49,12 @@ class ExerciseStatsViewModelTest {
         // Session 1: two sets (base date)
         val base = LocalDateTime.of(2026, 1, 1, 10, 0)
         statisticsRepo.addExerciseSet(WorkoutSet(id = 1L, sessionId = 1L, exerciseId = targetExerciseId,
-            setNumber = 1, reps = 5, weightKg = 80.0, isWarmup = false, completedAt = base))
+            setNumber = 1, reps = 5, weightKg = 80.0, setType = SetType.NORMAL, completedAt = base))
         statisticsRepo.addExerciseSet(WorkoutSet(id = 2L, sessionId = 1L, exerciseId = targetExerciseId,
-            setNumber = 2, reps = 8, weightKg = 70.0, isWarmup = false, completedAt = base.plusMinutes(5)))
+            setNumber = 2, reps = 8, weightKg = 70.0, setType = SetType.NORMAL, completedAt = base.plusMinutes(5)))
         // Session 2: one heavier set, later date
         statisticsRepo.addExerciseSet(WorkoutSet(id = 3L, sessionId = 2L, exerciseId = targetExerciseId,
-            setNumber = 1, reps = 3, weightKg = 90.0, isWarmup = false, completedAt = base.plusDays(3)))
+            setNumber = 1, reps = 3, weightKg = 90.0, setType = SetType.NORMAL, completedAt = base.plusDays(3)))
 
         val vm = ExerciseStatsViewModel(
             savedStateHandle = SavedStateHandle(mapOf("exerciseId" to targetExerciseId)),
@@ -91,7 +93,7 @@ class ExerciseStatsViewModelTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = SetType.NORMAL,
                 completedAt = LocalDateTime.of(2025, 12, 31, 18, 0)
             )
         )
@@ -103,7 +105,7 @@ class ExerciseStatsViewModelTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 105.0,
-                isWarmup = false,
+                setType = SetType.NORMAL,
                 completedAt = LocalDateTime.of(2026, 1, 2, 18, 0)
             )
         )
@@ -118,5 +120,74 @@ class ExerciseStatsViewModelTest {
 
         val labels = vm.uiState.value.chartData.map { it.dateLabel }
         assertEquals(listOf("31.12", "2.1"), labels)
+    }
+
+    @Test
+    fun `e1rmProgression leitet ersten aktuellen und besten Session-Wert ab`() = runTest {
+        val exercise = Exercise(
+            id = 1L,
+            name = "Bankdrücken",
+            primaryMuscleGroup = MuscleGroup.BRUST,
+            category = ExerciseCategory.LANGHANTEL
+        )
+        exerciseRepo.addExercise(exercise)
+        val base = LocalDateTime.of(2026, 1, 1, 10, 0)
+
+        // Session 1: 80x5 -> Epley 93,33
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 1L, sessionId = 1L, exerciseId = exercise.id, setNumber = 1,
+                reps = 5, weightKg = 80.0, setType = SetType.NORMAL, completedAt = base
+            )
+        )
+        // Session 2: 90x3 -> Epley 99,0
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 2L, sessionId = 2L, exerciseId = exercise.id, setNumber = 1,
+                reps = 3, weightKg = 90.0, setType = SetType.NORMAL, completedAt = base.plusDays(2)
+            )
+        )
+        // Session 3 (aktuellste): 85x8 -> Epley 107,67 (auch Bestwert)
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 3L, sessionId = 3L, exerciseId = exercise.id, setNumber = 1,
+                reps = 8, weightKg = 85.0, setType = SetType.NORMAL, completedAt = base.plusDays(5)
+            )
+        )
+
+        val vm = ExerciseStatsViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("exerciseId" to exercise.id)),
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val progression = vm.uiState.value.e1rmProgression
+        assertNotNull(progression)
+        assertEquals(93.3333f, progression!!.first, 0.01f)
+        assertEquals(107.6667f, progression.latest, 0.01f)
+        assertEquals(107.6667f, progression.best, 0.01f)
+        assertEquals(14.3334f, progression.delta, 0.01f)
+        assertEquals(15.3571f, progression.deltaPercent, 0.01f)
+    }
+
+    @Test
+    fun `e1rmProgression ist null ohne abgeschlossene Sätze`() = runTest {
+        val exercise = Exercise(
+            id = 1L,
+            name = "Kreuzheben",
+            primaryMuscleGroup = MuscleGroup.RUECKEN,
+            category = ExerciseCategory.LANGHANTEL
+        )
+        exerciseRepo.addExercise(exercise)
+
+        val vm = ExerciseStatsViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("exerciseId" to exercise.id)),
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(null, vm.uiState.value.e1rmProgression)
     }
 }

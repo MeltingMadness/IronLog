@@ -70,7 +70,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 20.0,
-                isWarmup = true,
+                setType = com.ironlog.app.domain.model.SetType.WARMUP,
                 completedAt = java.time.LocalDateTime.now()
             )
         )
@@ -82,7 +82,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 2,
                 reps = 5,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = com.ironlog.app.domain.model.SetType.NORMAL,
                 completedAt = java.time.LocalDateTime.now()
             )
         )
@@ -101,7 +101,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = com.ironlog.app.domain.model.SetType.NORMAL,
                 completedAt = java.time.LocalDateTime.now()
             )
         )
@@ -113,7 +113,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 2,
                 reps = 10,
                 weightKg = 20.0,
-                isWarmup = true,
+                setType = com.ironlog.app.domain.model.SetType.WARMUP,
                 completedAt = java.time.LocalDateTime.now()
             )
         )
@@ -125,7 +125,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 40.0,
-                isWarmup = false,
+                setType = com.ironlog.app.domain.model.SetType.NORMAL,
                 completedAt = java.time.LocalDateTime.now()
             )
         )
@@ -183,7 +183,7 @@ class FakeWorkoutRepositoryTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = com.ironlog.app.domain.model.SetType.NORMAL,
                 completedAt = java.time.LocalDateTime.now()
             )
         )

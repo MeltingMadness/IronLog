@@ -20,6 +20,7 @@ import com.ironlog.app.domain.model.CompletedWorkoutSummary
 import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -152,7 +153,7 @@ class WorkoutRepositoryImpl(
                 updated.sessionId == stored.sessionId &&
                     updated.exerciseId == stored.exerciseId &&
                     updated.setNumber == stored.setNumber &&
-                    updated.isWarmup == stored.isWarmup &&
+                    updated.setType == stored.setType &&
                     updated.completedAt == stored.completedAt &&
                     updated.planTargetSnapshotId == stored.planTargetSnapshotId
             ) {
@@ -214,7 +215,7 @@ class WorkoutRepositoryImpl(
                     session = relation.session.toDomain(),
                     exerciseCount = sets.map { it.exerciseId }.distinct().size,
                     setCount = sets.size,
-                    totalVolume = sets.filter { !it.isWarmup }.sumOf { it.weightKg * it.reps }
+                    totalVolume = sets.filter { it.setType != SetType.WARMUP.name }.sumOf { it.weightKg * it.reps }
                 )
             }
         }
@@ -242,7 +243,8 @@ class WorkoutRepositoryImpl(
      * from whatever work sets remain, updating or removing PR rows as needed.
      */
     private suspend fun recalculatePersonalRecords(exerciseId: Long) {
-        val allWorkSets = setDao.getSetsForExerciseList(exerciseId).filterNot { it.isWarmup }
+        val allWorkSets = setDao.getSetsForExerciseList(exerciseId)
+            .filterNot { it.setType == SetType.WARMUP.name }
 
         // Weight/reps/E1RM records are per-set achievements and stay live during a
         // session (a set just completed IS a personal record). Volume is per-session

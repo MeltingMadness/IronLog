@@ -5,6 +5,7 @@ import com.ironlog.app.domain.model.ProgressionContext
 import com.ironlog.app.domain.model.ProgressionOutcome
 import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionScheme
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.progression.v1.DoubleProgressionRuleV1
 import com.ironlog.app.domain.progression.v1.LinearProgressionRuleV1
@@ -28,7 +29,7 @@ class ProgressionEngine private constructor(
     fun evaluate(context: ProgressionContext): ProgressionOutcome {
         val config = context.sourceTarget.config
         val availableEvidenceIds = context.setsForTarget
-            .filterNot(WorkoutSet::isWarmup)
+            .filter { it.setType == SetType.NORMAL }
             .sortedWith(compareBy(WorkoutSet::setNumber, WorkoutSet::completedAt, WorkoutSet::id))
             .map(WorkoutSet::id)
             .filter { it > 0 }

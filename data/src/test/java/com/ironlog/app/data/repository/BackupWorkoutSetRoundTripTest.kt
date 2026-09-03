@@ -23,7 +23,7 @@ class BackupWorkoutSetRoundTripTest {
             setNumber = 1,
             reps = 8,
             weightKg = 80.0,
-            isWarmup = false,
+            setType = "NORMAL",
             completedAt = 1_200L,
             rpe = 8.5,
             planTargetSnapshotId = 41L

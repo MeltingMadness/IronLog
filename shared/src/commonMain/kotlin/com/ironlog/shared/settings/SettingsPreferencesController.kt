@@ -30,6 +30,8 @@ interface SharedAppPreferencesRepository {
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
     suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
+    suspend fun updateAutoRestTimerEnabled(enabled: Boolean)
+    suspend fun updateDefaultRestTimeSeconds(seconds: Int)
 }
 
 interface SharedReminderScheduler {
@@ -108,5 +110,13 @@ class SettingsPreferencesController(
 
     fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         controllerScope.launch { appPreferencesRepository.updateShareWeightHistoryAcrossContexts(enabled) }
+    }
+
+    fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateAutoRestTimerEnabled(enabled) }
+    }
+
+    fun updateDefaultRestTimeSeconds(seconds: Int) {
+        controllerScope.launch { appPreferencesRepository.updateDefaultRestTimeSeconds(seconds) }
     }
 }

@@ -44,6 +44,7 @@ import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.repository.BackupContentCounts
 import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
@@ -605,7 +606,7 @@ internal fun WorkoutSetEntity.toBackupWorkoutSet(): BackupWorkoutSet = BackupWor
     setNumber = setNumber,
     reps = reps,
     weightKg = weightKg,
-    isWarmup = isWarmup,
+    isWarmup = setType == SetType.WARMUP.name,
     completedAt = completedAt,
     rpe = rpe,
     planTargetSnapshotId = planTargetSnapshotId
@@ -618,7 +619,7 @@ internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity = WorkoutSe
     setNumber = setNumber,
     reps = reps,
     weightKg = weightKg,
-    isWarmup = isWarmup,
+    setType = if (isWarmup) SetType.WARMUP.name else SetType.NORMAL.name,
     completedAt = completedAt,
     rpe = rpe,
     planTargetSnapshotId = planTargetSnapshotId

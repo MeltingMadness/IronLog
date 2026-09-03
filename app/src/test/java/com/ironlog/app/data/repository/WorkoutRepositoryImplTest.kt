@@ -16,6 +16,7 @@ import com.ironlog.app.data.local.entity.ProgressionConfigColumns
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.util.WorkoutCalculations
 import io.mockk.coEvery
@@ -106,7 +107,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 30.0,
-                isWarmup = true,
+                setType = "WARMUP",
                 completedAt = 1_000L
             ),
             WorkoutSetEntity(
@@ -116,7 +117,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 2,
                 reps = 6,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 2_000L
             )
         )
@@ -158,7 +159,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 2_000L
             )
         )
@@ -286,7 +287,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             )
         )
@@ -348,7 +349,7 @@ class WorkoutRepositoryImplTest {
             setNumber = 1,
             reps = 5,
             weightKg = 60.0,
-            isWarmup = false,
+            setType = "NORMAL",
             completedAt = 1_000L
         )
         coEvery { setDao.getSetById(10L) } returns set
@@ -384,7 +385,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             )
         )
@@ -455,7 +456,7 @@ class WorkoutRepositoryImplTest {
             setNumber = 1,
             reps = 5,
             weightKg = 60.0,
-            isWarmup = false,
+            setType = "NORMAL",
             completedAt = 1_000L
         )
         coEvery { setDao.getSetById(10L) } returns set
@@ -505,7 +506,7 @@ class WorkoutRepositoryImplTest {
             setNumber = 1,
             reps = 5,
             weightKg = 60.0,
-            isWarmup = false,
+            setType = "NORMAL",
             completedAt = 1_000L
         )
         coEvery { setDao.getSetById(10L) } returns set
@@ -538,7 +539,7 @@ class WorkoutRepositoryImplTest {
             setNumber = 1,
             reps = 8,
             weightKg = 100.0,
-            isWarmup = false,
+            setType = SetType.NORMAL,
             completedAt = LocalDateTime.of(2026, 8, 6, 12, 0)
         )
         // After the insert, the rebuild reads exactly these sets (existing 80x5 + the new 100x8).
@@ -550,7 +551,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             ),
             WorkoutSetEntity(
@@ -560,7 +561,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 2_000L
             )
         )
@@ -628,7 +629,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 1,
                 weightKg = 120.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             )
         )
@@ -641,7 +642,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 1,
                 weightKg = 120.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -671,7 +672,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 50.0,
-                isWarmup = true
+                setType = SetType.WARMUP
             )
         )
 
@@ -696,7 +697,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 120.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 2_000L
             )
         )
@@ -709,7 +710,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 2,
                 reps = 10,
                 weightKg = 120.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -746,7 +747,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             ),
             WorkoutSetEntity(
@@ -756,7 +757,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 2_000L
             )
         )
@@ -772,7 +773,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 2,
                 reps = 10,
                 weightKg = 100.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -798,7 +799,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 0.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             )
         )
@@ -819,7 +820,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 2,
                 reps = 10,
                 weightKg = 0.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -844,7 +845,7 @@ class WorkoutRepositoryImplTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 100.0,
-                isWarmup = false,
+                setType = "NORMAL",
                 completedAt = 1_000L
             )
         )
@@ -878,7 +879,7 @@ class WorkoutRepositoryImplTest {
                     setNumber = 1,
                     reps = 8,
                     weightKg = 100.0,
-                    isWarmup = false
+                    setType = SetType.NORMAL
                 )
             )
             fail("Expected addSet to propagate the DAO failure")
@@ -935,7 +936,7 @@ class WorkoutRepositoryImplTest {
             domain.copy(sessionId = domain.sessionId + 1),
             domain.copy(exerciseId = domain.exerciseId + 1),
             domain.copy(setNumber = domain.setNumber + 1),
-            domain.copy(isWarmup = !domain.isWarmup),
+            domain.copy(setType = if (domain.isWarmup) SetType.NORMAL else SetType.WARMUP),
             domain.copy(completedAt = domain.completedAt.plusSeconds(1)),
             domain.copy(planTargetSnapshotId = null)
         )
@@ -1016,7 +1017,7 @@ class WorkoutRepositoryImplTest {
         setNumber = 1,
         reps = 8,
         weightKg = 100.0,
-        isWarmup = false,
+        setType = "NORMAL",
         completedAt = 1_000L,
         rpe = 8.0,
         planTargetSnapshotId = 41L

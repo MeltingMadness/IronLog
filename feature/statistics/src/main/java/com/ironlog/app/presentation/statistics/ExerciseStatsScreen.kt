@@ -60,6 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,6 +195,80 @@ fun ExerciseStatsScreen(
                                 value = maxVolume?.let {
                                     WeightFormatting.formatVolume(it.value, preferences.unitSystem)
                                 } ?: "-",
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.TERTIARY
+                            )
+                        }
+                    }
+                }
+
+                val e1rmProgression = state.e1rmProgression
+                if (e1rmProgression != null && state.chartData.size >= 2) {
+                    item {
+                        Text(
+                            text = stringResource(id = R.string.stats_e1rm_progress_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    item {
+                        Text(
+                            text = stringResource(id = R.string.stats_e1rm_formula_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            StatCard(
+                                label = stringResource(id = R.string.stats_e1rm_first_label),
+                                value = WeightFormatting.formatWeight(
+                                    e1rmProgression.first.toDouble(),
+                                    preferences.unitSystem
+                                ),
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.TERTIARY
+                            )
+                            StatCard(
+                                label = stringResource(id = R.string.stats_e1rm_latest_label),
+                                value = WeightFormatting.formatWeight(
+                                    e1rmProgression.latest.toDouble(),
+                                    preferences.unitSystem
+                                ),
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.PRIMARY
+                            )
+                        }
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            val deltaAbs = WeightFormatting.formatWeightDelta(
+                                e1rmProgression.delta.toDouble(),
+                                preferences.unitSystem
+                            )
+                            val deltaSign = if (e1rmProgression.deltaPercent > 0f) "+" else ""
+                            val deltaRel = stringResource(
+                                id = R.string.stats_e1rm_rel_value,
+                                deltaSign + e1rmProgression.deltaPercent.roundToInt()
+                            )
+                            StatCard(
+                                label = stringResource(id = R.string.stats_e1rm_abs_label),
+                                value = deltaAbs,
+                                modifier = Modifier.weight(1f),
+                                variant = StatCardVariant.SECONDARY
+                            )
+                            StatCard(
+                                label = stringResource(id = R.string.stats_e1rm_rel_label),
+                                value = deltaRel,
                                 modifier = Modifier.weight(1f),
                                 variant = StatCardVariant.TERTIARY
                             )

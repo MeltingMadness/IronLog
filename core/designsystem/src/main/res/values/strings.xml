@@ -77,6 +77,9 @@
     <string name="workout_delete_set_cd">Satz löschen</string>
     <string name="workout_set_number">%1$d.</string>
     <string name="workout_warmup_chip">Aufwärmen</string>
+    <string name="workout_set_type_normal">Normal</string>
+    <string name="workout_set_type_drop_set">Drop-Set</string>
+    <string name="workout_set_type_failure">Fehlversuch</string>
     <string name="workout_previous_show_cd">Vorheriges Training einblenden</string>
     <string name="workout_previous_hide_cd">Vorheriges Training ausblenden</string>
     <string name="workout_previous_session_title">Letztes Training (%1$s)</string>
@@ -99,6 +102,7 @@
     <string name="workout_detail_meta">Dauer: %1$d min • Volumen: %2$s</string>
     <string name="workout_detail_record_cd">Rekord</string>
     <string name="workout_detail_pr_badge">PR</string>
+    <string name="workout_detail_progression_title">Progressions-Coach</string>
     <string name="workout_detail_set_warmup">W%1$d</string>
     <string name="workout_detail_set_work">Satz %1$d</string>
     <string name="workout_detail_set_value">%1$s x %2$d</string>
@@ -191,6 +195,13 @@
     <string name="stats_metric_weight">Gewicht</string>
     <string name="stats_metric_e1rm">Geschätztes 1RM</string>
     <string name="stats_metric_volume">Volumen</string>
+    <string name="stats_e1rm_progress_title">1RM-Entwicklung</string>
+    <string name="stats_e1rm_formula_hint">Geschätzt nach der Epley-Formel</string>
+    <string name="stats_e1rm_first_label">Erstes 1RM</string>
+    <string name="stats_e1rm_latest_label">Aktuelles 1RM</string>
+    <string name="stats_e1rm_abs_label">Steigerung</string>
+    <string name="stats_e1rm_rel_label">Steigerung (%%)</string>
+    <string name="stats_e1rm_rel_value">%1$s %%</string>
 
     <string name="settings_title">Einstellungen</string>
     <string name="settings_section_appearance">Darstellung</string>
@@ -320,6 +331,10 @@
     <string name="settings_msg_notification_denied">Benachrichtigungsberechtigung wurde nicht erteilt.</string>
     <string name="common_error_action_failed">Aktion fehlgeschlagen: %1$s</string>
     <string name="workout_rest_timer_prefix">Pause</string>
+    <string name="settings_section_rest_timer">Pause</string>
+    <string name="settings_auto_rest_timer_title">Rest-Timer automatisch starten</string>
+    <string name="settings_auto_rest_timer_subtitle">Nach jedem Arbeitssatz startet automatisch eine Pause mit der Standarddauer.</string>
+    <string name="settings_rest_time_title">Standard-Pausendauer</string>
 
     <string name="progression_review_title">Progression prüfen</string>
     <string name="progression_review_close_cd">Progressionsprüfung schließen</string>
@@ -379,3 +394,4 @@
     <string name="progression_review_reason_backoff_floor">Ein Backoff um %1$s Prozent würde das Gewicht nicht weiter sicher senken.</string>
     <string name="progression_review_reason_unavailable">Die Begründung kann wegen unvollständiger Auswertungsdaten nicht sicher angezeigt werden.</string>
 </resources>
+

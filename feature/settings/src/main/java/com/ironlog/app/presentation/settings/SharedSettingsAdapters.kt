@@ -69,6 +69,14 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         delegate.updateShareWeightHistoryAcrossContexts(enabled)
     }
+
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        delegate.updateAutoRestTimerEnabled(enabled)
+    }
+
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
+        delegate.updateDefaultRestTimeSeconds(seconds)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -96,7 +104,9 @@ internal fun AppPreferences.toShared(): com.ironlog.shared.model.AppPreferences 
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toShared(),
         intensitySystem = intensitySystem.toShared(),
-        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts
+        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts,
+        autoRestTimerEnabled = autoRestTimerEnabled,
+        defaultRestTimeSeconds = defaultRestTimeSeconds
     )
 
 internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -112,7 +122,9 @@ internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
         betaDiagnosticsOptIn = betaDiagnosticsOptIn,
         reminderConfig = reminderConfig.toApp(),
         intensitySystem = intensitySystem.toApp(),
-        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts
+        shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts,
+        autoRestTimerEnabled = autoRestTimerEnabled,
+        defaultRestTimeSeconds = defaultRestTimeSeconds
     )
 
 internal fun ReminderConfig.toShared(): com.ironlog.shared.model.ReminderConfig =

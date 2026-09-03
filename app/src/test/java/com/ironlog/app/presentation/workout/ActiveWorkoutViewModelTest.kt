@@ -14,6 +14,7 @@ import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
@@ -141,7 +142,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "8.5")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(8.5, sets[0].rpe)
@@ -153,7 +154,7 @@ class ActiveWorkoutViewModelTest {
         val vm = createViewModel()
 
         // 1.5 RIR = 8.5 RPE
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "1.5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "1.5")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(8.5, sets[0].rpe)
@@ -164,7 +165,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "abc")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "abc")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(null, sets[0].rpe)
@@ -175,7 +176,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.OFF)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "8.5")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(null, sets[0].rpe)
@@ -186,7 +187,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8,5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "8,5")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
         assertEquals(8.5, sets[0].rpe)
@@ -344,7 +345,7 @@ class ActiveWorkoutViewModelTest {
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
 
-        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, isWarmup = true)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, setType = SetType.WARMUP)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(emitted.isEmpty())
@@ -421,7 +422,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "8.5")
         val logged = workoutRepo.getSetsForSessionList(sessionId).first()
 
         // User switches intensity tracking off before editing the set; the (hidden)
@@ -440,7 +441,7 @@ class ActiveWorkoutViewModelTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
 
-        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, isWarmup = false, intensity = "8.5")
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "8.5")
         val logged = workoutRepo.getSetsForSessionList(sessionId).first()
 
         // Intensity tracking stays on, user clears the field intentionally.
@@ -475,7 +476,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 80.0,
-                isWarmup = false,
+                setType = SetType.NORMAL,
                 completedAt = LocalDateTime.now()
             )
         )
@@ -619,7 +620,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 75.0,
-                isWarmup = true
+                setType = SetType.WARMUP
             )
         )
         workoutRepo.addSetDirectly(
@@ -630,7 +631,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 2,
                 reps = 6,
                 weightKg = 90.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -668,7 +669,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 40.0,
-                isWarmup = true
+                setType = SetType.WARMUP
             )
         )
         workoutRepo.addSetDirectly(
@@ -679,7 +680,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 110.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -722,7 +723,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 82.5,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -744,7 +745,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 5,
                 weightKg = 95.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -800,7 +801,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -823,7 +824,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 95.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -875,7 +876,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 82.5,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -898,7 +899,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 95.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -955,7 +956,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -978,7 +979,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 95.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -1051,7 +1052,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -1074,7 +1075,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 95.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -1203,7 +1204,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         planRepo.savePlan(
@@ -1280,7 +1281,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 6,
                 weightKg = 90.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         planRepo.savePlan(
@@ -1345,7 +1346,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 50.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -1372,7 +1373,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 70.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
 
@@ -1393,6 +1394,7 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `rest timer bleibt auch nach letztem geplanten Arbeitssatz aktiv`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
         val planId = 88L
         val plan = com.ironlog.app.domain.model.TrainingPlan(
             id = planId,
@@ -1462,20 +1464,21 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `warmup Satz startet keinen Rest Timer und raeumt bestehenden`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
         val vm = createViewModel()
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, isWarmup = true)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 50.0, setType = SetType.WARMUP)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(vm.uiState.value.restTimers.isEmpty())
 
-        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0, isWarmup = false)
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0, setType = SetType.NORMAL)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(WorkoutExerciseKey.AdHoc(testExercise.id) in vm.uiState.value.restTimers)
 
         // A subsequent warmup set cancels the pending timer for the same exercise.
-        vm.logSet(exerciseId = testExercise.id, reps = 5, weightKg = 40.0, isWarmup = true)
+        vm.logSet(exerciseId = testExercise.id, reps = 5, weightKg = 40.0, setType = SetType.WARMUP)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(WorkoutExerciseKey.AdHoc(testExercise.id) !in vm.uiState.value.restTimers)
 
@@ -1484,6 +1487,7 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `finishWorkout raeumt laufende Rest Timer`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
         val vm = createViewModel()
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1529,6 +1533,7 @@ class ActiveWorkoutViewModelTest {
 
     @Test
     fun `rest timer state uses instant and dismisses per exercise independently`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
         val secondExercise = Exercise(
             id = 2L,
             name = "Schraegbankdruecken",
@@ -1547,10 +1552,12 @@ class ActiveWorkoutViewModelTest {
         val firstKey = WorkoutExerciseKey.AdHoc(testExercise.id)
         val secondKey = WorkoutExerciseKey.AdHoc(secondExercise.id)
         assertEquals(setOf(firstKey, secondKey), restTimers.keys)
-        val firstTimer: Instant = restTimers.getValue(firstKey)
-        val secondTimer: Instant = restTimers.getValue(secondKey)
-        assertTrue(firstTimer.epochSecond > 0)
-        assertTrue(secondTimer.epochSecond > 0)
+        val firstTimer: RestTimerUi = restTimers.getValue(firstKey)
+        val secondTimer: RestTimerUi = restTimers.getValue(secondKey)
+        assertTrue(firstTimer.startTime.epochSecond > 0)
+        assertTrue(secondTimer.startTime.epochSecond > 0)
+        assertEquals(120, firstTimer.durationSeconds)
+        assertEquals(120, secondTimer.durationSeconds)
 
         vm.dismissRestTimer(firstKey)
 
@@ -1670,7 +1677,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         val vm = createViewModel()
@@ -1685,6 +1692,99 @@ class ActiveWorkoutViewModelTest {
         assertEquals(0, workoutRepo.deleteSessionCallCount)
         assertEquals(1, progressionGenerateCalls)
         assertNotNull(workoutRepo.getSessionById(sessionId)?.endTime)
+        assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout mit pendierenden Vorschlaegen oeffnet das Review`() = runTest {
+        progressionGenerationResult = ProgressionGenerationResult(
+            insertedCount = 2,
+            reviewItemCount = 2,
+            pendingCount = 2
+        )
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 401L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                setType = SetType.NORMAL
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(WorkoutFinishState.ReviewReady(sessionId), vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout mit nur informativen Outcomes oeffnet das Review statt still zu schliessen`() = runTest {
+        // Der Coach hat bewertet (KEEP_TARGET / INSUFFICIENT_DATA) und informative
+        // Zeilen eingefuegt, aber es gibt keine Entscheidungen: trotzdem Review zeigen.
+        progressionGenerationResult = ProgressionGenerationResult(
+            insertedCount = 2,
+            reviewItemCount = 0,
+            pendingCount = 0
+        )
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 402L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                setType = SetType.NORMAL
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(WorkoutFinishState.ReviewReady(sessionId), vm.uiState.value.finishState)
+        collector.cancel()
+    }
+
+    @Test
+    fun `finishWorkout ohne Outcomes schliesst weiterhin still`() = runTest {
+        // Freies Training ohne Plan / bereits generierte Outcomes: kein Review.
+        progressionGenerationResult = ProgressionGenerationResult(
+            insertedCount = 0,
+            reviewItemCount = 0,
+            pendingCount = 0
+        )
+        workoutRepo.addSetDirectly(
+            WorkoutSet(
+                id = 403L,
+                sessionId = sessionId,
+                exerciseId = testExercise.id,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 80.0,
+                setType = SetType.NORMAL
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.finishWorkout()
+        testDispatcher.scheduler.advanceUntilIdle()
+
         assertEquals(WorkoutFinishState.CompletedWithoutReview, vm.uiState.value.finishState)
         collector.cancel()
     }
@@ -1908,7 +2008,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         workoutRepo.failFinishWorkout = true
@@ -1997,7 +2097,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 100.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         val vm = ActiveWorkoutViewModel(
@@ -2034,7 +2134,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 100.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         val stats = mockk<StatisticsRepository>(relaxed = true)
@@ -2077,7 +2177,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         val vm = createViewModel()
@@ -2105,7 +2205,7 @@ class ActiveWorkoutViewModelTest {
                 setNumber = 1,
                 reps = 10,
                 weightKg = 80.0,
-                isWarmup = false
+                setType = SetType.NORMAL
             )
         )
         val vm = createViewModel()
@@ -2460,6 +2560,38 @@ class ActiveWorkoutViewModelTest {
         weightKg = weightKg
     )
 
+    @Test
+    fun `logSet startet keinen Rest Timer wenn Auto-Pause deaktiviert ist`() = runTest {
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.restTimers.isEmpty())
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `logSet startet Rest Timer mit konfigurierter Standarddauer`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
+        prefsRepo.updateDefaultRestTimeSeconds(180)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val timer = vm.uiState.value.restTimers.getValue(WorkoutExerciseKey.AdHoc(testExercise.id))
+        assertEquals(180, timer.durationSeconds)
+        assertTrue(timer.startTime.epochSecond > 0)
+
+        collector.cancel()
+    }
+
     private fun snapshotSet(
         id: Long,
         exerciseId: Long,
@@ -2486,5 +2618,5 @@ private fun previousSet(
     setNumber = 1,
     reps = reps,
     weightKg = weightKg,
-    isWarmup = warmup
+    setType = if (warmup) SetType.WARMUP else SetType.NORMAL
 )

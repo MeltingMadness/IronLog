@@ -24,4 +24,6 @@ interface AppPreferencesRepository {
     suspend fun updateReminderConfig(config: ReminderConfig)
     suspend fun updateIntensitySystem(intensitySystem: IntensitySystem)
     suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
+    suspend fun updateAutoRestTimerEnabled(enabled: Boolean)
+    suspend fun updateDefaultRestTimeSeconds(seconds: Int)
 }

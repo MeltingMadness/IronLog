@@ -62,7 +62,9 @@ class AppPreferencesRepositoryImpl(
             reminderConfig = reminderConfig,
             intensitySystem = intensitySystem,
             shareWeightHistoryAcrossContexts =
-                prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] ?: false
+                prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] ?: false,
+            autoRestTimerEnabled = prefs[AppPreferenceKeys.AUTO_REST_TIMER_ENABLED] ?: false,
+            defaultRestTimeSeconds = prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] ?: 120
         )
     }
 
@@ -138,6 +140,18 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] = enabled
+        }
+    }
+
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.AUTO_REST_TIMER_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] = seconds.coerceIn(30, 600)
         }
     }
 }

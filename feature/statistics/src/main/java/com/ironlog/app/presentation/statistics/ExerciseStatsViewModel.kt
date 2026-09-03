@@ -30,11 +30,28 @@ data class ChartDataPoint(
     val value: Float
 )
 
+/**
+ * Entwicklung des geschätzten 1RM über die Trainingseinheiten: erster, aktuellster
+ * und bester Session-Bestwert sowie die Veränderung vom ersten zum aktuellen Wert.
+ */
+data class E1rmProgression(
+    val first: Float,
+    val latest: Float,
+    val best: Float
+) {
+    /** Veränderung vom ersten zum aktuellsten Session-Bestwert (absolut, in kg). */
+    val delta: Float get() = latest - first
+
+    /** Relative Veränderung vom ersten zum aktuellsten Session-Bestwert (in Prozent). */
+    val deltaPercent: Float get() = if (first > 0f) delta / first * 100f else 0f
+}
+
 data class ExerciseStatsUiState(
     val exercise: Exercise? = null,
     val records: List<PersonalRecord> = emptyList(),
     val selectedMetric: ChartMetric = ChartMetric.WEIGHT,
     val chartData: List<ChartDataPoint> = emptyList(),
+    val e1rmProgression: E1rmProgression? = null,
     val recentSets: List<WorkoutSet> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
@@ -105,25 +122,50 @@ class ExerciseStatsViewModel(
     }
 
     private fun updateChartData(sets: List<WorkoutSet>, metric: ChartMetric) {
-        if (sets.isEmpty()) {
-            _uiState.value = _uiState.value.copy(chartData = emptyList())
+        val sessions = aggregateBySession(sets)
+        if (sessions.isEmpty()) {
+            _uiState.value = _uiState.value.copy(chartData = emptyList(), e1rmProgression = null)
             return
         }
 
-        data class Accumulator(
-            val latestTime: LocalDateTime,
-            val maxWeight: Double,
-            val maxE1Rm: Double,
-            val totalVolume: Double
-        )
+        val ordered = sessions.sortedBy { it.latestTime }
+        val e1rmSeries = ordered.map { it.maxE1Rm }
 
-        val bySession: Map<Long, Accumulator> = sets.fold(mutableMapOf()) { acc, set ->
+        _uiState.value = _uiState.value.copy(
+            chartData = ordered.map { agg ->
+                val date = agg.latestTime
+                ChartDataPoint(
+                    dateLabel = "${date.dayOfMonth}.${date.monthValue}",
+                    value = when (metric) {
+                        ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
+                        ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()
+                        ChartMetric.VOLUME -> agg.totalVolume.toFloat()
+                    }
+                )
+            },
+            e1rmProgression = E1rmProgression(
+                first = e1rmSeries.first().toFloat(),
+                latest = e1rmSeries.last().toFloat(),
+                best = e1rmSeries.max().toFloat()
+            )
+        )
+    }
+
+    private data class SessionAggregate(
+        val latestTime: LocalDateTime,
+        val maxWeight: Double,
+        val maxE1Rm: Double,
+        val totalVolume: Double
+    )
+
+    private fun aggregateBySession(sets: List<WorkoutSet>): List<SessionAggregate> {
+        val bySession: Map<Long, SessionAggregate> = sets.fold(mutableMapOf()) { acc, set ->
             val e1rm = WorkoutCalculations.calculateE1RM(set.weightKg, set.reps)
             val prev = acc[set.sessionId]
             acc[set.sessionId] = if (prev == null) {
-                Accumulator(set.completedAt, set.weightKg, e1rm, set.weightKg * set.reps)
+                SessionAggregate(set.completedAt, set.weightKg, e1rm, set.weightKg * set.reps)
             } else {
-                Accumulator(
+                SessionAggregate(
                     latestTime = if (set.completedAt > prev.latestTime) set.completedAt else prev.latestTime,
                     maxWeight = maxOf(prev.maxWeight, set.weightKg),
                     maxE1Rm = maxOf(prev.maxE1Rm, e1rm),
@@ -132,19 +174,6 @@ class ExerciseStatsViewModel(
             }
             acc
         }
-
-        val dataPoints = bySession.values.sortedBy { it.latestTime }.map { agg ->
-            val date = agg.latestTime
-            ChartDataPoint(
-                dateLabel = "${date.dayOfMonth}.${date.monthValue}",
-                value = when (metric) {
-                    ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
-                    ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()
-                    ChartMetric.VOLUME -> agg.totalVolume.toFloat()
-                }
-            )
-        }
-
-        _uiState.value = _uiState.value.copy(chartData = dataPoints)
+        return bySession.values.toList()
     }
 }

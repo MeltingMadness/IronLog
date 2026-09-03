@@ -126,7 +126,7 @@ class WorkoutSessionDateFilterTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = weightKg,
-                isWarmup = isWarmup,
+                setType = if (isWarmup) "WARMUP" else "NORMAL",
                 completedAt = sessionId * 1_000L
             )
         )

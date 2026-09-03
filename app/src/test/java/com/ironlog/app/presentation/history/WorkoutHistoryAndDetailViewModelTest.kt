@@ -5,10 +5,21 @@ import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.ProgressionOutcome
+import com.ironlog.app.domain.model.ProgressionReasonCode
+import com.ironlog.app.domain.model.ProgressionStreakEffect
+import com.ironlog.app.domain.model.ProgressionSuggestion
+import com.ironlog.app.domain.model.ProgressionSuggestionStatus
+import com.ironlog.app.domain.model.ProgressionTarget
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WeightStep
+import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.fakes.FakeExerciseRepository
+import com.ironlog.app.fakes.FakeProgressionRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,6 +45,7 @@ class WorkoutHistoryAndDetailViewModelTest {
     private lateinit var workoutRepo: FakeWorkoutRepository
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statisticsRepo: FakeStatisticsRepository
+    private lateinit var progressionRepo: FakeProgressionRepository
 
     @Before
     fun setUp() {
@@ -40,6 +53,7 @@ class WorkoutHistoryAndDetailViewModelTest {
         workoutRepo = FakeWorkoutRepository()
         exerciseRepo = FakeExerciseRepository()
         statisticsRepo = FakeStatisticsRepository()
+        progressionRepo = FakeProgressionRepository()
     }
 
     @After
@@ -106,7 +120,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf("sessionId" to 7L)),
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
-            statisticsRepository = statisticsRepo
+            statisticsRepository = statisticsRepo,
+            progressionRepository = progressionRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -117,12 +132,87 @@ class WorkoutHistoryAndDetailViewModelTest {
     }
 
     @Test
+    fun `workout detail zeigt Progressions-Outcomes der Session mit aufgeloesten Namen`() = runTest {
+        val now = LocalDateTime.now()
+
+        exerciseRepo.addExercise(
+            Exercise(
+                id = 1L,
+                name = "Bankdruecken",
+                primaryMuscleGroup = MuscleGroup.BRUST,
+                category = ExerciseCategory.LANGHANTEL
+            )
+        )
+        workoutRepo.addSession(
+            WorkoutSession(id = 7L, startTime = now.minusDays(1), endTime = now, durationSeconds = 3600),
+            isActive = false
+        )
+        workoutRepo.addSetDirectly(
+            WorkoutSet(id = 101L, sessionId = 7L, exerciseId = 1L, setNumber = 1, reps = 8, weightKg = 80.0, completedAt = now.minusDays(1))
+        )
+
+        progressionRepo.setSuggestions(
+            listOf(
+                suggestion(
+                    id = 11L,
+                    sessionId = 7L,
+                    exerciseId = 1L,
+                    status = ProgressionSuggestionStatus.ACCEPTED,
+                    outcome = acceptedOutcome()
+                )
+            )
+        )
+
+        val vm = WorkoutDetailViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("sessionId" to 7L)),
+            workoutRepository = workoutRepo,
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo,
+            progressionRepository = progressionRepo
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val outcomes = vm.uiState.value.progressionOutcomes
+        assertEquals(1, outcomes.size)
+        val outcome = outcomes.single()
+        assertEquals("Bankdruecken", outcome.exerciseName)
+        assertEquals(ProgressionSuggestionStatus.ACCEPTED, outcome.status)
+        // History is read-only: decision actions must never appear here.
+        assertFalse(outcome.canDecide)
+        // The detail load must not have wiped the concurrently collected outcomes.
+        assertTrue(vm.uiState.value.exercises.isNotEmpty())
+        assertEquals(listOf<Long?>(7L), progressionRepo.observedSessionIds)
+    }
+
+    @Test
+    fun `workout detail ohne Progressions-Outcomes bleibt ohne Coach-Abschnitt`() = runTest {
+        workoutRepo.addSession(
+            WorkoutSession(id = 7L, startTime = LocalDateTime.now().minusDays(1)),
+            isActive = false
+        )
+        val vm = WorkoutDetailViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("sessionId" to 7L)),
+            workoutRepository = workoutRepo,
+            exerciseRepository = exerciseRepo,
+            statisticsRepository = statisticsRepo,
+            progressionRepository = progressionRepo
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.progressionOutcomes.isEmpty())
+        assertFalse(vm.uiState.value.notFound)
+    }
+
+    @Test
     fun `missing session sets notFound and clears isLoading instead of an empty scaffold`() = runTest {
         val vm = WorkoutDetailViewModel(
             savedStateHandle = SavedStateHandle(mapOf("sessionId" to 12345L)),
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
-            statisticsRepository = statisticsRepo
+            statisticsRepository = statisticsRepo,
+            progressionRepository = progressionRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -130,4 +220,48 @@ class WorkoutHistoryAndDetailViewModelTest {
         assertTrue(vm.uiState.value.notFound)
         assertEquals(false, vm.uiState.value.isLoading)
     }
+
+    private fun suggestion(
+        id: Long,
+        sessionId: Long,
+        exerciseId: Long,
+        status: ProgressionSuggestionStatus,
+        outcome: ProgressionOutcome
+    ): ProgressionSuggestion {
+        val sourceTarget = WorkoutPlanTarget(
+            id = 1000L + id,
+            sessionId = sessionId,
+            planId = 3L,
+            exerciseId = exerciseId,
+            orderIndex = 0,
+            supersetGroupId = null,
+            target = ProgressionTarget(sets = 3, reps = 8, weightKg = 80.0),
+            config = ProgressionConfig.Linear(
+                step = WeightStep(
+                    originalValue = 2.5,
+                    originalUnit = UnitSystem.METRIC,
+                    kilograms = 2.5
+                )
+            )
+        )
+        return ProgressionSuggestion(
+            id = id,
+            sourceTarget = sourceTarget,
+            outcome = outcome,
+            countedSets = emptyList(),
+            status = status,
+            wasEdited = false,
+            finalTarget = null,
+            createdAtEpochMillis = id,
+            decidedAtEpochMillis = null
+        )
+    }
+
+    private fun acceptedOutcome(): ProgressionOutcome = ProgressionOutcome.ProposeChange(
+        sourceTarget = ProgressionTarget(sets = 3, reps = 8, weightKg = 80.0),
+        proposedTarget = ProgressionTarget(sets = 3, reps = 8, weightKg = 82.5),
+        reasonCode = ProgressionReasonCode.LOAD_ADVANCED,
+        reasonArguments = mapOf("stepOriginalValue" to 2.5),
+        streakEffect = ProgressionStreakEffect.INCREMENT
+    )
 }

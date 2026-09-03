@@ -70,6 +70,7 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ProgressionConfig
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.repository.AppPreferencesRepository
@@ -231,14 +232,16 @@ fun ActiveWorkoutScreen(
                             horizontalArrangement = Arrangement.Center,
                             verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                         ) {
-                            state.restTimers.forEach { (exerciseKey, startTime) ->
+                            state.restTimers.forEach { (exerciseKey, timer) ->
                                 val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
                                 val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
                                 val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
 
                                 RestTimer(
-                                    startTime = startTime,
+                                    startTime = timer.startTime,
+                                    durationSeconds = timer.durationSeconds.toLong(),
                                     onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
+                                    onComplete = { viewModel.dismissRestTimer(exerciseKey) },
                                     titleText = exerciseWithSets?.exercise?.name,
                                     baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
                                     modifier = Modifier.padding(horizontal = dims.spacingXs)
@@ -289,13 +292,13 @@ fun ActiveWorkoutScreen(
                                 logSuccessSubmissions = state.logSuccessSubmissions,
                                 updateInFlightBySet = state.updateInFlightBySet,
                                 updateSuccessCountBySet = state.updateSuccessCountBySet,
-                                onLogSet = { reps, weight, isWarmup, intensity, submissionId ->
+                                onLogSet = { reps, weight, setType, intensity, submissionId ->
                                     viewModel.logSet(
                                         key = exerciseWithSets.key,
                                         exerciseId = exerciseWithSets.exercise.id,
                                         reps = reps,
                                         weightKg = weight,
-                                        isWarmup = isWarmup,
+                                        setType = setType,
                                         intensity = intensity,
                                         submissionId = submissionId
                                     )
@@ -534,7 +537,7 @@ private fun ExerciseCard(
     logSuccessSubmissions: Set<Long>,
     updateInFlightBySet: Map<Long, Int>,
     updateSuccessCountBySet: Map<Long, Int>,
-    onLogSet: (Int, Double, Boolean, String, Long) -> Unit,
+    onLogSet: (Int, Double, SetType, String, Long) -> Unit,
     onUpdateSet: (Long, Int, Double, String) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: HapticFeedbackHelper
@@ -564,7 +567,7 @@ private fun ExerciseCard(
     }
     var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
-    val completedWorkSets = loggedSets.count { !it.isWarmup }
+    val completedWorkSets = loggedSets.count { it.setType == SetType.NORMAL }
     val targetSetCount = planTarget?.target?.sets ?: 0
 
     IronLogSurfaceCard(
@@ -664,7 +667,7 @@ private fun ExerciseCard(
 
             if (planTarget != null && targetSetCount > 0) {
                 for (setIndex in 1..targetSetCount) {
-                    val matchingSet = loggedSets.filter { !it.isWarmup }.getOrNull(setIndex - 1)
+                    val matchingSet = loggedSets.filter { it.setType == SetType.NORMAL }.getOrNull(setIndex - 1)
                     if (matchingSet != null) {
                         LoggedSetRow(
                             set = matchingSet,
@@ -688,13 +691,13 @@ private fun ExerciseCard(
                             locked = isLogging,
                             completedSubmissions = logSuccessSubmissions,
                             onLog = { reps, weight, intensity, submissionId ->
-                                onLogSet(reps, weight, false, intensity, submissionId)
+                                onLogSet(reps, weight, SetType.NORMAL, intensity, submissionId)
                             }
                         )
                     }
                 }
 
-                loggedSets.filter { !it.isWarmup }.drop(targetSetCount).forEach { set ->
+                loggedSets.filter { it.setType == SetType.NORMAL }.drop(targetSetCount).forEach { set ->
                     LoggedSetRow(
                         set = set,
                         intensitySystem = rowIntensitySystem,
@@ -707,7 +710,7 @@ private fun ExerciseCard(
                     )
                 }
 
-                loggedSets.filter { it.isWarmup }.forEach { set ->
+                loggedSets.filter { it.setType != SetType.NORMAL }.forEach { set ->
                     LoggedSetRow(
                         set = set,
                         intensitySystem = rowIntensitySystem,
@@ -847,7 +850,7 @@ private fun PreviousSessionSetRow(
 ) {
     val dims = ironLogDimens
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
-    val setLabel = if (set.isWarmup) "W${set.setNumber}" else set.setNumber.toString()
+    val setLabel = setTypeLabel(set.setNumber, set.setType)
 
     Row(
         modifier = modifier
@@ -935,6 +938,20 @@ internal fun targetWeightHint(
 fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {
     val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
     return String.format(Locale.ROOT, "%.1f %s", displayValue, WeightFormatting.unitLabel(unitSystem))
+}
+
+private fun setTypeLabel(setNumber: Int, setType: SetType): String = when (setType) {
+    SetType.NORMAL -> setNumber.toString()
+    SetType.WARMUP -> "W$setNumber"
+    SetType.DROP_SET -> "D$setNumber"
+    SetType.FAILURE -> "F$setNumber"
+}
+
+private fun SetType.labelRes(): Int = when (this) {
+    SetType.NORMAL -> R.string.workout_set_type_normal
+    SetType.WARMUP -> R.string.workout_warmup_chip
+    SetType.DROP_SET -> R.string.workout_set_type_drop_set
+    SetType.FAILURE -> R.string.workout_set_type_failure
 }
 
 @Composable
@@ -1037,7 +1054,7 @@ private fun LoggedSetRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = set.setNumber.toString(),
+                text = setTypeLabel(set.setNumber, set.setType),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1109,7 +1126,7 @@ private fun LoggedSetRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = set.setNumber.toString(),
+                text = setTypeLabel(set.setNumber, set.setType),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1274,7 +1291,7 @@ private fun ExtraSetInput(
     intensityPlaceholder: String? = null,
     locked: Boolean,
     logSuccessSubmissions: Set<Long>,
-    onLogSet: (Int, Double, Boolean, String, Long) -> Unit,
+    onLogSet: (Int, Double, SetType, String, Long) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
 ) {
     val dims = ironLogDimens
@@ -1285,7 +1302,7 @@ private fun ExtraSetInput(
     var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
     var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var isWarmup by remember { mutableStateOf(defaultWarmupFlag) }
+    var setType by remember { mutableStateOf(if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL) }
     var activeSubmissionId by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(activeSubmissionId, logSuccessSubmissions) {
@@ -1304,13 +1321,21 @@ private fun ExtraSetInput(
             modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingXs),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChip(
-                selected = isWarmup,
-                onClick = { isWarmup = !isWarmup },
-                enabled = !locked,
-                label = { Text(stringResource(id = R.string.workout_warmup_chip), style = MaterialTheme.typography.labelSmall) },
-                modifier = Modifier.height(ButtonSize.heightXs)
-            )
+            androidx.compose.foundation.layout.FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingXs),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+            ) {
+                SetType.entries.forEach { type ->
+                    FilterChip(
+                        selected = setType == type,
+                        onClick = { setType = type },
+                        enabled = !locked,
+                        label = { Text(stringResource(id = type.labelRes()), style = MaterialTheme.typography.labelSmall) },
+                        modifier = Modifier.height(ButtonSize.heightXs)
+                    )
+                }
+            }
         }
 
         SetInputRow(
@@ -1337,7 +1362,7 @@ private fun ExtraSetInput(
                     onLogSet(
                         reps,
                         weight,
-                        isWarmup,
+                        setType,
                         if (tracksIntensity) intensityInput.text else "",
                         submissionId
                     )

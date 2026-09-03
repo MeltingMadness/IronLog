@@ -1099,6 +1099,7 @@ class ProgressionRepositoryImplTest {
         setNumber = setNumber,
         reps = reps,
         weightKg = 100.0,
+        setType = "NORMAL",
         completedAt = 500L + id,
         planTargetSnapshotId = snapshotId
     )

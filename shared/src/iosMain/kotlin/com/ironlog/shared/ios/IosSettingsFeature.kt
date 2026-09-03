@@ -256,6 +256,8 @@ private class IosAppPreferencesRepository(
     override suspend fun updateReminderConfig(config: ReminderConfig) = persist { it.copy(reminderConfig = config) }
     override suspend fun updateIntensitySystem(intensitySystem: IntensitySystem) = persist { it.copy(intensitySystem = intensitySystem) }
     override suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean) = persist { it.copy(shareWeightHistoryAcrossContexts = enabled) }
+    override suspend fun updateAutoRestTimerEnabled(enabled: Boolean) = persist { it.copy(autoRestTimerEnabled = enabled) }
+    override suspend fun updateDefaultRestTimeSeconds(seconds: Int) = persist { it.copy(defaultRestTimeSeconds = seconds) }
 
     private fun persist(transform: (AppPreferences) -> AppPreferences) {
         val updated = transform(mutablePreferences.value)

@@ -151,6 +151,14 @@ class SettingsViewModel(
         preferencesController.updateReminderConfig(config.toShared())
     }
 
+    fun updateAutoRestTimerEnabled(enabled: Boolean) {
+        preferencesController.updateAutoRestTimerEnabled(enabled)
+    }
+
+    fun updateDefaultRestTimeSeconds(seconds: Int) {
+        preferencesController.updateDefaultRestTimeSeconds(seconds)
+    }
+
     fun exportBackup(uri: Uri) {
         viewModelScope.launch {
             runBusyAction(

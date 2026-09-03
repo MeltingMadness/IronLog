@@ -8,6 +8,7 @@ import com.ironlog.app.domain.model.ProgressionOutcome
 import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.ProgressionStreakEffect
 import com.ironlog.app.domain.model.ProgressionTarget
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutPlanTarget
@@ -121,6 +122,51 @@ class ProgressionEngineTest {
         assertEquals(ProgressionReasonCode.TOO_FEW_WORK_SETS, result.reasonCode)
         assertEquals(ProgressionStreakEffect.IGNORE, result.streakEffect)
         assertEquals(mapOf("targetSets" to 3.0, "actualWorkSets" to 2.0), result.reasonArguments)
+    }
+
+    @Test
+    fun `drop sets never satisfy missing planned sets`() {
+        val result = engine.evaluate(
+            context(
+                linear(),
+                reps = listOf(8, 8),
+                extraReps = listOf(20),
+                extraTypes = listOf(SetType.DROP_SET)
+            )
+        )
+        assertEquals(ProgressionReasonCode.TOO_FEW_WORK_SETS, result.reasonCode)
+        assertEquals(ProgressionStreakEffect.IGNORE, result.streakEffect)
+        assertEquals(mapOf("targetSets" to 3.0, "actualWorkSets" to 2.0), result.reasonArguments)
+    }
+
+    @Test
+    fun `failure sets never satisfy missing planned sets`() {
+        val result = engine.evaluate(
+            context(
+                linear(),
+                reps = listOf(8, 8),
+                extraReps = listOf(3),
+                extraTypes = listOf(SetType.FAILURE)
+            )
+        )
+        assertEquals(ProgressionReasonCode.TOO_FEW_WORK_SETS, result.reasonCode)
+        assertEquals(ProgressionStreakEffect.IGNORE, result.streakEffect)
+        assertEquals(mapOf("targetSets" to 3.0, "actualWorkSets" to 2.0), result.reasonArguments)
+    }
+
+    @Test
+    fun `counted set ids exclude drop and failure sets`() {
+        val result = engine.evaluate(
+            context(
+                linear(),
+                reps = listOf(8, 8, 8),
+                extraReps = listOf(12, 4),
+                extraTypes = listOf(SetType.DROP_SET, SetType.FAILURE)
+            )
+        )
+        val change = result as ProgressionOutcome.ProposeChange
+        assertEquals(102.5, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(listOf(1L, 2L, 3L), result.countedSetIds)
     }
 
     @Test
@@ -469,6 +515,7 @@ class ProgressionEngineTest {
         rpes: List<Double?> = List(reps.size) { null },
         warmupReps: List<Int> = emptyList(),
         extraReps: List<Int> = emptyList(),
+        extraTypes: List<SetType> = emptyList(),
         workSetIds: List<Long> = reps.indices.map { it + 1L },
         workSetNumbers: List<Int> = reps.indices.map { it + 1 },
         warmupSetIds: List<Long> = emptyList(),
@@ -493,7 +540,7 @@ class ProgressionEngineTest {
                 setNumber = index + 1,
                 reps = warmupReps.getOrElse(index) { targetReps },
                 weightKg = targetWeightKg,
-                isWarmup = true
+                setType = SetType.WARMUP
             )
         }
         val extraCount = maxOf(extraReps.size, extraSetIds.size)
@@ -502,7 +549,8 @@ class ProgressionEngineTest {
                 id = extraSetIds.getOrElse(index) { workCount + warmupCount + index + 1L },
                 setNumber = workCount + index + 1,
                 reps = extraReps.getOrElse(index) { targetReps },
-                weightKg = targetWeightKg
+                weightKg = targetWeightKg,
+                setType = extraTypes.getOrElse(index) { SetType.NORMAL }
             )
         }
         return ProgressionContext(source, workSets + warmups + extras, previous)
@@ -513,7 +561,7 @@ class ProgressionEngineTest {
         setNumber: Int,
         reps: Int,
         weightKg: Double,
-        isWarmup: Boolean = false,
+        setType: SetType = SetType.NORMAL,
         rpe: Double? = null
     ) = WorkoutSet(
         id = id,
@@ -522,7 +570,7 @@ class ProgressionEngineTest {
         setNumber = setNumber,
         reps = reps,
         weightKg = weightKg,
-        isWarmup = isWarmup,
+        setType = setType,
         completedAt = LocalDateTime.of(2026, 8, 9, 12, 0).plusSeconds(id.coerceAtLeast(0)),
         rpe = rpe,
         planTargetSnapshotId = SNAPSHOT_ID

@@ -28,6 +28,8 @@ internal object AppPreferenceKeys {
     val INTENSITY_SYSTEM = stringPreferencesKey("intensity_system")
     val SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS =
         booleanPreferencesKey("share_weight_history_across_contexts")
+    val AUTO_REST_TIMER_ENABLED = booleanPreferencesKey("auto_rest_timer_enabled")
+    val DEFAULT_REST_TIME_SECONDS = intPreferencesKey("default_rest_time_seconds")
 }
 
 // Sentinel stored when the user explicitly deselects every reminder day. This is required to

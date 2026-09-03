@@ -465,7 +465,7 @@ class BackupLifecycleRoundTripTest {
                         setNumber = index + 1,
                         reps = 6,
                         weightKg = 120.0,
-                        isWarmup = false,
+                        setType = "NORMAL",
                         completedAt = 3100L + index,
                         rpe = if (id == SET_2_ID) 9.0 else 8.0,
                         planTargetSnapshotId = TARGET_ID
@@ -560,7 +560,7 @@ class BackupLifecycleRoundTripTest {
                     setNumber = 3,
                     reps = 2,
                     weightKg = 140.0,
-                    isWarmup = false,
+                    setType = "NORMAL",
                     completedAt = 9999L,
                     rpe = 10.0
                 )
