@@ -3,6 +3,8 @@ package com.ironlog.app.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.data.local.entity.EpochConverter
+import com.ironlog.app.domain.model.DeloadAssessment
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MuscleGroup
@@ -11,6 +13,7 @@ import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.repository.DeloadRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
@@ -66,6 +69,9 @@ data class DashboardUiState(
     val muscleHeatmap: Map<MuscleGroup, Int> = emptyMap(),
     val weeklyVolume: List<Pair<String, Double>> = emptyList(),
     val pendingProgressionCount: Int = 0,
+    val deload: DeloadAssessment? = null,
+    val deloadExerciseName: String? = null,
+    val deloadMode: DeloadMode? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
     val skippingMetaPlanId: Long? = null
@@ -78,7 +84,8 @@ class DashboardViewModel(
     private val appPreferencesRepository: AppPreferencesRepository,
     private val trainingPlanRepository: TrainingPlanRepository,
     private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
-    private val progressionRepository: ProgressionRepository
+    private val progressionRepository: ProgressionRepository,
+    private val deloadRepository: DeloadRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -226,7 +233,6 @@ class DashboardViewModel(
                 val eightWeeksAgo = now.minusWeeks(7).with(TemporalAdjusters.previousOrSame(weekAnchor))
                 val eightWeeksAgoMillis = EpochConverter.toLong(eightWeeksAgo.atStartOfDay())
                 val trendSets = statisticsRepository.getWorkSetsCompletedSince(eightWeeksAgoMillis)
-
                 val weekFields = WeekFields.of(weekAnchor, 1)
                 val volumeByWeek = trendSets
                     .groupBy { set ->
@@ -242,6 +248,16 @@ class DashboardViewModel(
                         label to volume
                     }
 
+                val deload = runCatching { deloadRepository.assess() }
+                    .onFailure { error ->
+                        AppLogger.w("DashboardVM", "Deload-Analyse fehlgeschlagen: ${error.message}", error)
+                    }
+                    .getOrNull()
+                val deloadExerciseName = deload?.strongestExerciseId
+                    ?.let { id ->
+                        runCatching { exerciseRepository.getExerciseById(id)?.name }.getOrNull()
+                    }
+
                 _uiState.update {
                     it.copy(
                         workoutsThisWeek = workoutsThisWeek,
@@ -251,6 +267,9 @@ class DashboardViewModel(
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,
                         muscleHeatmap = heatmap,
                         weeklyVolume = volumeByWeek,
+                        deload = deload,
+                        deloadExerciseName = deloadExerciseName,
+                        deloadMode = preferences.deloadMode,
                         isLoading = false
                     )
                 }
@@ -415,6 +434,30 @@ class DashboardViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun activateDeloadMode(mode: DeloadMode) {
+        viewModelScope.launch {
+            runCatching { appPreferencesRepository.updateDeloadMode(mode) }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "Deload-Modus konnte nicht aktiviert werden: ${error.message}")
+                    }
+                }
+            _uiState.update { it.copy(deloadMode = mode) }
+        }
+    }
+
+    fun deactivateDeloadMode() {
+        viewModelScope.launch {
+            runCatching { appPreferencesRepository.updateDeloadMode(null) }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(error = "Deload-Modus konnte nicht beendet werden: ${error.message}")
+                    }
+                }
+            _uiState.update { it.copy(deloadMode = null) }
+        }
     }
 
     private fun buildMetaPlanOptions(

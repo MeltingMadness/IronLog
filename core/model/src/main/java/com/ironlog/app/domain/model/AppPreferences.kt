@@ -49,5 +49,6 @@ data class AppPreferences(
     val intensitySystem: IntensitySystem = IntensitySystem.RPE,
     val shareWeightHistoryAcrossContexts: Boolean = false,
     val autoRestTimerEnabled: Boolean = false,
-    val defaultRestTimeSeconds: Int = 120
+    val defaultRestTimeSeconds: Int = 120,
+    val deloadMode: DeloadMode? = null
 )

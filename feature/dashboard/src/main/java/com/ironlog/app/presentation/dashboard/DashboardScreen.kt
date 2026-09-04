@@ -49,6 +49,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.LocalDateTime
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.model.DeloadAssessment
+import com.ironlog.app.domain.model.DeloadMode
+import com.ironlog.app.domain.model.DeloadSignal
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
@@ -60,6 +63,7 @@ import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.app.presentation.theme.staggeredEntrance
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,6 +133,19 @@ fun DashboardScreen(
                         }
                     }
                 )
+            }
+
+            val deload = state.deload
+            if ((deload?.recommended == true || state.deloadMode != null) && deload != null) {
+                item(key = "deload_card") {
+                    DeloadCard(
+                        assessment = deload,
+                        exerciseName = state.deloadExerciseName,
+                        activeMode = state.deloadMode,
+                        onActivate = viewModel::activateDeloadMode,
+                        onDeactivate = viewModel::deactivateDeloadMode
+                    )
+                }
             }
 
             if (state.pendingProgressionCount > 0) {
@@ -259,6 +276,129 @@ fun DashboardScreen(
         }
     }
 }
+
+@Composable
+private fun DeloadCard(
+    assessment: DeloadAssessment,
+    exerciseName: String?,
+    activeMode: DeloadMode?,
+    onActivate: (DeloadMode) -> Unit,
+    onDeactivate: () -> Unit
+) {
+    val dims = ironLogDimens
+
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.COLORED,
+        semanticColor = MaterialTheme.semantic.warning
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+        ) {
+            Text(
+                text = stringResource(
+                    id = if (activeMode != null) {
+                        R.string.deload_card_title_active
+                    } else {
+                        R.string.deload_card_title_recommended
+                    }
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(id = R.string.deload_card_fatigue_score, assessment.fatigueScore),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (activeMode == null) {
+                Text(
+                    text = stringResource(id = R.string.deload_card_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                assessment.signals.forEach { signal ->
+                    Text(
+                        text = "• ${stringResource(id = signal.labelRes())}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                val strongestChange = assessment.strongestExerciseChangePercent
+                if (exerciseName != null && strongestChange != null) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.deload_strongest_exercise,
+                            exerciseName,
+                            formatPercent(strongestChange)
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            } else {
+                Text(
+                    text = stringResource(
+                        id = when (activeMode) {
+                            DeloadMode.HALVE_SET_VOLUME -> R.string.deload_active_hint_volume
+                            DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT -> R.string.deload_active_hint_intensity
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = dims.spacingXs),
+                horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                if (activeMode == null) {
+                    Button(
+                        onClick = { onActivate(DeloadMode.HALVE_SET_VOLUME) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(id = R.string.deload_mode_halve_volume))
+                    }
+                    TextButton(
+                        onClick = { onActivate(DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(id = R.string.deload_mode_reduce_intensity))
+                    }
+                } else {
+                    Text(
+                        text = stringResource(id = R.string.deload_mode_active),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.semantic.success
+                    )
+                    TextButton(onClick = onDeactivate) {
+                        Text(stringResource(id = R.string.deload_mode_end))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun DeloadSignal.labelRes(): Int = when (this) {
+    DeloadSignal.E1RM_STAGNATION -> R.string.deload_signal_e1rm_stagnation
+    DeloadSignal.E1RM_DROP -> R.string.deload_signal_e1rm_drop
+    DeloadSignal.RPE_CREEP -> R.string.deload_signal_rpe_creep
+    DeloadSignal.FAILURE_FREQUENCY -> R.string.deload_signal_failure_frequency
+}
+
+private fun formatPercent(changePercent: Double): String =
+    String.format(Locale.ROOT, "%.1f %%", changePercent)
 
 @Composable
 private fun PendingProgressionCard(

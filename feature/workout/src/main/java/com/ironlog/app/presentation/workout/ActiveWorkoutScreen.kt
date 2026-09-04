@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -284,6 +286,7 @@ fun ActiveWorkoutScreen(
                         group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
                             ExerciseCard(
                                 exerciseWithSets = exerciseWithSets,
+                                nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
                                 tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
@@ -529,6 +532,7 @@ private fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: Stri
 @Composable
 private fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
+    nextSetRecommendation: NextSetRecommendationUi?,
     tintColor: Color?,
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
@@ -774,6 +778,14 @@ private fun ExerciseCard(
                 )
             }
 
+            nextSetRecommendation?.let { recommendation ->
+                NextSetRecommendationChips(
+                    recommendation = recommendation,
+                    unitSystem = unitSystem,
+                    modifier = Modifier.padding(top = dims.spacingXs)
+                )
+            }
+
             AnimatedVisibility(
                 visible = showPreviousSession && previousSession != null,
                 enter = fadeIn() + expandVertically(animationSpec = spring()),
@@ -933,6 +945,80 @@ internal fun targetWeightHint(
     ?.takeIf { it.target.weightKg > 0 }
     ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
     ?: previousWeightHint
+
+@Composable
+private fun NextSetRecommendationChips(
+    recommendation: NextSetRecommendationUi,
+    unitSystem: UnitSystem,
+    modifier: Modifier = Modifier
+) {
+    val dims = ironLogDimens
+    val weightText = formatWeightValue(recommendation.recommendedWeightKg, unitSystem)
+    val delta = recommendation.recommendedWeightKg - recommendation.lastWeightKg
+    val loadText = if (kotlin.math.abs(delta) < 0.05) {
+        stringResource(id = R.string.workout_autoregulation_next_set, weightText)
+    } else {
+        stringResource(
+            id = R.string.workout_autoregulation_next_set_delta,
+            weightText,
+            WeightFormatting.formatWeightDelta(delta, unitSystem)
+        )
+    }
+    val accent = if (recommendation.isOvershoot) {
+        MaterialTheme.semantic.danger
+    } else {
+        MaterialTheme.semantic.sky
+    }
+
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
+        verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+    ) {
+        recommendation.targetRpe?.let { target ->
+            RecommendationPill(
+                text = stringResource(id = R.string.workout_autoregulation_target_rpe, formatRpeValue(target)),
+                color = MaterialTheme.semantic.sky
+            )
+        }
+        if (recommendation.isOvershoot) {
+            RecommendationPill(
+                text = stringResource(
+                    id = R.string.workout_autoregulation_overshoot,
+                    formatRpeValue(recommendation.lastRpe)
+                ),
+                color = MaterialTheme.semantic.danger
+            )
+        }
+        RecommendationPill(text = loadText, color = accent)
+        recommendation.backoffWeightKg?.let { backoff ->
+            RecommendationPill(
+                text = stringResource(
+                    id = R.string.workout_autoregulation_backoff_set,
+                    formatWeightValue(backoff, unitSystem)
+                ),
+                color = MaterialTheme.semantic.danger
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecommendationPill(text: String, color: Color, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = color,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
 
 /** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
 fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {

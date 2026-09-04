@@ -7,17 +7,26 @@ import androidx.lifecycle.viewModelScope
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.Exercise
+import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PersonalRecord
+import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
+import com.ironlog.app.domain.util.MuscleVolume
+import com.ironlog.app.domain.util.MuscleVolumeCalculator
 import com.ironlog.app.domain.util.WorkoutCalculations
 import com.ironlog.app.domain.util.catchAndLog
 import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 enum class ChartMetric(@StringRes val labelRes: Int) {
     WEIGHT(R.string.stats_metric_weight),
@@ -52,6 +61,7 @@ data class ExerciseStatsUiState(
     val selectedMetric: ChartMetric = ChartMetric.WEIGHT,
     val chartData: List<ChartDataPoint> = emptyList(),
     val e1rmProgression: E1rmProgression? = null,
+    val weeklyMuscleVolume: List<MuscleVolume> = emptyList(),
     val recentSets: List<WorkoutSet> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
@@ -60,7 +70,8 @@ data class ExerciseStatsUiState(
 class ExerciseStatsViewModel(
     savedStateHandle: SavedStateHandle,
     private val exerciseRepository: ExerciseRepository,
-    private val statisticsRepository: StatisticsRepository
+    private val statisticsRepository: StatisticsRepository,
+    private val appPreferencesRepository: AppPreferencesRepository
 ) : ViewModel() {
 
     private val exerciseId: Long = savedStateHandle["exerciseId"] ?: -1L
@@ -87,6 +98,7 @@ class ExerciseStatsViewModel(
                 )
 
                 updateChartData(sets, ChartMetric.WEIGHT)
+                loadWeeklyMuscleVolume(exercise)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -94,6 +106,39 @@ class ExerciseStatsViewModel(
                 )
             }
         }
+    }
+
+    /**
+     * Lädt alle abgeschlossenen Arbeitssätze der aktuellen Woche und bewertet das
+     * gewichtete Volumen der Muskelgruppen dieser Übung gegen MEV/MAV/MRV.
+     */
+    private suspend fun loadWeeklyMuscleVolume(exercise: Exercise?) {
+        if (exercise == null) {
+            _uiState.value = _uiState.value.copy(weeklyMuscleVolume = emptyList())
+            return
+        }
+
+        val preferences = appPreferencesRepository.preferences.first()
+        val weekAnchor = when (preferences.weekStart) {
+            WeekStart.MONDAY -> DayOfWeek.MONDAY
+            WeekStart.SUNDAY -> DayOfWeek.SUNDAY
+        }
+        val startOfWeek = MuscleVolumeCalculator.weekStartFor(LocalDate.now(), weekAnchor)
+        val startOfWeekMillis = startOfWeek
+            .atStartOfDay()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val weekSets = statisticsRepository.getWorkSetsCompletedSince(startOfWeekMillis)
+        val exercises = exerciseRepository.getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
+        val relevantGroups = setOf(exercise.primaryMuscleGroup) + exercise.secondaryMuscleGroups
+
+        _uiState.value = _uiState.value.copy(
+            weeklyMuscleVolume = MuscleVolumeCalculator
+                .aggregateByMuscleGroup(weekSets, exercises, startOfWeek)
+                .filter { it.muscleGroup in relevantGroups }
+        )
     }
 
     private fun observeRecords() {

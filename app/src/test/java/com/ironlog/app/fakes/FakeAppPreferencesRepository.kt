@@ -1,6 +1,7 @@
 package com.ironlog.app.fakes
 
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
@@ -29,6 +30,10 @@ class FakeAppPreferencesRepository(
 
     override suspend fun updateWeekStart(weekStart: WeekStart) {
         state.value = state.value.copy(weekStart = weekStart)
+    }
+
+    override suspend fun updateDeloadMode(mode: DeloadMode?) {
+        state.value = state.value.copy(deloadMode = mode)
     }
 
     override suspend fun updateThemeMode(themeMode: ThemeMode) {

@@ -2560,6 +2560,28 @@ class ActiveWorkoutViewModelTest {
         weightKg = weightKg
     )
 
+    private fun rpeSnapshotTarget(
+        id: Long,
+        exerciseId: Long,
+        orderIndex: Int,
+        sets: Int = 3,
+        reps: Int = 8,
+        weightKg: Double = 100.0,
+        targetRpe: Double = 8.0
+    ) = snapshotTarget(
+        id = id,
+        exerciseId = exerciseId,
+        orderIndex = orderIndex,
+        sets = sets,
+        reps = reps,
+        weightKg = weightKg,
+        config = ProgressionConfig.RpeRir(
+            targetRpe = targetRpe,
+            tolerance = 0.5,
+            step = WeightStep(originalValue = 2.5, originalUnit = UnitSystem.METRIC, kilograms = 2.5)
+        )
+    )
+
     @Test
     fun `logSet startet keinen Rest Timer wenn Auto-Pause deaktiviert ist`() = runTest {
         val vm = createViewModel()
@@ -2588,6 +2610,137 @@ class ActiveWorkoutViewModelTest {
         val timer = vm.uiState.value.restTimers.getValue(WorkoutExerciseKey.AdHoc(testExercise.id))
         assertEquals(180, timer.durationSeconds)
         assertTrue(timer.startTime.epochSecond > 0)
+
+        collector.cancel()
+    }
+
+    // --- Intra-Session Autoregulation (RPE) ---
+
+    @Test
+    fun `Ziel-RPE aktiv zeigt Empfehlung fuer naechsten Satz`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        progressionTargets.value = listOf(
+            rpeSnapshotTarget(id = 881L, exerciseId = testExercise.id, orderIndex = 0, sets = 2, weightKg = 80.0)
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // 8.5 RPE bei Ziel-RPE 8.0 -> Delta -0.5 -> -1.25 % -> 79.0 kg
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0,
+            intensity = "8.5"
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val key = WorkoutExerciseKey.Planned(881L)
+        val recommendation = vm.uiState.value.nextSetRecommendations[key]
+        assertNotNull(recommendation)
+        assertEquals(79.0, recommendation!!.recommendedWeightKg, 0.01)
+        assertEquals(80.0, recommendation.lastWeightKg, 0.01)
+        assertEquals(8.5, recommendation.lastRpe, 0.01)
+        assertEquals(8.0, recommendation.targetRpe!!, 0.01)
+        assertFalse(recommendation.isOvershoot)
+        assertNull(recommendation.backoffWeightKg)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `Overshoot ohne Ziel-RPE zeigt Reduktion und Backoff-Satz`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 100.0, intensity = "9.5")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val key = WorkoutExerciseKey.AdHoc(testExercise.id)
+        val recommendation = vm.uiState.value.nextSetRecommendations[key]
+        assertNotNull(recommendation)
+        // 9.5 RPE ohne Ziel => Referenz 9.0 -> -1.25 % -> 98.8 kg
+        assertEquals(98.8, recommendation!!.recommendedWeightKg, 0.01)
+        assertEquals(9.5, recommendation.lastRpe, 0.01)
+        assertTrue(recommendation.isOvershoot)
+        assertNull(recommendation.targetRpe)
+        // Dedizierter Backoff-Satz: 10 % unter dem Arbeitsgewicht
+        assertEquals(90.0, recommendation.backoffWeightKg!!, 0.01)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `keine Empfehlung ohne Arbeitssatz mit RPE`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Aufwaermsaetze zaehlen nie als Basis, fehlende RPE ebenso nicht.
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 60.0, setType = SetType.WARMUP, intensity = "9")
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.nextSetRecommendations.isEmpty())
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `keine Empfehlung bei deaktivierter Intensitaetserfassung`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.OFF)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 100.0, intensity = "9.5")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.nextSetRecommendations.isEmpty())
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `Empfehlung folgt RPE-Aenderung des letzten Satzes`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        progressionTargets.value = listOf(
+            rpeSnapshotTarget(id = 881L, exerciseId = testExercise.id, orderIndex = 0, sets = 2, weightKg = 80.0)
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0,
+            intensity = "8"
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val key = WorkoutExerciseKey.Planned(881L)
+        assertEquals(
+            80.0,
+            vm.uiState.value.nextSetRecommendations.getValue(key).recommendedWeightKg,
+            0.01
+        )
+
+        // RPE des letzten Satzes nachtraeglich auf 9.5 korrigieren -> Empfehlung sinkt.
+        val set = workoutRepo.getSetsForSessionList(sessionId).single()
+        vm.updateSet(setId = set.id, reps = 8, weightKg = 80.0, intensity = "9.5")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            77.0,
+            vm.uiState.value.nextSetRecommendations.getValue(key).recommendedWeightKg,
+            0.01
+        )
 
         collector.cancel()
     }

@@ -277,6 +277,10 @@ fun ExerciseStatsScreen(
                 }
 
                 item {
+                    WeeklyMuscleVolumeCard(volumes = state.weeklyMuscleVolume)
+                }
+
+                item {
                     Text(
                         text = stringResource(id = R.string.stats_progress_title),
                         style = MaterialTheme.typography.titleLarge,

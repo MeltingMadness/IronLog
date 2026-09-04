@@ -2,6 +2,9 @@ package com.ironlog.app.presentation.dashboard
 
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
+import com.ironlog.app.domain.model.DeloadAssessment
+import com.ironlog.app.domain.model.DeloadMode
+import com.ironlog.app.domain.model.DeloadSignal
 import com.ironlog.app.domain.model.MetaPlanRotationEvent
 import com.ironlog.app.domain.model.ProgressionDecisionResult
 import com.ironlog.app.domain.model.ProgressionGenerationResult
@@ -14,6 +17,7 @@ import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
+import com.ironlog.app.fakes.FakeDeloadRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
@@ -83,7 +87,8 @@ class DashboardViewModelTest {
         preferencesRepo,
         planRepo,
         metaPlanRepo,
-        progressionRepository
+        progressionRepository,
+        FakeDeloadRepository()
     )
 
     @Test
@@ -788,5 +793,74 @@ class DashboardViewModelTest {
             ProgressionDecisionResult.Accepted(finalTargetsBySuggestionId.keys)
 
         override suspend fun rejectSuggestion(suggestionId: Long) = Unit
+    }
+
+    // --- Deload ---
+
+    private fun recommendedDeload() = DeloadAssessment(
+        recommended = true,
+        fatigueScore = 75,
+        signals = listOf(DeloadSignal.E1RM_DROP, DeloadSignal.FAILURE_FREQUENCY),
+        windowStart = java.time.LocalDate.now().minusWeeks(4),
+        windowEnd = java.time.LocalDate.now(),
+        sessionCount = 6,
+        strongestExerciseId = 1L,
+        strongestExerciseChangePercent = -4.0
+    )
+
+    @Test
+    fun `deload recommendation is loaded into dashboard state with exercise name`() = runTest {
+        exerciseRepo.addExercise(
+            com.ironlog.app.domain.model.Exercise(
+                id = 1L,
+                name = "Kniebeuge",
+                primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BEINE,
+                category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
+            )
+        )
+        val deloadRepo = FakeDeloadRepository(assessment = recommendedDeload())
+        val vm = DashboardViewModel(
+            workoutRepo,
+            statsRepo,
+            exerciseRepo,
+            preferencesRepo,
+            planRepo,
+            metaPlanRepo,
+            progressionRepository,
+            deloadRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals(true, state.deload?.recommended)
+        assertEquals(75, state.deload?.fatigueScore)
+        assertEquals("Kniebeuge", state.deloadExerciseName)
+        assertEquals(null, state.deloadMode)
+    }
+
+    @Test
+    fun `activateDeloadMode persists the mode and updates the state`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.activateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DeloadMode.HALVE_SET_VOLUME, preferencesRepo.current.deloadMode)
+        assertEquals(DeloadMode.HALVE_SET_VOLUME, vm.uiState.value.deloadMode)
+    }
+
+    @Test
+    fun `deactivateDeloadMode clears the persisted mode`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.activateDeloadMode(DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT)
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.deactivateDeloadMode()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(null, preferencesRepo.current.deloadMode)
+        assertEquals(null, vm.uiState.value.deloadMode)
     }
 }

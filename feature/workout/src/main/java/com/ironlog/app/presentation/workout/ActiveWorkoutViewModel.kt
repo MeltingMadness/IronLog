@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.ProgressionConfig
@@ -19,6 +20,7 @@ import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
+import com.ironlog.app.domain.util.RpeAutoregulation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -84,6 +86,28 @@ data class RestTimerUi(
 )
 
 /**
+ * Intra-session autoregulation hint for the next work set of an exercise,
+ * derived from the RPE of the last logged work set (see [RpeAutoregulation]).
+ */
+data class NextSetRecommendationUi(
+    val recommendedWeightKg: Double,
+    val lastWeightKg: Double,
+    val lastRpe: Double,
+    val targetRpe: Double?
+) {
+    val isOvershoot: Boolean
+        get() = lastRpe >= RpeAutoregulation.OVERSHOOT_RPE
+
+    /** Dedicated backoff-set load; only meaningful after an overshoot. */
+    val backoffWeightKg: Double?
+        get() = if (isOvershoot) {
+            RpeAutoregulation.backoffSetWeightKg(lastWeightKg)
+        } else {
+            null
+        }
+}
+
+/**
  * Describes the last failed mutation so the UI can offer a real retry without
  * storing composable callbacks inside the ViewModel.
  */
@@ -122,6 +146,7 @@ data class ActiveWorkoutUiState(
     val showExercisePicker: Boolean = false,
     val showFinishDialog: Boolean = false,
     val restTimers: Map<WorkoutExerciseKey, RestTimerUi> = emptyMap(),
+    val nextSetRecommendations: Map<WorkoutExerciseKey, NextSetRecommendationUi> = emptyMap(),
     val error: WorkoutErrorUi? = null,
     val logInFlightByExercise: Map<WorkoutExerciseKey, Int> = emptyMap(),
     val logSuccessSubmissions: Set<Long> = emptySet(),
@@ -170,6 +195,31 @@ fun lastWorkSetReachedTarget(
         lastWorkSet.weightKg >= target.target.weightKg
 }
 
+/**
+ * Passt ein Planziel an den aktiven Deload-Modus an (nur Anzeigeebene — die
+ * gespeicherten Planziele und die Progressions-Auswertung bleiben unverändert).
+ * Ohne aktiven Modus wird das Ziel unverändert zurückgegeben.
+ */
+internal fun applyDeloadToTarget(
+    target: WorkoutPlanTarget,
+    deloadMode: DeloadMode?
+): WorkoutPlanTarget = when (deloadMode) {
+    null -> target
+    DeloadMode.HALVE_SET_VOLUME -> target.copy(
+        target = target.target.copy(
+            sets = maxOf(1, (target.target.sets + 1) / 2)
+        )
+    )
+    DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT -> target.copy(
+        target = target.target.copy(
+            weightKg = roundToOneDecimal(target.target.weightKg * 0.85)
+        )
+    )
+}
+
+private fun roundToOneDecimal(value: Double): Double =
+    kotlin.math.round(value * 10.0) / 10.0
+
 class ActiveWorkoutViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val workoutRepository: WorkoutRepository,
@@ -214,12 +264,18 @@ class ActiveWorkoutViewModel(
             .map { it.shareWeightHistoryAcrossContexts }
             .distinctUntilChanged()
 
+    private val deloadMode =
+        appPreferencesRepository.preferences
+            .map { it.deloadMode }
+            .distinctUntilChanged()
+
     private val exercisesWithSets = combine(
         sessionSets,
         addedExercises,
         planTargets,
-        shareWeightHistoryAcrossContexts
-    ) { sets, added, targets, shareAcrossContexts ->
+        shareWeightHistoryAcrossContexts,
+        deloadMode
+    ) { sets, added, targets, shareAcrossContexts, activeDeloadMode ->
         val orderedTargets = targets.sortedWith(
             compareBy(WorkoutPlanTarget::orderIndex, WorkoutPlanTarget::id)
         )
@@ -251,7 +307,7 @@ class ActiveWorkoutViewModel(
                 exercise = exercise,
                 sets = sets.filter { it.planTargetSnapshotId == target.id }
                     .sortedBy { it.setNumber },
-                planTarget = target,
+                planTarget = applyDeloadToTarget(target, activeDeloadMode),
                 previousSession = previousSession?.let {
                     PreviousExerciseSessionUi(
                         sessionId = it.sessionId,
@@ -288,6 +344,44 @@ class ActiveWorkoutViewModel(
         plannedRows + adHocRows
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /**
+     * Real-time next-set load hints: built from the last work set of each
+     * exercise and its RPE_RIR target (when present). Updates whenever a set
+     * is logged, edited or deleted through [exercisesWithSets], so the chip
+     * always reflects the newest RPE.
+     */
+    private val nextSetRecommendations = combine(
+        exercisesWithSets,
+        appPreferencesRepository.preferences
+    ) { rows, prefs ->
+        rows.mapNotNull { row ->
+            if (
+                effectiveRowIntensitySystem(prefs.intensitySystem, row.planTarget) ==
+                IntensitySystem.OFF
+            ) {
+                return@mapNotNull null
+            }
+            val lastWorkSet = row.sets
+                .filter { it.setType == SetType.NORMAL }
+                .sortedBy { it.setNumber }
+                .lastOrNull()
+                ?: return@mapNotNull null
+            val lastRpe = lastWorkSet.rpe ?: return@mapNotNull null
+            val targetRpe = (row.planTarget?.config as? ProgressionConfig.RpeRir)?.targetRpe
+            val recommended = RpeAutoregulation.recommendNextSetWeightKg(
+                lastWeightKg = lastWorkSet.weightKg,
+                lastRpe = lastRpe,
+                targetRpe = targetRpe
+            ) ?: return@mapNotNull null
+            row.key to NextSetRecommendationUi(
+                recommendedWeightKg = recommended,
+                lastWeightKg = lastWorkSet.weightKg,
+                lastRpe = lastRpe,
+                targetRpe = targetRpe
+            )
+        }.toMap()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     internal fun previousSessionScope(
         planId: Long,
         metaPlanId: Long,
@@ -319,12 +413,14 @@ class ActiveWorkoutViewModel(
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
         sessionPhase,
         exercisesWithSets,
+        nextSetRecommendations,
         chromeState,
         operationState
-    ) { phase, exercises, chrome, operation ->
+    ) { phase, exercises, recommendations, chrome, operation ->
         ActiveWorkoutUiState(
             sessionPhase = phase,
             exercisesWithSets = exercises,
+            nextSetRecommendations = recommendations,
             showExercisePicker = chrome.showExercisePicker,
             showFinishDialog = chrome.showFinishDialog,
             restTimers = chrome.restTimers,
@@ -554,7 +650,18 @@ class ActiveWorkoutViewModel(
             return configured
         }
         val target = planTargets.value.find { it.id == key.snapshotId }
-        return if (target?.config is ProgressionConfig.RpeRir) IntensitySystem.RPE else configured
+        return effectiveRowIntensitySystem(configured, target)
+    }
+
+    private fun effectiveRowIntensitySystem(
+        configured: IntensitySystem,
+        planTarget: WorkoutPlanTarget?
+    ): IntensitySystem = if (
+        configured == IntensitySystem.OFF && planTarget?.config is ProgressionConfig.RpeRir
+    ) {
+        IntensitySystem.RPE
+    } else {
+        configured
     }
 
     private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {

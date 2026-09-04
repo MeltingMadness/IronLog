@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.ReminderConfig
 import java.time.DayOfWeek
 
@@ -30,6 +31,7 @@ internal object AppPreferenceKeys {
         booleanPreferencesKey("share_weight_history_across_contexts")
     val AUTO_REST_TIMER_ENABLED = booleanPreferencesKey("auto_rest_timer_enabled")
     val DEFAULT_REST_TIME_SECONDS = intPreferencesKey("default_rest_time_seconds")
+    val DELOAD_MODE = stringPreferencesKey("deload_mode")
 }
 
 // Sentinel stored when the user explicitly deselects every reminder day. This is required to

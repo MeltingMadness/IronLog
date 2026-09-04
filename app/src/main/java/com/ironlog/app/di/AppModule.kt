@@ -12,6 +12,7 @@ import com.ironlog.app.data.local.IronLogDatabase
 import com.ironlog.app.data.preferences.AppPreferencesRepositoryImpl
 import com.ironlog.app.data.reminder.ReminderSchedulerImpl
 import com.ironlog.app.data.repository.BackupRepositoryImpl
+import com.ironlog.app.data.repository.DeloadRepositoryImpl
 import com.ironlog.app.data.repository.ExerciseRepositoryImpl
 import com.ironlog.app.data.repository.IncidentReportRepositoryImpl
 import com.ironlog.app.data.repository.MetaTrainingPlanRepositoryImpl
@@ -21,6 +22,7 @@ import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.BackupRepository
+import com.ironlog.app.domain.repository.DeloadRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
@@ -69,6 +71,7 @@ val appModule = module {
     single { ProgressionEngine() }
     single<ProgressionRepository> { ProgressionRepositoryImpl(get(), get(), get(), get(), get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
+    single<DeloadRepository> { DeloadRepositoryImpl(get(), get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
     single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext()) }

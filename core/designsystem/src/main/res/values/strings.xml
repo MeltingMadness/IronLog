@@ -36,6 +36,21 @@
         <item quantity="other">%1$d Progressionsvorschläge offen</item>
     </plurals>
     <string name="dashboard_review_progressions">Prüfen</string>
+    <string name="deload_card_title_recommended">Deload-Woche empfohlen</string>
+    <string name="deload_card_title_active">Deload-Woche aktiv</string>
+    <string name="deload_card_fatigue_score">Ermüdungswert: %1$d/100</string>
+    <string name="deload_card_body">Deine Leistungskurve deutet auf aufgestaute Ermüdung hin. Eine Deload-Woche schützt deine Fortschritte.</string>
+    <string name="deload_signal_e1rm_stagnation">E1RM stagniert</string>
+    <string name="deload_signal_e1rm_drop">E1RM sinkt</string>
+    <string name="deload_signal_rpe_creep">RPE steigt</string>
+    <string name="deload_signal_failure_frequency">Viele Fehlversuche</string>
+    <string name="deload_strongest_exercise">Stärkster Abfall: %1$s (%2$s)</string>
+    <string name="deload_mode_halve_volume">Volumen halbieren</string>
+    <string name="deload_mode_reduce_intensity">Intensität −15 %%</string>
+    <string name="deload_mode_active">Deload aktiv</string>
+    <string name="deload_mode_end">Deload beenden</string>
+    <string name="deload_active_hint_volume">Deine Trainingsziele zeigen die halbe Satzzahl.</string>
+    <string name="deload_active_hint_intensity">Deine Trainingsziele zeigen 15 %% weniger Gewicht.</string>
 
     <string name="dashboard_greeting_morning">Guten Morgen</string>
     <string name="dashboard_greeting_day">Guten Tag</string>
@@ -202,6 +217,13 @@
     <string name="stats_e1rm_abs_label">Steigerung</string>
     <string name="stats_e1rm_rel_label">Steigerung (%%)</string>
     <string name="stats_e1rm_rel_value">%1$s %%</string>
+    <string name="stats_weekly_volume_title">Wochenvolumen</string>
+    <string name="stats_weekly_volume_subtitle">Arbeitssätze je Muskelgruppe und Woche — MEV: Minimum, MAV: Ziel, MRV: Maximum</string>
+    <string name="stats_weekly_volume_empty">Diese Woche sind noch keine Arbeitssätze für diese Muskelgruppen erfasst.</string>
+    <string name="stats_volume_status_low">Niedrig</string>
+    <string name="stats_volume_status_optimal">Optimal</string>
+    <string name="stats_volume_status_high">Hoch</string>
+    <string name="stats_volume_sets_count">%1$s Sätze</string>
 
     <string name="settings_title">Einstellungen</string>
     <string name="settings_section_appearance">Darstellung</string>
@@ -331,6 +353,11 @@
     <string name="settings_msg_notification_denied">Benachrichtigungsberechtigung wurde nicht erteilt.</string>
     <string name="common_error_action_failed">Aktion fehlgeschlagen: %1$s</string>
     <string name="workout_rest_timer_prefix">Pause</string>
+    <string name="workout_autoregulation_next_set">Nächster Satz: %1$s</string>
+    <string name="workout_autoregulation_next_set_delta">Nächster Satz: %1$s (%2$s)</string>
+    <string name="workout_autoregulation_target_rpe">Ziel-RPE %1$s</string>
+    <string name="workout_autoregulation_overshoot">Zu schwer (RPE %1$s)</string>
+    <string name="workout_autoregulation_backoff_set">Backoff-Satz: %1$s</string>
     <string name="settings_section_rest_timer">Pause</string>
     <string name="settings_auto_rest_timer_title">Rest-Timer automatisch starten</string>
     <string name="settings_auto_rest_timer_subtitle">Nach jedem Arbeitssatz startet automatisch eine Pause mit der Standarddauer.</string>

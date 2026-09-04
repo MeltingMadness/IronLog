@@ -1,6 +1,7 @@
 ﻿package com.ironlog.app.domain.repository
 
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
@@ -26,4 +27,5 @@ interface AppPreferencesRepository {
     suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
     suspend fun updateAutoRestTimerEnabled(enabled: Boolean)
     suspend fun updateDefaultRestTimeSeconds(seconds: Int)
+    suspend fun updateDeloadMode(mode: DeloadMode?)
 }

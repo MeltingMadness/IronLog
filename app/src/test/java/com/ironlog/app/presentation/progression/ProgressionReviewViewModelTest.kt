@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.progression
 
 import androidx.lifecycle.SavedStateHandle
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.IntensitySystem
@@ -741,6 +742,10 @@ private class FakePreferencesRepository : AppPreferencesRepository {
 
     override suspend fun updateWeekStart(weekStart: WeekStart) {
         state.value = state.value.copy(weekStart = weekStart)
+    }
+
+    override suspend fun updateDeloadMode(mode: DeloadMode?) {
+        state.value = state.value.copy(deloadMode = mode)
     }
 
     override suspend fun updateThemeMode(themeMode: ThemeMode) {

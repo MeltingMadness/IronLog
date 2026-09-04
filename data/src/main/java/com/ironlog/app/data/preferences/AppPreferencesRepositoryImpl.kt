@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
@@ -64,7 +65,9 @@ class AppPreferencesRepositoryImpl(
             shareWeightHistoryAcrossContexts =
                 prefs[AppPreferenceKeys.SHARE_WEIGHT_HISTORY_ACROSS_CONTEXTS] ?: false,
             autoRestTimerEnabled = prefs[AppPreferenceKeys.AUTO_REST_TIMER_ENABLED] ?: false,
-            defaultRestTimeSeconds = prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] ?: 120
+            defaultRestTimeSeconds = prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] ?: 120,
+            deloadMode = prefs.stringOrNull(AppPreferenceKeys.DELOAD_MODE)
+                ?.let { runCatching { DeloadMode.valueOf(it) }.getOrNull() }
         )
     }
 
@@ -152,6 +155,16 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] = seconds.coerceIn(30, 600)
+        }
+    }
+
+    override suspend fun updateDeloadMode(mode: DeloadMode?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (mode == null) {
+                prefs.remove(AppPreferenceKeys.DELOAD_MODE)
+            } else {
+                prefs[AppPreferenceKeys.DELOAD_MODE] = mode.name
+            }
         }
     }
 }
