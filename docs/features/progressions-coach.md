@@ -79,6 +79,16 @@ Nur `PENDING` zählt für den Dashboard-Hinweis.
 
 Jede fachliche Änderung an einer Regel braucht eine neue **Regelrevision**. Offene Vorschläge einer älteren Revision werden dann `STALE`, statt still neu interpretiert zu werden.
 
+## Individuelle Satzvorgaben (manuelle Progression)
+
+Eine Planübung kann statt `targetSets × targetReps @ Gewicht` eine Liste einzelner Satzvorgaben haben (`setTargetsJson`, Modell `PlannedSet` in `:shared`). Diese Vorgaben landen im Snapshot beim Workout-Start.
+
+Nach dem Workout bietet die Zusammenfassung „Planänderungen prüfen“ an. Dort lassen sich die **tatsächlich absolvierten** Satzwerte ausdrücklich als neue Vorgaben übernehmen („Satzwerte übernehmen“) oder der Plan bleibt unverändert. Offene, nicht absolvierte Vorgaben bleiben erhalten. Hat sich der Plan seit dem Workout-Start geändert, wird die Übernahme abgelehnt.
+
+## Plattformen
+
+Die Regeln liegen im gemeinsamen Kern (`:shared`, `progression`). Android ruft sie über `PortableProgressionAdapter` auf, die iOS-App direkt. Der Ablauf mit Review und Bestätigung ist auf beiden Plattformen gleich.
+
 ## Nicht enthalten
 
-Prozentwellen, Training-Max-Blöcke, Periodisierung, automatische Planänderungen ohne Bestätigung, KI- oder Cloud-Empfehlungen, medizinische Bewertung, iOS.
+Prozentwellen, Training-Max-Blöcke, Periodisierung, automatische Planänderungen ohne Bestätigung, KI- oder Cloud-Empfehlungen, medizinische Bewertung.
