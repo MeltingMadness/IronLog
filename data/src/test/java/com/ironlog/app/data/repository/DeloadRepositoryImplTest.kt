@@ -32,7 +32,9 @@ class DeloadRepositoryImplTest {
         setDao = setDao,
         exerciseDao = exerciseDao,
         detector = DeloadDetector(),
-        now = { today }
+        now = { today },
+        // Keep the timestamp upper-bound tests independent of the host clock.
+        nowEpochMillis = { EpochConverter.toLong(today.plusDays(1).atStartOfDay()) }
     )
 
     private fun session(id: Long, date: LocalDate): WorkoutSessionEntity = WorkoutSessionEntity(
@@ -169,5 +171,43 @@ class DeloadRepositoryImplTest {
         // die Verbundübung wird trotzdem analysiert, aber der flache Trend ist nur Stagnation.
         assertEquals(1, assessment.analyzedCompoundCount)
         assertFalse(assessment.recommended)
+    }
+
+    @Test
+    fun `assess excludes future sessions and future sets from readiness evidence`() = runTest {
+        val nowMillis = EpochConverter.toLong(today.plusDays(1).atStartOfDay())
+        val repositoryAtFixedTime = DeloadRepositoryImpl(
+            sessionDao = sessionDao,
+            setDao = setDao,
+            exerciseDao = exerciseDao,
+            detector = DeloadDetector(),
+            now = { today },
+            nowEpochMillis = { nowMillis }
+        )
+        val validSessions = listOf(
+            session(1, today.minusWeeks(3)),
+            session(2, today.minusWeeks(2)),
+            session(3, today.minusWeeks(1))
+        )
+        val futureSession = session(4, today.plusDays(1))
+
+        coEvery { sessionDao.getAllCompletedSessionsList() } returns validSessions + futureSession
+        coEvery { setDao.getSetsForSessions(any()) } returns listOf(
+            entitySet(1, 10, 100.0, date = today.minusWeeks(3)),
+            entitySet(2, 10, 100.0, date = today.minusWeeks(2)),
+            entitySet(3, 10, 100.0, date = today.plusDays(2)),
+            entitySet(4, 10, 100.0, date = today.plusDays(1))
+        )
+        coEvery { exerciseDao.getExercisesByIds(any()) } returns listOf(
+            exercise(10, ExerciseCategory.LANGHANTEL)
+        )
+
+        val assessment = repositoryAtFixedTime.assess()
+
+        // The future session and the future-dated set do not manufacture the
+        // minimum session count required for a readiness score.
+        assertEquals(2, assessment.sessionCount)
+        assertEquals(0, assessment.fatigueScore)
+        assertFalse(assessment.hasSufficientData)
     }
 }

@@ -7,5 +7,6 @@ interface TrainingPlanRepository {
     fun getAllPlans(): Flow<List<TrainingPlan>>
     suspend fun getPlanById(id: Long): TrainingPlan?
     suspend fun savePlan(plan: TrainingPlan): Long
+    suspend fun applyPerformedSetTargets(sessionId: Long) { error("Satzübernahme wird nicht unterstützt") }
     suspend fun deletePlan(planId: Long)
 }

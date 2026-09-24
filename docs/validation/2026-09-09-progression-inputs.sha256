@@ -1,0 +1,12 @@
+13f142febc57bc2176809358c9221f128f60ee3f6c43be89672456d923a75cd5  app/build.gradle.kts
+f13921621619e5d2a2b32fd8e0b6b4d46df5969abd14d1a9d9639840a74fe1d7  core/common/src/main/java/com/ironlog/app/domain/progression/ProgressionRuleSupport.kt
+0e2a19d9226b757c15ddf00e73eacf87dd71a592c2266fc61b23b3b8cdfc560c  core/common/src/main/java/com/ironlog/app/domain/progression/v1/DoubleProgressionRuleV1.kt
+e5607fb356e371b26302b17f91b628b54f1229b3279a1c36d77d05fbd83e7c90  core/common/src/main/java/com/ironlog/app/domain/progression/v1/RpeProgressionRuleV1.kt
+8069d2a24631ed74958ce32e11ea3a20efc5a9c1d65dba193698740f9fdb72b7  core/database/src/main/java/com/ironlog/app/data/local/dao/ProgressionDao.kt
+89a7be96ab26f38533913fb0203b795f1c551c1af057fdaef0b05fbb841aad9f  data/src/main/java/com/ironlog/app/data/repository/ProgressionRepositoryImpl.kt
+51ea4ae55930dca2965046b5f51f04c9caad746e7de1b828b1f4082fbec5753b  feature/progression/src/main/java/com/ironlog/app/presentation/progression/ProgressionWeightEvidence.kt
+96f9ca517bef910e54ac22fe6db3e73e7998180fc5d80f3f4f0a1cc914df22f5  feature/progression/src/main/java/com/ironlog/app/presentation/progression/ProgressionReasonText.kt
+1b0803659236fe14828045744fa33f8d9a832fcb3530742dbcdf7eb5883d4461  feature/progression/src/main/java/com/ironlog/app/presentation/progression/ProgressionReviewScreen.kt
+2fcfdc7f52c1d715e687eeea8683a23464adb2fd0a38ea2f993ce456a0638648  feature/progression/src/main/res/values/audit_strings.xml
+93b6d8bb20a4848aed5c91bdad9bf8495306c849e883abc076fd48714abc60bb  feature/plans/src/main/java/com/ironlog/app/presentation/plans/PlanEditorScreen.kt
+b205a5c6fbc5d666f5f3c753193f1daf446e39e0e5b98243c4c4a61851f2b63e  core/designsystem/src/main/res/values/strings.xml

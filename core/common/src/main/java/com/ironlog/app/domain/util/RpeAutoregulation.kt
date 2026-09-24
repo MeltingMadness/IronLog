@@ -1,6 +1,6 @@
 package com.ironlog.app.domain.util
 
-import kotlin.math.floor
+import com.ironlog.shared.workout.SharedNextSetCoach
 
 /**
  * Intra-session RPE autoregulation: adapts the load of the next work set to
@@ -15,16 +15,16 @@ import kotlin.math.floor
 object RpeAutoregulation {
 
     /** Percent of load adjusted per 1.0 RPE difference from the target (2.5%). */
-    const val PERCENT_PER_RPE = 2.5
+    const val PERCENT_PER_RPE = SharedNextSetCoach.PERCENT_PER_RPE
 
     /** RPE at or above which a set counts as an overshoot even without a target. */
-    const val OVERSHOOT_RPE = 9.0
+    const val OVERSHOOT_RPE = SharedNextSetCoach.OVERSHOOT_RPE
 
     /** One-step cap for the autoregulated adjustment (mirrors the failure backoff). */
-    const val MAX_ADJUSTMENT_PERCENT = 10.0
+    const val MAX_ADJUSTMENT_PERCENT = SharedNextSetCoach.MAX_ADJUSTMENT_PERCENT
 
     /** Default load drop for a dedicated backoff set. */
-    const val DEFAULT_BACKOFF_PERCENT = 10.0
+    const val DEFAULT_BACKOFF_PERCENT = SharedNextSetCoach.DEFAULT_BACKOFF_PERCENT
 
     /**
      * Recommends the load for the next work set.
@@ -44,18 +44,7 @@ object RpeAutoregulation {
         lastWeightKg: Double,
         lastRpe: Double,
         targetRpe: Double?
-    ): Double? {
-        if (!lastWeightKg.isFinite() || lastWeightKg <= 0.0) return null
-        if (!lastRpe.isFinite() || lastRpe !in 1.0..10.0) return null
-
-        val referenceRpe = targetRpe
-            ?: if (lastRpe >= OVERSHOOT_RPE) OVERSHOOT_RPE else return null
-        val rpeDelta = referenceRpe - lastRpe
-        val adjustmentPercent = (rpeDelta * PERCENT_PER_RPE)
-            .coerceIn(-MAX_ADJUSTMENT_PERCENT, MAX_ADJUSTMENT_PERCENT)
-        val recommended = lastWeightKg * (1.0 + adjustmentPercent / 100.0)
-        return roundToOneDecimal(recommended.coerceAtLeast(0.0))
-    }
+    ): Double? = SharedNextSetCoach.recommendNextSetWeightKg(lastWeightKg, lastRpe, targetRpe)
 
     /**
      * Load for a dedicated backoff set (to be run after a hard overshoot set
@@ -68,15 +57,5 @@ object RpeAutoregulation {
     fun backoffSetWeightKg(
         workingWeightKg: Double,
         backoffPercent: Double = DEFAULT_BACKOFF_PERCENT
-    ): Double? {
-        if (!workingWeightKg.isFinite() || workingWeightKg <= 0.0) return null
-        if (!backoffPercent.isFinite() || backoffPercent < 0.0 || backoffPercent > 50.0) return null
-
-        val backoff = workingWeightKg * (1.0 - backoffPercent / 100.0)
-        return roundToOneDecimal(backoff.coerceAtLeast(0.0))
-    }
-
-    // Halbe Zehntel (z. B. 99.25) runden bewusst kaufmaennisch auf, damit die
-    // Empfehlung fuer den naechsten Satz nicht willkuerlich abgerundet wird.
-    private fun roundToOneDecimal(value: Double): Double = floor(value * 10.0 + 0.5) / 10.0
+    ): Double? = SharedNextSetCoach.backoffSetWeightKg(workingWeightKg, backoffPercent)
 }

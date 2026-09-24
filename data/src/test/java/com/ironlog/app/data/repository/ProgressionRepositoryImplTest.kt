@@ -231,6 +231,167 @@ class ProgressionRepositoryImplTest {
     }
 
     @Test
+    fun `legacy zero weight informational outcome is repaired in place and stays idempotent`() = runTest {
+        targetsBySession[9] = listOf(target(id = 41, weightKg = 0.0))
+        setsBySession[9] = listOf(
+            set(id = 1, snapshotId = 41, weightKg = 100.0),
+            set(id = 2, snapshotId = 41, setNumber = 2, weightKg = 100.0),
+            set(id = 3, snapshotId = 41, setNumber = 3, weightKg = 100.0)
+        )
+        suggestions += suggestion(
+            id = 77,
+            sourceTargetSnapshotId = 41,
+            sourceWeightKg = 0.0,
+            countedSetIdsJson = "[1,2,3]"
+        ).copy(
+            sourceTarget = ProgressionTargetColumns(3, 8, 0.0),
+            outcomeType = ProgressionOutcomeType.INSUFFICIENT_DATA.name,
+            reasonCode = ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION.name,
+            reasonArgumentsJson = "{\"actualWeightKg\":100.0,\"expectedWeightKg\":0.0}"
+        )
+        val realRepository = newRepository(ProgressionEngine())
+
+        realRepository.generateOutcomesForSession(9)
+        val repaired = suggestions.single()
+
+        assertEquals(77L, repaired.id)
+        assertEquals(ProgressionTargetColumns(3, 8, 0.0), repaired.sourceTarget)
+        assertEquals("[1,2,3]", repaired.countedSetIdsJson)
+        assertEquals(ProgressionOutcomeType.PROPOSE_CHANGE.name, repaired.outcomeType)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, repaired.status)
+        assertEquals(6_000L, repaired.createdAtEpochMillis)
+
+        val afterFirstRepair = repaired
+        val second = realRepository.generateOutcomesForSession(9)
+
+        assertEquals(0, second.insertedCount)
+        assertEquals(afterFirstRepair, suggestions.single())
+    }
+
+    @Test
+    fun `generateMissingOutcomes repairs old repeat baseline rows but ignores nonzero baselines`() = runTest {
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        targetsBySession[12] = listOf(
+            target(id = 43, sessionId = 12, orderIndex = 0, weightKg = 0.0),
+            target(id = 44, sessionId = 12, orderIndex = 1, weightKg = 100.0)
+        )
+        setsBySession[12] = listOf(
+            set(id = 21, sessionId = 12, snapshotId = 43, reps = 7, weightKg = 100.0),
+            set(id = 22, sessionId = 12, snapshotId = 43, setNumber = 2, reps = 7, weightKg = 100.0),
+            set(id = 23, sessionId = 12, snapshotId = 43, setNumber = 3, reps = 7, weightKg = 100.0),
+            set(id = 31, sessionId = 12, snapshotId = 44, reps = 7, weightKg = 100.0),
+            set(id = 32, sessionId = 12, snapshotId = 44, setNumber = 2, reps = 7, weightKg = 100.0),
+            set(id = 33, sessionId = 12, snapshotId = 44, setNumber = 3, reps = 7, weightKg = 100.0)
+        )
+        fun oldRepeatRow(id: Long, targetId: Long, weightKg: Double, ids: String) = suggestion(
+            id = id,
+            sourceSessionId = 12,
+            sourceTargetSnapshotId = targetId,
+            sourceWeightKg = weightKg,
+            countedSetIdsJson = ids
+        ).copy(
+            sourceTarget = ProgressionTargetColumns(3, 8, weightKg),
+            outcomeType = ProgressionOutcomeType.KEEP_TARGET.name,
+            reasonCode = ProgressionReasonCode.REPEAT_TARGET.name,
+            reasonArgumentsJson = "{}"
+        )
+        suggestions += oldRepeatRow(77, 43, 0.0, "[21,22,23]")
+        suggestions += oldRepeatRow(78, 44, 100.0, "[31,32,33]")
+        missingSessionIds = listOf(12)
+
+        val realRepository = newRepository(ProgressionEngine())
+        realRepository.generateMissingOutcomes()
+
+        assertEquals(ProgressionOutcomeType.PROPOSE_CHANGE.name, suggestions[0].outcomeType)
+        assertEquals(ProgressionSuggestionStatus.PENDING.name, suggestions[0].status)
+        assertEquals(ProgressionOutcomeType.KEEP_TARGET.name, suggestions[1].outcomeType)
+        assertEquals(ProgressionSuggestionStatus.INFORMATIONAL.name, suggestions[1].status)
+        assertEquals(78L, suggestions[1].id)
+    }
+
+    @Test
+    fun `legacy repair leaves accepted and edited rows untouched`() = runTest {
+        targetsBySession[9] = listOf(
+            target(id = 41, orderIndex = 0, weightKg = 0.0),
+            target(id = 42, orderIndex = 1, weightKg = 0.0)
+        )
+        setsBySession[9] = listOf(
+            set(id = 1, snapshotId = 41, weightKg = 100.0),
+            set(id = 2, snapshotId = 41, setNumber = 2, weightKg = 100.0),
+            set(id = 3, snapshotId = 41, setNumber = 3, weightKg = 100.0),
+            set(id = 11, snapshotId = 42, weightKg = 100.0),
+            set(id = 12, snapshotId = 42, setNumber = 2, weightKg = 100.0),
+            set(id = 13, snapshotId = 42, setNumber = 3, weightKg = 100.0)
+        )
+        fun legacyRow(id: Long, targetId: Long) = suggestion(
+            id = id,
+            sourceTargetSnapshotId = targetId,
+            sourceWeightKg = 0.0,
+            countedSetIdsJson = if (targetId == 41L) "[1,2,3]" else "[11,12,13]"
+        ).copy(
+            sourceTarget = ProgressionTargetColumns(3, 8, 0.0),
+            outcomeType = ProgressionOutcomeType.INSUFFICIENT_DATA.name,
+            reasonCode = ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION.name,
+            reasonArgumentsJson = "{\"actualWeightKg\":100.0,\"expectedWeightKg\":0.0}"
+        )
+        suggestions += legacyRow(77, 41).copy(
+            status = ProgressionSuggestionStatus.ACCEPTED.name,
+            finalTarget = ProgressionTargetColumns(3, 8, 102.5),
+            decidedAtEpochMillis = 8_000L
+        )
+        suggestions += legacyRow(78, 42).copy(wasEdited = true)
+        engineOutcomes[41] = ProgressionOutcome.ProposeChange(
+            sourceTarget = ProgressionTarget(3, 8, 0.0),
+            proposedTarget = ProgressionTarget(3, 8, 102.5),
+            reasonCode = ProgressionReasonCode.LOAD_ADVANCED,
+            streakEffect = ProgressionStreakEffect.RESET,
+            countedSetIds = listOf(1, 2, 3)
+        )
+        engineOutcomes[42] = engineOutcomes[41]!!.let {
+            (it as ProgressionOutcome.ProposeChange).copy(
+                countedSetIds = listOf(11, 12, 13)
+            )
+        }
+        val before = suggestions.toList()
+
+        repository.generateOutcomesForSession(9)
+
+        assertEquals(before, suggestions)
+    }
+
+    @Test
+    fun `legacy repair skips mixed positive weights`() = runTest {
+        targetsBySession[9] = listOf(target(id = 41, weightKg = 0.0))
+        setsBySession[9] = listOf(
+            set(id = 1, snapshotId = 41, weightKg = 100.0),
+            set(id = 2, snapshotId = 41, setNumber = 2, weightKg = 100.0),
+            set(id = 3, snapshotId = 41, setNumber = 3, weightKg = 102.5)
+        )
+        suggestions += suggestion(
+            id = 77,
+            sourceTargetSnapshotId = 41,
+            sourceWeightKg = 0.0,
+            countedSetIdsJson = "[1,2,3]"
+        ).copy(
+            sourceTarget = ProgressionTargetColumns(3, 8, 0.0),
+            outcomeType = ProgressionOutcomeType.INSUFFICIENT_DATA.name,
+            reasonCode = ProgressionReasonCode.MANUAL_WEIGHT_DEVIATION.name
+        )
+        engineOutcomes[41] = ProgressionOutcome.ProposeChange(
+            sourceTarget = ProgressionTarget(3, 8, 0.0),
+            proposedTarget = ProgressionTarget(3, 8, 102.5),
+            reasonCode = ProgressionReasonCode.LOAD_ADVANCED,
+            streakEffect = ProgressionStreakEffect.RESET,
+            countedSetIds = listOf(1, 2, 3)
+        )
+        val before = suggestions.single()
+
+        repository.generateOutcomesForSession(9)
+
+        assertEquals(before, suggestions.single())
+    }
+
+    @Test
     fun `manual targets are not evaluated or stored`() = runTest {
         targetsBySession[9] = listOf(target(id = 41, config = ProgressionConfig.Manual()))
 
@@ -400,6 +561,42 @@ class ProgressionRepositoryImplTest {
 
         assertFalse(suggestionQueries.any { 41L in it })
         assertEquals(ProgressionReasonCode.CONFIG_INVALID.name, suggestions.last().reasonCode)
+    }
+
+    @Test
+    fun `changed actual weight cuts off otherwise comparable failure streak`() = runTest {
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        targetsBySession[12] = listOf(target(id = 43, sessionId = 12, weightKg = 100.0))
+        setsBySession[12] = listOf(
+            set(id = 21, sessionId = 12, snapshotId = 43, weightKg = 105.0),
+            set(id = 22, sessionId = 12, snapshotId = 43, setNumber = 2, weightKg = 105.0),
+            set(id = 23, sessionId = 12, snapshotId = 43, setNumber = 3, weightKg = 105.0)
+        )
+        previousTargetsByPosition[Triple(2, 7, 0)] = listOf(
+            target(id = 42, sessionId = 9, weightKg = 100.0)
+        )
+        suggestions += suggestion(
+            id = 1,
+            sourceTargetSnapshotId = 42,
+            sourceWeightKg = 100.0,
+            countedSetIdsJson = "[11,12,13]",
+            streak = ProgressionStreakEffect.INCREMENT
+        )
+        hydratedSets = listOf(
+            set(id = 11, sessionId = 9, snapshotId = 42, weightKg = 100.0),
+            set(id = 12, sessionId = 9, snapshotId = 42, setNumber = 2, weightKg = 100.0),
+            set(id = 13, sessionId = 9, snapshotId = 42, setNumber = 3, weightKg = 100.0)
+        )
+        engineOutcomes[43] = ProgressionOutcome.KeepTarget(
+            sourceTarget = ProgressionTarget(3, 8, 100.0),
+            reasonCode = ProgressionReasonCode.REPEAT_TARGET,
+            streakEffect = ProgressionStreakEffect.INCREMENT,
+            countedSetIds = listOf(21, 22, 23)
+        )
+
+        repository.generateOutcomesForSession(12)
+
+        assertTrue(contexts.single().previousComparableOutcomesNewestFirst.isEmpty())
     }
 
     @Test
@@ -779,6 +976,75 @@ class ProgressionRepositoryImplTest {
     }
 
     @Test
+    fun `single acceptance marks older pending history stale when a newer proposal exists`() = runTest {
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        seedPending(
+            id = 1,
+            sourceSessionId = 9,
+            sourceTargetSnapshotId = 41,
+            sourceWeight = 100.0,
+            proposedWeight = 102.5
+        )
+        seedPending(
+            id = 2,
+            sourceSessionId = 12,
+            sourceTargetSnapshotId = 42,
+            sourceWeight = 100.0,
+            proposedWeight = 105.0
+        )
+        planExercises += matchingPlanExercise(weight = 100.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(1L to ProgressionTarget(3, 8, 102.5))
+        )
+
+        assertEquals(ProgressionDecisionResult.Stale(setOf(1L)), result)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(
+            listOf(
+                ProgressionSuggestionStatus.STALE.name,
+                ProgressionSuggestionStatus.PENDING.name
+            ),
+            suggestions.map { it.status }
+        )
+        assertEquals(7_000L, suggestions.first().decidedAtEpochMillis)
+    }
+
+    @Test
+    fun `accepting newest proposal supersedes older pending history`() = runTest {
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        seedPending(
+            id = 1,
+            sourceSessionId = 9,
+            sourceTargetSnapshotId = 41,
+            sourceWeight = 100.0,
+            proposedWeight = 102.5
+        )
+        seedPending(
+            id = 2,
+            sourceSessionId = 12,
+            sourceTargetSnapshotId = 42,
+            sourceWeight = 100.0,
+            proposedWeight = 105.0
+        )
+        planExercises += matchingPlanExercise(weight = 100.0)
+
+        val result = repository.acceptSuggestions(
+            mapOf(2L to ProgressionTarget(3, 8, 105.0))
+        )
+
+        assertEquals(ProgressionDecisionResult.Accepted(setOf(2L)), result)
+        assertEquals(105.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(
+            listOf(
+                ProgressionSuggestionStatus.STALE.name,
+                ProgressionSuggestionStatus.ACCEPTED.name
+            ),
+            suggestions.map { it.status }
+        )
+    }
+
+    @Test
     fun `invalid edited target changes neither plan nor status`() = runTest {
         seedPending(id = 1, sourceWeight = 100.0, proposedWeight = 102.5)
         planExercises += matchingPlanExercise(weight = 100.0)
@@ -1017,6 +1283,7 @@ class ProgressionRepositoryImplTest {
     private fun seedPending(
         id: Long,
         sourceSessionId: Long = 9,
+        sourceTargetSnapshotId: Long = 41,
         planId: Long = 3,
         exerciseId: Long = 7,
         orderIndex: Int = 0,
@@ -1031,6 +1298,7 @@ class ProgressionRepositoryImplTest {
         suggestions += suggestion(
             id = id,
             sourceSessionId = sourceSessionId,
+            sourceTargetSnapshotId = sourceTargetSnapshotId,
             sourceWeightKg = sourceWeight,
             sourceProgression = sourceProgression,
             outcomeType = ProgressionOutcomeType.PROPOSE_CHANGE
@@ -1091,6 +1359,7 @@ class ProgressionRepositoryImplTest {
         exerciseId: Long = 7,
         setNumber: Int = 1,
         reps: Int = 8,
+        weightKg: Double = 100.0,
         snapshotId: Long? = 41
     ) = WorkoutSetEntity(
         id = id,
@@ -1098,7 +1367,7 @@ class ProgressionRepositoryImplTest {
         exerciseId = exerciseId,
         setNumber = setNumber,
         reps = reps,
-        weightKg = 100.0,
+        weightKg = weightKg,
         setType = "NORMAL",
         completedAt = 500L + id,
         planTargetSnapshotId = snapshotId

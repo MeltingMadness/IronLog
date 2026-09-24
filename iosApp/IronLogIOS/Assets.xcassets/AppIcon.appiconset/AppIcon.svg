@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 108 108" role="img" aria-label="IronLog">
+  <defs>
+    <!-- Android ic_launcher_background.xml: angle 135, start/center/end colors. -->
+    <linearGradient id="launcherBackground" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#1A110C"/>
+      <stop offset="0.5" stop-color="#2B170D"/>
+      <stop offset="1" stop-color="#3D1A00"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Android ic_launcher_background.xml is an opaque rectangle. -->
+  <rect width="108" height="108" fill="url(#launcherBackground)"/>
+
+  <!-- Android ic_launcher_foreground.xml, kept in its 108dp viewport. -->
+  <circle cx="54" cy="54" r="40" fill="#FF8A1F"/>
+  <circle cx="54" cy="24" r="14" fill="#FFFFD8B0" fill-opacity="0.22"/>
+
+  <path fill="#FFFFFF" d="M34 44H40V64H34Z"/>
+  <path fill="#FFFFFF" d="M30 42H44V46H30Z"/>
+  <path fill="#FFFFFF" d="M30 62H44V66H30Z"/>
+  <path fill="#FFFFFF" d="M68 44H74V64H68Z"/>
+  <path fill="#FFFFFF" d="M64 42H78V46H64Z"/>
+  <path fill="#FFFFFF" d="M64 62H78V66H64Z"/>
+  <path fill="#FFFFFF" d="M40 52H68V56H40Z"/>
+</svg>

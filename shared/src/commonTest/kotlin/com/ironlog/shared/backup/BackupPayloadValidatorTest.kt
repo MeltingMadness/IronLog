@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 11
+        const val CURRENT_SCHEMA_VERSION = 12
     }
 
     private val json = Json {
@@ -54,6 +54,7 @@ class BackupPayloadValidatorTest {
                     setNumber = 1,
                     reps = 8,
                     weightKg = 80.0,
+                    setType = NORMAL_SET_TYPE,
                     isWarmup = false,
                     completedAt = 1200L
                 )
@@ -394,6 +395,57 @@ class BackupPayloadValidatorTest {
         )
 
         assertFalse(BackupPayloadValidator.validate(warmupEvidence, CURRENT_SCHEMA_VERSION).isValid)
+    }
+
+    @Test
+    fun `current schema preserves every set type and rejects unknown types`() {
+        val valid = validPayload()
+        val allTypes = listOf(NORMAL_SET_TYPE, WARMUP_SET_TYPE, DROP_SET_TYPE, FAILURE_SET_TYPE)
+        val typed = valid.copy(
+            workoutSets = allTypes.mapIndexed { index, type ->
+                valid.workoutSets.single().copy(
+                    id = 20L + index,
+                    setType = type,
+                    isWarmup = null
+                )
+            }
+        )
+
+        assertTrue(
+            BackupPayloadValidator.validate(typed, CURRENT_SCHEMA_VERSION).isValid,
+            BackupPayloadValidator.validate(typed, CURRENT_SCHEMA_VERSION).errors.joinToString()
+        )
+        assertEquals(allTypes, typed.workoutSets.map { it.resolvedSetType() })
+
+        val unknown = typed.copy(
+            workoutSets = listOf(typed.workoutSets.first().copy(setType = "UNKNOWN"))
+        )
+        assertFalse(BackupPayloadValidator.validate(unknown, CURRENT_SCHEMA_VERSION).isValid)
+    }
+
+    @Test
+    fun `legacy warmup flag remains supported while current conflicting fields fail`() {
+        val valid = validPayload()
+        val legacyWarmup = valid.copy(
+            schemaVersion = 11,
+            workoutSets = listOf(valid.workoutSets.single().copy(setType = null, isWarmup = true))
+        )
+        assertEquals(WARMUP_SET_TYPE, legacyWarmup.workoutSets.single().resolvedSetType())
+        assertTrue(
+            BackupPayloadValidator.validate(legacyWarmup, CURRENT_SCHEMA_VERSION).isValid,
+            BackupPayloadValidator.validate(legacyWarmup, CURRENT_SCHEMA_VERSION).errors.joinToString()
+        )
+
+        val conflicting = valid.copy(
+            workoutSets = listOf(valid.workoutSets.single().copy(setType = NORMAL_SET_TYPE, isWarmup = true))
+        )
+        assertFalse(BackupPayloadValidator.validate(conflicting, CURRENT_SCHEMA_VERSION).isValid)
+
+        val legacyAdvanced = valid.copy(
+            schemaVersion = 11,
+            workoutSets = listOf(valid.workoutSets.single().copy(setType = DROP_SET_TYPE, isWarmup = false))
+        )
+        assertFalse(BackupPayloadValidator.validate(legacyAdvanced, CURRENT_SCHEMA_VERSION).isValid)
     }
 
     @Test
@@ -914,6 +966,7 @@ class BackupPayloadValidatorTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
+                setType = NORMAL_SET_TYPE,
                 isWarmup = false,
                 completedAt = 1200L
             )
@@ -952,6 +1005,7 @@ class BackupPayloadValidatorTest {
                     setNumber = 1,
                     reps = 8,
                     weightKg = 80.0,
+                    setType = NORMAL_SET_TYPE,
                     isWarmup = false,
                     completedAt = 1200L,
                     rpe = 8.0,

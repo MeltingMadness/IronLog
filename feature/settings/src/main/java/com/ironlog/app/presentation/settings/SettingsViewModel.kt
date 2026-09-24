@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.presentation.settings
+package com.ironlog.app.presentation.settings
 
 import android.net.Uri
 import android.util.Log
@@ -19,9 +19,12 @@ import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.RecoveryBackup
+import com.ironlog.app.domain.repository.ProgressionRepository
+import kotlinx.coroutines.CancellationException
 import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.shared.settings.SettingsPreferencesController
+import com.ironlog.shared.settings.isBackupReminderDue
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +42,7 @@ data class SettingsUiState(
     val importPreview: BackupImportPreview? = null,
     val recoveryBackup: RecoveryBackup? = null,
     val showRecoveryRestoreDialog: Boolean = false,
+    val backupReminderDue: Boolean = false,
     val buildInfo: BuildInfo = BuildInfo("", 0)
 )
 
@@ -52,7 +56,8 @@ class SettingsViewModel(
     private val backupRepository: BackupRepository,
     private val reminderScheduler: ReminderScheduler,
     private val incidentReportRepository: IncidentReportRepository,
-    private val buildInfo: BuildInfo
+    private val buildInfo: BuildInfo,
+    private val progressionRepository: ProgressionRepository
 ) : ViewModel() {
     private val preferencesController = SettingsPreferencesController(
         scope = viewModelScope,
@@ -88,6 +93,11 @@ class SettingsViewModel(
             showResetDialog = resetDialog,
             importConfirmationVisible = importVisible,
             importPreview = preview,
+            backupReminderDue = isBackupReminderDue(
+                reminderEnabled = preferencesState.preferences.backupReminderEnabled,
+                lastSuccessfulExportEpochMillis = preferencesState.preferences.lastSuccessfulExportEpochMillis,
+                nowEpochMillis = System.currentTimeMillis(),
+            ),
             buildInfo = buildInfo
         )
     }
@@ -159,12 +169,39 @@ class SettingsViewModel(
         preferencesController.updateDefaultRestTimeSeconds(seconds)
     }
 
+    fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        preferencesController.updatePlateCalculatorEnabled(enabled)
+    }
+
+    fun updateAvailablePlates(plates: List<Double>) {
+        preferencesController.updateAvailablePlates(plates)
+    }
+
+    fun updateBarbellWeightKg(weightKg: Double) {
+        preferencesController.updateBarbellWeightKg(weightKg)
+    }
+
+    fun updateBackupReminderEnabled(enabled: Boolean) {
+        preferencesController.updateBackupReminderEnabled(enabled)
+    }
+
+
     fun exportBackup(uri: Uri) {
         viewModelScope.launch {
-            runBusyAction(
-                action = { backupRepository.exportBackup(uri) },
-                successMessageRes = com.ironlog.core.designsystem.R.string.settings_msg_backup_exported
-            )
+            runBusy {
+                backupRepository.exportBackup(uri)
+                // Keep the timestamp tied to the verified write. A failed export therefore
+                // leaves the previous timestamp untouched and keeps the reminder actionable.
+                appPreferencesRepository.updateLastSuccessfulExportEpochMillis(
+                    System.currentTimeMillis()
+                )
+            }.onSuccess {
+                _events.emit(
+                    SettingsEvent.Message(
+                        com.ironlog.core.designsystem.R.string.settings_msg_backup_exported
+                    )
+                )
+            }.onFailure { error -> emitError(error) }
         }
     }
 
@@ -198,14 +235,22 @@ class SettingsViewModel(
         if (isBusy.value || uri == null || preview == null || !preview.isValid) return
 
         viewModelScope.launch {
-            runBusy { backupRepository.importBackup(uri, preview.sha256) }
-                .onSuccess {
+            runBusy {
+                backupRepository.importBackup(uri, preview.sha256)
+                recoverImportedProgressions()
+            }
+                .onSuccess { progressionRecovered ->
                     clearImportSelection()
                     _events.emit(
                         SettingsEvent.Message(
                             com.ironlog.core.designsystem.R.string.settings_msg_backup_imported
                         )
                     )
+                    if (!progressionRecovered) {
+                        _events.emit(SettingsEvent.Message(
+                            com.ironlog.core.designsystem.R.string.settings_msg_progression_recovery_failed
+                        ))
+                    }
                     syncReminderAndWarn()
                     refreshRecoveryAvailability()
                 }
@@ -238,13 +283,21 @@ class SettingsViewModel(
 
         viewModelScope.launch {
             showRecoveryRestoreDialog.value = false
-            runBusy { backupRepository.restoreLatestRecovery() }
-                .onSuccess {
+            runBusy {
+                backupRepository.restoreLatestRecovery()
+                recoverImportedProgressions()
+            }
+                .onSuccess { progressionRecovered ->
                     _events.emit(
                         SettingsEvent.Message(
                             com.ironlog.core.designsystem.R.string.settings_msg_recovery_restored
                         )
                     )
+                    if (!progressionRecovered) {
+                        _events.emit(SettingsEvent.Message(
+                            com.ironlog.core.designsystem.R.string.settings_msg_progression_recovery_failed
+                        ))
+                    }
                     syncReminderAndWarn()
                     refreshRecoveryAvailability()
                 }
@@ -324,6 +377,18 @@ class SettingsViewModel(
                 listOf(error.message ?: "unbekannter Fehler")
             )
         )
+    }
+
+    // A committed import stays successful even if its derived-data catch-up fails.
+    // Run while busy so a second import cannot overlap this post-processing.
+    private suspend fun recoverImportedProgressions(): Boolean = try {
+        progressionRepository.generateMissingOutcomes()
+        progressionRepository.reconcileOutstandingSuggestions()
+        true
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        false
     }
 
     private suspend fun syncReminderAndWarn() {

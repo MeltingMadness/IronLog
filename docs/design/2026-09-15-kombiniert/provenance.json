@@ -1,0 +1,16 @@
+{
+  "application": "Open Design",
+  "version": "0.22.2",
+  "projectId": "ironlog-kombinierter-entwurf-2026-09-15",
+  "runId": "65b9504b-51b6-4e0b-b96f-b0a3c01e96b7",
+  "transport": "local MCP",
+  "runtime": "Codex CLI",
+  "status": "succeeded",
+  "visualReview": "All three final PNG exports reviewed; all seven screens visible.",
+  "postGenerationCorrections": [
+    "Separate exercise and radio-option subtitles into block lines.",
+    "Fit boards and captions within 1440 x 1100 without scrollbars.",
+    "Use running status before workout finish confirmation."
+  ],
+  "scope": "Design artifact only; native app behavior not implemented or tested."
+}

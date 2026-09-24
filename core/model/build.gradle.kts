@@ -23,6 +23,12 @@ kotlin {
 }
 
 dependencies {
+    // Readiness contracts (readiness + readinessdata) are platform-neutral Kotlin
+    // types from :shared. They are part of this module's public repository API,
+    // so they are exposed with `api` instead of being hidden behind `implementation`.
+    api(project(":shared"))
+    api(libs.kotlinx.datetime)
+
     implementation(libs.core.ktx)
     implementation(libs.paging.common)
 }

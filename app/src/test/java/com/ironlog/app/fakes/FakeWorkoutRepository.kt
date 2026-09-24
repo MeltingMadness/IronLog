@@ -8,6 +8,8 @@ import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.util.WorkoutNumericValidation
+import com.ironlog.shared.readinessdata.SetIntention
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -16,6 +18,7 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     private val sessions = MutableStateFlow<List<WorkoutSessionData>>(emptyList())
     private val sets = MutableStateFlow<List<WorkoutSet>>(emptyList())
+    private val setIntentions = MutableStateFlow<Map<Long, SetIntention>>(emptyMap())
     private var nextSessionId = 1L
     private var nextSetId = 1L
 
@@ -30,6 +33,8 @@ class FakeWorkoutRepository : WorkoutRepository {
     var finishWorkoutCallCount = 0
     var deleteSessionCallCount = 0
     var getPreviousSessionDataForExercisesCallCount = 0
+    var getPagedCompletedWorkoutSummariesFilteredCallCount = 0
+    var lastPagedCompletedWorkoutSummariesFilter: Triple<Long?, Long?, Long?>? = null
 
     var failAddSet = false
     var failUpdateSet = false
@@ -53,6 +58,15 @@ class FakeWorkoutRepository : WorkoutRepository {
 
     fun addSetDirectly(set: WorkoutSet) {
         sets.value = sets.value + set
+    }
+
+    /** Test control: the stored intention for a set, `UNKNOWN` when there is no record. */
+    fun intentionFor(setId: Long): SetIntention =
+        setIntentions.value[setId] ?: SetIntention.UNKNOWN
+
+    /** Test control: seeds an intention without going through a set mutation. */
+    fun setIntentionDirectly(setId: Long, intention: SetIntention) {
+        setIntentions.value = setIntentions.value + (setId to intention)
     }
 
     // --- WorkoutRepository ---
@@ -87,7 +101,7 @@ class FakeWorkoutRepository : WorkoutRepository {
             throw IllegalStateException("Injected finishWorkout failure")
         }
         sessions.value = sessions.value.map {
-            if (it.session.id == sessionId) {
+            if (it.session.id == sessionId && it.isActive && it.session.endTime == null) {
                 val now = java.time.LocalDateTime.now()
                 val durationSeconds =
                     java.time.Duration.between(it.session.startTime, now).seconds
@@ -105,25 +119,41 @@ class FakeWorkoutRepository : WorkoutRepository {
     override fun observeActiveSession(): Flow<WorkoutSession?> =
         sessions.map { list -> list.find { it.isActive }?.session }
 
-    override suspend fun addSet(set: WorkoutSet): Long {
+    override suspend fun addSet(set: WorkoutSet, intention: SetIntention): Long {
         addSetCallCount++
         if (failAddSet) {
             throw IllegalStateException("Injected addSet failure")
         }
+        WorkoutNumericValidation.requireValidWorkoutSet(set)
         val id = nextSetId++
         sets.value = sets.value + set.copy(id = id)
+        // Mirrors the real repository: UNKNOWN records nothing, so a freshly logged set
+        // without an answer resolves to UNKNOWN instead of storing a placeholder.
+        if (intention != SetIntention.UNKNOWN) {
+            setIntentions.value = setIntentions.value + (id to intention)
+        }
         return id
     }
 
-    override suspend fun updateSet(set: WorkoutSet) {
+    override suspend fun updateSet(set: WorkoutSet, intention: SetIntention?) {
         updateSetCallCount++
         if (failUpdateSet) {
             throw IllegalStateException("Injected updateSet failure")
         }
+        WorkoutNumericValidation.requireValidWorkoutSet(set)
         sets.value = sets.value.map { existing ->
             if (existing.id == set.id) set else existing
         }
+        // Tri-state, like the real repository: null preserves, UNKNOWN clears, a
+        // concrete value replaces, so tests can prove an edit never erases an answer.
+        when (intention) {
+            null -> Unit
+            SetIntention.UNKNOWN -> setIntentions.value = setIntentions.value - set.id
+            else -> setIntentions.value = setIntentions.value + (set.id to intention)
+        }
     }
+
+    override fun observeSetIntentions(): Flow<Map<Long, SetIntention>> = setIntentions
 
     override suspend fun deleteSet(setId: Long) {
         deleteSetCallCount++
@@ -131,6 +161,7 @@ class FakeWorkoutRepository : WorkoutRepository {
             throw IllegalStateException("Injected deleteSet failure")
         }
         sets.value = sets.value.filter { it.id != setId }
+        setIntentions.value = setIntentions.value - setId
     }
 
     override fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>> =
@@ -166,12 +197,38 @@ class FakeWorkoutRepository : WorkoutRepository {
                 session = sessionData.session,
                 exerciseCount = sessionSets.map { it.exerciseId }.distinct().size,
                 setCount = sessionSets.size,
-                totalVolume = sessionSets.filter { !it.isWarmup }.sumOf { it.weightKg * it.reps }
+                totalVolume = sessionSets
+                    .filter {
+                        !it.isWarmup &&
+                            WorkoutNumericValidation.isValidReps(it.reps) &&
+                            WorkoutNumericValidation.isValidWeightKg(it.weightKg)
+                    }
+                    .fold(0.0) { total, set ->
+                        val volume = set.weightKg * set.reps.toDouble()
+                        val next = total + volume
+                        if (volume.isFinite() && next.isFinite()) next else total
+                    }
             )
         }
 
     override fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>> =
         kotlinx.coroutines.flow.flowOf(PagingData.from(completedWorkoutSummaries()))
+
+    override fun getPagedCompletedWorkoutSummaries(
+        planId: Long?,
+        fromEpochMillis: Long?,
+        toEpochMillis: Long?
+    ): Flow<PagingData<CompletedWorkoutSummary>> {
+        getPagedCompletedWorkoutSummariesFilteredCallCount++
+        lastPagedCompletedWorkoutSummariesFilter = Triple(planId, fromEpochMillis, toEpochMillis)
+        val filtered = completedWorkoutSummaries().filter { summary ->
+            val session = summary.session
+            (planId == null || session.planId == planId) &&
+                (fromEpochMillis == null || session.startTime.toEpochMillis() >= fromEpochMillis) &&
+                (toEpochMillis == null || session.startTime.toEpochMillis() < toEpochMillis)
+        }
+        return kotlinx.coroutines.flow.flowOf(PagingData.from(filtered))
+    }
 
     override suspend fun getSessionById(id: Long): WorkoutSession? =
         sessions.value.find { it.session.id == id }?.session
@@ -202,7 +259,11 @@ class FakeWorkoutRepository : WorkoutRepository {
         getTotalVolumeForSessionCallCount++
         return sets.value
             .filter { it.sessionId == sessionId && !it.isWarmup }
-            .sumOf { it.weightKg * it.reps }
+            .fold(0.0) { total, set ->
+                val volume = set.weightKg * set.reps.toDouble()
+                val next = total + volume
+                if (volume.isFinite() && next.isFinite()) next else total
+            }
     }
 
     override suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int =
@@ -210,8 +271,23 @@ class FakeWorkoutRepository : WorkoutRepository {
             !it.isActive && it.session.startTime.toEpochMillis() >= sinceEpochMillis
         }
 
+    override suspend fun getCompletedSessionCountBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): Int = sessions.value.count {
+        !it.isActive &&
+            it.session.startTime.toEpochMillis() >= sinceEpochMillis &&
+            it.session.startTime.toEpochMillis() <= untilEpochMillis
+    }
+
     override suspend fun getLastCompletedSession(): WorkoutSession? =
         sessions.value.filter { !it.isActive }.maxByOrNull { it.session.startTime }?.session
+
+    override suspend fun getLastCompletedSessionBefore(untilEpochMillis: Long): WorkoutSession? =
+        sessions.value
+            .filter { !it.isActive && it.session.startTime.toEpochMillis() <= untilEpochMillis }
+            .maxByOrNull { it.session.startTime }
+            ?.session
 
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> {
         getAllCompletedSessionsListCallCount++

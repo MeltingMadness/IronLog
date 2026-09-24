@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,9 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +36,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -41,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.plans.R as PlansR
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
@@ -57,7 +63,21 @@ fun MetaPlanEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDiscardDialog by remember { mutableStateOf(false) }
     val dims = ironLogDimens
+
+    fun requestBack() {
+        if (state.isSaving) return
+        if (state.hasUnsavedChanges && !state.isSaved) {
+            showDiscardDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    // Consume back while saving so the editor cannot disappear before the
+    // repository operation has completed.
+    BackHandler(onBack = ::requestBack)
 
     LaunchedEffect(metaPlanId) {
         viewModel.initialize(metaPlanId)
@@ -88,7 +108,7 @@ fun MetaPlanEditorScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = ::requestBack, enabled = !state.isSaving) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(id = R.string.nav_back)
@@ -96,11 +116,21 @@ fun MetaPlanEditorScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::saveMetaPlan) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(id = R.string.meta_plan_editor_save_cd)
-                        )
+                    IconButton(
+                        onClick = viewModel::saveMetaPlan,
+                        enabled = !state.isSaving && !state.isLoading
+                    ) {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = stringResource(id = R.string.meta_plan_editor_save_cd)
+                            )
+                        }
                     }
                 }
             )
@@ -138,7 +168,7 @@ fun MetaPlanEditorScreen(
                 IronLogSurfaceCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { viewModel.togglePlan(plan.id) },
+                        .clickable { viewModel.addPlan(plan.id) },
                     tone = if (selected) IronLogSurfaceTone.ELEVATED else IronLogSurfaceTone.MUTED,
                     alpha = if (selected) 0.78f else 0.68f,
                     border = if (selected) {
@@ -159,10 +189,15 @@ fun MetaPlanEditorScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f)
                         )
-                        Checkbox(
-                            checked = selected,
-                            onCheckedChange = { viewModel.togglePlan(plan.id) }
-                        )
+                        IconButton(
+                            onClick = { viewModel.addPlan(plan.id) },
+                            enabled = !state.isSaving && !state.isSaved
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(id = R.string.meta_plan_editor_add_subplan_cd)
+                            )
+                        }
                     }
                 }
             }
@@ -197,12 +232,35 @@ fun MetaPlanEditorScreen(
                         isLast = index == state.selectedPlanIds.lastIndex,
                         onMoveUp = { viewModel.moveSelectedPlanUp(index) },
                         onMoveDown = { viewModel.moveSelectedPlanDown(index) },
-                        onRemove = { viewModel.removeSelectedPlan(planId) }
+                        onRemove = { viewModel.removeSelectedPlanAt(index) }
                     )
                 }
             }
 
             item { Spacer(modifier = Modifier.height(dims.spacingXl)) }
+        }
+
+        if (showDiscardDialog) {
+            AlertDialog(
+                onDismissRequest = { showDiscardDialog = false },
+                title = { Text(stringResource(id = PlansR.string.meta_plan_editor_discard_title)) },
+                text = { Text(stringResource(id = PlansR.string.meta_plan_editor_discard_text)) },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            showDiscardDialog = false
+                            onBack()
+                        }
+                    ) {
+                        Text(stringResource(id = PlansR.string.meta_plan_editor_discard_confirm))
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showDiscardDialog = false }) {
+                        Text(stringResource(id = PlansR.string.meta_plan_editor_discard_cancel))
+                    }
+                }
+            )
         }
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsScreen: View {
-    @StateObject private var viewModel = IOSSettingsViewModel()
+    @EnvironmentObject private var viewModel: IOSSettingsViewModel
 
     var body: some View {
         NavigationStack {
@@ -44,11 +44,6 @@ struct SettingsScreen: View {
                         }
                     }
 
-                    Toggle("Dynamische Farben", isOn: Binding(
-                        get: { viewModel.state.useDynamicColor },
-                        set: viewModel.updateUseDynamicColor
-                    ))
-
                     Toggle("Reduzierte Bewegung", isOn: Binding(
                         get: { viewModel.state.reducedMotion },
                         set: viewModel.updateReducedMotion
@@ -56,7 +51,7 @@ struct SettingsScreen: View {
                 }
 
                 Section("Training") {
-                    Picker("Intensitaet", selection: Binding(
+                    Picker("Intensität", selection: Binding(
                         get: { viewModel.state.intensitySystem },
                         set: viewModel.updateIntensitySystem
                     )) {
@@ -65,7 +60,16 @@ struct SettingsScreen: View {
                         }
                     }
 
-                    Toggle("Warmup standardmaessig markieren", isOn: Binding(
+                    Picker("Deload", selection: Binding(
+                        get: { viewModel.state.deloadMode },
+                        set: viewModel.updateDeloadMode
+                    )) {
+                        ForEach(viewModel.deloadModeOptions, id: \.self) { option in
+                            Text(viewModel.label(for: option)).tag(option)
+                        }
+                    }
+
+                    Toggle("Warmup standardmäßig markieren", isOn: Binding(
                         get: { viewModel.state.defaultWarmupFlag },
                         set: viewModel.updateDefaultWarmupFlag
                     ))
@@ -74,6 +78,72 @@ struct SettingsScreen: View {
                         get: { viewModel.state.timerKeepScreenOn },
                         set: viewModel.updateTimerKeepScreenOn
                     ))
+
+                    Toggle("Gewichtshistorie über Kontexte teilen", isOn: Binding(
+                        get: { viewModel.state.shareWeightHistoryAcrossContexts },
+                        set: viewModel.updateShareWeightHistoryAcrossContexts
+                    ))
+                }
+
+                Section("Rest-Timer") {
+                    Toggle("Automatischer Rest-Timer", isOn: Binding(
+                        get: { viewModel.state.autoRestTimerEnabled },
+                        set: viewModel.updateAutoRestTimerEnabled
+                    ))
+
+                    Picker("Feste Dauer", selection: Binding(
+                        get: { viewModel.state.defaultRestTimeSeconds },
+                        set: viewModel.updateDefaultRestTimeSeconds
+                    )) {
+                        ForEach([30, 60, 90, 120, 180, 300, 600], id: \.self) { seconds in
+                            Text(viewModel.restTimeLabel(seconds)).tag(seconds)
+                        }
+                    }
+                    .disabled(!viewModel.state.autoRestTimerEnabled)
+
+                    Text(
+                        viewModel.state.autoRestTimerEnabled
+                            ? "Nach passenden Arbeitssätzen läuft ein Countdown."
+                            : "Deaktiviert: Nach dem Satz läuft die Zeit aufwärts."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+
+                Section("Hantel und Platten") {
+                    Toggle("Plattenrechner aktiv", isOn: Binding(
+                        get: { viewModel.state.plateCalculatorEnabled },
+                        set: viewModel.updatePlateCalculatorEnabled
+                    ))
+
+                    if viewModel.state.plateCalculatorEnabled {
+                        Picker("Hantelstange", selection: Binding(
+                            get: { viewModel.state.barbellWeightKg },
+                            set: viewModel.updateBarbellWeightKg
+                        )) {
+                            ForEach([20.0, 15.0, 10.0, 8.0, 2.5], id: \.self) { weight in
+                                Text(viewModel.weightLabel(weight)).tag(weight)
+                            }
+                        }
+
+                        Text("Verfügbare Platten")
+                            .font(.subheadline.weight(.semibold))
+
+                        ForEach([25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25, 0.5], id: \.self) { plate in
+                            Toggle(viewModel.weightLabel(plate), isOn: Binding(
+                                get: { viewModel.state.availablePlates.contains(plate) },
+                                set: { enabled in
+                                    var plates = viewModel.state.availablePlates
+                                    if enabled {
+                                        plates.append(plate)
+                                    } else {
+                                        plates.removeAll { $0 == plate }
+                                    }
+                                    viewModel.updateAvailablePlates(plates)
+                                }
+                            ))
+                        }
+                    }
                 }
 
                 Section("Reminder") {
@@ -110,8 +180,48 @@ struct SettingsScreen: View {
                         viewModel.isImportingBackup = true
                     }
 
-                    Button("Lokale Backup-Zwischenstaende loeschen", role: .destructive) {
-                        viewModel.resetUserData()
+                    Button("Lokale Trainingsdaten zurücksetzen", role: .destructive) {
+                        viewModel.isConfirmingReset = true
+                    }
+
+                    if let date = viewModel.recoveryDate {
+                        Text("Wiederherstellungspunkt: \(date.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.footnote.weight(.semibold))
+
+                        if let summary = viewModel.recoverySummary {
+                            Text(summary)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Button("Vorherige Trainingsdaten wiederherstellen") {
+                            viewModel.requestRestoreLatestRecovery()
+                        }
+                    } else {
+                        Text("Kein Wiederherstellungspunkt verfügbar")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let date = viewModel.lastSuccessfulExportDate {
+                        Text("Letzter erfolgreicher Export: \(date.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Noch kein erfolgreicher Export")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Toggle("An Backup erinnern", isOn: Binding(
+                        get: { viewModel.state.backupReminderEnabled },
+                        set: viewModel.updateBackupReminderEnabled
+                    ))
+
+                    if viewModel.state.backupReminderDue {
+                        Text("Ein neuer Export ist fällig.")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.orange)
                     }
                 }
 
@@ -157,7 +267,7 @@ struct SettingsScreen: View {
             allowedContentTypes: [.json],
             allowsMultipleSelection: false
         ) { result in
-            viewModel.importBackup(from: result)
+            viewModel.prepareBackupImport(from: result)
         }
         .fileExporter(
             isPresented: $viewModel.isExportingBackup,
@@ -165,8 +275,14 @@ struct SettingsScreen: View {
             contentType: .json,
             defaultFilename: viewModel.exportDocument.fileName
         ) { result in
-            if case .failure(let error) = result {
-                viewModel.activeAlert = SettingsAlert(title: "Export fehlgeschlagen", message: error.localizedDescription)
+            switch result {
+            case .success:
+                viewModel.recordSuccessfulBackupExport()
+            case .failure(let error):
+                viewModel.activeAlert = SettingsAlert(
+                    title: "Export fehlgeschlagen",
+                    message: error.localizedDescription
+                )
             }
         }
         .sheet(item: $viewModel.shareItem) { item in
@@ -178,6 +294,46 @@ struct SettingsScreen: View {
                 message: Text(alert.message),
                 dismissButton: .default(Text("OK"))
             )
+        }
+        .confirmationDialog(
+            "Lokale Trainingsdaten zurücksetzen?",
+            isPresented: $viewModel.isConfirmingReset,
+            titleVisibility: .visible
+        ) {
+            Button("Trainingsdaten zurücksetzen", role: .destructive) {
+                viewModel.resetUserData()
+            }
+            Button("Abbrechen", role: .cancel) { }
+        } message: {
+            Text("Übungen, Pläne und Trainings werden aus dem lokalen iOS-Speicher gelöscht.")
+        }
+        .confirmationDialog(
+            "Backup importieren?",
+            isPresented: $viewModel.isConfirmingBackupImport,
+            titleVisibility: .visible
+        ) {
+            Button("Backup importieren", role: .destructive) {
+                viewModel.confirmBackupImport()
+            }
+            Button("Abbrechen", role: .cancel) {
+                viewModel.cancelBackupImport()
+            }
+        } message: {
+            Text(viewModel.pendingImportSummary ?? "Die Backup-Datei wurde geprüft.")
+        }
+        .confirmationDialog(
+            "Vorherige Trainingsdaten wiederherstellen?",
+            isPresented: $viewModel.isConfirmingRecoveryRestore,
+            titleVisibility: .visible
+        ) {
+            Button("Wiederherstellung durchführen", role: .destructive) {
+                viewModel.confirmRestoreLatestRecovery()
+            }
+            Button("Abbrechen", role: .cancel) {
+                viewModel.cancelRecoveryRestore()
+            }
+        } message: {
+            Text("Der aktuelle Trainingsstand wird zuvor wieder als neuer Wiederherstellungspunkt gesichert.")
         }
     }
 }

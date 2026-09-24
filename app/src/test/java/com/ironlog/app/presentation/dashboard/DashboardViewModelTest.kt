@@ -1,7 +1,15 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.app.domain.model.Exercise
+import com.ironlog.app.domain.model.ExerciseCategory
+import com.ironlog.app.domain.model.MuscleGroup
+import com.ironlog.app.domain.model.SetType
+import com.ironlog.app.domain.model.WeekStart
+import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MetaTrainingPlanItem
+import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.DeloadAssessment
 import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.DeloadSignal
@@ -14,8 +22,12 @@ import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
+import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
+import com.ironlog.app.domain.repository.ReadinessProjectionSource
+import com.ironlog.app.domain.repository.ReadinessRepository
 import com.ironlog.app.domain.util.AppLogger
+import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.app.fakes.FakeDeloadRepository
 import com.ironlog.app.fakes.FakeExerciseRepository
@@ -23,11 +35,20 @@ import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
+import com.ironlog.shared.backup.BackupPayloadV1
+import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
+import com.ironlog.shared.readinessdata.ReadinessCheckIn
+import com.ironlog.shared.readinessdata.ReadinessData
+import com.ironlog.shared.readinessdata.SetIntention
+import com.ironlog.shared.readinessdata.SetIntentionRecord
+import com.ironlog.shared.readiness.TrainingTrendStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -46,8 +67,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
-import java.time.temporal.WeekFields
 import io.mockk.every
+import kotlinx.datetime.LocalDate as KxLocalDate
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 
@@ -62,6 +83,8 @@ class DashboardViewModelTest {
     private lateinit var planRepo: FakeTrainingPlanRepository
     private lateinit var metaPlanRepo: MetaTrainingPlanRepository
     private lateinit var progressionRepository: FakeDashboardProgressionRepository
+    private lateinit var readinessSource: FakeReadinessProjectionSource
+    private lateinit var readinessRepo: FakeReadinessRepository
 
     @Before
     fun setUp() {
@@ -73,6 +96,8 @@ class DashboardViewModelTest {
         planRepo = FakeTrainingPlanRepository()
         metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
         progressionRepository = FakeDashboardProgressionRepository()
+        readinessSource = FakeReadinessProjectionSource()
+        readinessRepo = FakeReadinessRepository()
     }
 
     @After
@@ -80,15 +105,17 @@ class DashboardViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = DashboardViewModel(
+    private fun createViewModel(statistics: StatisticsRepository = statsRepo) = DashboardViewModel(
         workoutRepo,
-        statsRepo,
+        statistics,
         exerciseRepo,
         preferencesRepo,
         planRepo,
         metaPlanRepo,
         progressionRepository,
-        FakeDeloadRepository()
+        FakeDeloadRepository(),
+        readinessSource,
+        readinessRepo
     )
 
     @Test
@@ -312,7 +339,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `dashboard reloads stats when active workout is finished`() = runTest {
-        val start = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))
+        val start = LocalDate.now().atStartOfDay()
         workoutRepo.addSession(
             WorkoutSession(
                 id = 123L,
@@ -341,7 +368,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `dashboard reloads stats when completed sessions are deleted without active-session transition`() = runTest {
-        val completed = LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0))
+        val completed = LocalDate.now().atStartOfDay()
         workoutRepo.addSession(
             WorkoutSession(
                 id = 900L,
@@ -417,51 +444,57 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun `weekly volume groups sets of the same ISO week into one entry`() = runTest {
-        // Datumswerte relativ zu heute, damit die Saetze im 8-Wochen-Fenster des
-        // Dashboards liegen: Das Fake-Repository filtert getWorkSetsCompletedSince
-        // seit der Fenster-Paritaet wie die echte Query (sinceEpochMillis,
-        // endTime IS NOT NULL, isWarmup = 0).
-        val anchor = DayOfWeek.MONDAY // AppPreferences-Default: WeekStart.MONDAY
-        val startOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(anchor))
-        val monday = startOfWeek.atTime(10, 0)
-        val wednesday = startOfWeek.plusDays(2).atTime(10, 0)
-        val previousSaturday = startOfWeek.minusDays(2).atTime(10, 0)
+    fun `weekly volume returns eight anchored bins with gaps zero and date labels`() = runTest {
+        val anchor = DayOfWeek.MONDAY
+        val currentWeekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(anchor))
+        val populatedWeek = currentWeekStart.minusWeeks(2)
+        val earlierWeek = currentWeekStart.minusWeeks(5)
+        val windowStart = currentWeekStart.minusWeeks(7)
 
         statsRepo.markSessionCompleted(1L)
-        statsRepo.addExerciseSet(
-            com.ironlog.app.domain.model.WorkoutSet(
-                sessionId = 1L, exerciseId = 1L, setNumber = 1, reps = 10,
-                weightKg = 100.0, completedAt = monday
-            )
-        )
-        statsRepo.addExerciseSet(
-            com.ironlog.app.domain.model.WorkoutSet(
-                sessionId = 1L, exerciseId = 1L, setNumber = 2, reps = 10,
-                weightKg = 50.0, completedAt = wednesday
-            )
-        )
-        statsRepo.addExerciseSet(
-            com.ironlog.app.domain.model.WorkoutSet(
-                sessionId = 1L, exerciseId = 1L, setNumber = 3, reps = 10,
-                weightKg = 20.0, completedAt = previousSaturday
-            )
-        )
+        addWeeklySet(1L, populatedWeek.atStartOfDay(), sessionId = 1L)
+        addWeeklySet(2L, populatedWeek.plusDays(2).atStartOfDay(), sessionId = 1L)
+        addWeeklySet(3L, earlierWeek.plusDays(6).atStartOfDay(), sessionId = 1L)
+        // A future week and a set before the eight-week window must not leak
+        // into any bin, even though the fake repository returns completed rows.
+        addWeeklySet(4L, currentWeekStart.plusWeeks(1).atStartOfDay(), sessionId = 1L)
+        addWeeklySet(5L, windowStart.minusDays(1).atStartOfDay(), sessionId = 1L)
 
         val vm = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val entries = vm.uiState.value.weeklyVolume
-        // Monday + Wednesday liegen in derselben ISO-Woche -> EIN Eintrag,
-        // der Samstag davor in der Vorwoche -> zweiter, getrennter Eintrag.
-        assertEquals(2, entries.size)
-        val weekFields = WeekFields.of(anchor, 1)
-        val thisWeekLabel = "KW${startOfWeek.get(weekFields.weekOfWeekBasedYear())}"
-        val thisWeekEntry = entries.first { it.first == thisWeekLabel }
-        // volume = weight * reps, summiert ueber beide Saetze der Woche: (100*10) + (50*10)
-        assertEquals(1500.0, thisWeekEntry.second, 0.0001)
-        val lastWeekEntry = entries.first { it.first != thisWeekLabel }
-        assertEquals(200.0, lastWeekEntry.second, 0.0001)
+        val expectedStarts = (0L until 8L).map { windowStart.plusWeeks(it) }
+        assertEquals(8, entries.size)
+        assertEquals(expectedStarts.map { DateFormatting.DATE_SHORT.format(it) }, entries.map { it.first })
+        assertEquals(1000.0, entries[expectedStarts.indexOf(populatedWeek)].second, 0.0001)
+        assertEquals(500.0, entries[expectedStarts.indexOf(earlierWeek)].second, 0.0001)
+        assertTrue(entries.filterIndexed { index, _ ->
+            expectedStarts[index] != populatedWeek && expectedStarts[index] != earlierWeek
+        }.all { it.second == 0.0 })
+        assertTrue(entries.none { it.first.startsWith("KW") })
+    }
+
+    @Test
+    fun `weekly volume follows Sunday week anchor`() = runTest {
+        preferencesRepo.updateWeekStart(WeekStart.SUNDAY)
+        val currentWeekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+        val populatedWeek = currentWeekStart.minusWeeks(1)
+        val windowStart = currentWeekStart.minusWeeks(7)
+
+        statsRepo.markSessionCompleted(1L)
+        addWeeklySet(1L, populatedWeek.plusDays(1).atStartOfDay(), sessionId = 1L)
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val entries = vm.uiState.value.weeklyVolume
+        assertEquals(8, entries.size)
+        assertEquals(
+            (0L until 8L).map { DateFormatting.DATE_SHORT.format(windowStart.plusWeeks(it)) },
+            entries.map { it.first }
+        )
+        assertEquals(500.0, entries[6].second, 0.0001)
     }
 
     @Test
@@ -827,7 +860,9 @@ class DashboardViewModelTest {
             planRepo,
             metaPlanRepo,
             progressionRepository,
-            deloadRepo
+            deloadRepo,
+            readinessSource,
+            readinessRepo
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -863,4 +898,669 @@ class DashboardViewModelTest {
         assertEquals(null, preferencesRepo.current.deloadMode)
         assertEquals(null, vm.uiState.value.deloadMode)
     }
+
+    @Test
+    fun `deload activation keeps the previous UI mode when persistence fails`() = runTest {
+        val preferences = FailingDeloadPreferencesRepository(
+            initial = AppPreferences(),
+            failure = IOException("disk full")
+        )
+        val vm = DashboardViewModel(
+            workoutRepo,
+            statsRepo,
+            exerciseRepo,
+            preferences,
+            planRepo,
+            metaPlanRepo,
+            progressionRepository,
+            FakeDeloadRepository(),
+            readinessSource,
+            readinessRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.activateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(vm.uiState.value.deloadMode)
+        assertFalse(vm.uiState.value.isDeloadModeUpdating)
+        assertTrue(vm.uiState.value.error?.contains("aktiviert") == true)
+    }
+
+    @Test
+    fun `deload deactivation keeps the active UI mode when persistence fails`() = runTest {
+        val preferences = FailingDeloadPreferencesRepository(
+            initial = AppPreferences(deloadMode = DeloadMode.HALVE_SET_VOLUME),
+            failure = IOException("read only")
+        )
+        val vm = DashboardViewModel(
+            workoutRepo,
+            statsRepo,
+            exerciseRepo,
+            preferences,
+            planRepo,
+            metaPlanRepo,
+            progressionRepository,
+            FakeDeloadRepository(),
+            readinessSource,
+            readinessRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DeloadMode.HALVE_SET_VOLUME, vm.uiState.value.deloadMode)
+        vm.deactivateDeloadMode()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DeloadMode.HALVE_SET_VOLUME, vm.uiState.value.deloadMode)
+        assertFalse(vm.uiState.value.isDeloadModeUpdating)
+        assertTrue(vm.uiState.value.error?.contains("beendet") == true)
+    }
+
+    @Test
+    fun `duplicate deload mode changes are ignored while persistence is in flight`() = runTest {
+        val preferences = BlockingDeloadPreferencesRepository()
+        val vm = DashboardViewModel(
+            workoutRepo,
+            statsRepo,
+            exerciseRepo,
+            preferences,
+            planRepo,
+            metaPlanRepo,
+            progressionRepository,
+            FakeDeloadRepository(),
+            readinessSource,
+            readinessRepo
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.activateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
+        testDispatcher.scheduler.runCurrent()
+        vm.deactivateDeloadMode()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(listOf(DeloadMode.HALVE_SET_VOLUME), preferences.updateCalls)
+        assertTrue(vm.uiState.value.isDeloadModeUpdating)
+
+        preferences.gate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(DeloadMode.HALVE_SET_VOLUME, vm.uiState.value.deloadMode)
+        assertFalse(vm.uiState.value.isDeloadModeUpdating)
+    }
+
+    private fun seedWeeklyExercise() {
+        exerciseRepo.addExercise(Exercise(
+            id = 1L, name = "Bankdrücken", primaryMuscleGroup = MuscleGroup.BRUST,
+            secondaryMuscleGroups = listOf(MuscleGroup.TRIZEPS, MuscleGroup.SCHULTERN),
+            category = ExerciseCategory.LANGHANTEL
+        ))
+    }
+
+    private fun addWeeklySet(id: Long, date: LocalDateTime, type: SetType = SetType.NORMAL, sessionId: Long = 1L) {
+        statsRepo.addExerciseSet(WorkoutSet(
+            id = id, sessionId = sessionId, exerciseId = 1L, setNumber = id.toInt(),
+            reps = 10, weightKg = 50.0, setType = type, completedAt = date
+        ))
+    }
+
+    @Test
+    fun `muscle overview counts completed work sets with secondary weighting and exact week bounds`() = runTest {
+        seedWeeklyExercise()
+        val start = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        statsRepo.markSessionCompleted(1L)
+        addWeeklySet(1, start.atStartOfDay())
+        addWeeklySet(2, start.atStartOfDay(), SetType.DROP_SET)
+        addWeeklySet(3, start.atStartOfDay(), SetType.FAILURE)
+        addWeeklySet(4, start.atStartOfDay(), SetType.WARMUP)
+        addWeeklySet(5, start.atStartOfDay().minusNanos(1))
+        addWeeklySet(6, start.plusWeeks(1).atStartOfDay())
+        addWeeklySet(7, start.atStartOfDay(), sessionId = 99L) // still active
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val weekly = vm.uiState.value.weeklyMuscleVolume
+        assertFalse(weekly.isLoading)
+        assertNull(weekly.error)
+        assertEquals(10, weekly.volumes.size)
+        assertEquals(1, weekly.completedWorkoutCount)
+        val values = weekly.volumes.associate { it.muscleGroup to it.weeklySets }
+        assertEquals(3.0, values.getValue(MuscleGroup.BRUST), 0.0)
+        assertEquals(1.5, values.getValue(MuscleGroup.TRIZEPS), 0.0)
+        assertEquals(1.5, values.getValue(MuscleGroup.SCHULTERN), 0.0)
+        assertEquals(0.0, values.getValue(MuscleGroup.BEINE), 0.0)
+        assertEquals(
+            listOf(
+                MuscleGroup.BRUST,
+                MuscleGroup.RUECKEN,
+                MuscleGroup.BEINE,
+                MuscleGroup.SCHULTERN,
+                MuscleGroup.BIZEPS,
+                MuscleGroup.TRIZEPS,
+                MuscleGroup.GESAESS,
+                MuscleGroup.CORE,
+                MuscleGroup.UNTERARME,
+                MuscleGroup.WADEN
+            ),
+            weekly.volumes.map { it.muscleGroup }
+        )
+    }
+
+    @Test
+    fun `empty muscle week has ten genuine zero values and no load error`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val weekly = vm.uiState.value.weeklyMuscleVolume
+        assertFalse(weekly.isLoading)
+        assertNull(weekly.error)
+        assertEquals(MuscleGroup.entries.toSet(), weekly.volumes.map { it.muscleGroup }.toSet())
+        assertTrue(weekly.volumes.all { it.weeklySets == 0.0 })
+    }
+
+    @Test
+    fun `muscle week navigation preserves selection on refresh and stops at current week`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val current = vm.uiState.value.weeklyMuscleVolume.weekStart!!
+        vm.showPreviousMuscleVolumeWeek()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.loadDashboard()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(current.minusWeeks(1), vm.uiState.value.weeklyMuscleVolume.weekStart)
+        vm.showNextMuscleVolumeWeek()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.showNextMuscleVolumeWeek()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(current, vm.uiState.value.weeklyMuscleVolume.weekStart)
+    }
+
+    @Test
+    fun `muscle overview realigns to Sunday after week preference changes`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.showPreviousMuscleVolumeWeek()
+        testDispatcher.scheduler.advanceUntilIdle()
+        preferencesRepo.updateWeekStart(WeekStart.SUNDAY)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(
+            LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY)),
+            vm.uiState.value.weeklyMuscleVolume.weekStart
+        )
+    }
+
+    @Test
+    fun `muscle week query failure is not zero volume and can be retried`() = runTest {
+        var fail = false
+        val repository = object : StatisticsRepository by statsRepo {
+            override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> {
+                if (fail) throw IOException("private database details")
+                return statsRepo.getWorkSetsCompletedSince(sinceEpochMillis)
+            }
+
+            override suspend fun getWorkSetsCompletedBetween(
+                sinceEpochMillis: Long,
+                untilEpochMillis: Long
+            ): List<WorkoutSet> {
+                if (fail) throw IOException("private database details")
+                return statsRepo.getWorkSetsCompletedBetween(sinceEpochMillis, untilEpochMillis)
+            }
+        }
+        val vm = createViewModel(repository)
+        testDispatcher.scheduler.advanceUntilIdle()
+        fail = true
+        vm.showPreviousMuscleVolumeWeek()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val failed = vm.uiState.value.weeklyMuscleVolume
+        assertFalse(failed.isLoading)
+        assertNotNull(failed.error)
+        assertFalse(failed.error!!.contains("private database details"))
+        assertTrue(failed.volumes.isEmpty())
+        fail = false
+        vm.reloadWeeklyMuscleVolume()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNull(vm.uiState.value.weeklyMuscleVolume.error)
+        assertEquals(10, vm.uiState.value.weeklyMuscleVolume.volumes.size)
+    }
+
+    @Test
+    fun `missing exercise mapping reports incomplete muscle data rather than zero`() = runTest {
+        statsRepo.markSessionCompleted(1L)
+        addWeeklySet(1L, LocalDate.now().atStartOfDay())
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(vm.uiState.value.weeklyMuscleVolume.error)
+        assertTrue(vm.uiState.value.weeklyMuscleVolume.volumes.isEmpty())
+    }
+
+    @Test
+    fun `slow previous muscle week cannot overwrite newer navigation`() = runTest {
+        var block = false
+        val gate = CompletableDeferred<Unit>()
+        val repository = object : StatisticsRepository by statsRepo {
+            override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> {
+                if (block) {
+                    block = false
+                    gate.await()
+                }
+                return statsRepo.getWorkSetsCompletedSince(sinceEpochMillis)
+            }
+        }
+        val vm = createViewModel(repository)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val current = vm.uiState.value.weeklyMuscleVolume.weekStart
+        block = true
+        vm.showPreviousMuscleVolumeWeek()
+        testDispatcher.scheduler.runCurrent()
+        vm.showNextMuscleVolumeWeek()
+        testDispatcher.scheduler.runCurrent()
+        gate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(current, vm.uiState.value.weeklyMuscleVolume.weekStart)
+        assertFalse(vm.uiState.value.weeklyMuscleVolume.isLoading)
+    }
+
+    @Test
+    fun `muscle navigation during dashboard refresh leaves both loads complete`() = runTest {
+        var block = false
+        val gate = CompletableDeferred<Unit>()
+        val repository = object : StatisticsRepository by statsRepo {
+            override suspend fun getRecentRecordsList(limit: Int): List<com.ironlog.app.domain.model.PersonalRecord> {
+                if (block) gate.await()
+                return statsRepo.getRecentRecordsList(limit)
+            }
+        }
+        val vm = createViewModel(repository)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val current = vm.uiState.value.weeklyMuscleVolume.weekStart!!
+        block = true
+        vm.loadDashboard()
+        testDispatcher.scheduler.runCurrent()
+        vm.showPreviousMuscleVolumeWeek()
+        testDispatcher.scheduler.runCurrent()
+        gate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(vm.uiState.value.isLoading)
+        assertFalse(vm.uiState.value.weeklyMuscleVolume.isLoading)
+        assertEquals(current.minusWeeks(1), vm.uiState.value.weeklyMuscleVolume.weekStart)
+    }
+
+    @Test
+    fun `preferences failure ends initial muscle loading without fabricated zeros`() = runTest {
+        val preferences = object : AppPreferencesRepository by preferencesRepo {
+            override val preferences: Flow<AppPreferences> = kotlinx.coroutines.flow.flow {
+                throw IOException("preferences unavailable")
+            }
+        }
+        mockkObject(AppLogger)
+        try {
+            every { AppLogger.e(any(), any(), any()) } returns Unit
+            val vm = DashboardViewModel(
+                workoutRepo, statsRepo, exerciseRepo, preferences, planRepo,
+                metaPlanRepo, progressionRepository, FakeDeloadRepository(),
+                readinessSource, readinessRepo
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertFalse(vm.uiState.value.isLoading)
+            assertFalse(vm.uiState.value.weeklyMuscleVolume.isLoading)
+            assertNotNull(vm.uiState.value.weeklyMuscleVolume.error)
+            assertTrue(vm.uiState.value.weeklyMuscleVolume.volumes.isEmpty())
+        } finally {
+            unmockkObject(AppLogger)
+        }
+    }
+
+    @Test
+    fun `training trend is computed from the projection source without a fake index`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val trend = vm.uiState.value.trainingTrend
+        assertFalse(trend.isLoading)
+        assertNull(trend.error)
+        val assessment = trend.assessment
+        assertNotNull(assessment)
+        // An empty graph must not fabricate a good-looking index.
+        assertEquals(TrainingTrendStatus.INSUFFICIENT_DATA, assessment!!.trainingTrend.status)
+        assertNull(assessment.trainingTrend.trainingIndex)
+    }
+
+    @Test
+    fun `saving a check-in persists the answers and leaves edit mode`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(4)
+        vm.updateCheckInEnergy(3)
+        vm.updateCheckInStress(2)
+        vm.updateCheckInSoreness(MuscleGroup.BRUST, 2)
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val stored = readinessRepo.storedCheckIns.single()
+        assertEquals(4, stored.sleepQuality)
+        assertEquals(3, stored.energy)
+        assertEquals(2, stored.stress)
+        assertEquals(2, stored.muscleSoreness[com.ironlog.shared.model.MuscleGroup.BRUST])
+
+        val state = vm.uiState.value.checkIn
+        assertFalse(state.isEditing)
+        assertFalse(state.isSaving)
+        val storedDay = state.stored
+        assertNotNull(storedDay)
+        assertTrue(storedDay?.hasAnyAnswer == true)
+        assertEquals(DashboardCheckInNotice.SAVED, vm.uiState.value.checkInNotice)
+    }
+
+    @Test
+    fun `an unanswered check-in is rejected instead of stored as a blank row`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(readinessRepo.storedCheckIns.isEmpty())
+        assertEquals(DashboardCheckInNotice.NEEDS_ANSWER, vm.uiState.value.checkInNotice)
+        assertTrue(vm.uiState.value.checkIn.isEditing)
+    }
+
+    @Test
+    fun `deleting a check-in removes only the stored day`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInEnergy(5)
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, readinessRepo.storedCheckIns.size)
+
+        vm.deleteCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(readinessRepo.storedCheckIns.isEmpty())
+        assertEquals(DashboardCheckInNotice.DELETED, vm.uiState.value.checkInNotice)
+    }
+
+    @Test
+    fun `cancelling an edit discards the draft and keeps the stored day`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(4)
+        vm.updateCheckInEnergy(3)
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(1)
+        vm.updateCheckInStress(5)
+        vm.cancelCheckInEdit()
+
+        val state = vm.uiState.value.checkIn
+        assertFalse(state.isEditing)
+        assertEquals(4, state.stored?.sleepQuality)
+        assertEquals(3, state.stored?.energy)
+        assertNull(state.stored?.stress)
+        // Der Entwurf zeigt wieder den gespeicherten Stand, nicht die verworfenen Eingaben.
+        assertEquals(4, state.draft.sleepQuality)
+        assertNull(state.draft.stress)
+        assertTrue(state.draft.sorenessByMuscle.isEmpty())
+    }
+
+    @Test
+    fun `cancelling an edit without stored answers leaves the day empty`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(5)
+        vm.cancelCheckInEdit()
+
+        val state = vm.uiState.value.checkIn
+        assertFalse(state.isEditing)
+        assertNull(state.stored)
+        assertFalse(state.draft.hasAnyAnswer)
+        assertTrue(readinessRepo.storedCheckIns.isEmpty())
+    }
+
+    @Test
+    fun `a failing projection stream clears the stale trend and surfaces an error`() = runTest {
+        mockkObject(AppLogger)
+        try {
+            every { AppLogger.w(any(), any(), any()) } returns Unit
+
+            val vm = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertNotNull(vm.uiState.value.trainingTrend.assessment)
+
+            readinessSource.fail()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val trend = vm.uiState.value.trainingTrend
+            assertNull(trend.assessment)
+            assertFalse(trend.isLoading)
+            assertNotNull(trend.error)
+        } finally {
+            unmockkObject(AppLogger)
+        }
+    }
+
+    @Test
+    fun `a draft started before midnight is discarded on the day change`() = runTest {
+        val yesterday = LocalDate.of(2026, 9, 10)
+        val today = LocalDate.of(2026, 9, 11)
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.todayProvider = { yesterday }
+        vm.refreshCheckInDay()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(3)
+        assertEquals(yesterday, vm.uiState.value.checkIn.draftDate)
+
+        vm.todayProvider = { today }
+        vm.refreshCheckInDay()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Der offene Entwurf gehört zu gestern und wird verworfen, nicht umdatiert.
+        val state = vm.uiState.value.checkIn
+        assertFalse(state.isEditing)
+        assertNull(state.draftDate)
+        assertFalse(state.draft.hasAnyAnswer)
+
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Nichts wird stillschweigend unter dem neuen Tag gespeichert.
+        assertTrue(readinessRepo.storedCheckIns.isEmpty())
+    }
+
+    @Test
+    fun `a plan arriving after the first trend snapshot triggers a re-projection`() = runTest {
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, readinessSource.currentPayloadCalls)
+
+        planRepo.savePlan(TrainingPlan(name = "Plan A"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(readinessSource.currentPayloadCalls >= 1)
+    }
+
+    @Test
+    fun `a day change discards the open draft and re-projects the trend`() = runTest {
+        val yesterday = LocalDate.of(2026, 9, 10)
+        val today = LocalDate.of(2026, 9, 11)
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.todayProvider = { yesterday }
+        vm.refreshCheckInDay()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(2)
+        assertTrue(vm.uiState.value.checkIn.isEditing)
+
+        val callsBefore = readinessSource.currentPayloadCalls
+        vm.todayProvider = { today }
+        vm.refreshCheckInDay()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value.checkIn
+        assertFalse(state.isEditing)
+        assertNull(state.draftDate)
+        assertFalse(state.draft.hasAnyAnswer)
+        assertEquals(today, state.today)
+        // Ein neuer Tag verschiebt das Trendfenster, also wird neu projiziert.
+        assertTrue(readinessSource.currentPayloadCalls > callsBefore)
+    }
+
+    @Test
+    fun `startCheckInEdit never prefills yesterday's answers as today`() = runTest {
+        val yesterday = LocalDate.of(2026, 9, 10)
+        val today = LocalDate.of(2026, 9, 11)
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.todayProvider = { yesterday }
+        vm.refreshCheckInDay()
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.startCheckInEdit()
+        vm.updateCheckInSleepQuality(4)
+        vm.saveCheckIn()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, readinessRepo.storedCheckIns.size)
+
+        // Der Tag wechselt, ohne dass vorher ein Tageswechsel-Refresh lief.
+        vm.todayProvider = { today }
+        vm.startCheckInEdit()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value.checkIn
+        assertTrue(state.isEditing)
+        assertNull(state.stored)
+        assertFalse(state.draft.hasAnyAnswer)
+        assertEquals(today, state.draftDate)
+    }
+
+    private class FailingDeloadPreferencesRepository(
+        initial: AppPreferences,
+        private val failure: Throwable
+    ) : AppPreferencesRepository by FakeAppPreferencesRepository(initial) {
+        override suspend fun updateDeloadMode(mode: DeloadMode?) {
+            throw failure
+        }
+    }
+
+    private class BlockingDeloadPreferencesRepository : AppPreferencesRepository by FakeAppPreferencesRepository() {
+        val gate = CompletableDeferred<Unit>()
+        val updateCalls = mutableListOf<DeloadMode?>()
+
+        override suspend fun updateDeloadMode(mode: DeloadMode?) {
+            updateCalls += mode
+            gate.await()
+        }
+    }
+
+    private class FakeReadinessProjectionSource : ReadinessProjectionSource {
+        /** `null` steht für einen fehlgeschlagenen Datenstrom. */
+        private val state = MutableStateFlow<BackupPayloadV1?>(emptyBackupPayload())
+
+        var currentPayloadCalls = 0
+            private set
+
+        fun fail() {
+            state.value = null
+        }
+
+        override suspend fun currentPayload(): BackupPayloadV1 {
+            currentPayloadCalls++
+            return state.value ?: throw IOException("Readiness-Payload nicht verfügbar")
+        }
+
+        override fun observePayload(): Flow<BackupPayloadV1> = state.map { payload ->
+            payload ?: throw IOException("Readiness-Payload nicht verfügbar")
+        }
+    }
+
+    /**
+     * In-memory readiness document for dashboard tests.
+     *
+     * It mirrors the repository contract: a missing check-in has no row, an
+     * unknown intention clears the record instead of storing a placeholder.
+     */
+    private class FakeReadinessRepository : ReadinessRepository {
+        private val document = MutableStateFlow(ReadinessData())
+
+        val storedCheckIns: List<ReadinessCheckIn> get() = document.value.checkIns
+
+        override fun observeReadinessData(): Flow<ReadinessData> = document
+
+        override suspend fun getReadinessData(): ReadinessData = document.value
+
+        override fun observeCheckIns(): Flow<Map<KxLocalDate, ReadinessCheckIn>> =
+            document.map { data -> data.checkIns.associateBy { it.localDate } }
+
+        override fun observeSetIntentions(): Flow<Map<Long, SetIntention>> =
+            document.map { data -> data.setIntentions.associate { it.setId to it.intention } }
+
+        override suspend fun upsertCheckIn(checkIn: ReadinessCheckIn) {
+            val others = document.value.checkIns.filterNot { it.localDate == checkIn.localDate }
+            document.value = document.value.copy(checkIns = others + checkIn)
+        }
+
+        override suspend fun deleteCheckIn(localDate: KxLocalDate) {
+            document.value = document.value.copy(
+                checkIns = document.value.checkIns.filterNot { it.localDate == localDate }
+            )
+        }
+
+        override suspend fun setSetIntention(setId: Long, intention: SetIntention, note: String) {
+            val others = document.value.setIntentions.filterNot { it.setId == setId }
+            val records = if (intention == SetIntention.UNKNOWN) {
+                others
+            } else {
+                others + SetIntentionRecord(setId = setId, intention = intention, note = note)
+            }
+            document.value = document.value.copy(setIntentions = records)
+        }
+
+        override suspend fun clearSetIntention(setId: Long) {
+            document.value = document.value.copy(
+                setIntentions = document.value.setIntentions.filterNot { it.setId == setId }
+            )
+        }
+
+        override suspend fun pruneSetIntentions(setIds: Collection<Long>) {
+            document.value = document.value.copy(
+                setIntentions = document.value.setIntentions.filterNot { it.setId in setIds }
+            )
+        }
+
+        override suspend fun replaceReadinessData(data: ReadinessData) {
+            document.value = data
+        }
+
+        override suspend fun clearReadinessData() {
+            document.value = ReadinessData()
+        }
+    }
 }
+
+private fun emptyBackupPayload(): BackupPayloadV1 = BackupPayloadV1(
+    formatVersion = 1,
+    schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
+    appVersion = "test",
+    exportedAtEpochMillis = 0L,
+    exercises = emptyList(),
+    workoutSessions = emptyList(),
+    workoutSets = emptyList(),
+    trainingPlans = emptyList(),
+    planExercises = emptyList(),
+    personalRecords = emptyList()
+)

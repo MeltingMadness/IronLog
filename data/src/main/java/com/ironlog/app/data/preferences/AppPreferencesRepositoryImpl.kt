@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.data.preferences
+package com.ironlog.app.data.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -12,12 +12,21 @@ import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class AppPreferencesRepositoryImpl(
-    private val context: Context
+    private val context: Context,
+    /**
+     * Optional write-through to the running workout. Activating a deload mode marks
+     * the active session's explicit deload context conservatively as `true`, so the
+     * history never has to derive it from the switch at read time. `null` in tests
+     * and legacy constructions; the app wires the real DAO.
+     */
+    private val workoutSessionDao: WorkoutSessionDao? = null
 ) : AppPreferencesRepository {
 
     override val preferences: Flow<AppPreferences> = context.appPreferencesDataStore.data
@@ -67,7 +76,12 @@ class AppPreferencesRepositoryImpl(
             autoRestTimerEnabled = prefs[AppPreferenceKeys.AUTO_REST_TIMER_ENABLED] ?: false,
             defaultRestTimeSeconds = prefs[AppPreferenceKeys.DEFAULT_REST_TIME_SECONDS] ?: 120,
             deloadMode = prefs.stringOrNull(AppPreferenceKeys.DELOAD_MODE)
-                ?.let { runCatching { DeloadMode.valueOf(it) }.getOrNull() }
+                ?.let { runCatching { DeloadMode.valueOf(it) }.getOrNull() },
+            plateCalculatorEnabled = prefs[AppPreferenceKeys.PLATE_CALCULATOR_ENABLED] ?: true,
+            availablePlates = parseAvailablePlates(prefs.stringOrNull(AppPreferenceKeys.AVAILABLE_PLATES)),
+            barbellWeightKg = prefs[AppPreferenceKeys.BARBELL_WEIGHT_KG] ?: DEFAULT_BARBELL_WEIGHT_KG,
+            lastSuccessfulExportEpochMillis = prefs[AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS],
+            backupReminderEnabled = prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] ?: false
         )
     }
 
@@ -164,6 +178,67 @@ class AppPreferencesRepositoryImpl(
                 prefs.remove(AppPreferenceKeys.DELOAD_MODE)
             } else {
                 prefs[AppPreferenceKeys.DELOAD_MODE] = mode.name
+            }
+        }
+        if (mode != null) {
+            // A workout that is already running when the user switches the mode on is
+            // conservatively recorded as a planned deload. Deactivation intentionally
+            // does not clear the flag: a session that happened under a deload stays a
+            // deload in history.
+            workoutSessionDao?.getActiveSession()?.let { active ->
+                if (active.isDeload != true) {
+                    workoutSessionDao.update(active.copy(isDeload = true))
+                }
+            }
+        }
+    }
+
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.PLATE_CALCULATOR_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.AVAILABLE_PLATES] = encodeAvailablePlates(plates)
+        }
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.BARBELL_WEIGHT_KG] = weightKg
+        }
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            if (timestampMillis == null) {
+                prefs.remove(AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS)
+            } else {
+                prefs[AppPreferenceKeys.LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS] = timestampMillis
+            }
+        }
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.BACKUP_REMINDER_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun readRestTimerState(sessionId: Long): String? =
+        context.appPreferencesDataStore.data
+            .catch { emit(emptyPreferences()) }
+            .first()[AppPreferenceKeys.restTimerState(sessionId)]
+
+    override suspend fun writeRestTimerState(sessionId: Long, encodedState: String?) {
+        context.appPreferencesDataStore.edit { prefs ->
+            val key = AppPreferenceKeys.restTimerState(sessionId)
+            if (encodedState.isNullOrBlank()) {
+                prefs.remove(key)
+            } else {
+                prefs[key] = encodedState
             }
         }
     }

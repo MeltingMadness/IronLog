@@ -32,6 +32,8 @@ import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
+import com.ironlog.feature.dashboard.R as DashboardR
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import kotlinx.coroutines.Dispatchers
@@ -77,6 +79,11 @@ fun WeeklyVolumeCard(
                 fontWeight = FontWeight.Bold
             )
 
+            Text(
+                text = stringResource(DashboardR.string.dashboard_ui_volume_unit),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             if (weeklyVolume.size >= 2) {
                 CartesianChartHost(
                     chart = rememberCartesianChart(
@@ -88,7 +95,11 @@ fun WeeklyVolumeCard(
                             )
                         ),
                         startAxis = VerticalAxis.rememberStart(),
-                        bottomAxis = HorizontalAxis.rememberBottom(),
+                        bottomAxis = HorizontalAxis.rememberBottom(
+                            valueFormatter = CartesianValueFormatter { _, value, _ ->
+                                weeklyVolume.getOrNull(value.toInt())?.first.orEmpty()
+                            }
+                        ),
                     ),
                     modelProducer = modelProducer,
                     modifier = Modifier

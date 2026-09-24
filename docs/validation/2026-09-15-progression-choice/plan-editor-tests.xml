@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" tests="28" skipped="0" failures="0" errors="0" timestamp="2026-09-15T10:32:08.456Z" hostname="mmba.tail6ae155.ts.net" time="0.11">
+  <properties/>
+  <testcase name="metric step accepts decimal comma and stores canonical kilograms" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.073"/>
+  <testcase name="savePlan ignores duplicate requests while save is in flight" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.004"/>
+  <testcase name="imperial step saves original pounds and canonical kilograms" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="manual scheme changes an active config only after apply" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.002"/>
+  <testcase name="double progression reports all simultaneous parse errors without changing plan state" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="invalid rpe config stays in editor and maps validator paths to exact fields" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="savePlan keeps editable numeric drafts and rejects invalid target input" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.003"/>
+  <testcase name="savePlan rejects an empty exercise plan" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.0"/>
+  <testcase name="active scheme drafts use deterministic defaults from the exercise target" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="explicit progression apply persists linear choice" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.002"/>
+  <testcase name="updatePlanName correctly updates ui state" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.0"/>
+  <testcase name="savePlan stores the plan in repository and updates state" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="opening and saving an existing step in another display unit is lossless" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="ungroup removes element and normalizes invalid supersets" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.002"/>
+  <testcase name="new exercises default to manual progression" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="moveUp and moveDown swap exercise order correctly" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="clean target weight draft follows a changed display unit" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="groupWithPrevious groups adjacent exercises into same superset" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.0"/>
+  <testcase name="removeExercise removes the exercise at correct index" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="quick progression choice closes sheet and persists after saving plan" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.002"/>
+  <testcase name="savePlan revalidates configs against edited targets before repository save" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.003"/>
+  <testcase name="preference change does not reinterpret a dirty progression draft" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="addExercise adds exercise to the list" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="target weight input uses display unit and stores canonical kilograms" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.0"/>
+  <testcase name="reorder preserves each exercises progression config" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="cancel closes the editor without changing the exercise config" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="loading a missing plan sets notFound and clears isLoading instead of spinning forever" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <testcase name="savePlan persists compact superset group ids" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_filter_time_label">Zeitraum</string>
+    <string name="history_filter_time_all">Alle</string>
+    <string name="history_filter_time_30_days">30 Tage</string>
+    <string name="history_filter_time_90_days">90 Tage</string>
+    <string name="history_filter_time_this_year">Dieses Jahr</string>
+    <string name="history_filter_plan_label">Plan</string>
+    <string name="history_filter_plan_all">Alle Pläne</string>
+    <string name="history_filter_empty_title">Keine passenden Trainings</string>
+    <string name="history_filter_empty_subtitle">Wähle einen anderen Plan oder Zeitraum.</string>
+    <string name="history_set_drop">Dropsatz %1$d</string>
+    <string name="history_set_failure">Failure-Satz %1$d</string>
+</resources>

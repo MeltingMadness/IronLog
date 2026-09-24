@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_audit_plan_target_with_weight">Plan-Ziel: %1$d × %2$d @ %3$s</string>
+    <string name="workout_audit_plan_target_no_weight">Plan-Ziel: %1$d × %2$d</string>
+    <string name="workout_audit_previous_session_title">Vorherige Einheit (%1$s)</string>
+    <string name="workout_audit_coach_suggestion">Coach-Vorschlag: %1$s</string>
+    <string name="workout_audit_apply_coach_weight">Übernehmen</string>
+    <string name="workout_audit_warmup_set">⚡ Aufwärmsatz %1$d</string>
+    <string name="workout_audit_drop_set">⚡ Drop-Set %1$d</string>
+    <string name="workout_audit_failure_set">⚡ Fehlversuch %1$d</string>
+    <string name="workout_audit_rir_value">%1$s RIR</string>
+</resources>

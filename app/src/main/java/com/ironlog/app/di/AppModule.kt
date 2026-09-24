@@ -17,6 +17,8 @@ import com.ironlog.app.data.repository.ExerciseRepositoryImpl
 import com.ironlog.app.data.repository.IncidentReportRepositoryImpl
 import com.ironlog.app.data.repository.MetaTrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.ProgressionRepositoryImpl
+import com.ironlog.app.data.repository.ReadinessProjectionSourceImpl
+import com.ironlog.app.data.repository.ReadinessRepositoryImpl
 import com.ironlog.app.data.repository.StatisticsRepositoryImpl
 import com.ironlog.app.data.repository.TrainingPlanRepositoryImpl
 import com.ironlog.app.data.repository.WorkoutRepositoryImpl
@@ -27,6 +29,8 @@ import com.ironlog.app.domain.repository.ExerciseRepository
 import com.ironlog.app.domain.repository.IncidentReportRepository
 import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
+import com.ironlog.app.domain.repository.ReadinessProjectionSource
+import com.ironlog.app.domain.repository.ReadinessRepository
 import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
@@ -45,6 +49,7 @@ import com.ironlog.app.presentation.progression.ProgressionReviewViewModel
 import com.ironlog.app.presentation.settings.SettingsViewModel
 import com.ironlog.app.presentation.statistics.ExerciseStatsViewModel
 import com.ironlog.app.presentation.workout.ActiveWorkoutViewModel
+import kotlinx.coroutines.flow.first
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -60,6 +65,7 @@ val appModule = module {
     single { get<IronLogDatabase>().trainingPlanDao() }
     single { get<IronLogDatabase>().metaTrainingPlanDao() }
     single { get<IronLogDatabase>().progressionDao() }
+    single { get<IronLogDatabase>().readinessDataDao() }
     single<TransactionRunner> { RoomTransactionRunner(get()) }
     single<BackupDocumentIo> {
         ContentResolverBackupDocumentIo(androidContext())
@@ -67,14 +73,28 @@ val appModule = module {
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
     single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<WorkoutRepository> {
+        val appPreferencesRepository = get<AppPreferencesRepository>()
+        WorkoutRepositoryImpl(
+            get(), get(), get(), get(), get(), get(),
+            // Set intentions are persisted through the readiness store inside the
+            // same Room transaction as the set itself.
+            get<ReadinessRepository>()
+        ) {
+            // Captured at session start so history keeps the deload context that was
+            // in effect back then, instead of re-deriving it from the current switch.
+            appPreferencesRepository.preferences.first().deloadMode
+        }
+    }
     single { ProgressionEngine() }
     single<ProgressionRepository> { ProgressionRepositoryImpl(get(), get(), get(), get(), get(), get()) }
+    single<ReadinessRepository> { ReadinessRepositoryImpl(get(), get(), get()) }
+    single<ReadinessProjectionSource> { ReadinessProjectionSourceImpl(get(), get()) }
     single<StatisticsRepository> { StatisticsRepositoryImpl(get(), get()) }
     single<DeloadRepository> { DeloadRepositoryImpl(get(), get(), get()) }
     single<TrainingPlanRepository> { TrainingPlanRepositoryImpl(get()) }
     single<MetaTrainingPlanRepository> { MetaTrainingPlanRepositoryImpl(get()) }
-    single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext()) }
+    single<AppPreferencesRepository> { AppPreferencesRepositoryImpl(androidContext(), get()) }
     single<ReminderScheduler> { ReminderSchedulerImpl(androidContext()) }
     single<IncidentReportRepository> { IncidentReportRepositoryImpl(androidContext(), get()) }
     single<BackupRepository> {
@@ -89,6 +109,7 @@ val appModule = module {
             metaTrainingPlanDao = get(),
             personalRecordDao = get(),
             progressionDao = get(),
+            readinessDataDao = get(),
             buildInfo = get()
         )
     }

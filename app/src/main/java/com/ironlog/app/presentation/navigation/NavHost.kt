@@ -133,6 +133,8 @@ fun IronLogNavHost(
             )
         ) {
             ActiveWorkoutScreen(
+                onWorkoutDetails = { sessionId -> navController.navigate(Screen.WorkoutDetail.createRoute(sessionId)) },
+                onPlanEditor = { planId -> navController.navigate(Screen.PlanEditor.createRoute(planId)) },
                 onWorkoutFinished = {
                     navController.popBackStack(Screen.Dashboard.route, inclusive = false)
                 },

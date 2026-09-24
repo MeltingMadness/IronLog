@@ -1,6 +1,7 @@
 package com.ironlog.app.domain.deload
 
 import com.ironlog.app.domain.model.DeloadSessionInput
+import com.ironlog.app.domain.model.DeloadAssessmentStatus
 import com.ironlog.app.domain.model.DeloadSignal
 import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
@@ -263,6 +264,20 @@ class DeloadDetectorTest {
         assertFalse(result.recommended)
         assertEquals(0, result.fatigueScore)
         assertTrue(result.signals.isEmpty())
+        assertEquals(DeloadAssessmentStatus.INSUFFICIENT_DATA, result.status)
+        assertFalse(result.hasSufficientData)
+        assertEquals(4, result.analysisWindowWeeks)
+        assertEquals(3, result.minimumSessionCount)
+    }
+
+    @Test
+    fun `enough sessions without signals are reported as no notable strain`() {
+        val sessions = weeklySessions(weeklyE1rm = listOf(90.0, 95.0, 100.0, 105.0))
+        val result = detector.assess(sessions, compoundIds, today)
+
+        assertEquals(DeloadAssessmentStatus.NO_NOTABLE_STRAIN, result.status)
+        assertTrue(result.hasSufficientData)
+        assertEquals(4, result.sessionCount)
     }
 
     // --- window / scoring details --------------------------------------------

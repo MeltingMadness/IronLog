@@ -1,5 +1,6 @@
 package com.ironlog.shared.backup
 
+import com.ironlog.shared.readinessdata.ReadinessDataValidator
 import kotlin.math.abs
 
 data class BackupValidationResult(
@@ -48,6 +49,9 @@ object BackupPayloadValidator {
         checkPositiveIds(errors, payload.workoutPlanTargets.map { it.id }, "workout plan target")
         checkPositiveIds(errors, payload.progressionSuggestions.map { it.id }, "progression suggestion")
 
+        if (payload.schemaVersion < 14 && (payload.planExercises.any { it.setTargets.isNotEmpty() } || payload.workoutPlanTargets.any { it.setTargets.isNotEmpty() })) {
+            errors += "Individual set targets require backup schema 14"
+        }
         if (payload.schemaVersion < PROGRESSION_SCHEMA_VERSION) {
             if (payload.workoutPlanTargets.isNotEmpty()) {
                 errors += "Schema ${payload.schemaVersion} backup contains workout plan targets"
@@ -67,6 +71,23 @@ object BackupPayloadValidator {
             }
         }
 
+        if (payload.schemaVersion < SESSION_DELOAD_BACKUP_SCHEMA_VERSION) {
+            payload.workoutSessions.forEach { session ->
+                if (session.isDeload != null) {
+                    errors += "Schema ${payload.schemaVersion} workout session ${session.id} contains a deload context"
+                }
+            }
+        }
+
+        // Readiness data is a schema-13 side channel. A payload that claims an
+        // older schema must not smuggle it in, and a newer payload is already
+        // rejected above.
+        if (payload.schemaVersion < READINESS_BACKUP_SCHEMA_VERSION &&
+            (payload.readinessData.checkIns.isNotEmpty() || payload.readinessData.setIntentions.isNotEmpty())
+        ) {
+            errors += "Schema ${payload.schemaVersion} backup contains readiness data"
+        }
+
         val exerciseIds = payload.exercises.map { it.id }.toSet()
         val sessionIds = payload.workoutSessions.map { it.id }.toSet()
         val planIds = payload.trainingPlans.map { it.id }.toSet()
@@ -74,6 +95,28 @@ object BackupPayloadValidator {
         val sessionsById = payload.workoutSessions.associateBy { it.id }
         val setsById = payload.workoutSets.associateBy { it.id }
         val targetsById = payload.workoutPlanTargets.associateBy { it.id }
+
+        payload.workoutSets.forEach { set ->
+            val rawSetType = set.setType
+            val resolvedSetType = set.resolvedSetType()
+            if (rawSetType != null && rawSetType !in SUPPORTED_BACKUP_SET_TYPES) {
+                errors += "Workout set ${set.id} has unknown set type: $rawSetType"
+            }
+            if (payload.schemaVersion >= SET_TYPE_BACKUP_SCHEMA_VERSION && rawSetType == null) {
+                errors += "Schema ${payload.schemaVersion} workout set ${set.id} is missing set type"
+            }
+            if (payload.schemaVersion < SET_TYPE_BACKUP_SCHEMA_VERSION &&
+                rawSetType != null && rawSetType != NORMAL_SET_TYPE
+            ) {
+                errors += "Schema ${payload.schemaVersion} workout set ${set.id} contains set type $rawSetType"
+            }
+            if (set.hasConflictingWarmupFlag()) {
+                errors += "Workout set ${set.id} has conflicting setType $rawSetType and isWarmup flag"
+            }
+            if (resolvedSetType !in SUPPORTED_BACKUP_SET_TYPES) {
+                errors += "Workout set ${set.id} has unknown resolved set type: $resolvedSetType"
+            }
+        }
 
         val activeSessions = payload.workoutSessions.count { it.endTime == null }
         if (activeSessions > 1) {
@@ -113,6 +156,7 @@ object BackupPayloadValidator {
             label = "plan exercise plan/order"
         )
         payload.planExercises.forEach { planExercise ->
+            if (!com.ironlog.shared.plans.PlannedSets.valid(planExercise.setTargets) || (planExercise.setTargets.isNotEmpty() && (planExercise.progression.scheme != "MANUAL" || planExercise.targetSets != planExercise.setTargets.count { it.kind != "WARMUP" }))) errors += "Invalid individual set targets for plan exercise ${planExercise.id}"
             if (planExercise.planId !in planIds) {
                 errors += "Plan exercise ${planExercise.id} references missing plan ${planExercise.planId}"
             }
@@ -170,6 +214,7 @@ object BackupPayloadValidator {
             label = "workout plan target session/order"
         )
         payload.workoutPlanTargets.forEach { target ->
+            if (!com.ironlog.shared.plans.PlannedSets.valid(target.setTargets) || (target.setTargets.isNotEmpty() && (target.progression.scheme != "MANUAL" || target.target.sets != target.setTargets.count { it.kind != "WARMUP" }))) errors += "Invalid individual set targets for workout target ${target.id}"
             if (target.orderIndex < 0) {
                 errors += "Workout plan target ${target.id} has a negative order index"
             }
@@ -211,10 +256,36 @@ object BackupPayloadValidator {
             )
         }
 
+        validateReadinessData(errors, payload.readinessData, setsById.keys)
+
         return BackupValidationResult(
             isValid = errors.isEmpty(),
             errors = errors
         )
+    }
+
+    /**
+     * Validates the additive readiness side channel and its references.
+     *
+     * The embedded document owns its own scale/date/duplicate rules; the backup
+     * layer only additionally guarantees that every per-set intention points at a
+     * workout set that is actually part of this payload. A dangling intention is a
+     * hard error so an import cannot leave orphaned readiness rows behind.
+     */
+    private fun validateReadinessData(
+        errors: MutableList<String>,
+        readinessData: com.ironlog.shared.readinessdata.ReadinessData,
+        setIds: Set<Long>
+    ) {
+        val readinessValidation = ReadinessDataValidator.validate(readinessData)
+        readinessValidation.errors.forEach { message ->
+            errors += "Readiness data is invalid: $message"
+        }
+        readinessData.setIntentions.forEach { record ->
+            if (record.setId !in setIds) {
+                errors += "Set intention references missing workout set ${record.setId}"
+            }
+        }
     }
 
     private fun checkDuplicateIds(
@@ -324,10 +395,17 @@ object BackupPayloadValidator {
             val set = setsById[setId]
             when {
                 set == null -> {
-                    errors += "Progression suggestion ${suggestion.id} references missing workout set $setId"
+                    // Pending rows are actionable and therefore must retain complete evidence.
+                    // Once a row is no longer pending (decided, informational, or stale), its
+                    // counted ids remain historical provenance; the referenced set may
+                    // legitimately have been deleted later without changing the source
+                    // target/configuration snapshot.
+                    if (suggestion.status == "PENDING") {
+                        errors += "Progression suggestion ${suggestion.id} references missing workout set $setId"
+                    }
                 }
-                set.isWarmup -> {
-                    errors += "Progression suggestion ${suggestion.id} references warmup set $setId"
+                set.resolvedSetType() != NORMAL_SET_TYPE -> {
+                    errors += "Progression suggestion ${suggestion.id} references ${set.resolvedSetType()} set $setId"
                 }
                 set.planTargetSnapshotId != suggestion.sourceTargetSnapshotId ||
                     set.sessionId != suggestion.sourceSessionId ||

@@ -1,0 +1,651 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */; };
+		0869BF40E44EDB759F73D93B /* IOSPlansSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16E76A0CCA913ADC440E678 /* IOSPlansSupport.swift */; };
+		0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */; };
+		0B0DA9EA073BAD6A6C2C3656 /* IronLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685AE05FC125A077D0129530 /* IronLogCard.swift */; };
+		0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */; };
+		0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FC306405B9BEA595E777BB /* IOSDashboardScreen.swift */; };
+		187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */; };
+		19021D29F385C24A553C5FF7 /* IOSWorkoutRestTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 226BC71A1A114CF54C1A6742 /* IOSWorkoutRestTimer.swift */; };
+		22B55B66B9719E8E01B6D560 /* IOSWorkoutStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC05139F58925D92390B07E /* IOSWorkoutStartView.swift */; };
+		25D89AB3FD5B8889379974B0 /* IOSWorkoutExercisePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBCD1C0E78A5BA61483270 /* IOSWorkoutExercisePicker.swift */; };
+		28B7D7F901FFDC6C19C0C84E /* IOSPlansScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D301A0719414E8B0D435219 /* IOSPlansScreen.swift */; };
+		2C33532E3C06D96BCF27C579 /* IOSWorkoutPlateVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */; };
+		314114849498ECCE06C4721B /* IOSWorkoutFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8B2586ACD70746876A6EFF /* IOSWorkoutFormatting.swift */; };
+		355BDEBEEAD9DD0AC9E05662 /* BinaryFileDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2177E25F0A397CE21DF8690D /* BinaryFileDocumentTests.swift */; };
+		393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E139A39ACDF1DD4F28B03640 /* IOSWorkoutCompletionScreen.swift */; };
+		3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57493B46D0737E1DCA25483 /* IOSWeeklyVolumeTrendCard.swift */; };
+		4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */; };
+		4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4291F379FACBEC41665E53 /* IOSProgressionReviewScreen.swift */; };
+		4DE13CA063E485D3BC27F865 /* IOSTrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B89E28761F801D15BB55BFB /* IOSTrainingStore.swift */; };
+		594DC0F64CF92E60EECB63D3 /* IOSWorkoutSuperset.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA06CB8823094162E1C3BA34 /* IOSWorkoutSuperset.swift */; };
+		5A79CD007629BC1CDEE1CC98 /* TrainingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FD09AEA020281213EF59B4 /* TrainingAnalytics.swift */; };
+		5B7F20D9057C5D94EA50B119 /* IOSWorkoutExerciseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B1490D1BF4D8F05137E4F5 /* IOSWorkoutExerciseCard.swift */; };
+		5BF7C753C0E21D29A735A1AE /* SharedBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36941B9A6F5984DC9297979 /* SharedBootstrap.swift */; };
+		68DE2C92172388DCEACC1CE1 /* IOSPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C9028A15ED491B4495007E /* IOSPlanEditorScreen.swift */; };
+		7120AB589A9BCE7CFB3F8271 /* IronLogWeeklyMuscleVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */; };
+		74E621E79975027907297F0A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 036E10CD0E4E87A2848693DE /* Assets.xcassets */; };
+		7605FB49D60C915FC699B5D0 /* Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF050746B4409F9D15BA3894 /* Readiness.swift */; };
+		77CC7D8970E0E1232B428883 /* IOSStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E7F324370A3507F4582AB4 /* IOSStatisticsScreen.swift */; };
+		796C7FAB5CF102777663E278 /* IOSWorkoutNextSetCoach.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C06C7AEADD15B33F85485C2 /* IOSWorkoutNextSetCoach.swift */; };
+		7C2B5C1CFE54DBEA87A0C13D /* IronLogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BCC5B8E55F164E9861E0536 /* IronLogApp.swift */; };
+		7D7A1A516DA037F63E1C1B80 /* IronLogMetricRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 178C511FBA3065902E1A5824 /* IronLogMetricRing.swift */; };
+		7EE2761C3A64467F5AB8D14A /* IndividualSetTargetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */; };
+		7F0D96676C8F6A7D23D428CF /* IOSExerciseLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A265FED18900AD07E50535B /* IOSExerciseLibraryScreen.swift */; };
+		846137AA294ED448ADEF1100 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BC40F8E313FAE1B098EB015A /* PrivacyInfo.xcprivacy */; };
+		8515BFA3D275E54DC62FD217 /* IOSMetaPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30808ABB7B7742355D0635D /* IOSMetaPlanEditorScreen.swift */; };
+		8C33CF24D58A77AF0585EDE8 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F327121E2804F40B69EB2A98 /* TrainingData.swift */; };
+		912FD5E42DCB9F9E324D33C7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC65BD5A1141010BA49E120 /* RootView.swift */; };
+		94500958EAE26793CA518347 /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E993C0D9701F14D3277ACF36 /* IOSSettingsViewModel.swift */; };
+		957F0C8A9B186114C4D54A21 /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA545153E6BF364D3143762 /* SettingsScreen.swift */; };
+		9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3370C75E31978BA1D7708CF4 /* ShareSheet.swift */; };
+		9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */; };
+		AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */; };
+		B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */; };
+		BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */; };
+		C389079B8F1449C74D5761CE /* IOSWorkoutScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC145BC0285EA34356A3E221 /* IOSWorkoutScreen.swift */; };
+		CE9AED1EDD8FBD1EE7656AF7 /* AnalyticsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A84655D88907D47D386F49D /* AnalyticsPresentation.swift */; };
+		D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 175CDFFC00E37243DD0A1389 /* Shared.framework */; };
+		D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */; };
+		DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */; };
+		E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */; };
+		EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */; };
+		F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		036E10CD0E4E87A2848693DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		06FC306405B9BEA595E777BB /* IOSDashboardScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardScreen.swift; sourceTree = "<group>"; };
+		0B89E28761F801D15BB55BFB /* IOSTrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSTrainingStore.swift; sourceTree = "<group>"; };
+		14803B130CFDD3294CFE0694 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		175CDFFC00E37243DD0A1389 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework"; sourceTree = SOURCE_ROOT; };
+		178C511FBA3065902E1A5824 /* IronLogMetricRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogMetricRing.swift; sourceTree = "<group>"; };
+		2177E25F0A397CE21DF8690D /* BinaryFileDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocumentTests.swift; sourceTree = "<group>"; };
+		226BC71A1A114CF54C1A6742 /* IOSWorkoutRestTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutRestTimer.swift; sourceTree = "<group>"; };
+		2FC05139F58925D92390B07E /* IOSWorkoutStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutStartView.swift; sourceTree = "<group>"; };
+		30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseStatisticsScreen.swift; sourceTree = "<group>"; };
+		3370C75E31978BA1D7708CF4 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
+		3A265FED18900AD07E50535B /* IOSExerciseLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseLibraryScreen.swift; sourceTree = "<group>"; };
+		3C06C7AEADD15B33F85485C2 /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
+		3D301A0719414E8B0D435219 /* IOSPlansScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlansScreen.swift; sourceTree = "<group>"; };
+		447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogIOSTests.swift; sourceTree = "<group>"; };
+		4BCC5B8E55F164E9861E0536 /* IronLogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogApp.swift; sourceTree = "<group>"; };
+		4BEBCD1C0E78A5BA61483270 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
+		63B1490D1BF4D8F05137E4F5 /* IOSWorkoutExerciseCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExerciseCard.swift; sourceTree = "<group>"; };
+		685AE05FC125A077D0129530 /* IronLogCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogCard.swift; sourceTree = "<group>"; };
+		6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
+		6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDayGuardTests.swift; sourceTree = "<group>"; };
+		7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRestTimerPersistenceTests.swift; sourceTree = "<group>"; };
+		7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
+		89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogWeeklyMuscleVolume.swift; sourceTree = "<group>"; };
+		90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeloadModeTests.swift; sourceTree = "<group>"; };
+		9A84655D88907D47D386F49D /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
+		9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionDraftTests.swift; sourceTree = "<group>"; };
+		A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSetEditor.swift; sourceTree = "<group>"; };
+		A5FD09AEA020281213EF59B4 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
+		ACA545153E6BF364D3143762 /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
+		AF050746B4409F9D15BA3894 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
+		AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
+		B16E76A0CCA913ADC440E678 /* IOSPlansSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlansSupport.swift; sourceTree = "<group>"; };
+		BC40F8E313FAE1B098EB015A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		BEC65BD5A1141010BA49E120 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		C6E7F324370A3507F4582AB4 /* IOSStatisticsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSStatisticsScreen.swift; sourceTree = "<group>"; };
+		CA06CB8823094162E1C3BA34 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
+		CB4291F379FACBEC41665E53 /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
+		CC8B2586ACD70746876A6EFF /* IOSWorkoutFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFormatting.swift; sourceTree = "<group>"; };
+		CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogTheme.swift; sourceTree = "<group>"; };
+		D30808ABB7B7742355D0635D /* IOSMetaPlanEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMetaPlanEditorScreen.swift; sourceTree = "<group>"; };
+		D36941B9A6F5984DC9297979 /* SharedBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedBootstrap.swift; sourceTree = "<group>"; };
+		DE008864544F67B48F64E88F /* IronLogIOS.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; name = IronLogIOS.app; path = IronLogIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E139A39ACDF1DD4F28B03640 /* IOSWorkoutCompletionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutCompletionScreen.swift; sourceTree = "<group>"; };
+		E57493B46D0737E1DCA25483 /* IOSWeeklyVolumeTrendCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWeeklyVolumeTrendCard.swift; sourceTree = "<group>"; };
+		E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryBridgeTests.swift; sourceTree = "<group>"; };
+		E993C0D9701F14D3277ACF36 /* IOSSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSettingsViewModel.swift; sourceTree = "<group>"; };
+		E9C9028A15ED491B4495007E /* IOSPlanEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlanEditorScreen.swift; sourceTree = "<group>"; };
+		EC145BC0285EA34356A3E221 /* IOSWorkoutScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutScreen.swift; sourceTree = "<group>"; };
+		EC14A4DC7B3B77F02BE46FF0 /* IronLogIOSTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; name = IronLogIOSTests.xctest; path = IronLogIOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F327121E2804F40B69EB2A98 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
+		F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocument.swift; sourceTree = "<group>"; };
+		F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistorySupport.swift; sourceTree = "<group>"; };
+		FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
+		FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		33D4DB7ABCB439682E66300C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ ,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		86218FCF4B4153B0362BD560 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00C45FD35CB0F9C5F764F070 /* Products */ = {
+			isa = PBXGroup;
+		children = (
+			DE008864544F67B48F64E88F /* IronLogIOS.app */,
+			EC14A4DC7B3B77F02BE46FF0 /* IronLogIOSTests.xctest */,
+		);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1075C18AFB168B2DFAEC5C36 /* Plans */ = {
+			isa = PBXGroup;
+		children = (
+			3A265FED18900AD07E50535B /* IOSExerciseLibraryScreen.swift */,
+			D30808ABB7B7742355D0635D /* IOSMetaPlanEditorScreen.swift */,
+			E9C9028A15ED491B4495007E /* IOSPlanEditorScreen.swift */,
+			3D301A0719414E8B0D435219 /* IOSPlansScreen.swift */,
+			B16E76A0CCA913ADC440E678 /* IOSPlansSupport.swift */,
+		);
+			path = Plans;
+			sourceTree = "<group>";
+		};
+		1995C461453B201C270667A5 /* Dashboard */ = {
+			isa = PBXGroup;
+		children = (
+			9A84655D88907D47D386F49D /* AnalyticsPresentation.swift */,
+			FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */,
+			06FC306405B9BEA595E777BB /* IOSDashboardScreen.swift */,
+			E57493B46D0737E1DCA25483 /* IOSWeeklyVolumeTrendCard.swift */,
+		);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		44AB20737046B73011DC7B99 /* Statistics */ = {
+			isa = PBXGroup;
+		children = (
+			30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */,
+			C6E7F324370A3507F4582AB4 /* IOSStatisticsScreen.swift */,
+		);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		8D5F0626C79621FB86CACCE1 /* Progression */ = {
+			isa = PBXGroup;
+		children = (
+			CB4291F379FACBEC41665E53 /* IOSProgressionReviewScreen.swift */,
+		);
+			path = Progression;
+			sourceTree = "<group>";
+		};
+		A39F31827FA20B6CC5BA6ACB /* Design */ = {
+			isa = PBXGroup;
+		children = (
+			685AE05FC125A077D0129530 /* IronLogCard.swift */,
+			178C511FBA3065902E1A5824 /* IronLogMetricRing.swift */,
+			CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */,
+			89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */,
+		);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		CF8D0BD4B75E8C2C174692A5 /* IronLogIOS */ = {
+			isa = PBXGroup;
+		children = (
+			036E10CD0E4E87A2848693DE /* Assets.xcassets */,
+			1995C461453B201C270667A5 /* Dashboard */,
+			A39F31827FA20B6CC5BA6ACB /* Design */,
+			E2102CCEDF04CE3AD3E8872E /* History */,
+			F6AA6DE13F902674E46301CA /* Models */,
+			1075C18AFB168B2DFAEC5C36 /* Plans */,
+			8D5F0626C79621FB86CACCE1 /* Progression */,
+			44AB20737046B73011DC7B99 /* Statistics */,
+			D25050EF8BFCD4C91FEE3984 /* Workout */,
+			F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */,
+			14803B130CFDD3294CFE0694 /* Info.plist */,
+			E993C0D9701F14D3277ACF36 /* IOSSettingsViewModel.swift */,
+			0B89E28761F801D15BB55BFB /* IOSTrainingStore.swift */,
+			4BCC5B8E55F164E9861E0536 /* IronLogApp.swift */,
+			BC40F8E313FAE1B098EB015A /* PrivacyInfo.xcprivacy */,
+			BEC65BD5A1141010BA49E120 /* RootView.swift */,
+			ACA545153E6BF364D3143762 /* SettingsScreen.swift */,
+			D36941B9A6F5984DC9297979 /* SharedBootstrap.swift */,
+			3370C75E31978BA1D7708CF4 /* ShareSheet.swift */,
+		);
+			path = IronLogIOS;
+			sourceTree = "<group>";
+		};
+		D25050EF8BFCD4C91FEE3984 /* Workout */ = {
+			isa = PBXGroup;
+		children = (
+			E139A39ACDF1DD4F28B03640 /* IOSWorkoutCompletionScreen.swift */,
+			63B1490D1BF4D8F05137E4F5 /* IOSWorkoutExerciseCard.swift */,
+			4BEBCD1C0E78A5BA61483270 /* IOSWorkoutExercisePicker.swift */,
+			CC8B2586ACD70746876A6EFF /* IOSWorkoutFormatting.swift */,
+			3C06C7AEADD15B33F85485C2 /* IOSWorkoutNextSetCoach.swift */,
+			FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */,
+			226BC71A1A114CF54C1A6742 /* IOSWorkoutRestTimer.swift */,
+			EC145BC0285EA34356A3E221 /* IOSWorkoutScreen.swift */,
+			A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */,
+			2FC05139F58925D92390B07E /* IOSWorkoutStartView.swift */,
+			CA06CB8823094162E1C3BA34 /* IOSWorkoutSuperset.swift */,
+		);
+			path = Workout;
+			sourceTree = "<group>";
+		};
+		D60ADEB63C860AFBC2C3F9EF /* IronLogIOS */ = {
+			isa = PBXGroup;
+		children = (
+			CF8D0BD4B75E8C2C174692A5 /* IronLogIOS */,
+			EEFE21A1443933CA4DE017DA /* IronLogIOSTests */,
+			00C45FD35CB0F9C5F764F070 /* Products */,
+			ED2F3B048716C9DC7573911C /* Frameworks */,
+		);
+			sourceTree = "<group>";
+		};
+		E2102CCEDF04CE3AD3E8872E /* History */ = {
+			isa = PBXGroup;
+		children = (
+			7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */,
+			F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */,
+		);
+			path = History;
+			sourceTree = "<group>";
+		};
+		ED2F3B048716C9DC7573911C /* Frameworks */ = {
+			isa = PBXGroup;
+		children = (
+			175CDFFC00E37243DD0A1389 /* Shared.framework */,
+		);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		EEFE21A1443933CA4DE017DA /* IronLogIOSTests */ = {
+			isa = PBXGroup;
+		children = (
+			AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */,
+			2177E25F0A397CE21DF8690D /* BinaryFileDocumentTests.swift */,
+			6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */,
+			447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */,
+			6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */,
+			9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */,
+			E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */,
+			90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */,
+			7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */,
+		);
+			path = IronLogIOSTests;
+			sourceTree = "<group>";
+		};
+		F6AA6DE13F902674E46301CA /* Models */ = {
+			isa = PBXGroup;
+		children = (
+			AF050746B4409F9D15BA3894 /* Readiness.swift */,
+			A5FD09AEA020281213EF59B4 /* TrainingAnalytics.swift */,
+			F327121E2804F40B69EB2A98 /* TrainingData.swift */,
+		);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* IronLogIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6999223B144664B5601B7EE0 /* Build configuration list for PBXNativeTarget "IronLogIOS" */;
+			buildPhases = (
+				3790D7103163C98E573B492A /* Build Shared Framework */,
+				D7FDE3A15F5D8A309D2F1B09 /* Sources */,
+				33D4DB7ABCB439682E66300C /* Frameworks */,
+				31B11E31C793B81C2C833089 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IronLogIOS;
+			productName = IronLogIOS;
+			productReference = DE008864544F67B48F64E88F /* IronLogIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7EC8F98B7A265120217712DE /* IronLogIOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 896302F3B0CBBDA7B3457F1A /* Build configuration list for PBXNativeTarget "IronLogIOSTests" */;
+			buildPhases = (
+				A2D16A52C8A07E55D9BD57CD /* Sources */,
+				86218FCF4B4153B0362BD560 /* Frameworks */,
+				4448936AF211E1FBD1BBC19B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				768F8B228D9788DC87302A82 /* PBXTargetDependency */,
+			);
+			name = IronLogIOSTests;
+			productName = IronLogIOSTests;
+			productReference = EC14A4DC7B3B77F02BE46FF0 /* IronLogIOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ED67DCD33B2AA9FDDB1C90BC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					29C7B681C8D62CBAC94D51C0 = { CreatedOnToolsVersion = 1600; };
+					7EC8F98B7A265120217712DE = { CreatedOnToolsVersion = 1600; TestTargetID = 29C7B681C8D62CBAC94D51C0; };
+				};
+			};
+			buildConfigurationList = FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "IronLogIOS" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D60ADEB63C860AFBC2C3F9EF /* IronLogIOS */;
+			productRefGroup = 00C45FD35CB0F9C5F764F070 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				29C7B681C8D62CBAC94D51C0 /* IronLogIOS */,
+				7EC8F98B7A265120217712DE /* IronLogIOSTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		31B11E31C793B81C2C833089 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74E621E79975027907297F0A /* Assets.xcassets in Resources */, 
+				846137AA294ED448ADEF1100 /* PrivacyInfo.xcprivacy in Resources */, 
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4448936AF211E1FBD1BBC19B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3790D7103163C98E573B492A /* Build Shared Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Shared Framework";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\"$SRCROOT/scripts/build-shared.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D7FDE3A15F5D8A309D2F1B09 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CE9AED1EDD8FBD1EE7656AF7 /* AnalyticsPresentation.swift in Sources */, 
+				AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */, 
+				0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */, 
+				3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */, 
+				0B0DA9EA073BAD6A6C2C3656 /* IronLogCard.swift in Sources */, 
+				7D7A1A516DA037F63E1C1B80 /* IronLogMetricRing.swift in Sources */, 
+				EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */, 
+				7120AB589A9BCE7CFB3F8271 /* IronLogWeeklyMuscleVolume.swift in Sources */, 
+				B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */, 
+				DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */, 
+				7605FB49D60C915FC699B5D0 /* Readiness.swift in Sources */, 
+				5A79CD007629BC1CDEE1CC98 /* TrainingAnalytics.swift in Sources */, 
+				8C33CF24D58A77AF0585EDE8 /* TrainingData.swift in Sources */, 
+				7F0D96676C8F6A7D23D428CF /* IOSExerciseLibraryScreen.swift in Sources */, 
+				8515BFA3D275E54DC62FD217 /* IOSMetaPlanEditorScreen.swift in Sources */, 
+				68DE2C92172388DCEACC1CE1 /* IOSPlanEditorScreen.swift in Sources */, 
+				28B7D7F901FFDC6C19C0C84E /* IOSPlansScreen.swift in Sources */, 
+				0869BF40E44EDB759F73D93B /* IOSPlansSupport.swift in Sources */, 
+				4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */, 
+				0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */, 
+				77CC7D8970E0E1232B428883 /* IOSStatisticsScreen.swift in Sources */, 
+				393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */, 
+				5B7F20D9057C5D94EA50B119 /* IOSWorkoutExerciseCard.swift in Sources */, 
+				25D89AB3FD5B8889379974B0 /* IOSWorkoutExercisePicker.swift in Sources */, 
+				314114849498ECCE06C4721B /* IOSWorkoutFormatting.swift in Sources */, 
+				796C7FAB5CF102777663E278 /* IOSWorkoutNextSetCoach.swift in Sources */, 
+				2C33532E3C06D96BCF27C579 /* IOSWorkoutPlateVisualizer.swift in Sources */, 
+				19021D29F385C24A553C5FF7 /* IOSWorkoutRestTimer.swift in Sources */, 
+				C389079B8F1449C74D5761CE /* IOSWorkoutScreen.swift in Sources */, 
+				F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */, 
+				22B55B66B9719E8E01B6D560 /* IOSWorkoutStartView.swift in Sources */, 
+				594DC0F64CF92E60EECB63D3 /* IOSWorkoutSuperset.swift in Sources */, 
+				D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */, 
+				94500958EAE26793CA518347 /* IOSSettingsViewModel.swift in Sources */, 
+				4DE13CA063E485D3BC27F865 /* IOSTrainingStore.swift in Sources */, 
+				7C2B5C1CFE54DBEA87A0C13D /* IronLogApp.swift in Sources */, 
+				912FD5E42DCB9F9E324D33C7 /* RootView.swift in Sources */, 
+				957F0C8A9B186114C4D54A21 /* SettingsScreen.swift in Sources */, 
+				5BF7C753C0E21D29A735A1AE /* SharedBootstrap.swift in Sources */, 
+				9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */, 
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A2D16A52C8A07E55D9BD57CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */, 
+				355BDEBEEAD9DD0AC9E05662 /* BinaryFileDocumentTests.swift in Sources */, 
+				7EE2761C3A64467F5AB8D14A /* IndividualSetTargetsTests.swift in Sources */, 
+				4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */, 
+				E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */, 
+				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
+				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
+				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 
+				BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */, 
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		768F8B228D9788DC87302A82 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29C7B681C8D62CBAC94D51C0 /* IronLogIOS */;
+			targetProxy = 2C135CA110FDB5658326B736 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		2C135CA110FDB5658326B736 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ED67DCD33B2AA9FDDB1C90BC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29C7B681C8D62CBAC94D51C0;
+			remoteInfo = IronLogIOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin XCBuildConfiguration section */
+		877A6BA951A2EA0025A2ABE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_NAME = IronLogIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		959134B361DD7E21ADEA3164 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_NAME = IronLogIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		3CF6A4F2E05B3AAE7E2CBFEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IronLogIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ironlog.ios;
+				PRODUCT_NAME = IronLogIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		23FB2CAEB38545C3793097DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_TESTABILITY = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IronLogIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ironlog.ios;
+				PRODUCT_NAME = IronLogIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E2657B9FA91DD4A55652006F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ironlog.ios.tests;
+				PRODUCT_NAME = IronLogIOSTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IronLogIOS.app/IronLogIOS";
+			};
+			name = Debug;
+		};
+		B4343C19535B18410503AED7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ironlog.ios.tests;
+				PRODUCT_NAME = IronLogIOSTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IronLogIOS.app/IronLogIOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "IronLogIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				877A6BA951A2EA0025A2ABE8 /* Debug */,
+				959134B361DD7E21ADEA3164 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6999223B144664B5601B7EE0 /* Build configuration list for PBXNativeTarget "IronLogIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3CF6A4F2E05B3AAE7E2CBFEE /* Debug */,
+				23FB2CAEB38545C3793097DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		896302F3B0CBBDA7B3457F1A /* Build configuration list for PBXNativeTarget "IronLogIOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2657B9FA91DD4A55652006F /* Debug */,
+				B4343C19535B18410503AED7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = ED67DCD33B2AA9FDDB1C90BC /* Project object */;
+}

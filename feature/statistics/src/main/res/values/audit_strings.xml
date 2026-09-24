@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_comparison_title">Vergleich zum vorherigen passenden Training</string>
+    <string name="stats_comparison_previous">Vorheriges · %1$s</string>
+    <string name="stats_comparison_latest">Letztes · %1$s</string>
+    <string name="stats_comparison_delta">Veränderung: %1$s</string>
+    <string name="stats_recent_sets_title">Letzte Sätze</string>
+    <string name="stats_recent_set_value">%1$s · %2$s × %3$d</string>
+    <string name="stats_set_type_normal">Arbeitssatz</string>
+    <string name="stats_set_type_warmup">Aufwärmen</string>
+    <string name="stats_set_type_drop">Dropsatz</string>
+    <string name="stats_set_type_failure">Failure-Satz</string>
+</resources>

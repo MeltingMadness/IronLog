@@ -17,7 +17,12 @@ data class WorkoutSessionEntity(
     val name: String = "",
     val notes: String = "",
     val planId: Long? = null,
-    val metaPlanId: Long? = null
+    val metaPlanId: Long? = null,
+    /**
+     * Explicit deload context for this session. `null` for every row written before
+     * schema 13 (unknown), `true`/`false` for sessions recorded with a known mode.
+     */
+    val isDeload: Boolean? = null
 ) {
     fun toDomain(): WorkoutSession = WorkoutSession(
         id = id,
@@ -27,7 +32,8 @@ data class WorkoutSessionEntity(
         name = name,
         notes = notes,
         planId = planId,
-        metaPlanId = metaPlanId
+        metaPlanId = metaPlanId,
+        isDeload = isDeload
     )
 
     companion object {
@@ -39,7 +45,8 @@ data class WorkoutSessionEntity(
             name = session.name,
             notes = session.notes,
             planId = session.planId,
-            metaPlanId = session.metaPlanId
+            metaPlanId = session.metaPlanId,
+            isDeload = session.isDeload
         )
     }
 }

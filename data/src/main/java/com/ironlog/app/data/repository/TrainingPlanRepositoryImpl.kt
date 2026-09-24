@@ -39,6 +39,8 @@ class TrainingPlanRepositoryImpl(
     }
 
     override suspend fun savePlan(plan: TrainingPlan): Long {
+        require(plan.exercises.all { com.ironlog.shared.plans.PlannedSets.valid(it.setTargets) &&
+            (it.setTargets.isEmpty() || (it.progressionConfig is com.ironlog.app.domain.model.ProgressionConfig.Manual && it.targetSets == it.setTargets.count { slot -> slot.kind != "WARMUP" })) }) { "Ungültige individuelle Satzvorgaben" }
         val nowEpochMillis = EpochConverter.toLong(LocalDateTime.now())
 
         val entity = if (plan.id == 0L) {
@@ -67,6 +69,8 @@ class TrainingPlanRepositoryImpl(
 
         return trainingPlanDao.replacePlanAndExercises(entity, exerciseEntities)
     }
+
+    override suspend fun applyPerformedSetTargets(sessionId: Long) = trainingPlanDao.applyPerformedSetTargets(sessionId)
 
     override suspend fun deletePlan(planId: Long) {
         trainingPlanDao.deletePlanAndDetachSessions(planId)

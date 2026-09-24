@@ -38,6 +38,30 @@ interface WorkoutSetDao {
     @Query("SELECT * FROM workout_sets WHERE exerciseId = :exerciseId ORDER BY completedAt DESC")
     suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSetEntity>
 
+    /**
+     * Returns only sets that are valid for historical exercise statistics.
+     *
+     * Keep this separate from [getSetsForExerciseList]: the latter is also used
+     * while a workout is active and must continue to expose the current session.
+     * The upper timestamp bound mirrors the shared analytics projection and
+     * prevents future-dated imported rows from changing the chart.
+     */
+    @Query(
+        """
+        SELECT ws.* FROM workout_sets ws
+        INNER JOIN workout_sessions s ON s.id = ws.sessionId
+        WHERE ws.exerciseId = :exerciseId
+          AND s.endTime IS NOT NULL
+          AND s.startTime <= :nowEpochMillis
+          AND ws.completedAt <= :nowEpochMillis
+        ORDER BY ws.completedAt DESC, ws.id DESC
+        """
+    )
+    suspend fun getCompletedSetsForExerciseList(
+        exerciseId: Long,
+        nowEpochMillis: Long
+    ): List<WorkoutSetEntity>
+
     @Query(
         """
         SELECT ws.* FROM workout_sets ws
@@ -181,8 +205,23 @@ interface WorkoutSetDao {
     @Query("""
         SELECT ws.* FROM workout_sets ws
         INNER JOIN workout_sessions s ON ws.sessionId = s.id
-        WHERE s.startTime >= :sinceEpochMillis AND s.endTime IS NOT NULL AND ws.setType != 'WARMUP'
+        WHERE ws.completedAt >= :sinceEpochMillis AND s.endTime IS NOT NULL AND ws.setType != 'WARMUP'
         ORDER BY s.startTime ASC
     """)
     suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSetEntity>
+
+    @Query("""
+        SELECT ws.* FROM workout_sets ws
+        INNER JOIN workout_sessions s ON ws.sessionId = s.id
+        WHERE ws.completedAt >= :sinceEpochMillis
+          AND ws.completedAt <= :untilEpochMillis
+          AND s.startTime <= :untilEpochMillis
+          AND s.endTime IS NOT NULL
+          AND ws.setType != 'WARMUP'
+        ORDER BY s.startTime ASC
+    """)
+    suspend fun getWorkSetsCompletedBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): List<WorkoutSetEntity>
 }

@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronLog — Interaktives Redesign Studio (NEXUS, FORGE, RASTER, TIDE, PULSE)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Shared Tokens */
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-swiss: 'Inter', sans-serif;
+      
+      /* Studio Chrome */
+      --studio-bg: #07090D;
+      --studio-panel: #0F131B;
+      --studio-border: rgba(255, 255, 255, 0.08);
+      --studio-text: #E5E8EF;
+      --studio-muted: #7E8695;
+      
+      /* THEME: NEXUS (Master Synthesis) */
+      --nexus-bg: #050608;
+      --nexus-card: #0D0F14;
+      --nexus-elevated: #151821;
+      --nexus-stroke: rgba(255, 255, 255, 0.09);
+      --nexus-stroke-active: #FF7A1A;
+      --nexus-accent: #FF7A1A;
+      --nexus-accent-glow: rgba(255, 122, 26, 0.25);
+      --nexus-success: #00F5A0;
+      --nexus-teal: #0D9488;
+      --nexus-text-hero: #FFFFFF;
+      --nexus-text-body: #C9CED8;
+      --nexus-text-dim: #717888;
+      
+      /* THEME: FORGE (Concept 1 - Brutalism) */
+      --forge-bg: #000000;
+      --forge-card: #0A0A0C;
+      --forge-elevated: #141416;
+      --forge-stroke: #26272B;
+      --forge-stroke-active: #FF5A1F;
+      --forge-accent: #FF7A1A;
+      --forge-accent-glow: rgba(255, 122, 26, 0.15);
+      --forge-success: #3DFF88;
+      --forge-text-hero: #FFFFFF;
+      --forge-text-body: #E6E8EC;
+      --forge-text-dim: #9BA0A8;
+      
+      /* THEME: RASTER (Concept 2 - Swiss Bento) */
+      --raster-bg: #0A0A0B;
+      --raster-card: #121215;
+      --raster-elevated: #1A1A1E;
+      --raster-stroke: #222226;
+      --raster-stroke-active: #3B82F6;
+      --raster-accent: #3B82F6;
+      --raster-accent-glow: rgba(59, 130, 246, 0.2);
+      --raster-success: #10B981;
+      --raster-text-hero: #F4F4F5;
+      --raster-text-body: #A1A1AA;
+      --raster-text-dim: #71717A;
+      
+      /* THEME: TIDE (Concept 3 - Biohacking) */
+      --tide-bg: #040908;
+      --tide-card: #071513;
+      --tide-elevated: #0C211E;
+      --tide-stroke: #10332E;
+      --tide-stroke-active: #00F5A0;
+      --tide-accent: #00F5A0;
+      --tide-accent-glow: rgba(0, 245, 160, 0.25);
+      --tide-success: #00F5A0;
+      --tide-text-hero: #E6FFF6;
+      --tide-text-body: #9DC3B9;
+      --tide-text-dim: #547B72;
+      
+      /* THEME: PULSE (Concept 4 - Motion & Heat) */
+      --pulse-bg: #0B080C;
+      --pulse-card: #161018;
+      --pulse-elevated: #221826;
+      --pulse-stroke: #33223A;
+      --pulse-stroke-active: #FF3366;
+      --pulse-accent: #FF3366;
+      --pulse-accent-glow: rgba(255, 51, 102, 0.3);
+      --pulse-success: #34D399;
+      --pulse-text-hero: #FFFFFF;
+      --pulse-text-body: #D8CCE0;
+      --pulse-text-dim: #8E7C97;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--studio-bg);
+      color: var(--studio-text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Studio Bar */
+    header.studio-header {
+      background: rgba(15, 19, 27, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--studio-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #FF7A1A 0%, #E11D48 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #fff;
+      font-size: 18px;
+      box-shadow: 0 4px 16px rgba(255, 122, 26, 0.35);
+    }
+
+    .brand-title h1 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+    }
+
+    .brand-title span {
+      font-size: 12px;
+      color: var(--studio-muted);
+      font-weight: 500;
+    }
+
+    /* Concept Selector Pills */
+    .concept-nav {
+      display: flex;
+      background: #090B10;
+      border: 1px solid var(--studio-border);
+      border-radius: 30px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .concept-btn {
+      background: transparent;
+      border: none;
+      color: var(--studio-muted);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 7px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .concept-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .concept-btn.active {
+      background: #FFFFFF;
+      color: #000000;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .concept-btn[data-theme="nexus"].active {
+      background: linear-gradient(135deg, #FF7A1A, #FF9E3D);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(255, 122, 26, 0.4);
+    }
+
+    .concept-btn[data-theme="tide"].active {
+      background: linear-gradient(135deg, #00F5A0, #0D9488);
+      color: #040908;
+      box-shadow: 0 4px 14px rgba(0, 245, 160, 0.35);
+    }
+
+    .concept-btn[data-theme="pulse"].active {
+      background: linear-gradient(135deg, #FF3366, #7C3AED);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(255, 51, 102, 0.35);
+    }
+
+    .view-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .view-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--studio-border);
+      color: var(--studio-text);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .view-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Screen Selector Bar */
+    .screen-subbar {
+      background: #0B0E14;
+      border-bottom: 1px solid var(--studio-border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .screen-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .screen-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--studio-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .screen-tab:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .screen-tab.active {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .concept-badge-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .badge-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #A3ABB8;
+    }
+
+    /* Main Preview Container */
+    main.studio-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 16px;
+      background: radial-gradient(circle at 50% 30%, rgba(255, 122, 26, 0.03) 0%, transparent 60%);
+      transition: background 0.4s ease;
+    }
+
+    /* Device Frame */
+    .device-wrapper {
+      position: relative;
+      width: 412px;
+      height: 870px;
+      background: #000000;
+      border-radius: 52px;
+      box-shadow: 
+        0 0 0 12px #181A20,
+        0 0 0 14px #262A35,
+        0 30px 80px rgba(0, 0, 0, 0.8),
+        0 0 60px rgba(255, 122, 26, 0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .device-wrapper.full-mode {
+      width: 100%;
+      max-width: 800px;
+      height: 900px;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Phone Bezel Header / Status Bar */
+    .phone-status-bar {
+      height: 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: var(--font-sans);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .dynamic-island {
+      width: 100px;
+      height: 24px;
+      background: #000000;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+    }
+
+    /* Inside Screen Scroll Container */
+    .screen-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: var(--app-bg, var(--nexus-bg));
+      color: var(--app-text, var(--nexus-text-body));
+      padding-bottom: 30px;
+    }
+
+    .screen-viewport::-webkit-scrollbar {
+      width: 4px;
+    }
+    .screen-viewport::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    /* THEME ATTRIBUTES ON VIEWPORT */
+    [data-active-theme="nexus"] {
+      --app-bg: var(--nexus-bg);
+      --app-card: var(--nexus-card);
+      --app-elevated: var(--nexus-elevated);
+      --app-stroke: var(--nexus-stroke);
+      --app-accent: var(--nexus-accent);
+      --app-accent-glow: var(--nexus-accent-glow);
+      --app-success: var(--nexus-success);
+      --app-hero-text: var(--nexus-text-hero);
+      --app-text: var(--nexus-text-body);
+      --app-dim: var(--nexus-text-dim);
+    }
+
+    [data-active-theme="forge"] {
+      --app-bg: var(--forge-bg);
+      --app-card: var(--forge-card);
+      --app-elevated: var(--forge-elevated);
+      --app-stroke: var(--forge-stroke);
+      --app-accent: var(--forge-accent);
+      --app-accent-glow: var(--forge-accent-glow);
+      --app-success: var(--forge-success);
+      --app-hero-text: var(--forge-text-hero);
+      --app-text: var(--forge-text-body);
+      --app-dim: var(--forge-text-dim);
+    }
+
+    [data-active-theme="raster"] {
+      --app-bg: var(--raster-bg);
+      --app-card: var(--raster-card);
+      --app-elevated: var(--raster-elevated);
+      --app-stroke: var(--raster-stroke);
+      --app-accent: var(--raster-accent);
+      --app-accent-glow: var(--raster-accent-glow);
+      --app-success: var(--raster-success);
+      --app-hero-text: var(--raster-text-hero);
+      --app-text: var(--raster-text-body);
+      --app-dim: var(--raster-text-dim);
+    }
+
+    [data-active-theme="tide"] {
+      --app-bg: var(--tide-bg);
+      --app-card: var(--tide-card);
+      --app-elevated: var(--tide-elevated);
+      --app-stroke: var(--tide-stroke);
+      --app-accent: var(--tide-accent);
+      --app-accent-glow: var(--tide-accent-glow);
+      --app-success: var(--tide-success);
+      --app-hero-text: var(--tide-text-hero);
+      --app-text: var(--tide-text-body);
+      --app-dim: var(--tide-text-dim);
+    }
+
+    [data-active-theme="pulse"] {
+      --app-bg: var(--pulse-bg);
+      --app-card: var(--pulse-card);
+      --app-elevated: var(--pulse-elevated);
+      --app-stroke: var(--pulse-stroke);
+      --app-accent: var(--pulse-accent);
+      --app-accent-glow: var(--pulse-accent-glow);
+      --app-success: var(--pulse-success);
+      --app-hero-text: var(--pulse-text-hero);
+      --app-text: var(--pulse-text-body);
+      --app-dim: var(--pulse-text-dim);
+    }
+
+    /* Common App Screen Elements */
+    .app-screen {
+      display: none;
+      padding: 16px 18px;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .app-screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* App Screen Header */
+    .screen-app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .user-greeting {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-greeting .sub {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--app-dim);
+    }
+
+    .user-greeting .title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--app-hero-text);
+    }
+
+    .avatar-pill {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: var(--app-accent);
+      font-size: 14px;
+    }
+
+    /* CARD SYSTEM */
+    .card {
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      border-radius: 20px;
+      padding: 16px;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    /* Bento Grid System */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .bento-full {
+      grid-column: span 2;
+    }
+
+    /* HERO CARD: Today's Workout */
+    .hero-workout-card {
+      background: linear-gradient(145deg, var(--app-card) 0%, var(--app-elevated) 100%);
+      border: 1px solid var(--app-stroke);
+      border-radius: 24px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-workout-card::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, var(--app-accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-accent);
+      margin-bottom: 8px;
+    }
+
+    .hero-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--app-hero-text);
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .hero-desc {
+      font-size: 13px;
+      color: var(--app-dim);
+      margin-bottom: 16px;
+    }
+
+    .exercise-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .exercise-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--app-stroke);
+      border-radius: 12px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--app-text);
+    }
+
+    .hero-cta-btn {
+      width: 100%;
+      background: var(--app-accent);
+      color: #FFFFFF;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px var(--app-accent-glow);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hero-cta-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .hero-cta-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* READINESS & RECOVERY CARD */
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .gauge-circle {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+    }
+
+    .gauge-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-bg-circle {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 6;
+      fill: none;
+    }
+
+    .gauge-val-circle {
+      stroke: var(--app-success);
+      stroke-width: 6;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 188;
+      stroke-dashoffset: 35;
+      transition: stroke-dashoffset 0.8s ease;
+    }
+
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--app-hero-text);
+    }
+
+    .readiness-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .readiness-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      color: var(--app-dim);
+    }
+
+    .readiness-status {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--app-hero-text);
+    }
+
+    .readiness-hint {
+      font-size: 11px;
+      color: var(--app-dim);
+    }
+
+    /* WEEKLY VOLUME BARS */
+    .volume-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .volume-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .volume-bar-bg {
+      height: 7px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .volume-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--app-accent);
+      transition: width 0.5s ease;
+    }
+
+    .volume-bar-fill.optimal {
+      background: var(--app-success);
+    }
+
+    .volume-bar-fill.under {
+      background: #FBBF24;
+    }
+
+    /* ====================================================================
+       SCREEN 2: ACTIVE WORKOUT SCREEN
+       ==================================================================== */
+    .workout-top-banner {
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .exercise-meta-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--app-hero-text);
+      letter-spacing: -0.02em;
+    }
+
+    .exercise-meta-sub {
+      font-size: 12px;
+      color: var(--app-dim);
+    }
+
+    /* Rest Timer Island */
+    .rest-timer-island {
+      background: var(--app-elevated);
+      border: 1px solid var(--app-stroke);
+      border-radius: 16px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timer-ring {
+      width: 34px;
+      height: 34px;
+      position: relative;
+    }
+
+    .timer-digits {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--app-hero-text);
+    }
+
+    .timer-quick-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--app-text);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 4-Way Set Type Selector */
+    .set-type-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      border-radius: 14px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .set-type-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 4px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--app-dim);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .set-type-btn.active {
+      background: var(--app-elevated);
+      color: var(--app-hero-text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Logged Sets Table */
+    .sets-table {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .set-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      border-radius: 14px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .set-row.logged {
+      background: rgba(255, 255, 255, 0.02);
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .set-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--app-text);
+    }
+
+    .set-row.logged .set-badge {
+      background: rgba(0, 245, 160, 0.12);
+      color: var(--app-success);
+    }
+
+    .set-data {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--app-hero-text);
+    }
+
+    .set-rpe-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--app-dim);
+    }
+
+    .set-check-icon {
+      color: var(--app-success);
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    /* ACTIVE SET INPUT CARD (The Core Ergonomic Innovation) */
+    .active-set-card {
+      background: linear-gradient(180deg, var(--app-elevated) 0%, var(--app-card) 100%);
+      border: 1.5px solid var(--app-stroke-active, var(--app-accent));
+      box-shadow: 0 4px 24px var(--app-accent-glow);
+      border-radius: 22px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+
+    .active-set-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .active-set-tag {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--app-accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .smart-coach-badge {
+      background: rgba(255, 122, 26, 0.12);
+      border: 1px solid rgba(255, 122, 26, 0.3);
+      color: var(--app-accent);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    /* Big Numbers Display Row */
+    .stepper-inputs-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+
+    .stepper-box {
+      background: #000000;
+      border: 1px solid var(--app-stroke);
+      border-radius: 16px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stepper-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--app-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stepper-val-hero {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .stepper-buttons-row {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .step-btn {
+      flex: 1;
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      color: #FFFFFF;
+      padding: 8px 0;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+    }
+
+    .step-btn:hover {
+      background: var(--app-elevated);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .step-btn:active {
+      transform: scale(0.92);
+      background: var(--app-accent);
+    }
+
+    /* BARBELL PLATE VISUALIZER (From Concept 1 FORGE) */
+    .plate-calc-container {
+      background: #000000;
+      border: 1px solid var(--app-stroke);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .plate-calc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--app-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .plate-calc-header span.weight-per-side {
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+    }
+
+    .barbell-graphic {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #070708;
+      border-radius: 8px;
+      padding: 0 10px;
+      overflow-x: auto;
+    }
+
+    .barbell-collar {
+      width: 14px;
+      height: 36px;
+      background: #8E8E93;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .barbell-sleeve {
+      width: 32px;
+      height: 14px;
+      background: #505055;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .plate-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 900;
+      color: #FFFFFF;
+      border-radius: 3px;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Big Log Button */
+    .confirm-log-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--app-accent) 0%, #FF5A1F 100%);
+      border: none;
+      color: #FFFFFF;
+      padding: 16px;
+      border-radius: 18px;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 24px var(--app-accent-glow);
+      transition: all 0.15s;
+    }
+
+    .confirm-log-btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+
+    .confirm-log-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ====================================================================
+       SCREEN 3: SMART COACH & ANALYTICS
+       ==================================================================== */
+    .chart-container {
+      height: 160px;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .progression-highlight {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: rgba(0, 245, 160, 0.08);
+      border: 1px solid rgba(0, 245, 160, 0.2);
+      border-radius: 14px;
+      color: var(--app-success);
+    }
+
+    .deload-gauge-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--app-card);
+      border: 1px solid var(--app-stroke);
+      border-radius: 20px;
+    }
+
+    /* PR CELEBRATION MODAL */
+    .celebration-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(12px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .celebration-overlay.active {
+      display: flex;
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .trophy-burst {
+      font-size: 64px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 24px rgba(255, 184, 0, 0.6));
+      animation: trophyBounce 0.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes trophyBounce {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-8px) scale(1.08); }
+    }
+
+    .pr-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: #FFFFFF;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .pr-subtitle {
+      font-size: 15px;
+      color: #FFD60A;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .pr-close-btn {
+      background: #FFFFFF;
+      color: #000000;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 24px;
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Bottom Navigation Bar inside Phone */
+    .phone-bottom-bar {
+      height: 60px;
+      background: rgba(13, 15, 20, 0.95);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid var(--app-stroke);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--app-dim);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bottom-nav-item.active {
+      color: var(--app-accent);
+    }
+
+    .nav-icon {
+      font-size: 18px;
+    }
+
+    /* Interactive PR Demo Button */
+    .demo-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed var(--app-stroke);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: var(--app-dim);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .demo-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Explanation Drawer on the side */
+    .studio-layout {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 40px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .concept-sidebar {
+      width: 380px;
+      background: var(--studio-panel);
+      border: 1px solid var(--studio-border);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar-section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--studio-muted);
+      margin-bottom: 8px;
+    }
+
+    .spec-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+    }
+
+    .spec-item span:first-child {
+      color: var(--studio-muted);
+    }
+
+    .spec-item span:last-child {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #FFFFFF;
+    }
+
+    .palette-swatches {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .swatch-tooltip {
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      font-family: var(--font-mono);
+      color: var(--studio-muted);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 980px) {
+      .studio-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+      .concept-sidebar {
+        width: 100%;
+        max-width: 440px;
+      }
+    }
+  </style>
+</head>
+<body data-active-theme="nexus">
+
+  <!-- Studio Header -->
+  <header class="studio-header">
+    <div class="brand">
+      <div class="brand-logo">IL</div>
+      <div class="brand-title">
+        <h1>IronLog Redesign Studio</h1>
+        <span>Interaktives Multi-Concept Visualizer</span>
+      </div>
+    </div>
+
+    <!-- 5 Concept Switchers -->
+    <nav class="concept-nav">
+      <button class="concept-btn active" data-theme="nexus">🌟 NEXUS (Master)</button>
+      <button class="concept-btn" data-theme="forge">⚡ Concept 1: FORGE</button>
+      <button class="concept-btn" data-theme="raster">📐 Concept 2: RASTER</button>
+      <button class="concept-btn" data-theme="tide">🌿 Concept 3: TIDE</button>
+      <button class="concept-btn" data-theme="pulse">🚀 Concept 4: PULSE</button>
+    </nav>
+
+    <!-- Controls -->
+    <div class="view-controls">
+      <button class="view-btn" id="toggleFrameBtn">📱 Rahmen anpassen</button>
+    </div>
+  </header>
+
+  <!-- Sub-Bar for Screen Switcher -->
+  <div class="screen-subbar">
+    <div class="screen-tabs">
+      <button class="screen-tab active" data-screen="dashboard">
+        <span>🏠</span> Dashboard (Bento-Hub)
+      </button>
+      <button class="screen-tab" data-screen="workout">
+        <span>🏋️‍♂️</span> Aktives Workout (Gym-UI)
+      </button>
+      <button class="screen-tab" data-screen="analytics">
+        <span>📊</span> Smart Coach & Volume
+      </button>
+    </div>
+
+    <div class="concept-badge-bar">
+      <span class="badge-pill" id="themeStatusBadge">THEME: OLED PITCH BLACK</span>
+      <span class="badge-pill" id="fontStatusBadge">TYPO: PLUS JAKARTA SANS</span>
+    </div>
+  </div>
+
+  <!-- Main Showcase Content -->
+  <main class="studio-content">
+    <div class="studio-layout">
+
+      <!-- Smartphone Device Frame -->
+      <div class="device-wrapper" id="deviceWrapper">
+        <div class="dynamic-island"></div>
+        <div class="phone-status-bar">
+          <span>09:41</span>
+          <div style="display:flex; gap:6px; font-size:11px;">
+            <span>5G</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <div class="screen-viewport" id="viewport">
+
+          <!-- ============================================================== -->
+          <!-- SCREEN 1: DASHBOARD -->
+          <!-- ============================================================== -->
+          <div class="app-screen active" id="screen-dashboard">
+            <div class="screen-app-header">
+              <div class="user-greeting">
+                <span class="sub">Willkommen zurück</span>
+                <span class="title">Max Mustermann</span>
+              </div>
+              <div class="avatar-pill">MM</div>
+            </div>
+
+            <!-- Hero Card: Today's Workout -->
+            <div class="hero-workout-card">
+              <div class="hero-tag">🔥 Heutige Session · Push Day B</div>
+              <div class="hero-title">Brust, Schultern & Trizeps</div>
+              <div class="hero-desc">5 Übungen · ~65 Min · Fokus auf progressives Bankdrücken</div>
+              <div class="exercise-pills-row">
+                <span class="exercise-pill">Bankdrücken (102.5 kg)</span>
+                <span class="exercise-pill">Schrägbank KH</span>
+                <span class="exercise-pill">Dips</span>
+                <span class="exercise-pill">Seitheben</span>
+              </div>
+              <button class="hero-cta-btn" onclick="switchScreen('workout')">
+                <span>Training jetzt starten</span>
+                <span>➔</span>
+              </button>
+            </div>
+
+            <!-- Bento 2x2 Grid -->
+            <div class="bento-grid">
+              
+              <!-- Readiness Gauge (From Concept 3 TIDE / DeloadDetector) -->
+              <div class="card">
+                <div class="gauge-container">
+                  <div class="gauge-circle">
+                    <svg class="gauge-svg" viewBox="0 0 68 68">
+                      <circle class="gauge-bg-circle" cx="34" cy="34" r="30"></circle>
+                      <circle class="gauge-val-circle" cx="34" cy="34" r="30"></circle>
+                    </svg>
+                    <div class="gauge-text">88%</div>
+                  </div>
+                  <div class="readiness-details">
+                    <span class="readiness-label">Readiness</span>
+                    <span class="readiness-status">Optimal</span>
+                    <span class="readiness-hint">Ermüdung 22/100</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Streak & Status Card -->
+              <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+                <span style="font-size:11px; font-weight:700; color:var(--app-dim); text-transform:uppercase;">Streak</span>
+                <div style="font-family:var(--font-mono); font-size:26px; font-weight:900; color:var(--app-hero-text); margin:2px 0;">
+                  4 Tage 🔥
+                </div>
+                <span style="font-size:11px; color:var(--app-success); font-weight:700;">+2 Tage vs Vorwoche</span>
+              </div>
+
+              <!-- Weekly Volume Bar Card -->
+              <div class="card bento-full">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <span style="font-size:12px; font-weight:800; color:var(--app-hero-text); text-transform:uppercase; letter-spacing:0.04em;">
+                    Wöchentliches Muskelvolumen (MEV / MAV)
+                  </span>
+                  <span style="font-size:11px; color:var(--app-dim); font-weight:600;">Woche 3 / 6</span>
+                </div>
+
+                <div class="volume-item">
+                  <div class="volume-header">
+                    <span>Brust (14 / 16 Sätze)</span>
+                    <span style="color:var(--app-success);">Optimal (MAV)</span>
+                  </div>
+                  <div class="volume-bar-bg">
+                    <div class="volume-bar-fill optimal" style="width: 87%;"></div>
+                  </div>
+                </div>
+
+                <div class="volume-item">
+                  <div class="volume-header">
+                    <span>Schultern (12 / 12 Sätze)</span>
+                    <span style="color:var(--app-success);">Optimal (MAV)</span>
+                  </div>
+                  <div class="volume-bar-bg">
+                    <div class="volume-bar-fill optimal" style="width: 100%;"></div>
+                  </div>
+                </div>
+
+                <div class="volume-item">
+                  <div class="volume-header">
+                    <span>Trizeps (6 / 10 Sätze)</span>
+                    <span style="color:#FBBF24;">Unter MEV</span>
+                  </div>
+                  <div class="volume-bar-bg">
+                    <div class="volume-bar-fill under" style="width: 60%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent PR Card -->
+              <div class="card bento-full" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="triggerPRModal()">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="font-size:24px;">🏆</div>
+                  <div>
+                    <div style="font-size:14px; font-weight:800; color:var(--app-hero-text);">Neuer PR aufgestellt!</div>
+                    <div style="font-size:12px; color:var(--app-dim);">Bankdrücken: 102.5 kg × 8 (e1RM: 126 kg)</div>
+                  </div>
+                </div>
+                <span style="color:var(--app-accent); font-weight:800; font-size:13px;">Feiern 🎉</span>
+              </div>
+
+            </div>
+          </div>
+
+
+          <!-- ============================================================== -->
+          <!-- SCREEN 2: ACTIVE WORKOUT -->
+          <!-- ============================================================== -->
+          <div class="app-screen" id="screen-workout">
+            
+            <!-- Top Workout Header -->
+            <div class="workout-top-banner">
+              <div>
+                <div class="exercise-meta-title">Bankdrücken (Langhantel)</div>
+                <div class="exercise-meta-sub">Satz 3 von 4 · Ziel: 8 Wdh @ RPE 8.5</div>
+              </div>
+
+              <!-- Rest Timer Island (Click to Reset/Start) -->
+              <div class="rest-timer-island">
+                <div class="timer-ring">
+                  <svg viewBox="0 0 34 34" style="transform: rotate(-90deg); width: 34px; height: 34px;">
+                    <circle cx="17" cy="17" r="14" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none"></circle>
+                    <circle id="timerSvgCircle" cx="17" cy="17" r="14" stroke="var(--app-accent)" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="25"></circle>
+                  </svg>
+                </div>
+                <div>
+                  <div class="timer-digits" id="timerDisplay">01:45</div>
+                </div>
+                <button class="timer-quick-btn" onclick="addTimer(30)">+30s</button>
+              </div>
+            </div>
+
+            <!-- 4-Way Set Type Selector -->
+            <div class="set-type-selector">
+              <button class="set-type-btn active" onclick="setSetType(this, 'NORMAL')">Normal</button>
+              <button class="set-type-btn" onclick="setSetType(this, 'WARMUP')">Aufwärmen</button>
+              <button class="set-type-btn" onclick="setSetType(this, 'DROP')">Drop-Set</button>
+              <button class="set-type-btn" onclick="setSetType(this, 'FAILURE')">Versagen</button>
+            </div>
+
+            <!-- Previous Completed Sets Table -->
+            <div class="sets-table">
+              <div class="set-row logged">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div class="set-badge">1</div>
+                  <div class="set-data">100.0 kg × 8 Wdh</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="set-rpe-tag">RPE 8.0</span>
+                  <span class="set-check-icon">✓</span>
+                </div>
+              </div>
+
+              <div class="set-row logged">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div class="set-badge">2</div>
+                  <div class="set-data">100.0 kg × 8 Wdh</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="set-rpe-tag">RPE 8.0</span>
+                  <span class="set-check-icon">✓</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTIVE SET INPUT CARD (The Primary Interaction) -->
+            <div class="active-set-card" id="activeSetCard">
+              <div class="active-set-header">
+                <div class="active-set-tag">
+                  <span>⚡ AKTIVER SATZ 3</span>
+                </div>
+                <div class="smart-coach-badge">Coach: +2.5 kg empfohlen</div>
+              </div>
+
+              <!-- Big Steppers Grid -->
+              <div class="stepper-inputs-grid">
+                <!-- Weight Stepper -->
+                <div class="stepper-box">
+                  <span class="stepper-label">Gewicht (kg)</span>
+                  <div class="stepper-val-hero" id="weightHero">102.5</div>
+                  <div class="stepper-buttons-row">
+                    <button class="step-btn" onclick="adjustWeight(-2.5)">-2.5</button>
+                    <button class="step-btn" onclick="adjustWeight(+2.5)">+2.5</button>
+                  </div>
+                </div>
+
+                <!-- Reps Stepper -->
+                <div class="stepper-box">
+                  <span class="stepper-label">Wiederholungen</span>
+                  <div class="stepper-val-hero" id="repsHero">8</div>
+                  <div class="stepper-buttons-row">
+                    <button class="step-btn" onclick="adjustReps(-1)">-1</button>
+                    <button class="step-btn" onclick="adjustReps(+1)">+1</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BARBELL PLATE CALCULATOR (Interactive & Color-coded) -->
+              <div class="plate-calc-container">
+                <div class="plate-calc-header">
+                  <span>Hantel-Beladung (je Seite)</span>
+                  <span class="weight-per-side" id="sideWeightDisplay">41.25 kg</span>
+                </div>
+                <div class="barbell-graphic" id="barbellVisualizer">
+                  <div class="barbell-collar"></div>
+                  <div class="barbell-sleeve"></div>
+                  <!-- Dynamically rendered plate discs -->
+                </div>
+              </div>
+
+              <!-- Log Button -->
+              <button class="confirm-log-btn" id="logSetBtn" onclick="logActiveSet()">
+                <span style="font-size:18px;">✓</span>
+                <span id="logBtnText">Satz 3 loggen (102.5 kg)</span>
+              </button>
+            </div>
+
+            <!-- Interactive Triggers -->
+            <div style="display:flex; gap:10px;">
+              <button class="demo-action-btn" style="flex:1;" onclick="triggerPRModal()">🎉 PR-Animation testen</button>
+              <button class="demo-action-btn" style="flex:1;" onclick="resetWorkout()">🔄 Sätze zurücksetzen</button>
+            </div>
+
+          </div>
+
+
+          <!-- ============================================================== -->
+          <!-- SCREEN 3: SMART COACH & ANALYTICS -->
+          <!-- ============================================================== -->
+          <div class="app-screen" id="screen-analytics">
+            <div class="screen-app-header">
+              <div class="user-greeting">
+                <span class="sub">Progressions-Analytik</span>
+                <span class="title">Bankdrücken 1RM</span>
+              </div>
+              <span class="badge-pill" style="color:var(--app-success);">+11.2% e1RM</span>
+            </div>
+
+            <!-- Progression Highlight Card -->
+            <div class="progression-highlight">
+              <div>
+                <div style="font-size:11px; text-transform:uppercase; font-weight:700; opacity:0.8;">Aktueller Spitzenwert</div>
+                <div style="font-family:var(--font-mono); font-size:24px; font-weight:900; color:#FFFFFF;">126.0 kg e1RM</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px; text-transform:uppercase; font-weight:700; opacity:0.8;">Steigerung 6 Wochen</div>
+                <div style="font-family:var(--font-mono); font-size:18px; font-weight:800;">+12.5 kg</div>
+              </div>
+            </div>
+
+            <!-- Interactive SVG Progression Chart -->
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:12px; font-weight:800; color:var(--app-hero-text); text-transform:uppercase;">e1RM Verlauf (Epley Formula)</span>
+                <span style="font-size:11px; color:var(--app-dim); font-family:var(--font-mono);">6 Trainingstage</span>
+              </div>
+              
+              <div class="chart-container">
+                <svg class="chart-svg" viewBox="0 0 320 120">
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="var(--app-accent)" stop-opacity="0.45"/>
+                      <stop offset="100%" stop-color="var(--app-accent)" stop-opacity="0.0"/>
+                    </linearGradient>
+                  </defs>
+                  
+                  <!-- Grid lines -->
+                  <line x1="0" y1="20" x2="320" y2="20" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+                  <line x1="0" y1="60" x2="320" y2="60" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+                  <line x1="0" y1="100" x2="320" y2="100" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3"/>
+                  
+                  <!-- Area -->
+                  <path d="M 10,105 L 60,95 L 120,80 L 180,68 L 240,45 L 300,22 L 300,115 L 10,115 Z" fill="url(#chartGrad)"/>
+                  
+                  <!-- Line -->
+                  <path d="M 10,105 L 60,95 L 120,80 L 180,68 L 240,45 L 300,22" fill="none" stroke="var(--app-accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  
+                  <!-- Dots -->
+                  <circle cx="10" cy="105" r="4" fill="#FFFFFF" stroke="var(--app-accent)" stroke-width="2"/>
+                  <circle cx="60" cy="95" r="4" fill="#FFFFFF" stroke="var(--app-accent)" stroke-width="2"/>
+                  <circle cx="120" cy="80" r="4" fill="#FFFFFF" stroke="var(--app-accent)" stroke-width="2"/>
+                  <circle cx="180" cy="68" r="4" fill="#FFFFFF" stroke="var(--app-accent)" stroke-width="2"/>
+                  <circle cx="240" cy="45" r="4" fill="#FFFFFF" stroke="var(--app-accent)" stroke-width="2"/>
+                  <circle cx="300" cy="22" r="6" fill="var(--app-accent)" stroke="#FFFFFF" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; font-size:10px; font-family:var(--font-mono); color:var(--app-dim);">
+                <span>12. Aug (113.5)</span>
+                <span>20. Aug</span>
+                <span>28. Aug</span>
+                <span>05. Sep (126.0)</span>
+              </div>
+            </div>
+
+            <!-- Deload & Fatigue Gauge Card -->
+            <div class="deload-gauge-card">
+              <div class="gauge-circle" style="width:54px; height:54px;">
+                <svg class="gauge-svg" viewBox="0 0 68 68">
+                  <circle class="gauge-bg-circle" cx="34" cy="34" r="30"></circle>
+                  <circle class="gauge-val-circle" cx="34" cy="34" r="30" style="stroke: #34D399; stroke-dashoffset: 140;"></circle>
+                </svg>
+                <div class="gauge-text" style="font-size:12px;">32%</div>
+              </div>
+              <div>
+                <div style="font-size:14px; font-weight:800; color:var(--app-hero-text);">Ermüdungslevel: Niedrig</div>
+                <div style="font-size:12px; color:var(--app-dim);">Empfehlung: Volle Progression fortsetzen. Nächster regulärer Deload in ca. 14 Tagen.</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- PR Celebration Overlay / Modal -->
+        <div class="celebration-overlay" id="prOverlay">
+          <div class="trophy-burst">🏆</div>
+          <div class="pr-title">NEUER REKORD!</div>
+          <div class="pr-subtitle">Bankdrücken: 102.5 kg × 8 Wdh (+2.5 kg)</div>
+          <div style="font-size:13px; color:#A1A1AA; margin-bottom:20px; max-width:260px;">
+            Hervorragende Leistung! Dein geschätztes 1RM klettert auf 126.0 kg.
+          </div>
+          <button class="pr-close-btn" onclick="closePRModal()">Weiter trainieren</button>
+        </div>
+
+        <!-- Bottom Navigation inside Phone -->
+        <div class="phone-bottom-bar">
+          <div class="bottom-nav-item active" onclick="switchScreen('dashboard')">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+          </div>
+          <div class="bottom-nav-item" onclick="switchScreen('workout')">
+            <span class="nav-icon">🏋️‍♂️</span>
+            <span>Workout</span>
+          </div>
+          <div class="bottom-nav-item" onclick="switchScreen('analytics')">
+            <span class="nav-icon">📊</span>
+            <span>Statistik</span>
+          </div>
+          <div class="bottom-nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span>Profil</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specification Sidebar / Concept Details -->
+      <aside class="concept-sidebar">
+        <div>
+          <div class="sidebar-section-title">Aktives Konzept</div>
+          <h2 id="conceptHeading" style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-bottom: 6px;">
+            NEXUS (Master-Synthese)
+          </h2>
+          <p id="conceptDescription" style="font-size: 13px; color: var(--studio-muted); line-height: 1.5;">
+            Kombiniert die OLED-Brutalität von FORGE mit der Schweizer Bento-Präzision von RASTER, dem Erholungs-Monitoring von TIDE und der Kinästhetik von PULSE.
+          </p>
+        </div>
+
+        <div>
+          <div class="sidebar-section-title">Design-Spezifikationen</div>
+          <div class="spec-item">
+            <span>Hintergrund</span>
+            <span id="specBg">#050608 (OLED Pitch Black)</span>
+          </div>
+          <div class="spec-item">
+            <span>Primär-Akzent</span>
+            <span id="specAccent">#FF7A1A (Molten Amber)</span>
+          </div>
+          <div class="spec-item">
+            <span>Sekundär / Status</span>
+            <span id="specSuccess">#00F5A0 (Bio-Emerald)</span>
+          </div>
+          <div class="spec-item">
+            <span>Konturen</span>
+            <span id="specBorders">1px Hairline (0.09 Alpha)</span>
+          </div>
+          <div class="spec-item">
+            <span>Hero-Ziffern</span>
+            <span id="specTypo">Tabular Mono (48–64sp)</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="sidebar-section-title">Farbpalette</div>
+          <div class="palette-swatches" id="swatchesRow">
+            <div class="swatch" style="background:#050608;"><span class="swatch-tooltip">#050608</span></div>
+            <div class="swatch" style="background:#0D0F14;"><span class="swatch-tooltip">#0D0F14</span></div>
+            <div class="swatch" style="background:#FF7A1A;"><span class="swatch-tooltip">#FF7A1A</span></div>
+            <div class="swatch" style="background:#00F5A0;"><span class="swatch-tooltip">#00F5A0</span></div>
+            <div class="swatch" style="background:#3D7BFF;"><span class="swatch-tooltip">#3D7BFF</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sidebar-section-title">Besondere Features in diesem Entwurf</div>
+          <ul id="conceptFeaturesList" style="font-size: 13px; color: var(--studio-text); padding-left: 18px; line-height: 1.7;">
+            <li><strong>Taktile Stepper:</strong> Direkte `+2.5 / -2.5 kg` Tasten ohne Tastatur.</li>
+            <li><strong>Plate Calculator:</strong> Automatische IWF-Hantel-Beladungsanzeige.</li>
+            <li><strong>Bento Dashboard:</strong> Klare visuelle Hierarchie ohne Scroll-Zwang.</li>
+            <li><strong>Readiness Gauge:</strong> Tagesform-Ermüdungsindex vor dem Training.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <script>
+    // State
+    let currentTheme = 'nexus';
+    let currentScreen = 'dashboard';
+    let currentWeight = 102.5;
+    let currentReps = 8;
+    let timerSeconds = 105;
+    let timerInterval = null;
+
+    const conceptConfigs = {
+      nexus: {
+        title: 'NEXUS (Master-Synthese)',
+        desc: 'Vereint das Beste aus allen 4 Worker-Konzepten: OLED Pitch Black, asymmetrisches Bento-Grid, taktile Stepper mit Plate-Visualizer, Recovery-Tracking und PR-Feier.',
+        bg: '#050608 (OLED True Black)',
+        accent: '#FF7A1A (Molten)',
+        success: '#00F5A0 (Bio-Teal)',
+        borders: '1px Hairline Opaque',
+        typo: 'Plus Jakarta + Tabular Mono',
+        badge: 'THEME: OLED PITCH BLACK',
+        fontBadge: 'TYPO: PLUS JAKARTA SANS',
+        swatches: ['#050608', '#0D0F14', '#FF7A1A', '#00F5A0', '#3D7BFF'],
+        features: [
+          'Taktile Stepper (+2.5/-2.5 kg) direkt unter den Hero-Zahlen',
+          'Interaktiver Hantelscheiben-Rechner nach IWF-Farbcode',
+          'Asymmetrisches Bento-Dashboard mit Readiness-Tacho',
+          'Celebratory PR-Overlay mit Haptik und visueller Belohnung'
+        ]
+      },
+      forge: {
+        title: 'Concept 1: FORGE (Heavy Lifter Brutalism)',
+        desc: 'Konzipiert für maximale Lesbarkeit und Bedienbarkeit unter Erschöpfung, Schweiß und mit zitternden Händen. Absolutes True-Black mit reinweißen Daten.',
+        bg: '#000000 (True OLED Pit)',
+        accent: '#FF7A1A (Molten Steel)',
+        success: '#3DFF88 (Laser Green)',
+        borders: '1px Stroke #26272B',
+        typo: 'Figtree Black + tnum',
+        badge: 'THEME: FORGE BRUTALISM',
+        fontBadge: 'TYPO: FIGTREE DATA',
+        swatches: ['#000000', '#0A0A0C', '#FF7A1A', '#3DFF88', '#FF453A'],
+        features: [
+          '21:1 maximaler Kontrast: Weiß auf Tiefstschwarz',
+          'PlateVisualizer nimmt dem Athleten das Kopfrechnen ab',
+          'Große taktile Buttons (≥ 48dp) für Daumenbedienung',
+          'Dominanter Rest-Timer als Trainings-Taktgeber'
+        ]
+      },
+      raster: {
+        title: 'Concept 2: RASTER (Swiss Bento Rationalism)',
+        desc: 'Inspiriert von Schweizer Typografie, MacroFactor und Apple Fitness. Ruhiges, monochromes UI mit strenger 4-Spalten-Bento-Hierarchie und kreisförmigen Micro-Metrics.',
+        bg: '#0A0A0B (Ink Carbon)',
+        accent: '#3B82F6 (Electric Blue)',
+        success: '#10B981 (Swiss Green)',
+        borders: '1px Hairline #222226',
+        typo: 'Inter + IBM Plex Mono',
+        badge: 'THEME: SWISS RASTER',
+        fontBadge: 'TYPO: INTER MONO',
+        swatches: ['#0A0A0B', '#121215', '#3B82F6', '#10B981', '#E4E4E7'],
+        features: [
+          'Kein Regenbogen-Chaos: Monochrom mit einem gezielten Akzent',
+          'Kein milchiges Glassmorphism, sondern scharfe Kanten',
+          'Kreisförmige Micro-Metriken für 3-Sekunden-Glanceability',
+          'Strikte Informations-Architektur ohne Deko-Fluff'
+        ]
+      },
+      tide: {
+        title: 'Concept 3: TIDE (Biohacking & Recovery)',
+        desc: 'Macht aus dem reinen Trainingslogger eine intelligente Recovery- und Belastungs-Plattform im Stil von Whoop und Bevel.',
+        bg: '#040908 (Deep Emerald Pit)',
+        accent: '#00F5A0 (Bio-Luminescent Teal)',
+        success: '#00F5A0 (Ready)',
+        borders: '1px Emerald #10332E',
+        typo: 'Figtree + Clean Tabular',
+        badge: 'THEME: TIDE BIOHACKING',
+        fontBadge: 'TYPO: RECOVERY GROTESK',
+        swatches: ['#040908', '#071513', '#00F5A0', '#0D9488', '#FB7185'],
+        features: [
+          'Prominenter ReadinessGauge vor dem Training (Deload-Score)',
+          'Live-Strain Meter zur Erfassung der Session-Belastung',
+          'MEV / MAV / MRV Muskelbalken zur Vermeidung von Übertraining',
+          'Dunkle Smaragd- und Teal-Atmosphäre für ruhigen Fokus'
+        ]
+      },
+      pulse: {
+        title: 'Concept 4: PULSE (Dynamic Motion & Kinesthetics)',
+        desc: 'Fokus auf Interaktionsfreude, organische Compose-Spring-Physik, Morphing-Karten, Gesten und eine dynamische RPE-Hitze-Farbrampe.',
+        bg: '#0B080C (Dark Berry Pit)',
+        accent: '#FF3366 (Kinetic Berry)',
+        success: '#34D399 (Spring Green)',
+        borders: '1px Violet Stroke',
+        typo: 'Figtree Expressive',
+        badge: 'THEME: PULSE MOTION',
+        fontBadge: 'TYPO: MATERIAL 3 EXPRESSIVE',
+        swatches: ['#0B080C', '#161018', '#FF3366', '#7C3AED', '#38BDF8'],
+        features: [
+          'Morphing Set Cards: Fließender Übergang von Eingabe zu Log',
+          'Swipe-to-Log Gestensteuerung für schnellen Durchlauf',
+          'Celebratory PR-Overlay mit Partikel-Explosion',
+          'Hitze-Farbcode nach Satzintensität (Teal → Amber → Rose → Red)'
+        ]
+      }
+    };
+
+    // Initialize
+    function init() {
+      setupConceptButtons();
+      setupScreenTabs();
+      setupToggleFrame();
+      updatePlateVisualizer();
+      startTimer();
+    }
+
+    // Concept Navigation
+    function setupConceptButtons() {
+      document.querySelectorAll('.concept-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.concept-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const theme = btn.getAttribute('data-theme');
+          setTheme(theme);
+        });
+      });
+    }
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.body.setAttribute('data-active-theme', theme);
+      const conf = conceptConfigs[theme];
+      
+      document.getElementById('conceptHeading').innerText = conf.title;
+      document.getElementById('conceptDescription').innerText = conf.desc;
+      document.getElementById('specBg').innerText = conf.bg;
+      document.getElementById('specAccent').innerText = conf.accent;
+      document.getElementById('specSuccess').innerText = conf.success;
+      document.getElementById('specBorders').innerText = conf.borders;
+      document.getElementById('specTypo').innerText = conf.typo;
+      document.getElementById('themeStatusBadge').innerText = conf.badge;
+      document.getElementById('fontStatusBadge').innerText = conf.fontBadge;
+      
+      // Update Swatches
+      const swatchesRow = document.getElementById('swatchesRow');
+      swatchesRow.innerHTML = conf.swatches.map(hex => 
+        `<div class="swatch" style="background:${hex};"><span class="swatch-tooltip">${hex}</span></div>`
+      ).join('');
+
+      // Update Features List
+      const featuresList = document.getElementById('conceptFeaturesList');
+      featuresList.innerHTML = conf.features.map(f => `<li>${f}</li>`).join('');
+    }
+
+    // Screen Tabs
+    function setupScreenTabs() {
+      document.querySelectorAll('.screen-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const screen = tab.getAttribute('data-screen');
+          switchScreen(screen);
+        });
+      });
+    }
+
+    function switchScreen(screen) {
+      currentScreen = screen;
+      document.querySelectorAll('.screen-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-screen') === screen);
+      });
+      document.querySelectorAll('.app-screen').forEach(s => {
+        s.classList.toggle('active', s.id === `screen-${screen}`);
+      });
+      document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      // Highlight bottom nav
+      const navMap = { dashboard: 0, workout: 1, analytics: 2 };
+      const items = document.querySelectorAll('.bottom-nav-item');
+      if (items[navMap[screen]]) items[navMap[screen]].classList.add('active');
+    }
+
+    // Toggle Frame Size
+    function setupToggleFrame() {
+      const btn = document.getElementById('toggleFrameBtn');
+      const wrapper = document.getElementById('deviceWrapper');
+      btn.addEventListener('click', () => {
+        wrapper.classList.toggle('full-mode');
+        btn.innerText = wrapper.classList.contains('full-mode') ? '💻 Responsive Modus' : '📱 Smartphone-Rahmen';
+      });
+    }
+
+    // Adjust Steppers
+    function adjustWeight(delta) {
+      currentWeight = Math.max(20, Math.round((currentWeight + delta) * 10) / 10);
+      document.getElementById('weightHero').innerText = currentWeight.toFixed(1);
+      document.getElementById('logBtnText').innerText = `Satz 3 loggen (${currentWeight.toFixed(1)} kg)`;
+      updatePlateVisualizer();
+    }
+
+    function adjustReps(delta) {
+      currentReps = Math.max(1, currentReps + delta);
+      document.getElementById('repsHero').innerText = currentReps;
+    }
+
+    // Barbell Plate Math & Visualization
+    function updatePlateVisualizer() {
+      const barWeight = 20; // 20kg Olympic Bar
+      const perSide = Math.max(0, (currentWeight - barWeight) / 2);
+      document.getElementById('sideWeightDisplay').innerText = `${perSide.toFixed(2)} kg`;
+
+      const plates = [
+        { weight: 25, color: '#FF453A', height: 44, width: 14, label: '25' },
+        { weight: 20, color: '#3D7BFF', height: 44, width: 13, label: '20' },
+        { weight: 15, color: '#FFD60A', height: 38, width: 11, label: '15' },
+        { weight: 10, color: '#30D158', height: 32, width: 9, label: '10' },
+        { weight: 5, color: '#F2F2F7', height: 26, width: 8, label: '5', textCol: '#000' },
+        { weight: 2.5, color: '#BF5AF2', height: 22, width: 7, label: '2.5' },
+        { weight: 1.25, color: '#8E8E93', height: 18, width: 6, label: '1.2' }
+      ];
+
+      let remaining = perSide;
+      const loadedPlates = [];
+
+      for (const p of plates) {
+        while (remaining >= p.weight - 0.001) {
+          loadedPlates.push(p);
+          remaining -= p.weight;
+        }
+      }
+
+      const visualizer = document.getElementById('barbellVisualizer');
+      // Keep collar and sleeve
+      visualizer.innerHTML = `
+        <div class="barbell-collar"></div>
+        <div class="barbell-sleeve"></div>
+      `;
+
+      if (loadedPlates.length === 0) {
+        visualizer.innerHTML += `<span style="font-size:11px; color:#7E8695; margin-left:10px;">(Nur Hantelstange: 20 kg)</span>`;
+      } else {
+        loadedPlates.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'plate-item';
+          div.style.backgroundColor = p.color;
+          div.style.height = `${p.height}px`;
+          div.style.width = `${p.width}px`;
+          if (p.textCol) div.style.color = p.textCol;
+          div.innerText = p.width >= 11 ? p.label : '';
+          div.title = `${p.weight} kg`;
+          visualizer.appendChild(div);
+        });
+      }
+    }
+
+    // Set Type Selector
+    function setSetType(btn, type) {
+      document.querySelectorAll('.set-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Log Active Set Simulation
+    function logActiveSet() {
+      const card = document.getElementById('activeSetCard');
+      card.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        card.style.transform = 'scale(1)';
+        triggerPRModal();
+        resetTimer();
+      }, 150);
+    }
+
+    // Rest Timer Functions
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      timerSeconds = 120;
+      updateTimerDisplay();
+    }
+
+    function addTimer(sec) {
+      timerSeconds += sec;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      document.getElementById('timerDisplay').innerText = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      
+      const circle = document.getElementById('timerSvgCircle');
+      if (circle) {
+        const fraction = (timerSeconds % 120) / 120;
+        circle.style.strokeDashoffset = (88 * (1 - fraction)).toString();
+      }
+    }
+
+    // PR Modal Functions
+    function triggerPRModal() {
+      document.getElementById('prOverlay').classList.add('active');
+    }
+
+    function closePRModal() {
+      document.getElementById('prOverlay').classList.remove('active');
+    }
+
+    function resetWorkout() {
+      currentWeight = 102.5;
+      currentReps = 8;
+      document.getElementById('weightHero').innerText = '102.5';
+      document.getElementById('repsHero').innerText = '8';
+      updatePlateVisualizer();
+      closePRModal();
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

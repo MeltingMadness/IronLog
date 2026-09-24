@@ -13,7 +13,12 @@ interface StatisticsRepository {
     suspend fun getRecentRecordsList(limit: Int = 5): List<PersonalRecord>
     fun getSetsForExercise(exerciseId: Long): Flow<List<WorkoutSet>>
     suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet>
+    /** Historical exercise statistics: completed sessions and timestamps up to [nowEpochMillis]. */
+    suspend fun getCompletedSetsForExerciseList(exerciseId: Long, nowEpochMillis: Long): List<WorkoutSet>
     suspend fun getMaxWeightForExercise(exerciseId: Long): Double?
     suspend fun getMaxRepsForExercise(exerciseId: Long): Int?
     suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet>
+    /** Analytics-only work sets bounded by both set completion and session start. */
+    suspend fun getWorkSetsCompletedBetween(sinceEpochMillis: Long, untilEpochMillis: Long): List<WorkoutSet> =
+        getWorkSetsCompletedSince(sinceEpochMillis)
 }

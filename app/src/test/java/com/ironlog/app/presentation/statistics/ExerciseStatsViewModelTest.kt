@@ -72,6 +72,7 @@ class ExerciseStatsViewModelTest {
         // Session 2: one heavier set, later date
         statisticsRepo.addExerciseSet(WorkoutSet(id = 3L, sessionId = 2L, exerciseId = targetExerciseId,
             setNumber = 1, reps = 3, weightKg = 90.0, setType = SetType.NORMAL, completedAt = base.plusDays(3)))
+        listOf(1L, 2L).forEach { statisticsRepo.markSessionCompleted(it) }
 
         val vm = createViewModel(targetExerciseId)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -86,6 +87,62 @@ class ExerciseStatsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(960f, vm.uiState.value.chartData[0].value) // 80*5 + 70*8
         assertEquals(270f, vm.uiState.value.chartData[1].value) // 90*3
+    }
+
+    @Test
+    fun `statistik ignoriert aktive und zukuenftige Saetze`() = runTest {
+        val exercise = Exercise(
+            id = 1L,
+            name = "Bankdrücken",
+            primaryMuscleGroup = MuscleGroup.BRUST,
+            category = ExerciseCategory.LANGHANTEL
+        )
+        exerciseRepo.addExercise(exercise)
+        val now = LocalDateTime.now()
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 1L,
+                sessionId = 1L,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                setType = SetType.NORMAL,
+                completedAt = now.minusDays(1)
+            )
+        )
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 2L,
+                sessionId = 2L,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 100.0,
+                setType = SetType.NORMAL,
+                completedAt = now.minusHours(2)
+            )
+        )
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 3L,
+                sessionId = 3L,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 120.0,
+                setType = SetType.NORMAL,
+                completedAt = now.plusDays(1)
+            )
+        )
+        statisticsRepo.markSessionCompleted(1L)
+        statisticsRepo.markSessionCompleted(3L)
+
+        val vm = createViewModel(exercise.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(80f), vm.uiState.value.chartData.map { it.value })
+        assertEquals(listOf(80.0), vm.uiState.value.recentSets.map { it.weightKg })
     }
 
     @Test
@@ -122,12 +179,63 @@ class ExerciseStatsViewModelTest {
                 completedAt = LocalDateTime.of(2026, 1, 2, 18, 0)
             )
         )
+        listOf(10L, 11L).forEach { statisticsRepo.markSessionCompleted(it) }
 
         val vm = createViewModel(exercise.id)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val labels = vm.uiState.value.chartData.map { it.dateLabel }
         assertEquals(listOf("31.12", "2.1"), labels)
+    }
+
+    @Test
+    fun `chart points behalten Datum und vergleichen die letzten zwei passenden Sessions`() = runTest {
+        val exercise = Exercise(
+            id = 1L,
+            name = "Kniebeuge",
+            primaryMuscleGroup = MuscleGroup.BEINE,
+            category = ExerciseCategory.LANGHANTEL
+        )
+        exerciseRepo.addExercise(exercise)
+        val firstDate = LocalDateTime.of(2026, 2, 1, 9, 0)
+        val latestDate = firstDate.plusDays(7)
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 1L,
+                sessionId = 1L,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                setType = SetType.NORMAL,
+                completedAt = firstDate
+            )
+        )
+        statisticsRepo.addExerciseSet(
+            WorkoutSet(
+                id = 2L,
+                sessionId = 2L,
+                exerciseId = exercise.id,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 85.0,
+                setType = SetType.NORMAL,
+                completedAt = latestDate
+            )
+        )
+        listOf(1L, 2L).forEach { statisticsRepo.markSessionCompleted(it) }
+
+        val vm = createViewModel(exercise.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val chart = vm.uiState.value.chartData
+        assertEquals(firstDate, chart.first().timestamp)
+        assertEquals(latestDate, chart.last().timestamp)
+        val comparison = vm.uiState.value.lastWorkoutComparison
+        assertNotNull(comparison)
+        assertEquals(80f, comparison!!.previous.value)
+        assertEquals(85f, comparison.latest.value)
+        assertEquals(5f, comparison.delta)
     }
 
     @Test
@@ -162,6 +270,7 @@ class ExerciseStatsViewModelTest {
                 reps = 8, weightKg = 85.0, setType = SetType.NORMAL, completedAt = base.plusDays(5)
             )
         )
+        listOf(1L, 2L, 3L).forEach { statisticsRepo.markSessionCompleted(it) }
 
         val vm = createViewModel(exercise.id)
         testDispatcher.scheduler.advanceUntilIdle()

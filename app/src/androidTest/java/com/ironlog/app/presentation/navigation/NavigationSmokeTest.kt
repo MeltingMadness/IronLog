@@ -9,6 +9,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.printToString
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -75,6 +81,14 @@ class NavigationSmokeTest {
         single<ProgressionRepository> { progressionRepository }
         single<AppPreferencesRepository> { preferencesRepository }
         single<ExerciseRepository> { NavigationSmokeExerciseRepository() }
+        single<com.ironlog.app.domain.repository.TrainingPlanRepository> {
+            object : com.ironlog.app.domain.repository.TrainingPlanRepository {
+                override fun getAllPlans() = kotlinx.coroutines.flow.flowOf(emptyList<com.ironlog.app.domain.model.TrainingPlan>())
+                override suspend fun getPlanById(id: Long): com.ironlog.app.domain.model.TrainingPlan? = null
+                override suspend fun savePlan(plan: com.ironlog.app.domain.model.TrainingPlan): Long = error("Read-only fixture")
+                override suspend fun deletePlan(planId: Long) = Unit
+            }
+        }
         viewModelOf(::ProgressionReviewViewModel)
     }
 
@@ -92,6 +106,18 @@ class NavigationSmokeTest {
             GlobalContext.get().get<IronLogDatabase>().clearAllTables()
             ApplicationProvider.getApplicationContext<Context>()
                 .appPreferencesDataStore.edit { it.clear() }
+        }
+    }
+
+    /** Wie waitUntil, schreibt bei einem Timeout aber den Semantik-Baum in die Fehlermeldung. */
+    private fun waitOrDump(timeoutMillis: Long, condition: () -> Boolean) {
+        try {
+            composeRule.waitUntil(timeoutMillis) { condition() }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError(
+                "${e.message}\n${composeRule.onAllNodes(isRoot()).printToString(maxDepth = 60)}",
+                e
+            )
         }
     }
 
@@ -239,11 +265,11 @@ class NavigationSmokeTest {
         // es gibt keine aktive Session, also MUSS "Training starten" erscheinen.
         // Ein schreibender Test darf hier kein "Training fortsetzen" hinterlassen.
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
 
         val hasContinue =
-            composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training fortsetzen ➔").fetchSemanticsNodes().isNotEmpty()
         assertFalse("Nach dem Leeren der App-DB darf keine aktive Session existieren", hasContinue)
     }
 
@@ -296,9 +322,9 @@ class NavigationSmokeTest {
         // 1) Dashboard: Training starten (dank Isolation garantiert "starten",
         //    nicht "fortsetzen").
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Training starten").performClick()
+        composeRule.onNodeWithText("Training jetzt starten ➔").performClick()
         composeRule.waitForIdle()
 
         // 2) Plan-Auswahl-Sheet: Freies Training waehlen -> Session startet.
@@ -321,37 +347,55 @@ class NavigationSmokeTest {
         }
         composeRule.onNodeWithText("Kniebeuge").performClick()
         composeRule.waitForIdle()
+        // Der Picker ist eine Mehrfachauswahl: Auswahl explizit uebernehmen.
+        composeRule.onNodeWithText("1 Übungen hinzufügen").performClick()
+        composeRule.waitForIdle()
 
-        // 5) Satz loggen: exakt 3 Eingabefelder (Gewicht, Wdh, Intensitaet) -
-        //    der Picker muss zu (kein Suchfeld mehr), sonst waere die Reihenfolge
-        //    nicht determiniert.
+        // 5) Satz loggen: exakt 2 Eingabefelder (Gewicht, Wdh) - RPE/RIR steckt
+        //    eingeklappt unter den Zusatzangaben. Der Picker muss zu sein (kein
+        //    Suchfeld mehr), sonst waere die Reihenfolge nicht determiniert.
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 3
+            composeRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 2
         }
         val setInputs = composeRule.onAllNodes(hasSetTextAction())
         setInputs[0].performTextInput("100") // Gewicht in kg
         setInputs[1].performTextInput("10") // Wiederholungen
-        composeRule.onNodeWithContentDescription("Loggen").performClick()
+        // Der Log-Button ist erst aktiv, wenn beide Eingaben uebernommen sind.
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodes(hasText("Satz 1 loggen", substring = true) and isEnabled())
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // Die Tastatur aus der Eingabe verschiebt das Layout; erst nach dem Idle in den
+        // sichtbaren Bereich scrollen und klicken, dann auf den gespeicherten Satz warten
+        // (eine Session ohne Satz wuerde beim Beenden still verworfen).
         composeRule.waitForIdle()
+        composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performScrollTo().performClick()
+        waitOrDump(30_000L) {
+            composeRule.onAllNodes(hasText("1 Sätze", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
 
-        // 6) Beenden: Top-Bar-Aktion, dann Dialog bestaetigen. Der Dialog
-        //    (eigenes Fenster) kommt in der Traversierung nach dem Hauptinhalt,
-        //    daher ist der zweite "Beenden"-Knoten der Bestaetigen-Button.
+        // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen
+        //    und die Zusammenfassung ueber "Fertig" schliessen.
         composeRule.onNodeWithText("Beenden").performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText("Training beenden?").fetchSemanticsNodes().isNotEmpty()
         }
-        assertEquals(
-            "Beenden muss genau in Top-Bar und Dialog-Bestaetigen erscheinen",
-            2,
-            composeRule.onAllNodesWithText("Beenden").fetchSemanticsNodes().size
-        )
-        composeRule.onAllNodesWithText("Beenden")[1].performClick()
+        // Der Dialog bleibt gesperrt ("Speichert …"), bis der geloggte Satz ganz
+        // gespeichert ist; erst dann erscheint der aktive Bestaetigen-Button.
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodes(hasText("Training beenden") and isEnabled())
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Training beenden").performClick()
+        waitOrDump(30_000L) {
+            composeRule.onAllNodesWithText("Training gespeichert").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Fertig").performClick()
         composeRule.waitForIdle()
 
         // 7) Zurueck auf dem Dashboard (Finish poppt zum Dashboard zurueck).
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
 
         // 8) Verlauf pruefen: die Test-Komposition zeichnet wie alle Smoke-Tests
@@ -532,5 +576,28 @@ private class NavigationSmokePreferencesRepository : AppPreferencesRepository {
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         state.value = state.value.copy(defaultRestTimeSeconds = seconds)
     }
-}
 
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        state.value = state.value.copy(plateCalculatorEnabled = enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        state.value = state.value.copy(availablePlates = plates)
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        state.value = state.value.copy(barbellWeightKg = weightKg)
+    }
+
+    override suspend fun updateDeloadMode(mode: com.ironlog.app.domain.model.DeloadMode?) {
+        state.value = state.value.copy(deloadMode = mode)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        state.value = state.value.copy(lastSuccessfulExportEpochMillis = timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+}

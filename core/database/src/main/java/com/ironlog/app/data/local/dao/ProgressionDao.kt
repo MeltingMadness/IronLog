@@ -89,10 +89,32 @@ interface ProgressionDao {
               AND t.progressionTargetRpe IS NULL
               AND t.progressionRpeTolerance IS NULL
           )
-          AND NOT EXISTS (
-              SELECT 1 FROM progression_suggestions p
-              WHERE p.sourceTargetSnapshotId = t.id
-                AND p.sourceProgressionRuleRevision = t.progressionRuleRevision
+          AND (
+              NOT EXISTS (
+                  SELECT 1 FROM progression_suggestions p
+                  WHERE p.sourceTargetSnapshotId = t.id
+                    AND p.sourceProgressionRuleRevision = t.progressionRuleRevision
+              )
+              OR EXISTS (
+                  SELECT 1 FROM progression_suggestions legacy
+                  WHERE legacy.sourceTargetSnapshotId = t.id
+                    AND legacy.sourceProgressionRuleRevision = t.progressionRuleRevision
+                    AND legacy.status = 'INFORMATIONAL'
+                    AND legacy.wasEdited = 0
+                    AND legacy.sourceWeightKg = 0
+                    AND t.targetWeightKg = 0
+                    AND (
+                        (
+                            legacy.outcomeType = 'INSUFFICIENT_DATA'
+                            AND legacy.reasonCode = 'MANUAL_WEIGHT_DEVIATION'
+                        )
+                        OR (
+                            legacy.outcomeType = 'KEEP_TARGET'
+                            AND legacy.reasonCode = 'REPEAT_TARGET'
+                            AND legacy.reasonArgumentsJson NOT LIKE '%"actualWeightKg"%'
+                        )
+                    )
+              )
           )
         ORDER BY s.endTime, s.id
         """
@@ -116,10 +138,32 @@ interface ProgressionDao {
               AND t.progressionTargetRpe IS NULL
               AND t.progressionRpeTolerance IS NULL
           )
-          AND NOT EXISTS (
-              SELECT 1 FROM progression_suggestions p
-              WHERE p.sourceTargetSnapshotId = t.id
-                AND p.sourceProgressionRuleRevision = t.progressionRuleRevision
+          AND (
+              NOT EXISTS (
+                  SELECT 1 FROM progression_suggestions p
+                  WHERE p.sourceTargetSnapshotId = t.id
+                    AND p.sourceProgressionRuleRevision = t.progressionRuleRevision
+              )
+              OR EXISTS (
+                  SELECT 1 FROM progression_suggestions legacy
+                  WHERE legacy.sourceTargetSnapshotId = t.id
+                    AND legacy.sourceProgressionRuleRevision = t.progressionRuleRevision
+                    AND legacy.status = 'INFORMATIONAL'
+                    AND legacy.wasEdited = 0
+                    AND legacy.sourceWeightKg = 0
+                    AND t.targetWeightKg = 0
+                    AND (
+                        (
+                            legacy.outcomeType = 'INSUFFICIENT_DATA'
+                            AND legacy.reasonCode = 'MANUAL_WEIGHT_DEVIATION'
+                        )
+                        OR (
+                            legacy.outcomeType = 'KEEP_TARGET'
+                            AND legacy.reasonCode = 'REPEAT_TARGET'
+                            AND legacy.reasonArgumentsJson NOT LIKE '%"actualWeightKg"%'
+                        )
+                    )
+              )
           )
         ORDER BY s.endTime, s.id
         """

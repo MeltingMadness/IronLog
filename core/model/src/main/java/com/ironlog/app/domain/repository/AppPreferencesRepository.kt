@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.domain.repository
+package com.ironlog.app.domain.repository
 
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.DeloadMode
@@ -28,4 +28,20 @@ interface AppPreferencesRepository {
     suspend fun updateAutoRestTimerEnabled(enabled: Boolean)
     suspend fun updateDefaultRestTimeSeconds(seconds: Int)
     suspend fun updateDeloadMode(mode: DeloadMode?)
+    suspend fun updatePlateCalculatorEnabled(enabled: Boolean)
+    suspend fun updateAvailablePlates(plates: List<Double>)
+    suspend fun updateBarbellWeightKg(weightKg: Double)
+    suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
+    suspend fun updateBackupReminderEnabled(enabled: Boolean)
+
+    /**
+     * Persists the active workout rest timers for one session.
+     *
+     * The payload is owned by the workout feature so this repository deliberately keeps it
+     * opaque. Implementations backed by the app DataStore survive process death and a later
+     * process restart; test and legacy implementations may keep the default no-op behavior.
+     */
+    suspend fun readRestTimerState(sessionId: Long): String? = null
+
+    suspend fun writeRestTimerState(sessionId: Long, encodedState: String?) = Unit
 }

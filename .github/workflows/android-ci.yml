@@ -42,9 +42,9 @@ jobs:
         with:
           name: reports-unit-lint
           path: |
-            app/build/reports/tests
-            app/build/reports/lint-results-*.html
-            app/build/reports/lint-results-*.xml
+            **/build/reports/tests
+            **/build/reports/lint-results-*.html
+            **/build/reports/lint-results-*.xml
 
   android-smoke:
     runs-on: ubuntu-latest

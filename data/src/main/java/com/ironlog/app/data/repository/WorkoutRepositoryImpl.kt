@@ -16,20 +16,45 @@ import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
+import com.ironlog.app.data.local.relation.SessionWithSets
 import com.ironlog.app.domain.model.CompletedWorkoutSummary
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.repository.ReadinessRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.WorkoutCalculations
+import com.ironlog.app.domain.util.WorkoutNumericValidation
+import com.ironlog.shared.readinessdata.SetIntention
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
+
+private fun SessionWithSets.toCompletedWorkoutSummary(): CompletedWorkoutSummary {
+    val workSets = sets.filter { set ->
+        set.setType != SetType.WARMUP.name &&
+            WorkoutNumericValidation.isValidReps(set.reps) &&
+            WorkoutNumericValidation.isValidWeightKg(set.weightKg)
+    }
+    val totalVolume = workSets.fold(0.0) { total, set ->
+        val setVolume = set.weightKg * set.reps.toDouble()
+        val next = total + setVolume
+        if (setVolume.isFinite() && next.isFinite()) next else total
+    }
+    return CompletedWorkoutSummary(
+        session = session.toDomain(),
+        exerciseCount = sets.map { it.exerciseId }.distinct().size,
+        setCount = sets.size,
+        totalVolume = totalVolume
+    )
+}
 
 class WorkoutRepositoryImpl(
     private val sessionDao: WorkoutSessionDao,
@@ -37,7 +62,22 @@ class WorkoutRepositoryImpl(
     private val personalRecordDao: PersonalRecordDao,
     private val trainingPlanDao: TrainingPlanDao,
     private val progressionDao: ProgressionDao,
-    private val transactionRunner: TransactionRunner
+    private val transactionRunner: TransactionRunner,
+    /**
+     * Stores the optional per-set intention in the readiness document. It is
+     * written inside the same transaction as the set itself, so a logged set and
+     * its intention can never diverge. Left null only by legacy test construction
+     * that does not exercise intentions.
+     */
+    private val readinessRepository: ReadinessRepository? = null,
+    /**
+     * Supplies the deload mode that is active when a session starts. The app wires
+     * this to the preferences store; the default keeps unit tests free of prefs.
+     *
+     * The value is captured once at session start so history never derives the
+     * deload context retroactively from the current switch.
+     */
+    private val currentDeloadMode: suspend () -> DeloadMode? = { null }
 ) : WorkoutRepository {
     private val startWorkoutMutex = Mutex()
 
@@ -53,6 +93,10 @@ class WorkoutRepositoryImpl(
             // Invariant: there can only be one active session.
             sessionDao.getActiveSession()?.let { return@withLock it.id }
 
+            // Read before opening the write transaction: the session records the
+            // deload context that was in effect when it started.
+            val isDeload = currentDeloadMode() != null
+
             transactionRunner.runInTransaction {
                 sessionDao.getActiveSession()?.let { return@runInTransaction it.id }
                 if (planId != null) {
@@ -65,7 +109,8 @@ class WorkoutRepositoryImpl(
                         startTime = EpochConverter.toLong(LocalDateTime.now()),
                         name = name,
                         planId = planId,
-                        metaPlanId = metaPlanId
+                        metaPlanId = metaPlanId,
+                        isDeload = isDeload
                     )
                 )
                 if (planId != null) {
@@ -83,7 +128,8 @@ class WorkoutRepositoryImpl(
                                     reps = planExercise.targetReps,
                                     weightKg = planExercise.targetWeightKg
                                 ),
-                                progression = planExercise.progression
+                                progression = planExercise.progression,
+                                setTargetsJson = planExercise.setTargetsJson
                             )
                         }
                     val insertedIds = progressionDao.insertTargets(targets)
@@ -97,20 +143,25 @@ class WorkoutRepositoryImpl(
     }
 
     override suspend fun finishWorkout(sessionId: Long) {
-        val session = sessionDao.getSessionById(sessionId) ?: return
-        val now = LocalDateTime.now()
-        val nowMillis = EpochConverter.toLong(now)
-        val durationSeconds = (nowMillis - session.startTime) / 1000
-        sessionDao.update(
-            session.copy(
-                endTime = nowMillis,
-                durationSeconds = durationSeconds
+        transactionRunner.runInTransaction {
+            val session = sessionDao.getSessionById(sessionId) ?: return@runInTransaction
+            // Finishing is deliberately idempotent. A retry after a successful commit must not
+            // move the completion timestamp or rebuild records against a different snapshot.
+            if (session.endTime != null) return@runInTransaction
+
+            val nowMillis = EpochConverter.toLong(LocalDateTime.now())
+            val durationSeconds = ((nowMillis - session.startTime) / 1000).coerceAtLeast(0L)
+            sessionDao.update(
+                session.copy(
+                    endTime = nowMillis,
+                    durationSeconds = durationSeconds
+                )
             )
-        )
-        // Personal records only count finished workouts (see recalculatePersonalRecords), so
-        // this session's sets become eligible for records exactly now that it is completed.
-        setDao.getExerciseIdsForSession(sessionId).forEach { exerciseId ->
-            recalculatePersonalRecords(exerciseId)
+            // Personal records only count finished workouts (see recalculatePersonalRecords), so
+            // this session's sets become eligible for records exactly now that it is completed.
+            setDao.getExerciseIdsForSession(sessionId).forEach { exerciseId ->
+                recalculatePersonalRecords(exerciseId)
+            }
         }
     }
 
@@ -120,8 +171,9 @@ class WorkoutRepositoryImpl(
     override fun observeActiveSession(): Flow<WorkoutSession?> =
         sessionDao.observeActiveSession().map { it?.toDomain() }
 
-    override suspend fun addSet(set: WorkoutSet): Long =
+    override suspend fun addSet(set: WorkoutSet, intention: SetIntention): Long =
         transactionRunner.runInTransaction {
+            WorkoutNumericValidation.requireValidWorkoutSet(set)
             requireActiveSession(set.sessionId)
             set.planTargetSnapshotId?.let { targetId ->
                 val target = progressionDao.getTargetById(targetId)
@@ -134,6 +186,9 @@ class WorkoutRepositoryImpl(
                 }
             }
             val id = setDao.insert(WorkoutSetEntity.fromDomain(set))
+            // Same transaction as the insert: a set is never observable without the
+            // intention the user chose for it.
+            applySetIntention(id, intention)
             // The insert and the exact PR rebuild must share one transaction and run before
             // any observer can compare records, otherwise a concurrent delete/update could
             // recalculate first and the stale add-set values would resurrect a ghost PR.
@@ -143,8 +198,9 @@ class WorkoutRepositoryImpl(
             id
         }
 
-    override suspend fun updateSet(set: WorkoutSet) {
+    override suspend fun updateSet(set: WorkoutSet, intention: SetIntention?) {
         transactionRunner.runInTransaction {
+            WorkoutNumericValidation.requireValidWorkoutSet(set)
             val stored = setDao.getSetById(set.id)
                 ?: throw IllegalStateException("Workout set ${set.id} does not exist")
             requireActiveSession(stored.sessionId)
@@ -160,6 +216,7 @@ class WorkoutRepositoryImpl(
                 "Workout set identity fields cannot be changed"
             }
             setDao.update(updated)
+            applySetIntention(updated.id, intention)
             recalculatePersonalRecords(stored.exerciseId)
         }
     }
@@ -169,7 +226,30 @@ class WorkoutRepositoryImpl(
             val stored = setDao.getSetById(setId) ?: return@runInTransaction
             requireActiveSession(stored.sessionId)
             setDao.deleteSet(setId)
+            // Dropped in the same transaction so no intention record can outlive its set.
+            readinessRepository?.pruneSetIntentions(listOf(setId))
             recalculatePersonalRecords(stored.exerciseId)
+        }
+    }
+
+    override fun observeSetIntentions(): Flow<Map<Long, SetIntention>> =
+        readinessRepository?.observeSetIntentions() ?: flowOf(emptyMap())
+
+    /**
+     * Writes the intention inside the caller's transaction. The readiness store runs
+     * its own [TransactionRunner]; Room joins nested transactions, so the set write and
+     * this write commit or roll back as one unit.
+     *
+     * Tri-state, matching the shared store and the [WorkoutRepository] contract: `null`
+     * leaves the stored record untouched (a plain reps/weight edit must not erase an
+     * answer), [SetIntention.UNKNOWN] removes it, and a concrete value replaces it.
+     */
+    private suspend fun applySetIntention(setId: Long, intention: SetIntention?) {
+        val readiness = readinessRepository ?: return
+        when (intention) {
+            null -> return
+            SetIntention.UNKNOWN -> readiness.clearSetIntention(setId)
+            else -> readiness.setSetIntention(setId, intention)
         }
     }
 
@@ -209,15 +289,26 @@ class WorkoutRepositoryImpl(
             config = PagingConfig(pageSize = 20, enablePlaceholders = false),
             pagingSourceFactory = { sessionDao.getPagedCompletedSessionsWithSets() }
         ).flow.map { pagingData ->
-            pagingData.map { relation ->
-                val sets = relation.sets
-                CompletedWorkoutSummary(
-                    session = relation.session.toDomain(),
-                    exerciseCount = sets.map { it.exerciseId }.distinct().size,
-                    setCount = sets.size,
-                    totalVolume = sets.filter { it.setType != SetType.WARMUP.name }.sumOf { it.weightKg * it.reps }
+            pagingData.map(SessionWithSets::toCompletedWorkoutSummary)
+        }
+    }
+
+    override fun getPagedCompletedWorkoutSummaries(
+        planId: Long?,
+        fromEpochMillis: Long?,
+        toEpochMillis: Long?
+    ): Flow<PagingData<CompletedWorkoutSummary>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+            pagingSourceFactory = {
+                sessionDao.getPagedCompletedSessionsWithSetsFiltered(
+                    planId = planId,
+                    fromEpochMillis = fromEpochMillis,
+                    toEpochMillis = toEpochMillis
                 )
             }
+        ).flow.map { pagingData ->
+            pagingData.map(SessionWithSets::toCompletedWorkoutSummary)
         }
     }
 
@@ -244,7 +335,11 @@ class WorkoutRepositoryImpl(
      */
     private suspend fun recalculatePersonalRecords(exerciseId: Long) {
         val allWorkSets = setDao.getSetsForExerciseList(exerciseId)
-            .filterNot { it.setType == SetType.WARMUP.name }
+            .filter { set ->
+                set.setType != SetType.WARMUP.name &&
+                    WorkoutNumericValidation.isValidReps(set.reps) &&
+                    WorkoutNumericValidation.isValidWeightKg(set.weightKg)
+            }
 
         // Weight/reps/E1RM records are per-set achievements and stay live during a
         // session (a set just completed IS a personal record). Volume is per-session
@@ -278,7 +373,15 @@ class WorkoutRepositoryImpl(
 
         val volumeBySession = completedWorkSets
             .groupBy { it.sessionId }
-            .mapValues { (_, sets) -> sets.sumOf { it.weightKg * it.reps } }
+            .mapNotNull { (sessionId, sets) ->
+                val volume = sets.fold(0.0) { total, set ->
+                    val setVolume = set.weightKg * set.reps.toDouble()
+                    val next = total + setVolume
+                    if (setVolume.isFinite() && next.isFinite()) next else total
+                }
+                sessionId to volume
+            }
+            .toMap()
         val bestVolumeSessionId = volumeBySession.maxByOrNull { it.value }?.key
         val bestVolume = bestVolumeSessionId?.let { volumeBySession[it] }
         val bestVolumeAchievedAt = bestVolumeSessionId
@@ -295,7 +398,7 @@ class WorkoutRepositoryImpl(
         val existing = personalRecordDao.getRecord(exerciseId, type.name)
         // A non-positive value (e.g. 0.0 volume from zero-weight sets) is no record at all:
         // clear the row instead of persisting a bogus "Rekord: 0,0 kg".
-        val recordValue = value?.takeIf { it > 0.0 }
+        val recordValue = value?.takeIf { it.isFinite() && it > 0.0 }
         if (recordValue == null || achievedAt == null) {
             if (existing != null) personalRecordDao.deleteRecord(exerciseId, type.name)
             return
@@ -318,13 +421,23 @@ class WorkoutRepositoryImpl(
         setDao.getSetCountForSession(sessionId)
 
     override suspend fun getTotalVolumeForSession(sessionId: Long): Double =
-        setDao.getTotalVolumeForSession(sessionId) ?: 0.0
+        setDao.getTotalVolumeForSession(sessionId)
+            ?.takeIf { it.isFinite() && it >= 0.0 }
+            ?: 0.0
 
     override suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int =
         sessionDao.getCompletedSessionCountSince(sinceEpochMillis)
 
+    override suspend fun getCompletedSessionCountBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): Int = sessionDao.getCompletedSessionCountBetween(sinceEpochMillis, untilEpochMillis)
+
     override suspend fun getLastCompletedSession(): WorkoutSession? =
         sessionDao.getLastCompletedSession()?.toDomain()
+
+    override suspend fun getLastCompletedSessionBefore(untilEpochMillis: Long): WorkoutSession? =
+        sessionDao.getLastCompletedSessionBefore(untilEpochMillis)?.toDomain()
 
     override suspend fun getAllCompletedSessionsList(): List<WorkoutSession> =
         sessionDao.getAllCompletedSessionsList().map { it.toDomain() }

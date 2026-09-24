@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.animation.core.LinearEasing
@@ -19,10 +21,21 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import com.ironlog.app.presentation.theme.AthleticHero
+import com.ironlog.app.presentation.theme.AthleticNumber
+import com.ironlog.app.presentation.theme.AthleticLabel
 import com.ironlog.app.presentation.common.DashboardSkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -46,24 +60,27 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
-import com.ironlog.app.domain.model.DeloadAssessment
 import com.ironlog.app.domain.model.DeloadMode
-import com.ironlog.app.domain.model.DeloadSignal
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
-import com.ironlog.app.presentation.common.StatCard
-import com.ironlog.app.presentation.common.StatCardVariant
-import com.ironlog.app.presentation.theme.ButtonSize
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.semantic
 import com.ironlog.app.presentation.theme.staggeredEntrance
+import com.ironlog.app.presentation.common.WeeklyMuscleVolumeCard
+import com.ironlog.feature.dashboard.R as DashboardR
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
+
+/** Abstand, in dem eine sichtbare Dashboard-Seite den Kalendertag prüft. */
+private const val DAY_ROLLOVER_CHECK_INTERVAL_MS = 60_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +94,26 @@ fun DashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = ironLogDimens
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshCheckInDay()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Solange die Seite sichtbar ist, den Tageswechsel auch ohne Resume prüfen.
+    // Die Schleife endet, sobald das Dashboard die Komposition verlässt.
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(DAY_ROLLOVER_CHECK_INTERVAL_MS)
+            viewModel.refreshCheckInDay()
+        }
+    }
 
     LaunchedEffect(state.error) {
         state.error?.let {
@@ -123,9 +160,15 @@ fun DashboardScreen(
 
             item {
                 val isFirstTimeUser = state.lastWorkout == null && state.recentRecords.isEmpty()
+                val topPlan = state.metaPlanOptions.firstOrNull()?.nextPlan ?: state.trainingPlans.firstOrNull()?.plan
+                val previewExercises = topPlan?.exercises?.map { it.exerciseName }?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
+
                 CommandCenterCard(
                     hasActiveSession = state.activeSession != null,
                     isFirstTimeUser = isFirstTimeUser,
+                    recommendedPlanName = topPlan?.name,
+                    recommendedExerciseCount = topPlan?.exercises?.size ?: 0,
+                    previewExercises = previewExercises,
                     onStartWorkout = { viewModel.showPlanSelectionSheet() },
                     onContinueWorkout = {
                         state.activeSession?.let { session ->
@@ -135,13 +178,59 @@ fun DashboardScreen(
                 )
             }
 
-            val deload = state.deload
-            if ((deload?.recommended == true || state.deloadMode != null) && deload != null) {
+            item(key = "training_trend") {
+                TrainingTrendCard(
+                    trend = state.trainingTrend,
+                    onRetry = viewModel::reloadTrainingTrend,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            item(key = "daily_check_in") {
+                DailyCheckInCard(
+                    checkIn = state.checkIn,
+                    notice = state.checkInNotice,
+                    onStartEdit = viewModel::startCheckInEdit,
+                    onCancelEdit = viewModel::cancelCheckInEdit,
+                    onSleepChange = viewModel::updateCheckInSleepQuality,
+                    onEnergyChange = viewModel::updateCheckInEnergy,
+                    onStressChange = viewModel::updateCheckInStress,
+                    onSorenessChange = viewModel::updateCheckInSoreness,
+                    onSave = viewModel::saveCheckIn,
+                    onDelete = viewModel::deleteCheckIn,
+                    onDismissNotice = viewModel::dismissCheckInNotice
+                )
+            }
+
+            // Der Muskelkontext stammt aus derselben Bewertung wie der Trend,
+            // damit "letzte Belastung" relativ zum Auswertungszeitpunkt gilt.
+            state.trainingTrend.assessment?.let { assessment ->
+                if (assessment.muscleGroups.isNotEmpty()) {
+                    item(key = "muscle_context") {
+                        MuscleContextCard(
+                            muscleGroups = assessment.muscleGroups,
+                            nowEpochMillis = assessment.generatedAtEpochMillis
+                        )
+                    }
+                }
+            }
+            item {
+                WorkoutStreakBentoCard(
+                    workoutsThisWeek = state.workoutsThisWeek,
+                    workoutsThisMonth = state.workoutsThisMonth,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Die automatische Deload-Empfehlung kommt ausschließlich aus dem
+            // neuen Trainingstrend. Die alte Ermüdungs-Heuristik wird nicht
+            // mehr angezeigt; ein aktiver manueller Modus bleibt bedienbar.
+            val deloadSuggested =
+                state.trainingTrend.assessment?.trainingTrend?.deloadSuggested == true
+            if (deloadSuggested || state.deloadMode != null) {
                 item(key = "deload_card") {
                     DeloadCard(
-                        assessment = deload,
-                        exerciseName = state.deloadExerciseName,
                         activeMode = state.deloadMode,
+                        isUpdating = state.isDeloadModeUpdating,
                         onActivate = viewModel::activateDeloadMode,
                         onDeactivate = viewModel::deactivateDeloadMode
                     )
@@ -157,38 +246,27 @@ fun DashboardScreen(
                 }
             }
 
+            item(key = "weekly_muscle_volume") {
+                val weeklyMuscleVolume = state.weeklyMuscleVolume
+                WeeklyMuscleVolumeCard(
+                    volumes = weeklyMuscleVolume.volumes,
+                    collapsible = true,
+                    weekStart = weeklyMuscleVolume.weekStart,
+                    currentWeekStart = weeklyMuscleVolume.currentWeekStart,
+                    completedWorkoutCount = weeklyMuscleVolume.completedWorkoutCount,
+                    isLoading = weeklyMuscleVolume.isLoading,
+                    error = weeklyMuscleVolume.error,
+                    onRetry = viewModel::reloadWeeklyMuscleVolume,
+                    onPreviousWeek = viewModel::showPreviousMuscleVolumeWeek,
+                    onNextWeek = viewModel::showNextMuscleVolumeWeek
+                )
+            }
+
             if (state.lastWorkout == null && state.recentRecords.isEmpty()) {
                 item {
                     OnboardingCard()
                 }
             } else {
-                item {
-                    SectionTitle(text = stringResource(id = R.string.dashboard_quick_stats))
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                    ) {
-                        StatCard(
-                            label = stringResource(id = R.string.dashboard_this_week),
-                            value = "${state.workoutsThisWeek}",
-                            modifier = Modifier.weight(1f),
-                            variant = StatCardVariant.SECONDARY
-                        )
-                        StatCard(
-                            label = stringResource(id = R.string.dashboard_this_month),
-                            value = "${state.workoutsThisMonth}",
-                            modifier = Modifier.weight(1f),
-                            variant = StatCardVariant.TERTIARY
-                        )
-                    }
-                }
-
-                item {
-                    MuscleHeatmapCard(heatmap = state.muscleHeatmap)
-                }
 
                 item {
                     SectionTitle(text = stringResource(id = R.string.dashboard_recent_records))
@@ -277,11 +355,18 @@ fun DashboardScreen(
     }
 }
 
+/**
+ * Deload-Karte.
+ *
+ * Die automatische Empfehlung stammt ausschließlich aus dem neuen
+ * Trainingstrend; die frühere Ermüdungs-Heuristik wird hier nicht mehr gezeigt,
+ * damit keine widersprüchlichen Zahlen nebeneinander stehen. Ein bereits aktiv
+ * gewählter Modus bleibt unabhängig davon bedienbar und jederzeit beendbar.
+ */
 @Composable
 private fun DeloadCard(
-    assessment: DeloadAssessment,
-    exerciseName: String?,
     activeMode: DeloadMode?,
+    isUpdating: Boolean,
     onActivate: (DeloadMode) -> Unit,
     onDeactivate: () -> Unit
 ) {
@@ -301,46 +386,21 @@ private fun DeloadCard(
             Text(
                 text = stringResource(
                     id = if (activeMode != null) {
-                        R.string.deload_card_title_active
+                        DashboardR.string.dashboard_audit_deload_title_active
                     } else {
-                        R.string.deload_card_title_recommended
+                        DashboardR.string.dashboard_audit_deload_title_recommended
                     }
                 ),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                text = stringResource(id = R.string.deload_card_fatigue_score, assessment.fatigueScore),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
             if (activeMode == null) {
                 Text(
-                    text = stringResource(id = R.string.deload_card_body),
+                    text = stringResource(DashboardR.string.dashboard_trend_deload_suggested),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                assessment.signals.forEach { signal ->
-                    Text(
-                        text = "• ${stringResource(id = signal.labelRes())}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                val strongestChange = assessment.strongestExerciseChangePercent
-                if (exerciseName != null && strongestChange != null) {
-                    Text(
-                        text = stringResource(
-                            id = R.string.deload_strongest_exercise,
-                            exerciseName,
-                            formatPercent(strongestChange)
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
             } else {
                 Text(
                     text = stringResource(
@@ -364,13 +424,15 @@ private fun DeloadCard(
                 if (activeMode == null) {
                     Button(
                         onClick = { onActivate(DeloadMode.HALVE_SET_VOLUME) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        enabled = !isUpdating
                     ) {
                         Text(stringResource(id = R.string.deload_mode_halve_volume))
                     }
                     TextButton(
                         onClick = { onActivate(DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT) },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        enabled = !isUpdating
                     ) {
                         Text(stringResource(id = R.string.deload_mode_reduce_intensity))
                     }
@@ -381,24 +443,20 @@ private fun DeloadCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.semantic.success
                     )
-                    TextButton(onClick = onDeactivate) {
+                    TextButton(onClick = onDeactivate, enabled = !isUpdating) {
                         Text(stringResource(id = R.string.deload_mode_end))
                     }
+                }
+                if (isUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
                 }
             }
         }
     }
 }
-
-private fun DeloadSignal.labelRes(): Int = when (this) {
-    DeloadSignal.E1RM_STAGNATION -> R.string.deload_signal_e1rm_stagnation
-    DeloadSignal.E1RM_DROP -> R.string.deload_signal_e1rm_drop
-    DeloadSignal.RPE_CREEP -> R.string.deload_signal_rpe_creep
-    DeloadSignal.FAILURE_FREQUENCY -> R.string.deload_signal_failure_frequency
-}
-
-private fun formatPercent(changePercent: Double): String =
-    String.format(Locale.ROOT, "%.1f %%", changePercent)
 
 @Composable
 private fun PendingProgressionCard(
@@ -443,18 +501,28 @@ private fun GreetingHeader() {
         in 18..21 -> R.string.dashboard_greeting_evening
         else -> R.string.dashboard_greeting_late
     }
-    Text(
-        text = stringResource(id = greetingRes),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
+    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+        Text(
+            text = "WILLKOMMEN ZURÜCK",
+            style = AthleticLabel,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(id = greetingRes),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
 }
 
 @Composable
 private fun CommandCenterCard(
     hasActiveSession: Boolean,
     isFirstTimeUser: Boolean,
+    recommendedPlanName: String? = null,
+    recommendedExerciseCount: Int = 0,
+    previewExercises: List<String> = emptyList(),
     onStartWorkout: () -> Unit,
     onContinueWorkout: () -> Unit
 ) {
@@ -477,49 +545,143 @@ private fun CommandCenterCard(
         1f
     }
 
-    IronLogSurfaceCard(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        tone = IronLogSurfaceTone.ACCENT
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dims.spacingLg),
-            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            val heroTag = if (hasActiveSession) {
+                "⚡ TRAINING LÄUFT"
+            } else if (recommendedPlanName != null) {
+                "${stringResource(id = R.string.dashboard_hero_tag)} · $recommendedPlanName"
+            } else {
+                stringResource(id = R.string.dashboard_hero_tag)
+            }
+
             Text(
-                text = stringResource(id = R.string.dashboard_command_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                text = heroTag.uppercase(),
+                style = AthleticLabel,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
             )
+
+            val heroTitle = if (hasActiveSession) {
+                stringResource(id = R.string.dashboard_command_title)
+            } else if (recommendedPlanName != null) {
+                recommendedPlanName
+            } else {
+                stringResource(id = R.string.dashboard_command_title)
+            }
+
             Text(
-                text = if (hasActiveSession) {
-                    stringResource(id = R.string.dashboard_command_subtitle_active)
-                } else {
-                    stringResource(id = R.string.dashboard_command_subtitle_idle)
-                },
+                text = heroTitle,
+                style = AthleticHero,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Black
+            )
+
+            val heroSubtitle = if (hasActiveSession) {
+                stringResource(id = R.string.dashboard_command_subtitle_active)
+            } else if (recommendedExerciseCount > 0) {
+                "$recommendedExerciseCount Übungen · Fokus auf progressive Überlastung"
+            } else {
+                stringResource(id = R.string.dashboard_command_subtitle_idle)
+            }
+
+            Text(
+                text = heroSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.92f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (previewExercises.isNotEmpty() && !hasActiveSession) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                ) {
+                    previewExercises.forEach { exName ->
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+                        ) {
+                            Text(
+                                text = exName,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
 
             val buttonAction = if (hasActiveSession) onContinueWorkout else onStartWorkout
             Button(
                 onClick = buttonAction,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(ButtonSize.height)
+                    .height(52.dp)
                     .scale(scale)
             ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (hasActiveSession) {
-                        stringResource(id = R.string.dashboard_continue_workout)
+                        stringResource(id = R.string.dashboard_hero_continue)
                     } else {
-                        stringResource(id = R.string.dashboard_start_workout)
+                        stringResource(id = R.string.dashboard_hero_start)
                     },
-                    modifier = Modifier.padding(start = dims.spacingXs),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun WorkoutStreakBentoCard(
+    workoutsThisWeek: Int,
+    workoutsThisMonth: Int,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(DashboardR.string.dashboard_ui_this_week), style = MaterialTheme.typography.labelMedium)
+                Text(pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisWeek, workoutsThisWeek), style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(DashboardR.string.dashboard_ui_this_month), style = MaterialTheme.typography.labelMedium)
+                Text(pluralStringResource(DashboardR.plurals.dashboard_ui_training_count, workoutsThisMonth, workoutsThisMonth), style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -537,15 +699,15 @@ private fun RecordCard(
     IronLogSurfaceCard(
         modifier = modifier
             .width(140.dp)
-            .height(120.dp),
+            .heightIn(min = 120.dp),
         tone = IronLogSurfaceTone.COLORED,
         semanticColor = MaterialTheme.semantic.warning
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(dims.spacingSm),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(

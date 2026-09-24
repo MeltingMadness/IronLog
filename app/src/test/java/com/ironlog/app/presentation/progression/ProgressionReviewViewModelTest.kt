@@ -1,6 +1,8 @@
 package com.ironlog.app.presentation.progression
 
 import androidx.lifecycle.SavedStateHandle
+import com.ironlog.app.fakes.FakeTrainingPlanRepository
+import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.Exercise
@@ -53,6 +55,7 @@ class ProgressionReviewViewModelTest {
     private lateinit var repository: FakeProgressionRepository
     private lateinit var preferences: FakePreferencesRepository
     private lateinit var exerciseRepository: FakeExerciseRepository
+    private lateinit var plans: FakeTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -60,6 +63,7 @@ class ProgressionReviewViewModelTest {
         repository = FakeProgressionRepository()
         preferences = FakePreferencesRepository()
         exerciseRepository = FakeExerciseRepository()
+        plans = FakeTrainingPlanRepository()
     }
 
     @After
@@ -296,7 +300,7 @@ class ProgressionReviewViewModelTest {
     }
 
     @Test
-    fun `accept all ignores drafts and sends exact stored proposals`() = runTest(dispatcher) {
+    fun `accept all preserves open edits until explicitly dismissed`() = runTest(dispatcher) {
         preferences.setUnitSystem(UnitSystem.IMPERIAL)
         val firstExact = ProgressionTarget(sets = 3, reps = 8, weightKg = 45.359237)
         val secondExact = ProgressionTarget(sets = 4, reps = 6, weightKg = 72.574779)
@@ -313,6 +317,11 @@ class ProgressionReviewViewModelTest {
         viewModel.acceptAllSafe()
         advanceUntilIdle()
 
+        assertTrue(repository.lastAccepted.isEmpty())
+        assertEquals("105", viewModel.uiState.value.edits.getValue(2L).weight)
+        viewModel.dismissEdit(2L)
+        viewModel.acceptAllSafe()
+        advanceUntilIdle()
         assertEquals(firstExact, repository.lastAccepted.getValue(2L))
         assertEquals(secondExact, repository.lastAccepted.getValue(3L))
     }
@@ -531,13 +540,33 @@ class ProgressionReviewViewModelTest {
         assertEquals("Bankdrücken", viewModel.uiState.value.items.single().exerciseName)
     }
 
+    @Test
+    fun `review resolves plan context and count matches newest safe proposals`() = runTest(dispatcher) {
+        plans.savePlan(TrainingPlan(id = 3L, name = "Oberkörper"))
+        repository.reviewItems.value = listOf(
+            pendingChange(id = 1L, sourceSessionId = 10L),
+            pendingChange(id = 2L, sourceSessionId = 12L),
+            information(id = 3L)
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertTrue(state.isSessionScoped)
+        assertEquals("Oberkörper", state.items.first().planName)
+        assertEquals(listOf(2L), state.safePendingItems.map { it.id })
+        plans.savePlan(TrainingPlan(id = 3L, name = "Oberkörper A"))
+        advanceUntilIdle()
+        assertEquals("Oberkörper A", viewModel.uiState.value.items.first().planName)
+    }
+
     private fun createViewModel(sessionId: Long? = 42L): ProgressionReviewViewModel {
         val handle = if (sessionId == null) {
             SavedStateHandle()
         } else {
             SavedStateHandle(mapOf("sessionId" to sessionId))
         }
-        return ProgressionReviewViewModel(handle, repository, preferences, exerciseRepository)
+        return ProgressionReviewViewModel(handle, repository, preferences, exerciseRepository, plans)
     }
 
     private fun pendingChange(
@@ -794,5 +823,25 @@ private class FakePreferencesRepository : AppPreferencesRepository {
 
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         state.value = state.value.copy(defaultRestTimeSeconds = seconds)
+    }
+
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        state.value = state.value.copy(plateCalculatorEnabled = enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        state.value = state.value.copy(availablePlates = plates)
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        state.value = state.value.copy(barbellWeightKg = weightKg)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        state.value = state.value.copy(lastSuccessfulExportEpochMillis = timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        state.value = state.value.copy(backupReminderEnabled = enabled)
     }
 }

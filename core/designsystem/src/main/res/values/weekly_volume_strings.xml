@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_weekly_volume_week_range">%1$s – %2$s</string>
+    <string name="stats_weekly_volume_week_current">Laufende Woche · Werte bis heute</string>
+    <string name="stats_weekly_volume_week_complete">Abgeschlossene Woche</string>
+    <string name="stats_weekly_volume_previous_week">Vorherige Woche</string>
+    <string name="stats_weekly_volume_next_week">Nächste Woche</string>
+    <string name="stats_weekly_volume_summary">%1$s gewichtete Arbeitssätze · %2$d Trainings</string>
+    <string name="stats_weekly_volume_orientation_hint">MEV, MAV und MRV sind Orientierungswerte in gewichteten Arbeitssätzen. Die Einordnung ersetzt keine individuelle Trainingssteuerung.</string>
+    <string name="stats_weekly_volume_error">Die Wochen-Auswertung konnte nicht geladen werden.</string>
+    <string name="stats_weekly_volume_retry">Erneut laden</string>
+    <string name="stats_weekly_volume_expand">Muskelgruppen anzeigen</string>
+    <string name="stats_weekly_volume_collapse">Muskelgruppen ausblenden</string>
+    <string name="stats_weekly_volume_expanded">Ausgeklappt</string>
+    <string name="stats_weekly_volume_collapsed">Eingeklappt</string>
+    <string name="stats_volume_sets_progress">%1$s / MAV %2$s Sätze</string>
+    <string name="stats_volume_thresholds">MEV %1$s · MAV %2$s · MRV %3$s</string>
+    <string name="stats_volume_status_no_sets">Noch keine Sätze</string>
+    <string name="stats_volume_status_below_mev">Unter MEV · Orientierung</string>
+    <string name="stats_volume_status_in_orientation">Im Orientierungsbereich</string>
+    <string name="stats_volume_status_above_mrv">Über MRV · Orientierung</string>
+</resources>

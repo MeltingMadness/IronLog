@@ -35,3 +35,11 @@ replay_pid*.log
 
 # Lokale Fremd-Daten (Desktop-Tools)
 .freebuff/
+
+# Lokale Arbeits-/Ausgabeordner
+/tmp/
+/output/
+__pycache__/
+
+# Wettbewerber-Screenshots (gross, nicht fuer das oeffentliche Repo)
+docs/validation/2026-09-13-competitor-audit/evidence/

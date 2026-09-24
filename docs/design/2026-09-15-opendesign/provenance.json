@@ -1,0 +1,17 @@
+{
+  "application": "Open Design",
+  "version": "0.22.2",
+  "projectId": "ironlog-ux-september-2026",
+  "runId": "9ac021b6-58e6-4c48-a1c8-13cde24ac0de",
+  "transport": "local stdio MCP, daemon-cli.mjs mcp --daemon-url",
+  "runtime": "Codex CLI",
+  "release": "https://github.com/nexu-io/open-design/releases/tag/open-design-v0.22.2",
+  "downloadSha256": "9c3c5f1e523dac9228c51331dea41de998f61ab9b2d51def27f642e2ce70a30e",
+  "signatureVerified": true,
+  "sourceEvidence": "../../validation/2026-09-13-competitor-audit/befunde.md",
+  "status": "completed",
+  "refinementRunId": "13b1d752-6c1c-49a7-8707-d1e496cc859d",
+  "finalCorrections": "Two CSS export corrections applied through Open Design MCP write_file",
+  "validation": "All seven final PNG exports visually inspected. Static design proposals; native app behavior not implemented or tested.",
+  "signatureVerifiedAtEnd": true
+}

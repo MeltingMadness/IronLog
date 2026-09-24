@@ -1,0 +1,8 @@
+
+com.ironlog.app.data.local.IndividualSetTargetsTest:..
+
+Time: 0.556
+
+OK (2 tests)
+
+

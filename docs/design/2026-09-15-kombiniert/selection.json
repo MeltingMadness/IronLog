@@ -1,0 +1,14 @@
+{
+  "confirmedByUser": true,
+  "scope": "Ausarbeitung einer konsistenten Designfassung; keine Produktimplementierung",
+  "choices": {
+    "01-logging-android": "Open Design 15.09.2026",
+    "02-logging-ios": "Open Design 15.09.2026",
+    "03-exercise-picker": "Erster Entwurf 14.09.2026",
+    "04-plan-create": "Erster Entwurf 14.09.2026",
+    "05-finish-early": "Erster Entwurf 14.09.2026",
+    "06-completion": "Open Design 15.09.2026",
+    "07-plan-changes": "Erster Entwurf 14.09.2026"
+  },
+  "visualAssumption": "Gemeinsame Anthrazit-Orange-Farbwelt aus Open Design; gewählte Bedienstrukturen bleiben erhalten."
+}

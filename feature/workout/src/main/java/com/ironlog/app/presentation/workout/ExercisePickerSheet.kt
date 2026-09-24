@@ -84,6 +84,7 @@ fun ExercisePickerSheet(
     val dims = ironLogDimens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    var selectedExercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedGroup by remember { mutableStateOf<MuscleGroup?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -108,7 +109,7 @@ fun ExercisePickerSheet(
                     else -> exerciseRepository.getAllExercises()
                 }
             }.map { exercises ->
-                exercises.filterNot { it.isArchived }
+                exercises.filterNot { it.isArchived }.filter { selectedGroup == null || it.primaryMuscleGroup == selectedGroup }
             }.catch { throwable ->
                 if (throwable is CancellationException) throw throwable
                 onCreationError?.invoke(
@@ -185,8 +186,12 @@ fun ExercisePickerSheet(
                 }
             }
 
+            Row(Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.colorScheme.primary)
+                TextButton(onClick = { selectedExercises = emptyList() }) { Text("Auswahl leeren") }
+            }
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                 contentPadding = PaddingValues(horizontal = dims.spacingMd, vertical = dims.spacingXs),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
             ) {
@@ -194,16 +199,17 @@ fun ExercisePickerSheet(
                     IronLogSurfaceCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onExerciseSelected(exercise) }
+                            .clickable { selectedExercises = if (selectedExercises.any { it.id == exercise.id }) selectedExercises.filterNot { it.id == exercise.id } else selectedExercises + exercise }
                             .semantics { role = Role.Button },
                         tone = IronLogSurfaceTone.ACCENT,
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
-                            MaterialTheme.semantic.sky.copy(alpha = 0.12f)
+                            if (selectedExercises.any { it.id == exercise.id }) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                         )
                     ) {
                         ListItem(
                             headlineContent = { Text(exercise.name) },
+                            trailingContent = { androidx.compose.material3.Checkbox(checked = selectedExercises.any { it.id == exercise.id }, onCheckedChange = null) },
                             supportingContent = {
                                 Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
                             },
@@ -212,6 +218,11 @@ fun ExercisePickerSheet(
                     }
                 }
             }
+            androidx.compose.material3.Button(
+                onClick = { selectedExercises.forEach(onExerciseSelected); onDismiss() },
+                enabled = selectedExercises.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd)
+            ) { Text("${selectedExercises.size} Übungen hinzufügen") }
         }
     }
 
@@ -244,7 +255,7 @@ fun ExercisePickerSheet(
                         )
                     }.onSuccess { exercise ->
                         showCreateDialog = false
-                        onExerciseSelected(exercise)
+                        selectedExercises = selectedExercises + exercise
                     }.onFailure { throwable ->
                         onCreationError?.invoke(
                             throwable.message ?: "Übung konnte nicht erstellt werden"

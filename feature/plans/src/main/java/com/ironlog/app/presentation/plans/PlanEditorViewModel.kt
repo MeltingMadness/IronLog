@@ -67,7 +67,17 @@ data class ProgressionEditorUi(
 
 data class PlanExerciseUi(
     val planExercise: PlanExercise,
-    val exercise: Exercise
+    val exercise: Exercise,
+    /**
+     * Keep editable numeric values as text until the user commits the plan.
+     * This lets a user clear a field or type an intermediate value such as
+     * `.`/`2,` without the controlled field snapping back to the last number.
+     */
+    val targetSetsInput: String = planExercise.targetSets.takeIf { it > 0 }?.toString() ?: "",
+    val targetRepsInput: String = planExercise.targetReps.takeIf { it > 0 }?.toString() ?: "",
+    val targetWeightInput: String = "",
+    val targetWeightInputUnit: UnitSystem = UnitSystem.METRIC,
+    val targetWeightInputDirty: Boolean = false
 )
 
 data class PlanEditorUiState(
@@ -79,8 +89,17 @@ data class PlanEditorUiState(
     val notFound: Boolean = false,
     val error: String? = null,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
-    val progressionEditor: ProgressionEditorUi? = null
+    val progressionEditor: ProgressionEditorUi? = null,
+    val isSaving: Boolean = false,
+    val hasUnsavedChanges: Boolean = false,
+    val targetInputErrors: Map<Int, Set<PlanExerciseNumericField>> = emptyMap()
 )
+
+enum class PlanExerciseNumericField {
+    SETS,
+    REPS,
+    WEIGHT
+}
 
 class PlanEditorViewModel(
     savedStateHandle: SavedStateHandle,
@@ -108,7 +127,24 @@ class PlanEditorViewModel(
                 .map { it.unitSystem }
                 .distinctUntilChanged()
                 .collect { unitSystem ->
-                    _uiState.value = _uiState.value.copy(unitSystem = unitSystem)
+                    val current = _uiState.value
+                    if (current.unitSystem == unitSystem) return@collect
+                    val exercises = current.exercises.map { item ->
+                        if (item.targetWeightInputDirty) {
+                            item
+                        } else {
+                            item.copy(
+                                targetWeightInput = targetWeightInputFor(item.planExercise, unitSystem),
+                                targetWeightInputUnit = unitSystem
+                            )
+                        }
+                    }
+                    // A preference change only changes the display unit. It is
+                    // not an edit to the plan itself.
+                    _uiState.value = current.copy(
+                        unitSystem = unitSystem,
+                        exercises = exercises
+                    )
                 }
         }
     }
@@ -121,14 +157,16 @@ class PlanEditorViewModel(
                 if (plan != null) {
                     val exerciseUis = plan.exercises.map { pe ->
                         val exercise = exerciseRepository.getExerciseById(pe.exerciseId)
-                        PlanExerciseUi(
-                            planExercise = pe.copy(exerciseName = exercise?.name ?: "Unbekannt"),
-                            exercise = exercise ?: Exercise(
+                        val resolvedExercise = exercise ?: Exercise(
                                 id = pe.exerciseId,
                                 name = "Unbekannt",
                                 primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
                                 category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                             )
+                        createPlanExerciseUi(
+                            planExercise = pe.copy(exerciseName = resolvedExercise.name),
+                            exercise = resolvedExercise,
+                            unitSystem = _uiState.value.unitSystem
                         )
                     }
                     val normalizedExercises = normalizeExercises(exerciseUis)
@@ -137,7 +175,9 @@ class PlanEditorViewModel(
                         exercises = normalizedExercises,
                         isLoading = false,
                         notFound = false,
-                        error = null
+                        error = null,
+                        hasUnsavedChanges = false,
+                        targetInputErrors = emptyMap()
                     )
                 } else {
                     // Plan was deleted (e.g. from another screen) or the id is invalid —
@@ -157,10 +197,16 @@ class PlanEditorViewModel(
     }
 
     fun updatePlanName(name: String) {
-        _uiState.value = _uiState.value.copy(planName = name)
+        val current = _uiState.value
+        if (current.isSaving || current.isSaved || current.planName == name) return
+        _uiState.value = current.copy(
+            planName = name,
+            hasUnsavedChanges = true
+        )
     }
 
     fun showExercisePicker() {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         _uiState.value = _uiState.value.copy(showExercisePicker = true)
     }
 
@@ -169,6 +215,7 @@ class PlanEditorViewModel(
     }
 
     fun addExercise(exercise: Exercise) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val current = _uiState.value.exercises
         val newIndex = current.size
         val planExercise = PlanExercise(
@@ -181,10 +228,15 @@ class PlanEditorViewModel(
             targetWeightKg = 0.0
         )
         _uiState.value = _uiState.value.copy(showExercisePicker = false)
-        setExercises(current + PlanExerciseUi(planExercise = planExercise, exercise = exercise))
+        setExercises(current + createPlanExerciseUi(
+            planExercise = planExercise,
+            exercise = exercise,
+            unitSystem = _uiState.value.unitSystem
+        ))
     }
 
     fun removeExercise(index: Int) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val current = _uiState.value.exercises.toMutableList()
         if (index in current.indices) {
             current.removeAt(index)
@@ -193,7 +245,7 @@ class PlanEditorViewModel(
     }
 
     fun moveUp(index: Int) {
-        if (index <= 0) return
+        if (_uiState.value.isSaving || _uiState.value.isSaved || index <= 0) return
         val current = _uiState.value.exercises.toMutableList()
         val item = current.removeAt(index)
         current.add(index - 1, item)
@@ -202,7 +254,7 @@ class PlanEditorViewModel(
 
     fun moveDown(index: Int) {
         val current = _uiState.value.exercises.toMutableList()
-        if (index >= current.size - 1) return
+        if (_uiState.value.isSaving || _uiState.value.isSaved || index >= current.size - 1) return
         val item = current.removeAt(index)
         current.add(index + 1, item)
         setExercises(current)
@@ -210,7 +262,7 @@ class PlanEditorViewModel(
 
     fun groupWithPrevious(index: Int) {
         val current = _uiState.value.exercises
-        if (index <= 0 || index >= current.size) return
+        if (_uiState.value.isSaving || _uiState.value.isSaved || index <= 0 || index >= current.size) return
 
         val previousGroup = current[index - 1].planExercise.supersetGroupId
         val currentGroup = current[index].planExercise.supersetGroupId
@@ -237,7 +289,7 @@ class PlanEditorViewModel(
 
     fun ungroup(index: Int) {
         val current = _uiState.value.exercises
-        if (index !in current.indices) return
+        if (_uiState.value.isSaving || _uiState.value.isSaved || index !in current.indices) return
 
         val ungrouped = current.mapIndexed { itemIndex, item ->
             if (itemIndex == index) {
@@ -250,19 +302,75 @@ class PlanEditorViewModel(
     }
 
     fun updateTargetSets(index: Int, sets: Int) {
-        updateExercise(index) { it.copy(targetSets = sets) }
+        updateTargetSetsInput(index, sets.toString())
     }
 
     fun updateTargetReps(index: Int, reps: Int) {
-        updateExercise(index) { it.copy(targetReps = reps) }
+        updateTargetRepsInput(index, reps.toString())
     }
 
     fun updateTargetWeightDisplay(index: Int, displayWeight: Double) {
-        val weightKg = WeightFormatting.convertToKg(displayWeight, _uiState.value.unitSystem)
-        updateExercise(index) { it.copy(targetWeightKg = weightKg) }
+        updateTargetWeightInput(index, editableNumber(displayWeight))
+    }
+
+    fun updateTargetSetsInput(index: Int, value: String) {
+        updateTargetInput(index, PlanExerciseNumericField.SETS, value) { item ->
+            parsePositiveTargetInt(value)?.let { sets ->
+                item.copy(planExercise = item.planExercise.copy(targetSets = sets))
+            } ?: item
+        }
+    }
+
+    fun updateTargetRepsInput(index: Int, value: String) {
+        updateTargetInput(index, PlanExerciseNumericField.REPS, value) { item ->
+            parsePositiveTargetInt(value)?.let { reps ->
+                item.copy(planExercise = item.planExercise.copy(targetReps = reps))
+            } ?: item
+        }
+    }
+
+    fun updateTargetWeightInput(index: Int, value: String) {
+        updateTargetInput(index, PlanExerciseNumericField.WEIGHT, value) { item ->
+            val weightKg = if (value.isBlank()) {
+                0.0
+            } else {
+                parseNonNegativeDecimal(value)
+                    ?.let { WeightFormatting.convertToKg(it, item.targetWeightInputUnit) }
+            }
+            weightKg?.let { parsed ->
+                item.copy(planExercise = item.planExercise.copy(targetWeightKg = parsed))
+            } ?: item
+        }
+    }
+
+    fun validateTargetInput(index: Int, field: PlanExerciseNumericField) {
+        val current = _uiState.value
+        if (current.isSaving || current.isSaved) return
+        val item = current.exercises.getOrNull(index) ?: return
+        val valid = when (field) {
+            PlanExerciseNumericField.SETS -> parsePositiveTargetInt(item.targetSetsInput) != null
+            PlanExerciseNumericField.REPS -> parsePositiveTargetInt(item.targetRepsInput) != null
+            PlanExerciseNumericField.WEIGHT -> item.targetWeightInput.isBlank() ||
+                parseNonNegativeDecimal(item.targetWeightInput)
+                    ?.let { WeightFormatting.convertToKg(it, item.targetWeightInputUnit) }
+                    ?.isFinite() == true
+        }
+        val fields = if (valid) {
+            current.targetInputErrors[index].orEmpty() - field
+        } else {
+            current.targetInputErrors[index].orEmpty() + field
+        }
+        _uiState.value = current.copy(
+            targetInputErrors = if (fields.isEmpty()) {
+                current.targetInputErrors - index
+            } else {
+                current.targetInputErrors + (index to fields)
+            }
+        )
     }
 
     fun openProgressionEditor(index: Int) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val item = _uiState.value.exercises.getOrNull(index) ?: return
         val unitSystem = _uiState.value.unitSystem
         _uiState.value = _uiState.value.copy(
@@ -278,7 +386,14 @@ class PlanEditorViewModel(
         _uiState.value = _uiState.value.copy(progressionEditor = null)
     }
 
+    /** A tap in the compact chooser commits to the plan draft and closes the sheet. */
+    fun chooseProgressionScheme(scheme: ProgressionScheme) {
+        selectProgressionScheme(scheme)
+        saveProgressionEditor()
+    }
+
     fun selectProgressionScheme(scheme: ProgressionScheme) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val current = _uiState.value.progressionEditor ?: return
         val exercise = _uiState.value.exercises.getOrNull(current.exerciseIndex)?.planExercise ?: return
         val next = when {
@@ -298,6 +413,7 @@ class PlanEditorViewModel(
     }
 
     fun updateProgressionField(field: ProgressionField, value: String) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val current = _uiState.value.progressionEditor ?: return
         val updated = when (field) {
             ProgressionField.STEP -> current.copy(
@@ -318,6 +434,7 @@ class PlanEditorViewModel(
     }
 
     fun saveProgressionEditor() {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
         val draft = _uiState.value.progressionEditor ?: return
         val item = _uiState.value.exercises.getOrNull(draft.exerciseIndex) ?: return
         val parsed = parseProgressionConfig(draft)
@@ -363,7 +480,60 @@ class PlanEditorViewModel(
         }
     }
 
+    private fun updateTargetInput(
+        index: Int,
+        field: PlanExerciseNumericField,
+        value: String,
+        transform: (PlanExerciseUi) -> PlanExerciseUi
+    ) {
+        val current = _uiState.value
+        if (current.isSaving || current.isSaved || index !in current.exercises.indices) return
+        val exercises = current.exercises.toMutableList()
+        val item = exercises[index]
+        val updated = transform(
+            when (field) {
+                PlanExerciseNumericField.SETS -> item.copy(targetSetsInput = value)
+                PlanExerciseNumericField.REPS -> item.copy(targetRepsInput = value)
+                PlanExerciseNumericField.WEIGHT -> item.copy(
+                    targetWeightInput = value,
+                    targetWeightInputDirty = true
+                )
+            }
+        )
+        exercises[index] = updated
+        _uiState.value = current.copy(
+            exercises = exercises,
+            hasUnsavedChanges = true,
+            targetInputErrors = current.targetInputErrors
+                .mapValues { (errorIndex, fields) ->
+                    if (errorIndex == index) fields - field else fields
+                }
+                .filterValues { it.isNotEmpty() }
+        )
+    }
+
+    fun updateSetTargets(index: Int, targets: List<com.ironlog.shared.plans.PlannedSet>) {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
+        if (!com.ironlog.shared.plans.PlannedSets.valid(targets)) return
+        val current = _uiState.value
+        val row = current.exercises.getOrNull(index) ?: return
+        val work = targets.filter { it.kind != "WARMUP" }
+        val first = work.firstOrNull()
+        val plan = row.planExercise.copy(
+            setTargets = targets,
+            targetSets = if (targets.isEmpty()) row.planExercise.targetSets else work.size,
+            targetReps = first?.reps ?: row.planExercise.targetReps,
+            targetWeightKg = first?.weightKg ?: row.planExercise.targetWeightKg,
+            progressionConfig = if (targets.isEmpty()) row.planExercise.progressionConfig else ProgressionConfig.Manual()
+        )
+        setExercises(current.exercises.mapIndexed { i, item ->
+            if (i == index) createPlanExerciseUi(plan, row.exercise, current.unitSystem) else item
+        })
+    }
+
     fun savePlan() {
+        if (_uiState.value.isSaving || _uiState.value.isSaved) return
+
         val name = _uiState.value.planName.trim()
         if (name.isBlank()) {
             _uiState.value = _uiState.value.copy(error = "Bitte gib einen Namen ein")
@@ -371,7 +541,24 @@ class PlanEditorViewModel(
         }
 
         val normalizedExercises = normalizeExercises(_uiState.value.exercises)
-        val invalidExercise = normalizedExercises.firstOrNull { item ->
+        if (normalizedExercises.isEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                error = "Bitte füge mindestens eine Übung hinzu."
+            )
+            return
+        }
+
+        val parsedExercises = parseTargetInputs(normalizedExercises)
+        if (parsedExercises.errors.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                targetInputErrors = parsedExercises.errors,
+                error = "Bitte korrigiere die markierten Trainingsziele."
+            )
+            return
+        }
+
+        val exercisesWithTargets = parsedExercises.exercises
+        val invalidExercise = exercisesWithTargets.firstOrNull { item ->
             ProgressionConfigValidator.validationErrors(
                 target = item.planExercise.toProgressionTarget(),
                 config = item.planExercise.progressionConfig
@@ -384,29 +571,48 @@ class PlanEditorViewModel(
             return
         }
 
+        _uiState.value = _uiState.value.copy(isSaving = true)
         viewModelScope.launch {
             try {
-                val exercises = normalizedExercises.map { it.planExercise }
+                val exercises = exercisesWithTargets.map { it.planExercise }
                 val plan = TrainingPlan(
                     id = planId,
                     name = name,
                     exercises = exercises
                 )
                 planRepository.savePlan(plan)
+                val cleanExercises = exercisesWithTargets.map { item ->
+                    item.copy(
+                        targetWeightInput = targetWeightInputFor(
+                            item.planExercise,
+                            _uiState.value.unitSystem
+                        ),
+                        targetWeightInputUnit = _uiState.value.unitSystem,
+                        targetWeightInputDirty = false
+                    )
+                }
                 _uiState.value = _uiState.value.copy(
-                    exercises = normalizedExercises,
-                    isSaved = true
+                    exercises = cleanExercises,
+                    isSaved = true,
+                    isSaving = false,
+                    hasUnsavedChanges = false,
+                    targetInputErrors = emptyMap()
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Plan konnte nicht gespeichert werden: ${e.message}"
+                    error = "Plan konnte nicht gespeichert werden: ${e.message}",
+                    isSaving = false
                 )
             }
         }
     }
 
     private fun setExercises(exercises: List<PlanExerciseUi>) {
-        _uiState.value = _uiState.value.copy(exercises = normalizeExercises(exercises))
+        _uiState.value = _uiState.value.copy(
+            exercises = normalizeExercises(exercises),
+            hasUnsavedChanges = true,
+            targetInputErrors = emptyMap()
+        )
     }
 
     private fun normalizeExercises(exercises: List<PlanExerciseUi>): List<PlanExerciseUi> {
@@ -706,6 +912,78 @@ class PlanEditorViewModel(
         return parsed.toLong()
     }
 
+    private fun parsePositiveInt(value: String): Int? =
+        parseInteger(value)?.takeIf { it > 0 }
+
+    private fun parseNonNegativeDecimal(value: String): Double? =
+        parseDecimal(value)?.takeIf { it.isFinite() && it >= 0.0 }
+
+    private fun parseTargetInputs(
+        exercises: List<PlanExerciseUi>
+    ): ParsedTargetInputs {
+        val errors = linkedMapOf<Int, Set<PlanExerciseNumericField>>()
+        val parsed = exercises.mapIndexed { index, item ->
+            val sets = parsePositiveTargetInt(item.targetSetsInput)
+            val reps = parsePositiveTargetInt(item.targetRepsInput)
+            val weight = if (item.targetWeightInput.isBlank()) {
+                0.0
+            } else {
+                parseNonNegativeDecimal(item.targetWeightInput)?.let {
+                    WeightFormatting.convertToKg(it, item.targetWeightInputUnit)
+                }
+            }
+
+            val invalidFields = buildSet {
+                if (sets == null) add(PlanExerciseNumericField.SETS)
+                if (reps == null) add(PlanExerciseNumericField.REPS)
+                if (weight == null || !weight.isFinite() || weight < 0.0) {
+                    add(PlanExerciseNumericField.WEIGHT)
+                }
+            }
+            if (invalidFields.isNotEmpty()) {
+                errors[index] = invalidFields
+            }
+
+            item.copy(
+                planExercise = item.planExercise.copy(
+                    targetSets = sets ?: item.planExercise.targetSets,
+                    targetReps = reps ?: item.planExercise.targetReps,
+                    targetWeightKg = weight ?: item.planExercise.targetWeightKg
+                )
+            )
+        }
+        return ParsedTargetInputs(parsed, errors)
+    }
+
+    private fun parsePositiveTargetInt(value: String): Int? {
+        val normalized = value.trim()
+        if (normalized.contains('.') || normalized.contains(',')) return null
+        return parsePositiveInt(normalized)
+    }
+
+    private fun createPlanExerciseUi(
+        planExercise: PlanExercise,
+        exercise: Exercise,
+        unitSystem: UnitSystem
+    ): PlanExerciseUi = PlanExerciseUi(
+        planExercise = planExercise,
+        exercise = exercise,
+        targetSetsInput = planExercise.targetSets.takeIf { it > 0 }?.toString() ?: "",
+        targetRepsInput = planExercise.targetReps.takeIf { it > 0 }?.toString() ?: "",
+        targetWeightInput = targetWeightInputFor(planExercise, unitSystem),
+        targetWeightInputUnit = unitSystem,
+        targetWeightInputDirty = false
+    )
+
+    private fun targetWeightInputFor(planExercise: PlanExercise, unitSystem: UnitSystem): String =
+        if (planExercise.targetWeightKg == 0.0) {
+            ""
+        } else if (planExercise.targetWeightKg.isFinite()) {
+            editableNumber(WeightFormatting.convertToDisplay(planExercise.targetWeightKg, unitSystem))
+        } else {
+            planExercise.targetWeightKg.toString()
+        }
+
     private fun editableNumber(value: Double): String =
         BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
 
@@ -718,5 +996,10 @@ class PlanEditorViewModel(
     private data class ParsedProgressionConfig(
         val config: ProgressionConfig?,
         val errors: Map<ProgressionField, String>
+    )
+
+    private data class ParsedTargetInputs(
+        val exercises: List<PlanExerciseUi>,
+        val errors: Map<Int, Set<PlanExerciseNumericField>>
     )
 }

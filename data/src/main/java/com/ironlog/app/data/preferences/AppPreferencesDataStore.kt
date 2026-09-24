@@ -1,9 +1,11 @@
-﻿package com.ironlog.app.data.preferences
+package com.ironlog.app.data.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.ironlog.app.domain.model.DeloadMode
@@ -32,6 +34,14 @@ internal object AppPreferenceKeys {
     val AUTO_REST_TIMER_ENABLED = booleanPreferencesKey("auto_rest_timer_enabled")
     val DEFAULT_REST_TIME_SECONDS = intPreferencesKey("default_rest_time_seconds")
     val DELOAD_MODE = stringPreferencesKey("deload_mode")
+    val PLATE_CALCULATOR_ENABLED = booleanPreferencesKey("plate_calculator_enabled")
+    val AVAILABLE_PLATES = stringPreferencesKey("available_plates")
+    val BARBELL_WEIGHT_KG = doublePreferencesKey("barbell_weight_kg")
+    val LAST_SUCCESSFUL_EXPORT_EPOCH_MILLIS = longPreferencesKey("last_successful_export_epoch_millis")
+    val BACKUP_REMINDER_ENABLED = booleanPreferencesKey("backup_reminder_enabled")
+
+    fun restTimerState(sessionId: Long) =
+        stringPreferencesKey("rest_timer_state_$sessionId")
 }
 
 // Sentinel stored when the user explicitly deselects every reminder day. This is required to
@@ -67,6 +77,25 @@ internal fun parseReminderDays(raw: String?): Set<DayOfWeek> {
 internal fun encodeReminderDays(days: Set<DayOfWeek>): String {
     if (days.isEmpty()) return REMINDER_DAYS_NONE_SENTINEL
     return days.sortedBy { it.value }.joinToString(",") { it.name }
+}
+
+internal val DEFAULT_AVAILABLE_PLATES = listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25)
+internal const val DEFAULT_BARBELL_WEIGHT_KG = 20.0
+private const val AVAILABLE_PLATES_NONE_SENTINEL = "none"
+
+internal fun parseAvailablePlates(raw: String?): List<Double> {
+    if (raw == null) return DEFAULT_AVAILABLE_PLATES
+    if (raw == AVAILABLE_PLATES_NONE_SENTINEL || raw.isBlank()) return emptyList()
+    return raw.split(',')
+        .mapNotNull { it.trim().toDoubleOrNull() }
+        .filter { it > 0.0 }
+        .distinct()
+        .sortedDescending()
+}
+
+internal fun encodeAvailablePlates(plates: List<Double>): String {
+    if (plates.isEmpty()) return AVAILABLE_PLATES_NONE_SENTINEL
+    return plates.filter { it > 0.0 }.distinct().sortedDescending().joinToString(",") { it.toString() }
 }
 
 internal fun Preferences.stringOrNull(key: Preferences.Key<String>): String? = this[key]

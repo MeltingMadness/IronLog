@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dashboard_audit_analysis_title">Belastungsanalyse</string>
+    <string name="dashboard_audit_analysis_unavailable">Auswertung nicht verfügbar</string>
+    <string name="dashboard_audit_analysis_unavailable_detail">Die Trainingsdaten-Heuristik konnte nicht geladen werden.</string>
+    <string name="dashboard_audit_analysis_insufficient">Noch zu wenig Daten</string>
+    <string name="dashboard_audit_analysis_insufficient_detail">Mindestens %1$d Einheiten im %2$d-Wochen-Fenster nötig.</string>
+    <string name="dashboard_audit_analysis_no_notable_strain">Kein auffälliger Trend oder Belastungssignal</string>
+    <string name="dashboard_audit_analysis_signals_present">Auffällige Belastungssignale</string>
+    <string name="dashboard_audit_analysis_score">Heuristischer Belastungswert: %1$d/100</string>
+    <string name="dashboard_audit_analysis_no_score">—</string>
+    <string name="dashboard_audit_analysis_window">Fenster: %1$s – %2$s</string>
+    <string name="dashboard_audit_analysis_evidence">Evidenz: %1$d Einheiten · %2$d Verbundübungen</string>
+    <string name="dashboard_audit_analysis_heuristic">Heuristik aus Trainingsdaten, keine medizinische Einschätzung.</string>
+
+    <string name="dashboard_audit_deload_title_recommended">Deload-Option aus Trainingsdaten</string>
+    <string name="dashboard_audit_deload_title_active">Deload-Woche aktiv</string>
+    <string name="dashboard_audit_deload_body">Auffällige Belastungssignale wurden im Analysefenster gefunden. Die Empfehlung ist eine Trainingsheuristik und keine medizinische Einschätzung.</string>
+    <string name="dashboard_audit_deload_score">Heuristischer Belastungswert: %1$d/100</string>
+    <string name="dashboard_audit_deload_window">Fenster: %1$s – %2$s · %3$d Einheiten</string>
+</resources>

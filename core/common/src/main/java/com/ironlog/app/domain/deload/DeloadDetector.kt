@@ -143,7 +143,9 @@ class DeloadDetector(val config: Config = Config()) {
                 null
             },
             failureRate = failureRate,
-            analyzedCompoundCount = compoundTrends.size
+            analyzedCompoundCount = compoundTrends.size,
+            analysisWindowWeeks = config.windowWeeks,
+            minimumSessionCount = config.minSessions
         )
     }
 
@@ -157,7 +159,9 @@ class DeloadDetector(val config: Config = Config()) {
         signals = emptyList(),
         windowStart = windowStart,
         windowEnd = windowEnd,
-        sessionCount = sessionCount
+        sessionCount = sessionCount,
+        analysisWindowWeeks = config.windowWeeks,
+        minimumSessionCount = config.minSessions
     )
 
     /** Wöchentliches Best-E1RM pro Verbundübung und relativer Trend der Fensterhälften. */

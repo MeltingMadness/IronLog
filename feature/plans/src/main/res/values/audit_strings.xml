@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plan_editor_target_sets_error">Gib eine gültige Anzahl Sätze (mindestens 1) ein.</string>
+    <string name="plan_editor_target_reps_error">Gib eine gültige Wiederholungszahl (mindestens 1) ein.</string>
+    <string name="plan_editor_target_weight_error">Gib ein gültiges Gewicht (0 oder größer) ein.</string>
+    <string name="plan_editor_discard_title">Änderungen verwerfen?</string>
+    <string name="plan_editor_discard_text">Deine Änderungen gehen verloren, wenn du den Editor verlässt.</string>
+    <string name="plan_editor_discard_confirm">Verwerfen</string>
+    <string name="plan_editor_discard_cancel">Weiter bearbeiten</string>
+    <string name="meta_plan_editor_discard_title">Änderungen verwerfen?</string>
+    <string name="meta_plan_editor_discard_text">Deine Änderungen gehen verloren, wenn du den Editor verlässt.</string>
+    <string name="meta_plan_editor_discard_confirm">Verwerfen</string>
+    <string name="meta_plan_editor_discard_cancel">Weiter bearbeiten</string>
+    <string name="meta_plans_last_done_today">Zuletzt absolviert: heute</string>
+    <string name="meta_plans_last_done_days">Zuletzt absolviert: vor %1$d Tagen</string>
+    <string name="meta_plans_last_done_yesterday">Zuletzt absolviert: gestern</string>
+    <string name="meta_plans_last_done_never">Noch kein Training in dieser Rotation</string>
+    <string name="plan_editor_progression_choice_hint">Antippen übernimmt die Auswahl. Danach den Plan oben speichern.</string>
+    <string name="plan_editor_progression_details">Details anpassen</string>
+</resources>

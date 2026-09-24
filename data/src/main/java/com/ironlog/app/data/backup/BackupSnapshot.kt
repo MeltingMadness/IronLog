@@ -1,5 +1,7 @@
 package com.ironlog.app.data.backup
 
+import com.ironlog.shared.readinessdata.ReadinessData
+
 internal data class BackupSnapshot(
     val exercises: List<BackupExercise>,
     val workoutSessions: List<BackupWorkoutSession>,
@@ -11,7 +13,12 @@ internal data class BackupSnapshot(
     val metaPlanItems: List<BackupMetaPlanItem>,
     val metaPlanSkips: List<BackupMetaPlanSkip>,
     val workoutPlanTargets: List<BackupWorkoutPlanTarget> = emptyList(),
-    val progressionSuggestions: List<BackupProgressionSuggestion> = emptyList()
+    val progressionSuggestions: List<BackupProgressionSuggestion> = emptyList(),
+    /**
+     * Readiness side channel. Already pruned against the snapshot's workout-set ids, so an
+     * export can never carry an intention that points at a set the same document does not contain.
+     */
+    val readinessData: ReadinessData = ReadinessData()
 ) {
     fun canonicalPayload(schemaVersion: Int): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = FORMAT_VERSION,
@@ -28,7 +35,8 @@ internal data class BackupSnapshot(
         metaPlanItems = metaPlanItems,
         metaPlanSkips = metaPlanSkips,
         workoutPlanTargets = workoutPlanTargets,
-        progressionSuggestions = progressionSuggestions
+        progressionSuggestions = progressionSuggestions,
+        readinessData = readinessData
     )
 
     fun toExportPayload(
@@ -50,7 +58,8 @@ internal data class BackupSnapshot(
         metaPlanItems = metaPlanItems,
         metaPlanSkips = metaPlanSkips,
         workoutPlanTargets = workoutPlanTargets,
-        progressionSuggestions = progressionSuggestions
+        progressionSuggestions = progressionSuggestions,
+        readinessData = readinessData
     )
 
     private companion object {

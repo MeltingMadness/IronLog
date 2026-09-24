@@ -21,7 +21,7 @@ import kotlinx.serialization.json.Json
 class BackupPayloadValidatorTest {
 
     private companion object {
-        const val CURRENT_SCHEMA_VERSION = 11
+        const val CURRENT_SCHEMA_VERSION = 12
     }
 
     @Test
@@ -59,6 +59,7 @@ class BackupPayloadValidatorTest {
                     setNumber = 1,
                     reps = 8,
                     weightKg = 80.0,
+                    setType = "NORMAL",
                     isWarmup = false,
                     completedAt = 1200L
                 )
@@ -139,7 +140,7 @@ class BackupPayloadValidatorTest {
                 BackupWorkoutSession(1, 1000L, 1200L, 200L, "A", "")
             ),
             workoutSets = listOf(
-                BackupWorkoutSet(1, sessionId = 1, exerciseId = 99, setNumber = 1, reps = 10, weightKg = 20.0, isWarmup = false, completedAt = 1010L)
+                BackupWorkoutSet(1, sessionId = 1, exerciseId = 99, setNumber = 1, reps = 10, weightKg = 20.0, setType = "NORMAL", isWarmup = false, completedAt = 1010L)
             ),
             trainingPlans = emptyList(),
             planExercises = emptyList(),
@@ -510,6 +511,24 @@ class BackupPayloadValidatorTest {
         }
     }
 
+    @Test
+    fun `deload context is only valid from schema 13 onward`() {
+        val base = validPayload()
+        val session = base.workoutSessions.single()
+        val withDeload = base.copy(
+            schemaVersion = 13,
+            workoutSessions = listOf(session.copy(isDeload = true))
+        )
+
+        val accepted = BackupPayloadValidator.validate(withDeload, 13)
+        assertTrue(accepted.errors.joinToString(), accepted.isValid)
+
+        val mislabelled = withDeload.copy(schemaVersion = 12)
+        val rejected = BackupPayloadValidator.validate(mislabelled, 13)
+        assertFalse(rejected.isValid)
+        assertTrue(rejected.errors.any { it.contains("deload context") })
+    }
+
     private fun validPayload(): BackupPayloadV1 = BackupPayloadV1(
         formatVersion = 1,
         schemaVersion = CURRENT_SCHEMA_VERSION,
@@ -543,6 +562,7 @@ class BackupPayloadValidatorTest {
                 setNumber = 1,
                 reps = 8,
                 weightKg = 80.0,
+                setType = "NORMAL",
                 isWarmup = false,
                 completedAt = 1200L
             )

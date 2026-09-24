@@ -1,6 +1,7 @@
 package com.ironlog.shared.settings
 
 import com.ironlog.shared.model.AppPreferences
+import com.ironlog.shared.model.DeloadMode
 import com.ironlog.shared.model.IntensitySystem
 import com.ironlog.shared.model.ReminderConfig
 import com.ironlog.shared.model.ThemeMode
@@ -129,6 +130,108 @@ class SettingsPreferencesControllerTest {
 
         assertEquals(180, repository.current.defaultRestTimeSeconds)
     }
+
+    @Test
+    fun updatePlateCalculatorEnabled_persistsFlag() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updatePlateCalculatorEnabled(false)
+        advanceUntilIdle()
+
+        assertEquals(false, repository.current.plateCalculatorEnabled)
+    }
+
+    @Test
+    fun updateAvailablePlates_persistsCustomPlateList() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+        val customPlates = listOf(25.0, 20.0, 10.0, 5.0, 2.5, 1.25) // e.g. no 15kg plate
+
+        controller.updateAvailablePlates(customPlates)
+        advanceUntilIdle()
+
+        assertEquals(customPlates, repository.current.availablePlates)
+    }
+
+    @Test
+    fun updateBarbellWeightKg_persistsWeight() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updateBarbellWeightKg(15.0)
+        advanceUntilIdle()
+
+        assertEquals(15.0, repository.current.barbellWeightKg)
+    }
+
+    @Test
+    fun updateBackupReminderEnabled_persistsOptInWithoutSchedulingTrainingReminder() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val reminderScheduler = FakeSharedReminderScheduler()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = reminderScheduler
+        )
+
+        controller.updateBackupReminderEnabled(true)
+        advanceUntilIdle()
+
+        assertTrue(repository.current.backupReminderEnabled)
+        assertEquals(null, reminderScheduler.syncedConfig)
+    }
+
+    @Test
+    fun backupReminder_isDueAtSevenDaysOnlyWhenOptedIn() {
+        val sevenDays = BACKUP_REMINDER_THRESHOLD_MILLIS
+
+        assertTrue(
+            isBackupReminderDue(
+                reminderEnabled = true,
+                lastSuccessfulExportEpochMillis = null,
+                nowEpochMillis = 0L
+            )
+        )
+        assertTrue(
+            isBackupReminderDue(
+                reminderEnabled = true,
+                lastSuccessfulExportEpochMillis = 100L,
+                nowEpochMillis = 100L + sevenDays
+            )
+        )
+        assertEquals(
+            false,
+            isBackupReminderDue(
+                reminderEnabled = true,
+                lastSuccessfulExportEpochMillis = 100L,
+                nowEpochMillis = 100L + sevenDays - 1L
+            )
+        )
+        assertEquals(
+            false,
+            isBackupReminderDue(
+                reminderEnabled = false,
+                lastSuccessfulExportEpochMillis = null,
+                nowEpochMillis = 0L
+            )
+        )
+    }
 }
 
 private class FakeSharedAppPreferencesRepository(
@@ -195,6 +298,30 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         state.value = state.value.copy(defaultRestTimeSeconds = seconds)
+    }
+
+    override suspend fun updateDeloadMode(mode: DeloadMode) {
+        state.value = state.value.copy(deloadMode = mode)
+    }
+
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        state.value = state.value.copy(plateCalculatorEnabled = enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        state.value = state.value.copy(availablePlates = plates)
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        state.value = state.value.copy(barbellWeightKg = weightKg)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        state.value = state.value.copy(lastSuccessfulExportEpochMillis = timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        state.value = state.value.copy(backupReminderEnabled = enabled)
     }
 }
 

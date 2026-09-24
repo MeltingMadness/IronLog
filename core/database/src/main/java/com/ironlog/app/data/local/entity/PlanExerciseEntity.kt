@@ -34,6 +34,8 @@ data class PlanExerciseEntity(
     val targetSets: Int = 3,
     val targetReps: Int = 10,
     val targetWeightKg: Double = 0.0,
+    @androidx.room.ColumnInfo(defaultValue = "'[]'")
+    val setTargetsJson: String = "[]",
     @Embedded(prefix = "progression")
     val progression: ProgressionConfigColumns = ProgressionConfigColumns()
 ) {
@@ -45,7 +47,8 @@ data class PlanExerciseEntity(
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg,
-        progressionConfig = progression.toDomain()
+        progressionConfig = progression.toDomain(),
+        setTargets = com.ironlog.shared.plans.PlannedSets.decode(setTargetsJson)
     )
 
     companion object {
@@ -59,7 +62,8 @@ data class PlanExerciseEntity(
                 targetSets = exercise.targetSets,
                 targetReps = exercise.targetReps,
                 targetWeightKg = exercise.targetWeightKg,
-                progression = ProgressionConfigColumns.fromDomain(exercise.progressionConfig)
+                progression = ProgressionConfigColumns.fromDomain(exercise.progressionConfig),
+                setTargetsJson = com.ironlog.shared.plans.PlannedSets.encode(exercise.setTargets)
             )
     }
 }

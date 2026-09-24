@@ -38,6 +38,28 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     fun getPagedCompletedSessionsWithSets(): PagingSource<Int, SessionWithSets>
 
+    /**
+     * The filter predicates intentionally live in this query instead of being applied to
+     * collected PagingData. Applying them here means a plan/date filter searches every completed
+     * session, including sessions on pages that have not been loaded yet.
+     */
+    @androidx.room.Transaction
+    @Query(
+        """
+        SELECT * FROM workout_sessions
+        WHERE endTime IS NOT NULL
+          AND (:planId IS NULL OR planId = :planId)
+          AND (:fromEpochMillis IS NULL OR startTime >= :fromEpochMillis)
+          AND (:toEpochMillis IS NULL OR startTime < :toEpochMillis)
+        ORDER BY startTime DESC
+        """
+    )
+    fun getPagedCompletedSessionsWithSetsFiltered(
+        planId: Long?,
+        fromEpochMillis: Long?,
+        toEpochMillis: Long?
+    ): PagingSource<Int, SessionWithSets>
+
     @Query("SELECT * FROM workout_sessions ORDER BY id ASC")
     suspend fun getAllSessionsList(): List<WorkoutSessionEntity>
 
@@ -59,8 +81,27 @@ interface WorkoutSessionDao {
     @Query("SELECT COUNT(*) FROM workout_sessions WHERE endTime IS NOT NULL AND startTime >= :sinceEpoch")
     suspend fun getCompletedSessionCountSince(sinceEpoch: Long): Int
 
+    @Query(
+        "SELECT COUNT(*) FROM workout_sessions " +
+            "WHERE endTime IS NOT NULL " +
+            "AND startTime >= :sinceEpochMillis " +
+            "AND startTime <= :untilEpochMillis"
+    )
+    suspend fun getCompletedSessionCountBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): Int
+
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC LIMIT 1")
     suspend fun getLastCompletedSession(): WorkoutSessionEntity?
+
+    @Query(
+        "SELECT * FROM workout_sessions " +
+            "WHERE endTime IS NOT NULL " +
+            "AND startTime <= :untilEpochMillis " +
+            "ORDER BY startTime DESC LIMIT 1"
+    )
+    suspend fun getLastCompletedSessionBefore(untilEpochMillis: Long): WorkoutSessionEntity?
 
     @Query("SELECT * FROM workout_sessions WHERE endTime IS NOT NULL ORDER BY startTime DESC")
     suspend fun getAllCompletedSessionsList(): List<WorkoutSessionEntity>

@@ -1,9 +1,14 @@
 package com.ironlog.app.data.preferences
 
 import android.content.Context
+import com.ironlog.app.data.local.dao.WorkoutSessionDao
+import com.ironlog.app.data.local.entity.WorkoutSessionEntity
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.ReminderConfig
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.UnitSystem
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.File
@@ -80,6 +85,61 @@ class AppPreferencesDataStoreTest {
         val persisted = repository.preferences.first()
         assertTrue(persisted.autoRestTimerEnabled)
         assertEquals(240, persisted.defaultRestTimeSeconds)
+    }
+
+    @Test
+    fun `backup export timestamp defaults to null and reminder opt in persists`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        val defaults = repository.preferences.first()
+        assertEquals(null, defaults.lastSuccessfulExportEpochMillis)
+        assertFalse(defaults.backupReminderEnabled)
+
+        repository.updateLastSuccessfulExportEpochMillis(1_700_000_000_000L)
+        repository.updateBackupReminderEnabled(true)
+
+        val persisted = repository.preferences.first()
+        assertEquals(1_700_000_000_000L, persisted.lastSuccessfulExportEpochMillis)
+        assertTrue(persisted.backupReminderEnabled)
+    }
+
+    @Test
+    fun `clearing backup export timestamp removes stored completion`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        repository.updateLastSuccessfulExportEpochMillis(1_700_000_000_000L)
+        repository.updateLastSuccessfulExportEpochMillis(null)
+
+        assertEquals(null, repository.preferences.first().lastSuccessfulExportEpochMillis)
+    }
+
+    @Test
+    fun `enabling deload mode marks the running session as a planned deload`() = runTest {
+        val context = createContextWithTempDataStore()
+        val sessionDao = mockk<WorkoutSessionDao>()
+        coEvery { sessionDao.getActiveSession() } returns WorkoutSessionEntity(
+            id = 7L,
+            startTime = 1_700_000_000_000L,
+            name = "Laufendes Training"
+        )
+        coEvery { sessionDao.update(any()) } returns Unit
+        val repository = AppPreferencesRepositoryImpl(context, sessionDao)
+
+        repository.updateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
+
+        coVerify(exactly = 1) { sessionDao.update(match { it.id == 7L && it.isDeload == true }) }
+    }
+
+    @Test
+    fun `clearing deload mode never rewrites the recorded session context`() = runTest {
+        val context = createContextWithTempDataStore()
+        val sessionDao = mockk<WorkoutSessionDao>()
+        val repository = AppPreferencesRepositoryImpl(context, sessionDao)
+
+        repository.updateDeloadMode(null)
+
+        coVerify(exactly = 0) { sessionDao.getActiveSession() }
+        coVerify(exactly = 0) { sessionDao.update(any()) }
     }
 
     @Test

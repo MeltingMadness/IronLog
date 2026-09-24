@@ -80,7 +80,8 @@ data class WorkoutPlanTarget(
     val orderIndex: Int,
     val supersetGroupId: Int?,
     val target: ProgressionTarget,
-    val config: ProgressionConfig
+    val config: ProgressionConfig,
+    val setTargets: List<com.ironlog.shared.plans.PlannedSet> = emptyList()
 )
 
 enum class ProgressionOutcomeType { PROPOSE_CHANGE, KEEP_TARGET, INSUFFICIENT_DATA, NOT_APPLICABLE }

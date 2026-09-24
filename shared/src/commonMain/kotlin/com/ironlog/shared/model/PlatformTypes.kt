@@ -36,7 +36,11 @@ enum class ThemeMode {
 enum class ThemeScheme {
     AMBER,
     DEEP_CYAN,
-    NEON_RED
+    NEON_RED,
+    FORGE,
+    RASTER,
+    TIDE,
+    PULSE
 }
 
 @Serializable
@@ -44,6 +48,17 @@ enum class IntensitySystem {
     OFF,
     RPE,
     RIR
+}
+
+/**
+ * Active deload strategy. NONE keeps the planned target unchanged. The enum mirrors Android's
+ * persisted DeloadMode names so the two clients keep one durable preference vocabulary.
+ */
+@Serializable
+enum class DeloadMode {
+    NONE,
+    HALVE_SET_VOLUME,
+    REDUCE_INTENSITY_BY_15_PERCENT,
 }
 
 @Serializable
@@ -73,7 +88,15 @@ data class AppPreferences(
     val intensitySystem: IntensitySystem = IntensitySystem.RPE,
     val shareWeightHistoryAcrossContexts: Boolean = false,
     val autoRestTimerEnabled: Boolean = false,
-    val defaultRestTimeSeconds: Int = 120
+    val defaultRestTimeSeconds: Int = 120,
+    val deloadMode: DeloadMode = DeloadMode.NONE,
+    val plateCalculatorEnabled: Boolean = true,
+    val availablePlates: List<Double> = listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25),
+    val barbellWeightKg: Double = 20.0,
+    /** Epoch millis of the most recent completed export to a user-selected document. */
+    val lastSuccessfulExportEpochMillis: Long? = null,
+    /** Opt-in for the local Settings reminder when the external export is stale. */
+    val backupReminderEnabled: Boolean = false
 )
 
 @Serializable

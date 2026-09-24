@@ -26,7 +26,8 @@ class ProgressionEntityMapper(
         orderIndex = row.orderIndex,
         supersetGroupId = row.supersetGroupId,
         target = row.target.toDomain(),
-        config = row.progression.toDomain()
+        config = row.progression.toDomain(),
+        setTargets = com.ironlog.shared.plans.PlannedSets.decode(row.setTargetsJson)
     ).also(::requireStoredTargetIdentity)
 
     fun toEntity(

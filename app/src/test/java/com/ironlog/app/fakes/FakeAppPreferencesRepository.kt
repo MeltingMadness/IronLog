@@ -12,12 +12,18 @@ import com.ironlog.app.domain.repository.AppPreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CompletableDeferred
 
 class FakeAppPreferencesRepository(
     initial: AppPreferences = AppPreferences()
 ) : AppPreferencesRepository {
 
     private val state = MutableStateFlow(initial)
+    private val restTimerStates = mutableMapOf<Long, String>()
+
+    /** Optional gates used by workout timer race tests. */
+    var restTimerReadGate: CompletableDeferred<Unit>? = null
+    var restTimerClearGate: CompletableDeferred<Unit>? = null
 
     val current: AppPreferences
         get() = state.value
@@ -91,5 +97,41 @@ class FakeAppPreferencesRepository(
                 minute = config.minute.coerceIn(0, 59)
             )
         )
+    }
+
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        state.value = state.value.copy(plateCalculatorEnabled = enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        state.value = state.value.copy(availablePlates = plates.filter { it > 0.0 }.distinct().sortedDescending())
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        state.value = state.value.copy(barbellWeightKg = weightKg)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        state.value = state.value.copy(lastSuccessfulExportEpochMillis = timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+
+    override suspend fun readRestTimerState(sessionId: Long): String? {
+        restTimerReadGate?.await()
+        return restTimerStates[sessionId]
+    }
+
+    override suspend fun writeRestTimerState(sessionId: Long, encodedState: String?) {
+        if (encodedState.isNullOrBlank()) {
+            restTimerClearGate?.await()
+        }
+        if (encodedState.isNullOrBlank()) {
+            restTimerStates.remove(sessionId)
+        } else {
+            restTimerStates[sessionId] = encodedState
+        }
     }
 }

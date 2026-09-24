@@ -54,6 +54,13 @@ class StatisticsRepositoryImpl(
     override suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet> =
         workoutSetDao.getSetsForExerciseList(exerciseId).map { it.toDomain() }
 
+    override suspend fun getCompletedSetsForExerciseList(
+        exerciseId: Long,
+        nowEpochMillis: Long
+    ): List<WorkoutSet> =
+        workoutSetDao.getCompletedSetsForExerciseList(exerciseId, nowEpochMillis)
+            .map { it.toDomain() }
+
     override suspend fun getMaxWeightForExercise(exerciseId: Long): Double? =
         workoutSetDao.getMaxWeightForExercise(exerciseId)
 
@@ -62,4 +69,11 @@ class StatisticsRepositoryImpl(
 
     override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> =
         workoutSetDao.getWorkSetsCompletedSince(sinceEpochMillis).map { it.toDomain() }
+
+    override suspend fun getWorkSetsCompletedBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): List<WorkoutSet> = workoutSetDao
+        .getWorkSetsCompletedBetween(sinceEpochMillis, untilEpochMillis)
+        .map { it.toDomain() }
 }

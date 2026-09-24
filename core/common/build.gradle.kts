@@ -24,6 +24,7 @@ kotlin {
 
 dependencies {
     api(project(":core:model"))
+    implementation(project(":shared"))
     implementation(libs.core.ktx)
     implementation(libs.coroutines.test) // kotlinx.coroutines.flow
 

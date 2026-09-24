@@ -12,6 +12,7 @@ import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.ReadinessDataDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -21,6 +22,7 @@ import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.ProgressionConfigColumns
 import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
+import com.ironlog.app.data.local.entity.ReadinessDataEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
@@ -40,6 +42,12 @@ import com.ironlog.shared.backup.BackupTrainingPlan
 import com.ironlog.shared.backup.BackupWorkoutPlanTarget
 import com.ironlog.shared.backup.BackupWorkoutSession
 import com.ironlog.shared.backup.BackupWorkoutSet
+import com.ironlog.shared.model.MuscleGroup
+import com.ironlog.shared.readinessdata.ReadinessCheckIn
+import com.ironlog.shared.readinessdata.ReadinessData
+import com.ironlog.shared.readinessdata.ReadinessDataCodec
+import com.ironlog.shared.readinessdata.SetIntention
+import com.ironlog.shared.readinessdata.SetIntentionRecord
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
@@ -47,6 +55,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -103,7 +112,7 @@ class BackupRepositoryImplTest {
 
         val written = harness.documentIo.writtenBytes ?: throw AssertionError("no document written")
         val payload = json.decodeFromString(BackupPayloadV1.serializer(), written.decodeToString())
-        assertEquals(11, payload.schemaVersion)
+        assertEquals(14, payload.schemaVersion)
         assertEquals(8.5, payload.workoutSets.single().rpe)
         assertEquals(30L, payload.workoutSets.single().planTargetSnapshotId)
         assertEquals("notiz", payload.exercises.single().notes)
@@ -148,7 +157,7 @@ class BackupRepositoryImplTest {
         val newerJson = """
             {
               "formatVersion": 1,
-              "schemaVersion": 12,
+              "schemaVersion": 15,
               "appVersion": "2.0",
               "exportedAtEpochMillis": 1000,
               "exercises": [
@@ -183,12 +192,127 @@ class BackupRepositoryImplTest {
             runBlocking { harness.repository.previewImport(URI) }
         }
 
-        assertEquals(12, error.backupSchemaVersion)
-        assertEquals(11, error.appSchemaVersion)
+        assertEquals(15, error.backupSchemaVersion)
+        assertEquals(14, error.appSchemaVersion)
         assertTrue(error.message.orEmpty().contains("newer than this app", ignoreCase = true))
         assertTrue(harness.transactionRunner.events.isEmpty())
         coVerify(exactly = 0) { harness.exerciseDao.getAllExercisesList() }
         coVerify(exactly = 0) { harness.exerciseDao.deleteAll() }
+    }
+
+    @Test
+    fun `legacy document without readiness or deload fields decodes to defaults`() {
+        val legacy = """
+            {
+              "formatVersion": 1,
+              "schemaVersion": 12,
+              "appVersion": "1.0",
+              "exportedAtEpochMillis": 42,
+              "exercises": [],
+              "workoutSessions": [
+                {
+                  "id": 10,
+                  "startTime": 1000,
+                  "endTime": 2000,
+                  "durationSeconds": 1,
+                  "name": "Push",
+                  "notes": ""
+                }
+              ],
+              "workoutSets": [],
+              "trainingPlans": [],
+              "planExercises": [],
+              "personalRecords": [],
+              "metaTrainingPlans": [],
+              "metaPlanItems": [],
+              "metaPlanSkips": [],
+              "workoutPlanTargets": [],
+              "progressionSuggestions": []
+            }
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(BackupPayloadV1.serializer(), legacy)
+
+        // A pre-readiness backup has no key and must resolve to "no data" rather than a
+        // guessed check-in, and a pre-deload session stays unknown instead of "not a deload".
+        assertEquals(ReadinessData(), decoded.readinessData)
+        assertNull(decoded.workoutSessions.single().isDeload)
+    }
+
+    @Test
+    fun `current readiness document survives an export and import round trip`() {
+        val stored = ReadinessData(
+            checkIns = listOf(
+                ReadinessCheckIn(
+                    localDate = LocalDate(2026, 9, 11),
+                    sleepQuality = 4,
+                    energy = 3,
+                    muscleSoreness = mapOf(MuscleGroup.BEINE to 5),
+                    recordedAtEpochMillis = 1_757_500_000_000
+                )
+            ),
+            setIntentions = listOf(
+                SetIntentionRecord(
+                    setId = 20L,
+                    intention = SetIntention.PLANNED_FAILURE,
+                    note = "geplant"
+                )
+            )
+        )
+
+        val exporter = Harness()
+        exporter.readinessPayload = ReadinessDataCodec.encode(stored)
+        exporter.stubSnapshotReads(
+            exercise = ExerciseEntity(
+                id = 1L,
+                name = "Bankdruecken",
+                primaryMuscleGroup = "BRUST",
+                secondaryMuscleGroups = "TRIZEPS",
+                category = "LANGHANTEL",
+                isCustom = false,
+                notes = "",
+                isArchived = false
+            ),
+            session = WorkoutSessionEntity(
+                id = 10L,
+                startTime = 1000L,
+                endTime = 2000L,
+                durationSeconds = 1L,
+                name = "Push",
+                notes = "",
+                planId = null,
+                metaPlanId = null
+            ),
+            sets = listOf(
+                WorkoutSetEntity(
+                    id = 20L,
+                    sessionId = 10L,
+                    exerciseId = 1L,
+                    setNumber = 1,
+                    reps = 8,
+                    weightKg = 80.0,
+                    setType = "NORMAL",
+                    completedAt = 1200L
+                )
+            )
+        )
+
+        runBlocking { exporter.repository.exportBackup(URI) }
+        val document = exporter.documentIo.writtenBytes ?: throw AssertionError("no document written")
+        val exported = json.decodeFromString(BackupPayloadV1.serializer(), document.decodeToString())
+        assertEquals(stored, exported.readinessData)
+
+        val importer = Harness()
+        importer.stubSnapshotReads()
+        importer.stubMutations()
+        importer.documentIo.bytes = document
+
+        runBlocking { importer.repository.importBackup(URI, document.sha256Hex()) }
+
+        val restored = ReadinessDataCodec.decode(
+            importer.readinessPayload ?: throw AssertionError("no readiness row written")
+        )
+        assertEquals(stored, restored)
     }
 
     @Test
@@ -858,6 +982,10 @@ class BackupRepositoryImplTest {
         val metaTrainingPlanDao = mockk<MetaTrainingPlanDao>(relaxed = true)
         val personalRecordDao = mockk<PersonalRecordDao>(relaxed = true)
         val progressionDao = mockk<ProgressionDao>(relaxed = true)
+        val readinessDataDao = mockk<ReadinessDataDao>(relaxed = true)
+
+        /** Raw readiness row; `null` mirrors "no row yet" and decodes to the empty document. */
+        var readinessPayload: String? = null
         var currentProgressionSets = emptyList<WorkoutSetEntity>()
             private set
         var currentProgressionTargets = emptyList<WorkoutPlanTargetEntity>()
@@ -875,8 +1003,18 @@ class BackupRepositoryImplTest {
             metaTrainingPlanDao = metaTrainingPlanDao,
             personalRecordDao = personalRecordDao,
             progressionDao = progressionDao,
+            readinessDataDao = readinessDataDao,
             buildInfo = BuildInfo(versionName = "1.0", versionCode = 1)
         )
+
+        init {
+            // A relaxed mock would answer "" here, which is malformed JSON. Be explicit
+            // so export/import guard snapshots see the real "missing row" contract.
+            coEvery { readinessDataDao.getPayload() } answers { readinessPayload }
+            coEvery { readinessDataDao.upsert(any()) } answers {
+                readinessPayload = firstArg<ReadinessDataEntity>().payload
+            }
+        }
 
         fun stubSnapshotReads(
             exercise: ExerciseEntity? = null,

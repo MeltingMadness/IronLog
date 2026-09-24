@@ -18,6 +18,10 @@ import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.presentation.common.toUserMessage
 import com.ironlog.app.presentation.progression.ProgressionReviewItemUi
+import com.ironlog.app.domain.repository.ReadinessRepository
+import com.ironlog.shared.readinessdata.SetIntention
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -37,7 +41,11 @@ data class WorkoutDetailUiState(
     val notFound: Boolean = false,
     val error: String? = null,
     /** Progression coach outcomes that were evaluated for this past session. */
-    val progressionOutcomes: List<ProgressionReviewItemUi> = emptyList()
+    val progressionOutcomes: List<ProgressionReviewItemUi> = emptyList(),
+    val setIntentions: Map<Long, SetIntention> = emptyMap(),
+    val intentionsLoaded: Boolean = false,
+    val intentionError: String? = null,
+    val intentionSaving: Boolean = false
 )
 
 class WorkoutDetailViewModel(
@@ -45,7 +53,8 @@ class WorkoutDetailViewModel(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
-    private val progressionRepository: ProgressionRepository
+    private val progressionRepository: ProgressionRepository,
+    private val readinessRepository: ReadinessRepository
 ) : ViewModel() {
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
@@ -56,6 +65,40 @@ class WorkoutDetailViewModel(
     init {
         loadDetail()
         observeProgressionOutcomes()
+        observeSetIntentions()
+    }
+
+    private fun observeSetIntentions() {
+        viewModelScope.launch {
+            readinessRepository.observeSetIntentions()
+                .catch { error ->
+                    if (error is CancellationException) throw error
+                    _uiState.update { it.copy(intentionsLoaded = false, intentionError = "Satzabsichten konnten nicht geladen werden.") }
+                }
+                .collect { values ->
+                    _uiState.update { it.copy(setIntentions = values, intentionsLoaded = true, intentionError = null) }
+                }
+        }
+    }
+
+    /** Historical metadata may change without reopening the completed workout. */
+    fun updateSetIntention(setId: Long, intention: SetIntention, onSaved: () -> Unit = {}) {
+        val state = _uiState.value
+        if (!state.intentionsLoaded || state.intentionSaving) return
+        if (state.exercises.none { group -> group.sets.any { it.id == setId } }) return
+        _uiState.update { it.copy(intentionSaving = true, intentionError = null) }
+        viewModelScope.launch {
+            try {
+                readinessRepository.setSetIntention(setId, intention)
+                onSaved()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _uiState.update { it.copy(intentionError = "Satzabsicht konnte nicht gespeichert werden. Bitte erneut versuchen.") }
+            } finally {
+                _uiState.update { it.copy(intentionSaving = false) }
+            }
+        }
     }
 
     /**

@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.settings.R as SettingsR
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.model.ThemeScheme
@@ -69,6 +70,8 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import androidx.compose.foundation.layout.FlowRow
+import com.ironlog.app.presentation.theme.PlateColors
 import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
@@ -233,6 +236,30 @@ fun SettingsScreen(
                             leadingIcon = { SchemeColorDot(color = MaterialTheme.semantic.rose) },
                             label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) }
                         )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.FORGE,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.FORGE) },
+                            leadingIcon = { SchemeColorDot(color = Color(0xFFFF7A1A)) },
+                            label = { Text(stringResource(id = R.string.settings_scheme_forge)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.RASTER,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.RASTER) },
+                            leadingIcon = { SchemeColorDot(color = Color(0xFF3B82F6)) },
+                            label = { Text(stringResource(id = R.string.settings_scheme_raster)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.TIDE,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.TIDE) },
+                            leadingIcon = { SchemeColorDot(color = Color(0xFF00F5A0)) },
+                            label = { Text(stringResource(id = R.string.settings_scheme_tide)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.themeScheme == ThemeScheme.PULSE,
+                            onClick = { viewModel.updateThemeScheme(ThemeScheme.PULSE) },
+                            leadingIcon = { SchemeColorDot(color = Color(0xFFFF3366)) },
+                            label = { Text(stringResource(id = R.string.settings_scheme_pulse)) }
+                        )
                     }
 
                     ToggleRow(
@@ -341,6 +368,83 @@ fun SettingsScreen(
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RIR) },
                             label = { Text("RIR") }
                         )
+                    }
+                }
+            }
+
+            item {
+                PreferenceCard(title = stringResource(id = R.string.settings_section_barbell)) {
+                    ToggleRow(
+                        title = stringResource(id = R.string.settings_plate_calculator_title),
+                        subtitle = stringResource(id = R.string.settings_plate_calculator_subtitle),
+                        checked = state.preferences.plateCalculatorEnabled,
+                        onCheckedChange = viewModel::updatePlateCalculatorEnabled
+                    )
+
+                    if (state.preferences.plateCalculatorEnabled) {
+                        Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                        Text(
+                            text = stringResource(id = R.string.settings_barbell_weight_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            listOf(20.0, 15.0, 10.0, 8.0, 2.5).forEach { barWeight ->
+                                val label = if (barWeight % 1.0 == 0.0) "${barWeight.toInt()} kg" else "$barWeight kg"
+                                FilterChip(
+                                    selected = state.preferences.barbellWeightKg == barWeight,
+                                    onClick = { viewModel.updateBarbellWeightKg(barWeight) },
+                                    label = { Text(label) }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                        Text(
+                            text = stringResource(id = R.string.settings_available_plates_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_available_plates_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
+                            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                        ) {
+                            val allPlateOptions = listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25, 0.5)
+                            val currentPlates = state.preferences.availablePlates.toSet()
+
+                            allPlateOptions.forEach { plate ->
+                                val isSelected = plate in currentPlates
+                                val plateLabel = if (plate % 1.0 == 0.0) "${plate.toInt()} kg" else "$plate kg"
+
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        val updated = if (isSelected) {
+                                            currentPlates - plate
+                                        } else {
+                                            currentPlates + plate
+                                        }
+                                        viewModel.updateAvailablePlates(updated.toList())
+                                    },
+                                    leadingIcon = {
+                                        SchemeColorDot(color = PlateColors.forWeight(plate))
+                                    },
+                                    label = { Text(plateLabel) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -482,6 +586,50 @@ fun SettingsScreen(
                             Text(stringResource(id = R.string.settings_backup_import))
                         }
                     }
+                    Text(
+                        text = state.preferences.lastSuccessfulExportEpochMillis?.let { timestamp ->
+                            stringResource(
+                                id = SettingsR.string.settings_backup_last_external_export,
+                                formatEpochMillis(timestamp)
+                            )
+                        } ?: stringResource(id = SettingsR.string.settings_backup_no_external_export),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    ToggleRow(
+                        title = stringResource(id = SettingsR.string.settings_backup_reminder_title),
+                        subtitle = stringResource(id = SettingsR.string.settings_backup_reminder_subtitle),
+                        checked = state.preferences.backupReminderEnabled,
+                        onCheckedChange = viewModel::updateBackupReminderEnabled
+                    )
+                    if (state.backupReminderDue) {
+                        IronLogSurfaceCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            tone = IronLogSurfaceTone.MUTED
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(dims.spacingSm),
+                                verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                            ) {
+                                Text(
+                                    text = stringResource(id = SettingsR.string.settings_backup_reminder_due_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = stringResource(id = SettingsR.string.settings_backup_reminder_due_message),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = stringResource(id = SettingsR.string.settings_backup_recovery_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     if (recoveryBackup != null) {
                         Text(
                             text = stringResource(
@@ -671,7 +819,7 @@ private fun formatEpochMillis(millis: Long): String =
         .atZone(ZoneId.systemDefault())
         .format(DateFormatting.DATE_TIME)
 
-private val REST_TIME_OPTIONS_SECONDS = listOf(30, 60, 90, 120, 180, 300)
+private val REST_TIME_OPTIONS_SECONDS = listOf(30, 60, 90, 120, 180, 300, 600)
 
 private fun formatRestTimeOption(seconds: Int): String =
     String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60)
@@ -753,5 +901,4 @@ private fun ToggleRow(
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
-
 
