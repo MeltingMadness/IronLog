@@ -31,6 +31,10 @@ import java.io.File
 class ApprovedWorkoutFlowTest {
     @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
     private fun awaitText(text: String) = ui.waitUntil(20000) { ui.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    // Nach dem Loggen bleiben Log-Button, Eingaben und Abschlussdialog gesperrt, bis der
+    // Speichervorgang ganz abgeschlossen ist. Auf langsamen Emulatoren wuerde ein Klick
+    // davor ignoriert, daher erst auf den aktivierten Knoten warten.
+    private fun awaitEnabled(matcher: SemanticsMatcher) = ui.waitUntil(20000) { ui.onAllNodes(matcher and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
     private fun capture(name: String) {
         ui.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -58,7 +62,7 @@ class ApprovedWorkoutFlowTest {
         ui.waitUntil(20000) { ui.onAllNodes(hasText("Satz 1 loggen",substring=true)).fetchSemanticsNodes().isNotEmpty() }
         ui.onAllNodes(hasText("Satz 1 loggen",substring=true))[0].performScrollTo().performClick()
         ui.waitUntil(20000) { runBlocking { workouts.getSetsForSessionList(sessionId).size == 1 } }
-        ui.waitUntil(20000) { ui.onAllNodes(hasText("Satz 2 loggen",substring=true)).fetchSemanticsNodes().isNotEmpty() }
+        awaitEnabled(hasText("Satz 2 loggen",substring=true))
         ui.onAllNodes(hasSetTextAction())[1].performTextReplacement("9")
         capture("android-logging")
         ui.onNode(hasText("Satz 2 loggen",substring=true)).performScrollTo().performClick()
@@ -67,8 +71,10 @@ class ApprovedWorkoutFlowTest {
         awaitText("Training beenden?")
         ui.onNodeWithText("Noch 7 geplante Sätze offen. 2 von 9 absolviert.").assertExists()
         capture("android-partial-finish")
+        awaitEnabled(hasText("Weitertrainieren"))
         ui.onNodeWithText("Weitertrainieren").performClick()
         ui.onNodeWithText("Beenden").performClick()
+        awaitEnabled(hasText("Trotzdem beenden"))
         ui.onNodeWithText("Trotzdem beenden").performClick()
         awaitText("Teiltraining gespeichert")
         capture("android-summary")

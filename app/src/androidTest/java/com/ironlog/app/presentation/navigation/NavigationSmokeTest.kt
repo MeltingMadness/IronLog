@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -343,6 +344,11 @@ class NavigationSmokeTest {
         val setInputs = composeRule.onAllNodes(hasSetTextAction())
         setInputs[0].performTextInput("100") // Gewicht in kg
         setInputs[1].performTextInput("10") // Wiederholungen
+        // Der Log-Button ist erst aktiv, wenn beide Eingaben uebernommen sind.
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodes(hasText("Satz 1 loggen", substring = true) and isEnabled())
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performClick()
         composeRule.waitForIdle()
 
@@ -351,6 +357,12 @@ class NavigationSmokeTest {
         composeRule.onNodeWithText("Beenden").performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText("Training beenden?").fetchSemanticsNodes().isNotEmpty()
+        }
+        // Der Dialog bleibt gesperrt ("Speichert …"), bis der geloggte Satz ganz
+        // gespeichert ist; erst dann erscheint der aktive Bestaetigen-Button.
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodes(hasText("Training beenden") and isEnabled())
+                .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Training beenden").performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
