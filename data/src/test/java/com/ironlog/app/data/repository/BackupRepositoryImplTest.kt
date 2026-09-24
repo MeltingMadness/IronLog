@@ -112,7 +112,7 @@ class BackupRepositoryImplTest {
 
         val written = harness.documentIo.writtenBytes ?: throw AssertionError("no document written")
         val payload = json.decodeFromString(BackupPayloadV1.serializer(), written.decodeToString())
-        assertEquals(13, payload.schemaVersion)
+        assertEquals(14, payload.schemaVersion)
         assertEquals(8.5, payload.workoutSets.single().rpe)
         assertEquals(30L, payload.workoutSets.single().planTargetSnapshotId)
         assertEquals("notiz", payload.exercises.single().notes)
@@ -157,7 +157,7 @@ class BackupRepositoryImplTest {
         val newerJson = """
             {
               "formatVersion": 1,
-              "schemaVersion": 14,
+              "schemaVersion": 15,
               "appVersion": "2.0",
               "exportedAtEpochMillis": 1000,
               "exercises": [
@@ -192,8 +192,8 @@ class BackupRepositoryImplTest {
             runBlocking { harness.repository.previewImport(URI) }
         }
 
-        assertEquals(14, error.backupSchemaVersion)
-        assertEquals(13, error.appSchemaVersion)
+        assertEquals(15, error.backupSchemaVersion)
+        assertEquals(14, error.appSchemaVersion)
         assertTrue(error.message.orEmpty().contains("newer than this app", ignoreCase = true))
         assertTrue(harness.transactionRunner.events.isEmpty())
         coVerify(exactly = 0) { harness.exerciseDao.getAllExercisesList() }
