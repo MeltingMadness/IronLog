@@ -23,12 +23,13 @@ Siehe `.github/workflows/android-ci.yml` und [`docs/quality-gates.md`](docs/qual
 
 ## Stolperfallen
 
-- **Kein Emulator.** In Cloud-VMs fehlt `/dev/kvm`. `connectedDebugAndroidTest` läuft nur in GitHub Actions (`android-emulator-runner`). Lokal reichen Unit-Tests und `assembleDebug`.
+- **Kein Emulator in Cloud-VMs.** Dort fehlt `/dev/kvm`. `connectedDebugAndroidTest` läuft dann nur in GitHub Actions (`android-emulator-runner`), lokal reichen Unit-Tests und `assembleDebug`. Auf einem Rechner mit Emulator lassen sich die Instrumentation-Tests auch lokal ausführen.
+- **Die CI schaltet Animationen ab** (`disable-animations: true`) und ist langsamer als ein lokaler Emulator. UI-Tests, die lokal grün sind, können dort scheitern. Zum Nachstellen die drei `*_animation_scale`-Einstellungen per `adb shell settings put global … 0` abschalten. UI-Tests sollten vor Klicks auf den aktivierten Zustand warten (`isEnabled()`), Snackbars abwarten und das Ergebnis einer Aktion prüfen, statt blind weiterzuklicken.
 - **HTTP 429 von Maven Central** hinter dem Cloud-Proxy: Der Spiegel aus dem Session-Hook fängt das ab. Sonst hilft `--max-workers=2`.
 - Manche Testnamen sind deutsch (z. B. `logSet erstellt Satz korrekt`). Das ist gewollt.
-- UI-Texte gehören in `core/designsystem/src/main/res/values/strings.xml`.
+- UI-Texte gehören in `core/designsystem/src/main/res/values/strings.xml` oder in die `res/values/*_strings.xml` des Feature-Moduls.
 - Logging nur über `AppLogger` (siehe [`docs/logging-guideline.md`](docs/logging-guideline.md)).
-- Room-Schemaänderungen brauchen: Entity, Migration, exportiertes Schema in `core/database/schemas/`, Migrationstest und ggf. Backup-Format (`:shared`, `schemaVersion`).
+- Room-Schemaänderungen brauchen: Entity, Migration, exportiertes Schema in `core/database/schemas/`, Migrationstest und ggf. Backup-Format (`:shared`, `CURRENT_BACKUP_SCHEMA_VERSION`). Die Migrationstests in `IronLogDatabaseMigrationTest` und `BackupLifecycleRoundTripTest` prüfen die aktuelle Version und den Identity-Hash explizit und müssen bei jedem Versionssprung mitgezogen werden.
 
 ## Dokumentation pflegen
 
