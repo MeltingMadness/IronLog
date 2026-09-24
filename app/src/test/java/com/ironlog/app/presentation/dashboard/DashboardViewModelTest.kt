@@ -339,7 +339,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `dashboard reloads stats when active workout is finished`() = runTest {
-        val start = LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0))
+        val start = LocalDate.now().atStartOfDay()
         workoutRepo.addSession(
             WorkoutSession(
                 id = 123L,
@@ -368,7 +368,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `dashboard reloads stats when completed sessions are deleted without active-session transition`() = runTest {
-        val completed = LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0))
+        val completed = LocalDate.now().atStartOfDay()
         workoutRepo.addSession(
             WorkoutSession(
                 id = 900L,
