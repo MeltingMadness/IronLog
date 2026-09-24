@@ -142,6 +142,8 @@ fun ActiveWorkoutScreen(
         initialValue = AppPreferences()
     )
     val snackbarHostState = remember { SnackbarHostState() }
+    // Rekordmeldungen erscheinen oben, damit sie den Log-Button unten nie verdecken.
+    val recordSnackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
@@ -154,14 +156,15 @@ fun ActiveWorkoutScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is WorkoutEvent.NewRecord -> {
+                is WorkoutEvent.NewRecords -> {
                     haptic.confirm()
-                    snackbarHostState.showSnackbar(
-                        message = context.getString(
-                            R.string.workout_new_record_message,
-                            event.exerciseName,
-                            event.type.displayName
-                        )
+                    val types = event.types.joinToString(", ") { it.displayName }
+                    recordSnackbarHostState.showSnackbar(
+                        message = if (event.types.size == 1) {
+                            context.getString(R.string.workout_new_record_message, event.exerciseName, types)
+                        } else {
+                            context.getString(R.string.workout_new_records_message, event.exerciseName, types)
+                        }
                     )
                 }
             }
@@ -241,129 +244,135 @@ fun ActiveWorkoutScreen(
             is ActiveWorkoutSessionPhase.Active -> Unit
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            activeSession?.let { session ->
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
-                        horizontalArrangement = Arrangement.Center
+            Column(modifier = Modifier.fillMaxSize()) {
+                activeSession?.let { session ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        WorkoutTimer(startTime = session.startTime)
-                        Spacer(Modifier.width(16.dp))
-                        Text("${state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }} Sätze · ${formatTargetWeight(state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }, preferences.unitSystem)}", style = MaterialTheme.typography.bodySmall)
-                    }
-
-                    AnimatedVisibility(
-                        visible = state.restTimers.isNotEmpty(),
-                        enter = fadeIn() + expandVertically(animationSpec = spring()),
-                        exit = fadeOut() + shrinkVertically(animationSpec = spring())
-                    ) {
-                        androidx.compose.foundation.layout.FlowRow(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingMd),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            state.restTimers.forEach { (exerciseKey, timer) ->
-                                val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
-                                val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
-                                val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
+                            WorkoutTimer(startTime = session.startTime)
+                            Spacer(Modifier.width(16.dp))
+                            Text("${state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }} Sätze · ${formatTargetWeight(state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }, preferences.unitSystem)}", style = MaterialTheme.typography.bodySmall)
+                        }
 
-                                RestTimer(
-                                    startTime = timer.startTime,
-                                    durationSeconds = timer.durationSeconds.toLong(),
-                                    onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
-                                    onComplete = { viewModel.dismissRestTimer(exerciseKey) },
-                                    titleText = exerciseWithSets?.exercise?.name,
-                                    baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
-                                    modifier = Modifier.padding(horizontal = dims.spacingXs)
-                                )
+                        AnimatedVisibility(
+                            visible = state.restTimers.isNotEmpty(),
+                            enter = fadeIn() + expandVertically(animationSpec = spring()),
+                            exit = fadeOut() + shrinkVertically(animationSpec = spring())
+                        ) {
+                            androidx.compose.foundation.layout.FlowRow(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingMd),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                            ) {
+                                state.restTimers.forEach { (exerciseKey, timer) ->
+                                    val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
+                                    val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
+                                    val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
+
+                                    RestTimer(
+                                        startTime = timer.startTime,
+                                        durationSeconds = timer.durationSeconds.toLong(),
+                                        onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
+                                        onComplete = { viewModel.dismissRestTimer(exerciseKey) },
+                                        titleText = exerciseWithSets?.exercise?.name,
+                                        baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
+                                        modifier = Modifier.padding(horizontal = dims.spacingXs)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
-                contentPadding = PaddingValues(dims.spacingMd)
-            ) {
-                items(exerciseGroups, key = { it.key }) { group ->
-                    Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
-                        group.supersetGroupId?.let { supersetGroupId ->
-                            SupersetHeader(
-                                groupId = supersetGroupId,
-                                exerciseCount = group.exercises.size,
-                                exerciseNames = group.exercises.joinToString(separator = " • ") {
-                                    it.exercise.name
-                                }
-                            )
-                        }
-                        group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
-                            ExerciseCard(
-                                exerciseWithSets = exerciseWithSets,
-                                nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
-                                tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
-                                defaultWarmupFlag = preferences.defaultWarmupFlag,
-                                intensitySystem = preferences.intensitySystem,
-                                unitSystem = preferences.unitSystem,
-                                plateCalculatorEnabled = preferences.plateCalculatorEnabled,
-                                availablePlates = preferences.availablePlates,
-                                barbellWeightKg = preferences.barbellWeightKg,
-                                isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
-                                logSuccessSubmissions = state.logSuccessSubmissions,
-                                updateInFlightBySet = state.updateInFlightBySet,
-                                updateSuccessCountBySet = state.updateSuccessCountBySet,
-                                setIntentions = state.setIntentions,
-                                setIntentionsLoaded = state.setIntentionsLoaded,
-                                setIntentionsFailed = state.setIntentionsFailed,
-                                onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
-                                    viewModel.logSet(
-                                        key = exerciseWithSets.key,
-                                        exerciseId = exerciseWithSets.exercise.id,
-                                        reps = reps,
-                                        weightKg = weight,
-                                        setType = setType,
-                                        intensity = intensity,
-                                        submissionId = submissionId,
-                                        // A brand-new set has no stored answer to preserve:
-                                        // "no deliberate choice" becomes the explicit UNKNOWN,
-                                        // which stores no record.
-                                        intention = intention ?: SetIntention.UNKNOWN
-                                    )
-                                },
-                                onUpdateSet = viewModel::updateSet,
-                                onDeleteSet = viewModel::deleteSet,
-                                haptic = haptic
-                            )
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
+                    contentPadding = PaddingValues(dims.spacingMd)
+                ) {
+                    items(exerciseGroups, key = { it.key }) { group ->
+                        Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
+                            group.supersetGroupId?.let { supersetGroupId ->
+                                SupersetHeader(
+                                    groupId = supersetGroupId,
+                                    exerciseCount = group.exercises.size,
+                                    exerciseNames = group.exercises.joinToString(separator = " • ") {
+                                        it.exercise.name
+                                    }
+                                )
+                            }
+                            group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
+                                ExerciseCard(
+                                    exerciseWithSets = exerciseWithSets,
+                                    nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
+                                    tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
+                                    defaultWarmupFlag = preferences.defaultWarmupFlag,
+                                    intensitySystem = preferences.intensitySystem,
+                                    unitSystem = preferences.unitSystem,
+                                    plateCalculatorEnabled = preferences.plateCalculatorEnabled,
+                                    availablePlates = preferences.availablePlates,
+                                    barbellWeightKg = preferences.barbellWeightKg,
+                                    isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
+                                    logSuccessSubmissions = state.logSuccessSubmissions,
+                                    updateInFlightBySet = state.updateInFlightBySet,
+                                    updateSuccessCountBySet = state.updateSuccessCountBySet,
+                                    setIntentions = state.setIntentions,
+                                    setIntentionsLoaded = state.setIntentionsLoaded,
+                                    setIntentionsFailed = state.setIntentionsFailed,
+                                    onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
+                                        viewModel.logSet(
+                                            key = exerciseWithSets.key,
+                                            exerciseId = exerciseWithSets.exercise.id,
+                                            reps = reps,
+                                            weightKg = weight,
+                                            setType = setType,
+                                            intensity = intensity,
+                                            submissionId = submissionId,
+                                            // A brand-new set has no stored answer to preserve:
+                                            // "no deliberate choice" becomes the explicit UNKNOWN,
+                                            // which stores no record.
+                                            intention = intention ?: SetIntention.UNKNOWN
+                                        )
+                                    },
+                                    onUpdateSet = viewModel::updateSet,
+                                    onDeleteSet = viewModel::deleteSet,
+                                    haptic = haptic
+                                )
+                            }
                         }
                     }
+                    item {
+                TextButton(
+                    onClick = viewModel::showExercisePicker,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Text(
+                        text = stringResource(id = R.string.workout_add_exercise),
+                        modifier = Modifier.padding(start = dims.spacingXs)
+                    )
                 }
-                item {
-            TextButton(
-                onClick = viewModel::showExercisePicker,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Text(
-                    text = stringResource(id = R.string.workout_add_exercise),
-                    modifier = Modifier.padding(start = dims.spacingXs)
-                )
-            }
 
+                    }
                 }
             }
+            SnackbarHost(
+                hostState = recordSnackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
 
         if (state.showExercisePicker) {

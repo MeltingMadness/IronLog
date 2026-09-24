@@ -198,7 +198,8 @@ private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
 internal fun nextSubmissionId(): Long = submissionIdSequence.incrementAndGet()
 
 sealed class WorkoutEvent {
-    data class NewRecord(val exerciseName: String, val type: RecordType) : WorkoutEvent()
+    /** All record types one mutation improved, so the UI can show them as a single message. */
+    data class NewRecords(val exerciseName: String, val types: List<RecordType>) : WorkoutEvent()
 }
 
 /**
@@ -524,7 +525,7 @@ class ActiveWorkoutViewModel(
         else -> PreviousSessionScope.NormalPlan(planId)
     }
 
-    // Buffered so emit() never waits for the UI: the screen shows each NewRecord as a
+    // Buffered so emit() never waits for the UI: the screen shows each NewRecords as a
     // suspending snackbar, and logSet emits while holding mutationMutex and the
     // per-exercise in-flight lock. An unbuffered flow kept the exercise locked for
     // several seconds after a set that improved more than one record.
@@ -871,7 +872,7 @@ class ActiveWorkoutViewModel(
                     // concurrent delete/update cannot interleave and later be overwritten by
                     // a stale add-based PR write.
                     // Best-effort snapshot: a statistics-read failure must never block the
-                    // repository mutation. Without a snapshot no NewRecord event is emitted,
+                    // repository mutation. Without a snapshot no NewRecords event is emitted,
                     // because an unknown baseline could otherwise produce false positives.
                     val recordsBefore: Map<RecordType, PersonalRecord>? = if (setType != SetType.WARMUP) {
                         snapshotRecordsBefore(exerciseId)
@@ -988,7 +989,7 @@ class ActiveWorkoutViewModel(
     }
 
     /**
-     * Emits NewRecord only for values that actually improved after a successful
+     * Emits one NewRecords event for the values that actually improved after a successful
      * repository mutation; the repository owns record recalculation, so this
      * never writes a record itself.
      */
@@ -1000,12 +1001,13 @@ class ActiveWorkoutViewModel(
             val exercise = exerciseRepository.getExerciseById(exerciseId) ?: return
             val recordsAfter = statisticsRepository.getRecordsForExercisesList(listOf(exerciseId))
                 .associateBy { it.type }
-            RecordType.entries.forEach { type ->
-                val current = recordsAfter[type]?.value ?: return@forEach
+            val improved = RecordType.entries.filter { type ->
+                val current = recordsAfter[type]?.value ?: return@filter false
                 val previous = recordsBefore[type]?.value
-                if (previous == null || current > previous) {
-                    _events.emit(WorkoutEvent.NewRecord(exercise.name, type))
-                }
+                previous == null || current > previous
+            }
+            if (improved.isNotEmpty()) {
+                _events.emit(WorkoutEvent.NewRecords(exercise.name, improved))
             }
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "PR-Pruefung nach Mutation fehlgeschlagen: ${e.message}", e)
@@ -1015,7 +1017,7 @@ class ActiveWorkoutViewModel(
     /**
      * Loads the current personal records as a comparison baseline before a repository
      * mutation. Best-effort by design: when statistics are temporarily unavailable the
-     * mutation still proceeds and the caller simply skips NewRecord emission.
+     * mutation still proceeds and the caller simply skips NewRecords emission.
      */
     private suspend fun snapshotRecordsBefore(exerciseId: Long): Map<RecordType, PersonalRecord>? =
         try {
