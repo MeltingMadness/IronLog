@@ -1,22 +1,36 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+Hinweise für KI-Agenten (Claude Code, Cursor u. a.). Überblick über das Projekt: [`README.md`](README.md). Architektur: [`docs/architektur.md`](docs/architektur.md).
 
-IronLog is an Android app (Kotlin Multiplatform; the `shared` module also targets iOS) built with Gradle, AGP `9.0.0`, Kotlin `2.3.10`, and Jetpack Compose. The Android app (`:app`, package `com.ironlog.app`) is the primary product — a workout/training logger.
+IronLog ist eine Android-App (Kotlin, Jetpack Compose, Package `com.ironlog.app`). Das Modul `:shared` ist Kotlin Multiplatform und zielt zusätzlich auf iOS. Gebaut wird mit Gradle 9.1.0, AGP 9.0.0, Kotlin 2.3.10 und **JDK 17**.
 
-### Environment (pre-provisioned by the startup update script + VM snapshot)
-- Build JDK is **17** (matches CI). `JAVA_HOME`, `ANDROID_HOME`/`ANDROID_SDK_ROOT`, and the SDK tools are exported from the agent's `~/.bashrc`, so interactive shells already have them. If you run Gradle from a non-login/non-interactive shell and hit "SDK location not found" or a Java version error, export them first:
+## Umgebung
+
+- **Claude Code im Web:** `.claude/hooks/session-start.sh` läuft beim Session-Start und richtet alles ein. Das sind JDK 17, Android SDK unter `~/android-sdk` (Plattformen 35 und 36, build-tools 36.0.0, platform-tools), `local.properties`, ein Maven-Central-Spiegel in `~/.gradle/init.d/` und die Variablen `JAVA_HOME`/`ANDROID_HOME`. Die Netzwerk-Policy der Umgebung muss `dl.google.com` und `maven.google.com` erlauben.
+- **Cursor Cloud:** JDK 17, SDK und `local.properties` sind im VM-Snapshot vorinstalliert.
+- **Sonst:** vor Gradle-Aufrufen setzen:
   - `export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`
   - `export ANDROID_HOME=$HOME/android-sdk`
-- The Android SDK lives at `$HOME/android-sdk` (installed: `platforms;android-35`, `platforms;android-36`, `build-tools;36.0.0`, `platform-tools`). `local.properties` (git-ignored) points `sdk.dir` there. The SDK, JDK 17, and `local.properties` persist in the VM snapshot — the update script does not reinstall them.
 
-### Build / test / lint (standard commands; see `.github/workflows/android-ci.yml` and `docs/quality-gates.md`)
-- Build the app (debug APK): `./gradlew assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`.
-- Unit tests: `./gradlew test` (or `:app:testDebugUnitTest`).
-- Lint: `./gradlew lintDebug` (reports under `<module>/build/reports/lint-results-debug.html`).
-- The four PR gates are: `test`, `lintDebug`, `assembleDebug`, and `connectedDebugAndroidTest` (see below).
+## Bauen, testen, linten
 
-### Non-obvious gotchas
-- **No emulator here.** `/dev/kvm` is not available in the Cloud VM, so `connectedDebugAndroidTest` and any GUI/emulator run are not possible. Validate changes with unit tests (`./gradlew test`) and `assembleDebug`. Instrumentation smoke tests run in GitHub Actions CI (`android-emulator-runner`), not locally.
-- Use `./gradlew --no-daemon ...` for one-off CI-parity runs (this is how CI invokes Gradle).
-- Some unit test names are written in German (e.g. `logSet erstellt Satz korrekt`); this is expected, not a bug.
+Siehe `.github/workflows/android-ci.yml` und [`docs/quality-gates.md`](docs/quality-gates.md).
+
+- `./gradlew assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`
+- `./gradlew test :shared:testAndroidHostTest`: Unit-Tests. `test` allein lässt die KMP-Tests aus.
+- `./gradlew lintDebug`: Reports unter `<modul>/build/reports/lint-results-debug.html`
+- Für CI-Parität: `./gradlew --no-daemon ...`
+
+## Stolperfallen
+
+- **Kein Emulator.** In Cloud-VMs fehlt `/dev/kvm`. `connectedDebugAndroidTest` läuft nur in GitHub Actions (`android-emulator-runner`). Lokal reichen Unit-Tests und `assembleDebug`.
+- **HTTP 429 von Maven Central** hinter dem Cloud-Proxy: Der Spiegel aus dem Session-Hook fängt das ab. Sonst hilft `--max-workers=2`.
+- Manche Testnamen sind deutsch (z. B. `logSet erstellt Satz korrekt`). Das ist gewollt.
+- UI-Texte gehören in `core/designsystem/src/main/res/values/strings.xml`.
+- Logging nur über `AppLogger` (siehe [`docs/logging-guideline.md`](docs/logging-guideline.md)).
+- Room-Schemaänderungen brauchen: Entity, Migration, exportiertes Schema in `core/database/schemas/`, Migrationstest und ggf. Backup-Format (`:shared`, `schemaVersion`).
+
+## Dokumentation pflegen
+
+- `README.md`, `docs/architektur.md`, `docs/design-system.md` und `docs/features/*.md` beschreiben den **aktuellen** Stand. Wer Verhalten ändert, passt die betroffene Datei im selben PR an.
+- Pläne für laufende Arbeit dürfen in `docs/plans/` liegen. Nach dem Merge wird das Ergebnis in die Doku übernommen und der Plan gelöscht.

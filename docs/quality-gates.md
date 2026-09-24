@@ -3,7 +3,9 @@
 ## Verbindliche PR-Gates
 Die vier Gates gelten fuer Pull Requests und Debug-Builds; sie entscheiden
 ueber Merge, nicht ueber Release-Freigabe:
-1. `./gradlew test` muss gruen sein.
+1. `./gradlew test` und `./gradlew :shared:testAndroidHostTest` muessen gruen
+   sein (die KMP-Tests von `:shared` laufen nicht ueber `test`; CI fuehrt
+   beide im selben Schritt aus).
 2. `./gradlew lintDebug` darf keine Lint-Errors enthalten.
 3. `./gradlew assembleDebug` muss erfolgreich bauen.
 4. Instrumentation-Smoke (`connectedDebugAndroidTest`) muss in CI gruen sein

@@ -1,6 +1,6 @@
 # Evidenzbasis für Progressionsvorschläge
 
-Stand: 2026-08-08. Diese Notiz grenzt belastbare Trainingsprinzipien von Produktentscheidungen für IronLog ab. Sie ist keine medizinische Beratung und definiert noch kein freigegebenes Feature-Design.
+Stand: 2026-08-08. Diese Notiz grenzt belastbare Trainingsprinzipien von Produktentscheidungen für IronLog ab. Sie ist keine medizinische Beratung. Das daraus umgesetzte Feature beschreibt [`../features/progressions-coach.md`](../features/progressions-coach.md).
 
 ## Belastbare Aussagen
 
