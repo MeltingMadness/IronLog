@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -523,7 +524,14 @@ class ActiveWorkoutViewModel(
         else -> PreviousSessionScope.NormalPlan(planId)
     }
 
-    private val _events = MutableSharedFlow<WorkoutEvent>()
+    // Buffered so emit() never waits for the UI: the screen shows each NewRecord as a
+    // suspending snackbar, and logSet emits while holding mutationMutex and the
+    // per-exercise in-flight lock. An unbuffered flow kept the exercise locked for
+    // several seconds after a set that improved more than one record.
+    private val _events = MutableSharedFlow<WorkoutEvent>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     val events = _events.asSharedFlow()
 
     private val chromeState = combine(

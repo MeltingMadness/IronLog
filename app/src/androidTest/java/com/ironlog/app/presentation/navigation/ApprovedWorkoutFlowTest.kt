@@ -15,6 +15,12 @@ import com.ironlog.app.domain.repository.*
 import com.ironlog.app.presentation.theme.IronLogTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
+import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.test.core.app.ApplicationProvider
+import com.ironlog.app.data.local.IronLogDatabase
+import com.ironlog.app.data.preferences.appPreferencesDataStore
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +36,13 @@ class ApprovedWorkoutFlowTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val file = File(instrumentation.targetContext.getExternalFilesDir(null), "$name.png")
         file.outputStream().use { instrumentation.uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG,100,it) }
+    }
+    /** Isolation wie in [NavigationSmokeTest]: keine aktive Session aus vorherigen Tests uebernehmen. */
+    @Before fun clearAppDatabaseAndDataStore() {
+        runBlocking {
+            GlobalContext.get().get<IronLogDatabase>().clearAllTables()
+            ApplicationProvider.getApplicationContext<Context>().appPreferencesDataStore.edit { it.clear() }
+        }
     }
     @Test fun logPartialWorkoutReviewAndApplyOnlyPerformedSets() {
         val plans = GlobalContext.get().get<TrainingPlanRepository>()

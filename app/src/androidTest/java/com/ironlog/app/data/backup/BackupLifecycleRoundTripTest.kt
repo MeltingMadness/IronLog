@@ -106,14 +106,14 @@ class BackupLifecycleRoundTripTest {
             assertTrue("export must contain skip", payload.metaPlanSkips.any { it.id == SKIP_ID })
             assertTrue("export must contain targets", payload.workoutPlanTargets.any { it.id == TARGET_ID })
             assertTrue("export must contain suggestions", payload.progressionSuggestions.any { it.id == SUGGESTION_ID })
-            assertEquals(12, payload.schemaVersion)
+            assertEquals(14, payload.schemaVersion)
 
             // Mutate/empty the database so the imported document must prove itself.
             harness.mutateAwayFromSeededState()
 
             val preview = harness.repository.previewImport(MEMORY_URI)
             assertTrue("preview must validate", preview.isValid)
-            assertEquals(12, preview.schemaVersion)
+            assertEquals(14, preview.schemaVersion)
             assertEquals(sha256Hex(exported), preview.sha256)
             assertPreviewCounts(preview, payload)
 
@@ -278,7 +278,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     private fun openRawConnection(dbName: String): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(11) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(14) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(

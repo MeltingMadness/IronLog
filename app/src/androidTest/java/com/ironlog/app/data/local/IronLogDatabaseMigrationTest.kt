@@ -147,15 +147,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV12Connection(context, dbName)
+        val rawHelper = openRawCurrentConnection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(12, cursor.getInt(0))
+                assertEquals(14, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "16d05ed82d494f1315859bd7641df225"
+                "ae45104c3ae7a04dd1f4ef2615def501"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -191,15 +191,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV12Connection(context, dbName)
+        val rawHelper = openRawCurrentConnection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(12, cursor.getInt(0))
+                assertEquals(14, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "16d05ed82d494f1315859bd7641df225"
+                "ae45104c3ae7a04dd1f4ef2615def501"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -275,15 +275,15 @@ class IronLogDatabaseMigrationTest {
         }
         database.close()
 
-        val rawHelper = openRawV12Connection(context, dbName)
+        val rawHelper = openRawCurrentConnection(context, dbName)
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(12, cursor.getInt(0))
+                assertEquals(14, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "16d05ed82d494f1315859bd7641df225"
+                "ae45104c3ae7a04dd1f4ef2615def501"
             )
             assertTrue(tableExists(db, "meta_plan_skips"))
             assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId"))
@@ -347,11 +347,13 @@ class IronLogDatabaseMigrationTest {
         val database = Room.databaseBuilder(context, IronLogDatabase::class.java, dbName)
             .addMigrations(IronLogDatabase.migration10To11ForTests())
             .addMigrations(IronLogDatabase.migration11To12ForTests())
+            .addMigrations(IronLogDatabase.migration12To13ForTests())
+            .addMigrations(IronLogDatabase.migration13To14ForTests())
             .build()
         runBlocking { database.exerciseDao().getCount() }
         database.close()
 
-        openRawV12Connection(context, dbName).use { helper ->
+        openRawCurrentConnection(context, dbName).use { helper ->
             val db = helper.writableDatabase
             assertEquals("MANUAL", queryString(db, "SELECT progressionScheme FROM plan_exercises WHERE id = 1"))
             assertEquals("MANUAL", queryString(db, "SELECT progressionScheme FROM plan_exercises WHERE id = 2"))
@@ -477,6 +479,12 @@ class IronLogDatabaseMigrationTest {
     ): SupportSQLiteOpenHelper {
         val callback = object : SupportSQLiteOpenHelper.Callback(11) {
             override fun onCreate(db: SupportSQLiteDatabase) {
+                // Minimal parent tables so PRAGMA foreign_key_check can resolve the references.
+                db.execSQL("CREATE TABLE IF NOT EXISTS exercises (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS workout_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS workout_plan_targets (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+                db.execSQL("INSERT INTO exercises (id) VALUES (1)")
+                db.execSQL("INSERT INTO workout_sessions (id) VALUES (1)")
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS workout_sets (
@@ -634,6 +642,8 @@ class IronLogDatabaseMigrationTest {
             .addMigrations(IronLogDatabase.migration9To10ForTests())
             .addMigrations(IronLogDatabase.migration10To11ForTests())
             .addMigrations(IronLogDatabase.migration11To12ForTests())
+            .addMigrations(IronLogDatabase.migration12To13ForTests())
+            .addMigrations(IronLogDatabase.migration13To14ForTests())
             .allowMainThreadQueries()
             .build()
     }
@@ -646,15 +656,17 @@ class IronLogDatabaseMigrationTest {
             .addMigrations(IronLogDatabase.migration9To10ForTests())
             .addMigrations(IronLogDatabase.migration10To11ForTests())
             .addMigrations(IronLogDatabase.migration11To12ForTests())
+            .addMigrations(IronLogDatabase.migration12To13ForTests())
+            .addMigrations(IronLogDatabase.migration13To14ForTests())
             .allowMainThreadQueries()
             .build()
     }
 
-    private fun openRawV12Connection(
+    private fun openRawCurrentConnection(
         context: Context,
         dbName: String
     ): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(12) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(14) {
             override fun onCreate(db: SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit

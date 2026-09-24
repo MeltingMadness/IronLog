@@ -27,6 +27,7 @@ import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -315,6 +316,45 @@ class ActiveWorkoutViewModelTest {
             emitted.filterIsInstance<WorkoutEvent.NewRecord>().map { it.type }.toSet()
         )
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
+
+        eventCollector.cancel()
+    }
+
+    @Test
+    fun `langsamer Event-Collector blockiert das Loggen des naechsten Satzes nicht`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val now = LocalDateTime.now()
+        val before = listOf(
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 80.0, achievedAt = now
+            ),
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 6.0, achievedAt = now
+            )
+        )
+        val after = listOf(before[0].copy(value = 100.0), before[1].copy(value = 8.0))
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returnsMany listOf(before, after)
+
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            progressionRepo,
+            prefsRepo
+        )
+        // Wie die Snackbar im Screen: jedes Event haelt den Collector an.
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.events.collect { awaitCancellation() }
+        }
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        vm.logSet(exerciseId = testExercise.id, reps = 8, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, workoutRepo.getSetsForSessionList(sessionId).size)
+        assertTrue(vm.uiState.value.logInFlightByExercise.values.none { it > 0 })
 
         eventCollector.cancel()
     }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -247,11 +248,11 @@ class NavigationSmokeTest {
         // es gibt keine aktive Session, also MUSS "Training starten" erscheinen.
         // Ein schreibender Test darf hier kein "Training fortsetzen" hinterlassen.
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
 
         val hasContinue =
-            composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training fortsetzen ➔").fetchSemanticsNodes().isNotEmpty()
         assertFalse("Nach dem Leeren der App-DB darf keine aktive Session existieren", hasContinue)
     }
 
@@ -304,9 +305,9 @@ class NavigationSmokeTest {
         // 1) Dashboard: Training starten (dank Isolation garantiert "starten",
         //    nicht "fortsetzen").
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Training starten").performClick()
+        composeRule.onNodeWithText("Training jetzt starten ➔").performClick()
         composeRule.waitForIdle()
 
         // 2) Plan-Auswahl-Sheet: Freies Training waehlen -> Session startet.
@@ -329,37 +330,38 @@ class NavigationSmokeTest {
         }
         composeRule.onNodeWithText("Kniebeuge").performClick()
         composeRule.waitForIdle()
+        // Der Picker ist eine Mehrfachauswahl: Auswahl explizit uebernehmen.
+        composeRule.onNodeWithText("1 Übungen hinzufügen").performClick()
+        composeRule.waitForIdle()
 
-        // 5) Satz loggen: exakt 3 Eingabefelder (Gewicht, Wdh, Intensitaet) -
-        //    der Picker muss zu (kein Suchfeld mehr), sonst waere die Reihenfolge
-        //    nicht determiniert.
+        // 5) Satz loggen: exakt 2 Eingabefelder (Gewicht, Wdh) - RPE/RIR steckt
+        //    eingeklappt unter den Zusatzangaben. Der Picker muss zu sein (kein
+        //    Suchfeld mehr), sonst waere die Reihenfolge nicht determiniert.
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 3
+            composeRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size == 2
         }
         val setInputs = composeRule.onAllNodes(hasSetTextAction())
         setInputs[0].performTextInput("100") // Gewicht in kg
         setInputs[1].performTextInput("10") // Wiederholungen
-        composeRule.onNodeWithContentDescription("Loggen").performClick()
+        composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performClick()
         composeRule.waitForIdle()
 
-        // 6) Beenden: Top-Bar-Aktion, dann Dialog bestaetigen. Der Dialog
-        //    (eigenes Fenster) kommt in der Traversierung nach dem Hauptinhalt,
-        //    daher ist der zweite "Beenden"-Knoten der Bestaetigen-Button.
+        // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen
+        //    und die Zusammenfassung ueber "Fertig" schliessen.
         composeRule.onNodeWithText("Beenden").performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText("Training beenden?").fetchSemanticsNodes().isNotEmpty()
         }
-        assertEquals(
-            "Beenden muss genau in Top-Bar und Dialog-Bestaetigen erscheinen",
-            2,
-            composeRule.onAllNodesWithText("Beenden").fetchSemanticsNodes().size
-        )
-        composeRule.onAllNodesWithText("Beenden")[1].performClick()
+        composeRule.onNodeWithText("Training beenden").performClick()
+        composeRule.waitUntil(timeoutMillis = 30_000L) {
+            composeRule.onAllNodesWithText("Training gespeichert").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Fertig").performClick()
         composeRule.waitForIdle()
 
         // 7) Zurueck auf dem Dashboard (Finish poppt zum Dashboard zurueck).
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
         }
 
         // 8) Verlauf pruefen: die Test-Komposition zeichnet wie alle Smoke-Tests
