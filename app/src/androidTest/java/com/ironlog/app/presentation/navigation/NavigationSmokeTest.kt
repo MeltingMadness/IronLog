@@ -11,6 +11,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.printToString
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -102,6 +106,18 @@ class NavigationSmokeTest {
             GlobalContext.get().get<IronLogDatabase>().clearAllTables()
             ApplicationProvider.getApplicationContext<Context>()
                 .appPreferencesDataStore.edit { it.clear() }
+        }
+    }
+
+    /** Wie waitUntil, schreibt bei einem Timeout aber den Semantik-Baum in die Fehlermeldung. */
+    private fun waitOrDump(timeoutMillis: Long, condition: () -> Boolean) {
+        try {
+            composeRule.waitUntil(timeoutMillis) { condition() }
+        } catch (e: ComposeTimeoutException) {
+            throw AssertionError(
+                "${e.message}\n${composeRule.onAllNodes(isRoot()).printToString(maxDepth = 60)}",
+                e
+            )
         }
     }
 
@@ -349,8 +365,14 @@ class NavigationSmokeTest {
             composeRule.onAllNodes(hasText("Satz 1 loggen", substring = true) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performClick()
+        // Die Tastatur aus der Eingabe verschiebt das Layout; erst nach dem Idle in den
+        // sichtbaren Bereich scrollen und klicken, dann auf den gespeicherten Satz warten
+        // (eine Session ohne Satz wuerde beim Beenden still verworfen).
         composeRule.waitForIdle()
+        composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performScrollTo().performClick()
+        waitOrDump(30_000L) {
+            composeRule.onAllNodes(hasText("1 Sätze", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
 
         // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen
         //    und die Zusammenfassung ueber "Fertig" schliessen.
@@ -365,7 +387,7 @@ class NavigationSmokeTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Training beenden").performClick()
-        composeRule.waitUntil(timeoutMillis = 30_000L) {
+        waitOrDump(30_000L) {
             composeRule.onAllNodesWithText("Training gespeichert").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Fertig").performClick()
