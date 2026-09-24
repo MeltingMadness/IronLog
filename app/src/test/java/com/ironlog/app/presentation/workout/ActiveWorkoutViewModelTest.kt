@@ -272,7 +272,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `logSet emittiert NewRecord aus Vergleich und schreibt keine PRs`() = runTest {
+    fun `logSet emittiert NewRecords aus Vergleich und schreibt keine PRs`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
         val now = LocalDateTime.now()
         val before = listOf(
@@ -313,8 +313,10 @@ class ActiveWorkoutViewModelTest {
 
         assertEquals(
             setOf(RecordType.MAX_WEIGHT, RecordType.MAX_REPS, RecordType.MAX_E1RM, RecordType.MAX_VOLUME),
-            emitted.filterIsInstance<WorkoutEvent.NewRecord>().map { it.type }.toSet()
+            emitted.filterIsInstance<WorkoutEvent.NewRecords>().flatMap { it.types }.toSet()
         )
+        // Alle Rekorde eines Satzes kommen gebuendelt als eine Meldung.
+        assertEquals(1, emitted.size)
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }
 
         eventCollector.cancel()
@@ -360,7 +362,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `logSet emittiert kein NewRecord wenn kein Record verbessert wurde`() = runTest {
+    fun `logSet emittiert kein NewRecords wenn kein Record verbessert wurde`() = runTest {
         val stats = mockk<StatisticsRepository>(relaxed = true)
         val existing = listOf(
             com.ironlog.app.domain.model.PersonalRecord(
@@ -2428,7 +2430,7 @@ class ActiveWorkoutViewModelTest {
 
         assertTrue(
             emitted.any { event ->
-                event is WorkoutEvent.NewRecord && event.type == RecordType.MAX_WEIGHT
+                event is WorkoutEvent.NewRecords && RecordType.MAX_WEIGHT in event.types
             }
         )
         coVerify(exactly = 0) { stats.checkAndUpdateRecord(any(), any(), any()) }

@@ -35,9 +35,6 @@ class ApprovedWorkoutFlowTest {
     // Speichervorgang ganz abgeschlossen ist. Auf langsamen Emulatoren wuerde ein Klick
     // davor ignoriert, daher erst auf den aktivierten Knoten warten.
     private fun awaitEnabled(matcher: SemanticsMatcher) = ui.waitUntil(20000) { ui.onAllNodes(matcher and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
-    // Rekord-Snackbars liegen unten ueber dem Log-Button und fangen Klicks ab; bei mehreren
-    // neuen Rekorden stehen sie nacheinander an. Wie ein Nutzer abwarten, bis sie weg sind.
-    private fun awaitNoRecordSnackbar() = ui.waitUntil(60000) { ui.onAllNodes(hasText("neuer Rekord",substring=true)).fetchSemanticsNodes().isEmpty() }
     // Bei einem Timeout den Semantik-Baum in die Fehlermeldung schreiben, damit CI-Fehler
     // ohne Emulator-Logcat nachvollziehbar sind.
     private fun waitOrDump(timeoutMillis: Long, condition: () -> Boolean) {
@@ -75,7 +72,6 @@ class ApprovedWorkoutFlowTest {
         awaitEnabled(hasText("Satz 2 loggen",substring=true))
         ui.onAllNodes(hasSetTextAction())[1].performTextReplacement("9")
         capture("android-logging")
-        awaitNoRecordSnackbar()
         ui.onNode(hasText("Satz 2 loggen",substring=true)).performScrollTo().performClick()
         waitOrDump(20000) { runBlocking { workouts.getSetsForSessionList(sessionId).size == 2 } }
         ui.onNodeWithText("Beenden").performClick()
