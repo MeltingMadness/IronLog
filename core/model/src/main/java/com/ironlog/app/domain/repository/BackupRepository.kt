@@ -1,6 +1,7 @@
 package com.ironlog.app.domain.repository
 
 import android.net.Uri
+import com.ironlog.shared.backup.BackupPayloadV1
 
 data class BackupContentCounts(
     val exercises: Int,
@@ -43,6 +44,16 @@ data class RecoveryBackup(
  *    replaces all eleven workout-domain tables in one transaction.
  */
 interface BackupRepository {
+    /**
+     * Current canonical payload of the whole training graph (schema 13): the same
+     * document [exportBackup] would write, without the export-only metadata
+     * (`appVersion`/`exportedAtEpochMillis` stay empty/zero).
+     *
+     * Read-only consumers such as the readiness projection build their input from
+     * this snapshot instead of re-mapping the storage entities themselves.
+     */
+    suspend fun currentPayload(): BackupPayloadV1
+
     suspend fun exportBackup(uri: Uri)
 
     suspend fun previewImport(uri: Uri): BackupImportPreview

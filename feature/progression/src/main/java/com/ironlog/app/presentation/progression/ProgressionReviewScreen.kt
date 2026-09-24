@@ -3,6 +3,8 @@ package com.ironlog.app.presentation.progression
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,6 +50,11 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.progression.R as ProgressionR
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.text.NumberFormat
 import org.koin.androidx.compose.koinViewModel
 
@@ -90,15 +97,20 @@ fun ProgressionReviewScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val hasSafePending = state.items.any(ProgressionReviewItemUi::canDecide)
+            val safePendingCount = state.safePendingItems.size
+            val hasSafePending = safePendingCount > 0
             if (hasSafePending) {
                 item(key = "accept_all") {
+                    Text(stringResource(ProgressionR.string.review_confirmation_hint))
+                    if (state.edits.isNotEmpty()) {
+                        Text(stringResource(ProgressionR.string.review_finish_edit_first))
+                    }
                     Button(
                         onClick = viewModel::acceptAllSafe,
-                        enabled = !state.isWorking,
+                        enabled = !state.isWorking && state.edits.isEmpty(),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.progression_review_accept_all))
+                        Text(stringResource(ProgressionR.string.review_accept_count, safePendingCount))
                     }
                 }
             }
@@ -106,7 +118,11 @@ fun ProgressionReviewScreen(
             if (state.items.isEmpty()) {
                 item(key = "empty") {
                     Text(
-                        text = stringResource(R.string.progression_review_empty),
+                        text = stringResource(when {
+                            state.isLoading -> ProgressionR.string.review_loading
+                            state.isSessionScoped -> ProgressionR.string.review_empty_session
+                            else -> ProgressionR.string.review_empty_all
+                        }),
                         modifier = Modifier.padding(vertical = 24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -153,6 +169,7 @@ fun ProgressionReviewScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProgressionReviewCard(
     item: ProgressionReviewItemUi,
@@ -181,19 +198,52 @@ private fun ProgressionReviewCard(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
+            val evidenceDate = item.countedSets.maxOfOrNull { it.completedAt }
+            val date = evidenceDate ?: item.createdAtEpochMillis.takeIf { it > 0 }?.let {
+                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            }
+            Text(
+                text = item.planName?.let { stringResource(ProgressionR.string.review_plan, it) }
+                    ?: stringResource(ProgressionR.string.review_plan_unavailable),
+                style = MaterialTheme.typography.bodySmall
+            )
+            date?.let {
+                Text(
+                    text = stringResource(
+                        if (evidenceDate != null) ProgressionR.string.review_training_date else ProgressionR.string.review_created_date,
+                        it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+                    ),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 text = ProgressionReasonText(item, unitSystem),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(Modifier.height(12.dp))
+            val trainedWeight = uniformCountedWeightKg(item.countedSets)
+            trainedWeight?.let { weight ->
+                Text(stringResource(ProgressionR.string.review_trained_weight,
+                    WeightFormatting.formatWeight(weight, unitSystem)))
+                if (kotlin.math.abs(weight - item.source.weightKg) > 0.1) {
+                    Text(stringResource(ProgressionR.string.review_stored_plan_weight,
+                        WeightFormatting.formatWeight(item.source.weightKg, unitSystem)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (item.proposed == null && item.reasonCode == com.ironlog.app.domain.model.ProgressionReasonCode.REPEAT_TARGET) {
+                    Text(stringResource(ProgressionR.string.review_repeat_weight,
+                        WeightFormatting.formatWeight(weight, unitSystem)))
+                }
+            }
             TargetChanges(item = item, unitSystem = unitSystem)
             Spacer(Modifier.height(12.dp))
             EvidenceSets(sets = item.countedSets, unitSystem = unitSystem)
             Spacer(Modifier.height(12.dp))
 
             if (item.canDecide) {
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -228,15 +278,10 @@ private fun TargetChanges(item: ProgressionReviewItemUi, unitSystem: UnitSystem)
         if (item.source.reps != proposed.reps) {
             Text(stringResource(R.string.progression_review_change_reps, item.source.reps, proposed.reps))
         }
-        if (item.source.weightKg != proposed.weightKg) {
-            Text(
-                stringResource(
-                    R.string.progression_review_change_weight,
-                    WeightFormatting.formatWeight(item.source.weightKg, unitSystem),
-                    WeightFormatting.formatWeight(proposed.weightKg, unitSystem)
-                )
-            )
-        }
+        Text(stringResource(
+            ProgressionR.string.review_next_weight,
+            WeightFormatting.formatWeight(proposed.weightKg, unitSystem)
+        ))
     }
 }
 

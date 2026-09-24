@@ -1,0 +1,19 @@
+
+android-build
+
+BUILD SUCCESSFUL in 1m 8s
+
+ios-tests
+
+BUILD SUCCESSFUL in 26s
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.010 (0.012) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.010 (0.013) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.010 (0.014) seconds
+** TEST SUCCEEDED **
+
+ios-final-build
+
+BUILD SUCCESSFUL in 46s
+** BUILD SUCCEEDED **
+Android UI test compilation after selector clarification
+BUILD SUCCESSFUL in 56s

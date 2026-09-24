@@ -1,0 +1,96 @@
+{
+  "exporter": "Open Design 0.22.2 official od export --format image",
+  "images": [
+    {
+      "source": "01-logging-android.html",
+      "image": "01-logging-android.png",
+      "sha256": "ce6445d47bde19f294b8c6e4611276ae5d04f1e401fbbb19b408326b29777971",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/01-logging-android.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/01-logging-android.png",
+        "bytes": 289019,
+        "format": "image"
+      }
+    },
+    {
+      "source": "02-logging-ios.html",
+      "image": "02-logging-ios.png",
+      "sha256": "1c9704b5d37441185de3b4302d687629d698fd3a6d13b4f72ae5088e1e0b2964",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/02-logging-ios.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/02-logging-ios.png",
+        "bytes": 315822,
+        "format": "image"
+      }
+    },
+    {
+      "source": "03-exercise-picker.html",
+      "image": "03-exercise-picker.png",
+      "sha256": "bcd8dd614863737379dcba90f9fd21186b5b9810e4a430b34a1f76702c29284c",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/03-exercise-picker.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/03-exercise-picker.png",
+        "bytes": 289699,
+        "format": "image"
+      }
+    },
+    {
+      "source": "04-plan-create.html",
+      "image": "04-plan-create.png",
+      "sha256": "d2c37be48e82da4060aa78826bba3fac3f9090932ef27a003c47d6ceb12c47b7",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/04-plan-create.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/04-plan-create.png",
+        "bytes": 271187,
+        "format": "image"
+      }
+    },
+    {
+      "source": "05-finish-early.html",
+      "image": "05-finish-early.png",
+      "sha256": "c20125180b160d6aff0ee665e730f56005391355f2c214b0e5b26e24bd4802f3",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/05-finish-early.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/05-finish-early.png",
+        "bytes": 267576,
+        "format": "image"
+      }
+    },
+    {
+      "source": "06-completion.html",
+      "image": "06-completion.png",
+      "sha256": "923f15cd4595b70373e6af4341ed93b1cbb0e0ef784932c72e62081ca0dc4930",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/06-completion.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/06-completion.png",
+        "bytes": 301414,
+        "format": "image"
+      }
+    },
+    {
+      "source": "07-plan-changes.html",
+      "image": "07-plan-changes.png",
+      "sha256": "7a4177640cc5fcc131e5f9f6c414d260d3a6671855016e059f5097ec62a18fcd",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/07-plan-changes.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/07-plan-changes.png",
+        "bytes": 274700,
+        "format": "image"
+      }
+    }
+  ],
+  "visualReview": {
+    "allSevenInspected": true,
+    "headerOverlapsResolved": true,
+    "exportScrollbarsRemoved": true,
+    "dialogTextChecked": true,
+    "scope": "Visual proposals only. No native functionality acceptance."
+  }
+}

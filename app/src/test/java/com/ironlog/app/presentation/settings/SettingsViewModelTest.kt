@@ -2,6 +2,7 @@
 
 import android.net.Uri
 import com.ironlog.app.data.backup.BackupHashMismatchException
+import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IncidentReport
 import com.ironlog.app.domain.model.ThemeMode
 import com.ironlog.app.domain.repository.BackupRepository
@@ -13,7 +14,13 @@ import com.ironlog.app.domain.repository.ReminderScheduler
 import com.ironlog.app.domain.util.BuildInfo
 import com.ironlog.app.fakes.FakeAppPreferencesRepository
 import com.ironlog.core.designsystem.R
+import com.ironlog.shared.backup.BackupPayloadV1
+import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import io.mockk.mockk
+import io.mockk.coEvery
+import io.mockk.coVerifyOrder
+import io.mockk.coVerify
+import com.ironlog.app.domain.repository.ProgressionRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +49,7 @@ class SettingsViewModelTest {
     private lateinit var preferencesRepository: FakeAppPreferencesRepository
     private lateinit var backupRepository: FakeBackupRepository
     private lateinit var reminderScheduler: FakeReminderScheduler
+    private lateinit var progressionRepository: ProgressionRepository
     private lateinit var viewModel: SettingsViewModel
 
     @Before
@@ -50,6 +58,7 @@ class SettingsViewModelTest {
         preferencesRepository = FakeAppPreferencesRepository()
         backupRepository = FakeBackupRepository()
         reminderScheduler = FakeReminderScheduler()
+        progressionRepository = mockk(relaxed = true)
         viewModel = createViewModel()
     }
 
@@ -63,7 +72,8 @@ class SettingsViewModelTest {
         backupRepository = backupRepository,
         reminderScheduler = reminderScheduler,
         incidentReportRepository = NoopIncidentReportRepository(),
-        buildInfo = BuildInfo("1.0-test", 1)
+        buildInfo = BuildInfo("1.0-test", 1),
+        progressionRepository = progressionRepository
     )
 
     @Test
@@ -124,6 +134,42 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(180, preferencesRepository.current.defaultRestTimeSeconds)
+    }
+
+    @Test
+    fun `successful export records completion timestamp`() = runTest {
+        val uri = mockk<Uri>()
+
+        viewModel.exportBackup(uri)
+        advanceUntilIdle()
+
+        assertEquals(listOf(uri), backupRepository.exportedUris)
+        assertNotNull(preferencesRepository.current.lastSuccessfulExportEpochMillis)
+    }
+
+    @Test
+    fun `failed export leaves previous completion timestamp unchanged`() = runTest {
+        val previousTimestamp = 1_700_000_000_000L
+        preferencesRepository = FakeAppPreferencesRepository(
+            AppPreferences(lastSuccessfulExportEpochMillis = previousTimestamp)
+        )
+        backupRepository.exportError = IOException("disk full")
+        viewModel = createViewModel()
+        val uri = mockk<Uri>()
+
+        viewModel.exportBackup(uri)
+        advanceUntilIdle()
+
+        assertEquals(previousTimestamp, preferencesRepository.current.lastSuccessfulExportEpochMillis)
+    }
+
+    @Test
+    fun `backup reminder preference persists without touching training reminder scheduler`() = runTest {
+        viewModel.updateBackupReminderEnabled(true)
+        advanceUntilIdle()
+
+        assertTrue(preferencesRepository.current.backupReminderEnabled)
+        assertEquals(0, reminderScheduler.syncCalls)
     }
 
     @Test
@@ -201,6 +247,10 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(uri to "abc123"), backupRepository.importedCalls)
+        coVerifyOrder {
+            progressionRepository.generateMissingOutcomes()
+            progressionRepository.reconcileOutstandingSuggestions()
+        }
         assertFalse(viewModel.uiState.value.importConfirmationVisible)
         assertNull(viewModel.uiState.value.importPreview)
         assertEquals(1, reminderScheduler.syncCalls)
@@ -249,6 +299,8 @@ class SettingsViewModelTest {
         assertNotNull(viewModel.uiState.value.importPreview)
         assertEquals(recovery, viewModel.uiState.value.recoveryBackup)
         assertTrue(messages.contains(R.string.common_error_action_failed))
+        coVerify(exactly = 0) { progressionRepository.generateMissingOutcomes() }
+        coVerify(exactly = 0) { progressionRepository.reconcileOutstandingSuggestions() }
 
         backupRepository.importError = null
         viewModel.confirmImport()
@@ -322,6 +374,10 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, backupRepository.restoreCalls)
+        coVerifyOrder {
+            progressionRepository.generateMissingOutcomes()
+            progressionRepository.reconcileOutstandingSuggestions()
+        }
         assertEquals(1, reminderScheduler.syncCalls)
         assertEquals(recovery, viewModel.uiState.value.recoveryBackup)
         assertFalse(viewModel.uiState.value.showRecoveryRestoreDialog)
@@ -344,6 +400,22 @@ class SettingsViewModelTest {
         assertTrue(messages.contains(R.string.settings_msg_backup_imported))
         assertTrue(messages.contains(R.string.settings_msg_reminder_sync_failed))
         assertFalse(messages.contains(R.string.common_error_action_failed))
+    }
+
+    @Test
+    fun `progression failure after committed import keeps success and warns separately`() = runTest {
+        val messages = startEventCollector(backgroundScope)
+        coEvery { progressionRepository.generateMissingOutcomes() } throws IOException("catch-up failed")
+        viewModel.onImportUriPicked(mockk())
+        advanceUntilIdle()
+        viewModel.confirmImport()
+        advanceUntilIdle()
+
+        assertEquals(1, backupRepository.importedCalls.size)
+        assertTrue(messages.contains(R.string.settings_msg_backup_imported))
+        assertTrue(messages.contains(R.string.settings_msg_progression_recovery_failed))
+        assertFalse(messages.contains(R.string.common_error_action_failed))
+        coVerify(exactly = 0) { progressionRepository.reconcileOutstandingSuggestions() }
     }
 
     private fun startUiStateCollector(scope: CoroutineScope) {
@@ -378,9 +450,24 @@ private class FakeBackupRepository : BackupRepository {
     var latestRecoveryError: Throwable? = null
     var restoreResult: RecoveryBackup? = null
     var restoreError: Throwable? = null
+    var exportError: Throwable? = null
+
+    override suspend fun currentPayload(): BackupPayloadV1 = BackupPayloadV1(
+        formatVersion = 1,
+        schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
+        appVersion = "test",
+        exportedAtEpochMillis = 0L,
+        exercises = emptyList(),
+        workoutSessions = emptyList(),
+        workoutSets = emptyList(),
+        trainingPlans = emptyList(),
+        planExercises = emptyList(),
+        personalRecords = emptyList()
+    )
 
     override suspend fun exportBackup(uri: Uri) {
         exportedUris += uri
+        exportError?.let { throw it }
     }
 
     override suspend fun previewImport(uri: Uri): BackupImportPreview {

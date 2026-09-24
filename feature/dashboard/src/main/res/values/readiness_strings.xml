@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Strings for the training-trend and daily-form surfaces.
+
+    Wording rule: every sentence describes an observation from the logged data
+    and never a medical or recovery claim. No string promises a percentage when
+    the evidence is missing.
+-->
+<resources>
+    <string name="dashboard_trend_title">Trainingstrend</string>
+    <string name="dashboard_trend_subtitle">Mehrwöchiger Vergleich deiner Übungen</string>
+    <string name="dashboard_trend_index_label">Trainingsindex</string>
+    <string name="dashboard_trend_index_value">%1$d</string>
+    <string name="dashboard_trend_index_unit">von 100</string>
+    <string name="dashboard_trend_no_index">Kein Index</string>
+    <string name="dashboard_trend_status_insufficient">Noch zu wenig vergleichbare Einheiten</string>
+    <string name="dashboard_trend_status_no_strain">Keine wiederholte Verschlechterung erkannt</string>
+    <string name="dashboard_trend_status_single">Eine Übung ist wiederholt zurückgegangen</string>
+    <string name="dashboard_trend_status_multiple">Mehrere Übungen sind wiederholt zurückgegangen</string>
+    <string name="dashboard_trend_evidence">%1$d Übungen analysiert · %2$d mit ausreichender Historie · %3$d vergleichbare Einheiten</string>
+    <string name="dashboard_trend_confidence">Aussagekraft der Daten: %1$s</string>
+    <string name="dashboard_trend_confidence_none">keine</string>
+    <string name="dashboard_trend_confidence_low">gering</string>
+    <string name="dashboard_trend_confidence_moderate">mittel</string>
+    <string name="dashboard_trend_confidence_high">hoch</string>
+    <string name="dashboard_trend_no_number">Ohne ausreichende Evidenz zeigt die App bewusst keine Prozentzahl.</string>
+    <string name="dashboard_trend_loading">Trainingstrend wird berechnet ...</string>
+    <string name="dashboard_trend_retry">Erneut berechnen</string>
+    <string name="dashboard_trend_show_details">Details anzeigen</string>
+    <string name="dashboard_trend_hide_details">Details ausblenden</string>
+    <string name="dashboard_trend_deload_suggested">Mehrere Übungen zeigen einen wiederholten Rückgang. Ein Deload ist eine Option – die App ändert deinen Plan nicht automatisch.</string>
+    <string name="dashboard_trend_deload_active">Deload-Einheiten sind aus dem Vergleich ausgeschlossen.</string>
+    <string name="dashboard_trend_exercises_title">Übungen im Trend</string>
+    <string name="dashboard_trend_no_exercise_decline">Keine Übung mit wiederholtem Rückgang.</string>
+    <string name="dashboard_trend_exercise_line">%1$s · %2$s · %3$s</string>
+    <string name="dashboard_trend_exercise_change">%1$s ggü. eigener Basis</string>
+    <string name="dashboard_trend_quality_title">Datenqualität</string>
+    <string name="dashboard_trend_quality_rpe">%1$d Sätze ohne RPE (neutral gewertet)</string>
+    <string name="dashboard_trend_quality_intention">%1$d Sätze ohne Angabe zur Absicht (neutral gewertet)</string>
+    <string name="dashboard_trend_quality_deload">%1$d Deload-Einheiten ausgeschlossen</string>
+    <string name="dashboard_trend_footer">Heuristik aus deinen Trainingsdaten · keine medizinische Einschätzung</string>
+
+    <string name="dashboard_trend_ex_status_improving">verbessert</string>
+    <string name="dashboard_trend_ex_status_stable">stabil</string>
+    <string name="dashboard_trend_ex_status_declining">rückläufig</string>
+    <string name="dashboard_trend_ex_status_insufficient">zu wenig Daten</string>
+    <string name="dashboard_trend_ex_status_excluded">ausgeschlossen</string>
+
+    <string name="dashboard_reason_insufficient_history">Für einen Trend fehlen noch vergleichbare Einheiten.</string>
+    <string name="dashboard_reason_no_notable_strain">Kein wiederholter Rückgang gefunden.</string>
+    <string name="dashboard_reason_single_decline">Eine Übung ist wiederholt zurückgegangen.</string>
+    <string name="dashboard_reason_multiple_declines">Mehrere Übungen sind wiederholt zurückgegangen.</string>
+    <string name="dashboard_reason_deload_in_progress">Eine Deload-Phase ist aktiv.</string>
+    <string name="dashboard_reason_deload_suggested">Ein Deload ist eine Option, keine automatische Änderung.</string>
+    <string name="dashboard_reason_stagnation_neutral">Stagnation allein gilt nicht als Ermüdung.</string>
+    <string name="dashboard_reason_planned_failure_neutral">Geplantes Muskelversagen wird nicht als Verschlechterung gewertet.</string>
+    <string name="dashboard_reason_deload_context_neutral">Deload-Einheiten werden nicht als Verschlechterung gewertet.</string>
+    <string name="dashboard_reason_missing_rpe_neutral">Fehlende RPE wird neutral gewertet und senkt nur die Aussagekraft.</string>
+    <string name="dashboard_reason_unknown_intention">Sätze ohne Angabe zur Absicht werden neutral gewertet.</string>
+    <string name="dashboard_reason_unexpected_target_miss">Es gibt Sätze, bei denen das geplante Ziel nicht erreicht wurde.</string>
+    <string name="dashboard_reason_muscle_trained_today">Heute schon belastet.</string>
+    <string name="dashboard_reason_muscle_high_soreness">Hoher Muskelkater gemeldet.</string>
+    <string name="dashboard_reason_muscle_high_volume">Viel Volumen in den letzten 7 Tagen.</string>
+    <string name="dashboard_reason_muscle_low_volume">Wenig Volumen in den letzten 7 Tagen.</string>
+    <string name="dashboard_reason_muscle_no_load">Keine Belastung in den letzten 7 Tagen.</string>
+    <string name="dashboard_reason_sleep_below">Schlafqualität niedrig gemeldet.</string>
+    <string name="dashboard_reason_energy_below">Energie niedrig gemeldet.</string>
+    <string name="dashboard_reason_stress_above">Stress hoch gemeldet.</string>
+    <string name="dashboard_reason_soreness_above">Muskelkater hoch gemeldet.</string>
+    <string name="dashboard_reason_no_check_in">Kein Check-in für heute.</string>
+    <string name="dashboard_reason_partial_check_in">Check-in nur teilweise ausgefüllt.</string>
+    <string name="dashboard_reason_check_in_neutral">Check-in ohne Auffälligkeit.</string>
+    <string name="dashboard_reason_unknown">Hinweis aus den Trainingsdaten.</string>
+
+    <string name="dashboard_checkin_title">Tagesform (optional)</string>
+    <string name="dashboard_checkin_subtitle">Deine eigenen Angaben. Keine Pflicht, kein Gesamtwert.</string>
+    <string name="dashboard_checkin_sleep">Schlafqualität</string>
+    <string name="dashboard_checkin_energy">Energie</string>
+    <string name="dashboard_checkin_stress">Stress</string>
+    <string name="dashboard_checkin_soreness_title">Muskelkater je Muskelgruppe</string>
+    <string name="dashboard_checkin_scale_hint">1 = niedrig · 5 = hoch</string>
+    <string name="dashboard_checkin_sleep_hint">1 = schlecht · 5 = sehr gut</string>
+    <string name="dashboard_checkin_energy_hint">1 = niedrig · 5 = sehr hoch</string>
+    <string name="dashboard_checkin_stress_hint">1 = niedrig · 5 = sehr hoch</string>
+    <string name="dashboard_checkin_skip">Überspringen</string>
+    <string name="dashboard_checkin_save">Speichern</string>
+    <string name="dashboard_checkin_edit">Bearbeiten</string>
+    <string name="dashboard_checkin_delete">Löschen</string>
+    <string name="dashboard_checkin_saved">Tagesform gespeichert.</string>
+    <string name="dashboard_checkin_deleted">Tagesform gelöscht.</string>
+    <string name="dashboard_checkin_error">Tagesform konnte nicht gespeichert werden.</string>
+    <string name="dashboard_checkin_none_stored">Für heute ist noch nichts eingetragen.</string>
+    <string name="dashboard_checkin_answers_required">Trage mindestens einen Wert ein oder brich ab.</string>
+    <string name="dashboard_checkin_answer_none">–</string>
+    <string name="dashboard_checkin_clear_answer">Antwort entfernen</string>
+    <string name="dashboard_checkin_no_soreness">Kein Muskelkater eingetragen.</string>
+
+    <string name="dashboard_muscles_title">Muskelgruppen im Blick</string>
+    <string name="dashboard_muscles_planned_marker">geplant</string>
+    <string name="dashboard_muscles_detail_show">Muskel-Details anzeigen</string>
+    <string name="dashboard_muscles_detail_hide">Muskel-Details ausblenden</string>
+    <string name="dashboard_muscles_planned">Heute geplant: %1$s</string>
+    <string name="dashboard_muscles_no_plan">Für heute ist kein Trainingsplan hinterlegt.</string>
+    <string name="dashboard_muscles_last_trained">Letzte Belastung: %1$s</string>
+    <string name="dashboard_muscles_trained_today">heute</string>
+    <string name="dashboard_muscles_trained_days_ago">vor %1$d Tagen</string>
+    <string name="dashboard_muscles_never">keine Belastung erfasst</string>
+    <string name="dashboard_muscles_window">%1$s Sätze in 7 Tagen</string>
+    <string name="dashboard_muscles_today">%1$s Sätze heute</string>
+    <string name="dashboard_muscles_soreness">Muskelkater %1$d/5</string>
+    <string name="dashboard_muscles_no_recovery_note">Keine Erholung in Prozent. MEV/MAV-Schwellen sind Planungsziele, keine Messwerte.</string>
+</resources>

@@ -36,8 +36,19 @@ enum class ChartMetric(@StringRes val labelRes: Int) {
 
 data class ChartDataPoint(
     val dateLabel: String,
-    val value: Float
+    val value: Float,
+    /** Full timestamp retained for an identifiable value outside the chart axis. */
+    val timestamp: LocalDateTime? = null,
+    val sessionId: Long = 0L
 )
+
+data class ChartComparison(
+    val previous: ChartDataPoint,
+    val latest: ChartDataPoint
+) {
+    val delta: Float
+        get() = latest.value - previous.value
+}
 
 /**
  * Entwicklung des geschätzten 1RM über die Trainingseinheiten: erster, aktuellster
@@ -60,6 +71,7 @@ data class ExerciseStatsUiState(
     val records: List<PersonalRecord> = emptyList(),
     val selectedMetric: ChartMetric = ChartMetric.WEIGHT,
     val chartData: List<ChartDataPoint> = emptyList(),
+    val lastWorkoutComparison: ChartComparison? = null,
     val e1rmProgression: E1rmProgression? = null,
     val weeklyMuscleVolume: List<MuscleVolume> = emptyList(),
     val recentSets: List<WorkoutSet> = emptyList(),
@@ -73,6 +85,9 @@ class ExerciseStatsViewModel(
     private val statisticsRepository: StatisticsRepository,
     private val appPreferencesRepository: AppPreferencesRepository
 ) : ViewModel() {
+
+    private fun LocalDateTime.toEpochMillis(): Long =
+        atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     private val exerciseId: Long = savedStateHandle["exerciseId"] ?: -1L
 
@@ -88,8 +103,7 @@ class ExerciseStatsViewModel(
         viewModelScope.launch {
             try {
                 val exercise = exerciseRepository.getExerciseById(exerciseId)
-                val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
-                    .filter { !it.isWarmup && it.reps > 0 }
+                val sets = loadHistoricalSets()
 
                 _uiState.value = _uiState.value.copy(
                     exercise = exercise,
@@ -130,7 +144,10 @@ class ExerciseStatsViewModel(
             .toInstant()
             .toEpochMilli()
 
-        val weekSets = statisticsRepository.getWorkSetsCompletedSince(startOfWeekMillis)
+        val weekSets = statisticsRepository.getWorkSetsCompletedBetween(
+            startOfWeekMillis,
+            LocalDateTime.now().toEpochMillis()
+        )
         val exercises = exerciseRepository.getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
         val relevantGroups = setOf(exercise.primaryMuscleGroup) + exercise.secondaryMuscleGroups
 
@@ -154,8 +171,7 @@ class ExerciseStatsViewModel(
     fun onMetricSelected(metric: ChartMetric) {
         viewModelScope.launch {
             try {
-                val sets = statisticsRepository.getSetsForExerciseList(exerciseId)
-                    .filter { !it.isWarmup && it.reps > 0 }
+                val sets = loadHistoricalSets()
                 _uiState.value = _uiState.value.copy(selectedMetric = metric)
                 updateChartData(sets, metric)
             } catch (e: Exception) {
@@ -166,27 +182,52 @@ class ExerciseStatsViewModel(
         }
     }
 
+    /**
+     * Historical charts intentionally exclude active sessions and future-dated
+     * rows. The repository query owns the session/timestamp predicates so this
+     * screen cannot accidentally drift back to the live-training query.
+     */
+    private suspend fun loadHistoricalSets(): List<WorkoutSet> =
+        statisticsRepository.getCompletedSetsForExerciseList(
+            exerciseId = exerciseId,
+            nowEpochMillis = LocalDateTime.now().toEpochMillis()
+        )
+            .filter { !it.isWarmup && it.reps > 0 }
+            .sortedWith(compareByDescending<WorkoutSet> { it.completedAt }.thenByDescending { it.id })
+
     private fun updateChartData(sets: List<WorkoutSet>, metric: ChartMetric) {
         val sessions = aggregateBySession(sets)
         if (sessions.isEmpty()) {
-            _uiState.value = _uiState.value.copy(chartData = emptyList(), e1rmProgression = null)
+            _uiState.value = _uiState.value.copy(
+                chartData = emptyList(),
+                lastWorkoutComparison = null,
+                e1rmProgression = null
+            )
             return
         }
 
-        val ordered = sessions.sortedBy { it.latestTime }
+        val ordered = sessions.sortedWith(
+            compareBy<SessionAggregate> { it.latestTime }.thenBy { it.sessionId }
+        )
         val e1rmSeries = ordered.map { it.maxE1Rm }
+        val chartData = ordered.map { agg ->
+            val date = agg.latestTime
+            ChartDataPoint(
+                dateLabel = "${date.dayOfMonth}.${date.monthValue}",
+                value = when (metric) {
+                    ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
+                    ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()
+                    ChartMetric.VOLUME -> agg.totalVolume.toFloat()
+                },
+                timestamp = date,
+                sessionId = agg.sessionId
+            )
+        }
 
         _uiState.value = _uiState.value.copy(
-            chartData = ordered.map { agg ->
-                val date = agg.latestTime
-                ChartDataPoint(
-                    dateLabel = "${date.dayOfMonth}.${date.monthValue}",
-                    value = when (metric) {
-                        ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
-                        ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()
-                        ChartMetric.VOLUME -> agg.totalVolume.toFloat()
-                    }
-                )
+            chartData = chartData,
+            lastWorkoutComparison = chartData.takeIf { it.size >= 2 }?.let {
+                ChartComparison(previous = it[it.lastIndex - 1], latest = it.last())
             },
             e1rmProgression = E1rmProgression(
                 first = e1rmSeries.first().toFloat(),
@@ -197,6 +238,7 @@ class ExerciseStatsViewModel(
     }
 
     private data class SessionAggregate(
+        val sessionId: Long,
         val latestTime: LocalDateTime,
         val maxWeight: Double,
         val maxE1Rm: Double,
@@ -208,9 +250,10 @@ class ExerciseStatsViewModel(
             val e1rm = WorkoutCalculations.calculateE1RM(set.weightKg, set.reps)
             val prev = acc[set.sessionId]
             acc[set.sessionId] = if (prev == null) {
-                SessionAggregate(set.completedAt, set.weightKg, e1rm, set.weightKg * set.reps)
+                SessionAggregate(set.sessionId, set.completedAt, set.weightKg, e1rm, set.weightKg * set.reps)
             } else {
                 SessionAggregate(
+                    sessionId = prev.sessionId,
                     latestTime = if (set.completedAt > prev.latestTime) set.completedAt else prev.latestTime,
                     maxWeight = maxOf(prev.maxWeight, set.weightKg),
                     maxE1Rm = maxOf(prev.maxE1Rm, e1rm),

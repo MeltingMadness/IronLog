@@ -1,0 +1,18 @@
+{
+  "pdf_pages": 7,
+  "pdf_pages_visually_reviewed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "embedded_original_screenshots": 7,
+  "vector_mockups": 7,
+  "html_anchor_targets": "valid",
+  "html_browser_render": "not tested; prior local URL policy restriction respected",
+  "product_code_changes": false,
+  "emulators_started": false
+}

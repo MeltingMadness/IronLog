@@ -9,6 +9,7 @@ import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -81,7 +82,7 @@ class MetaPlanEditorViewModelTest {
     }
 
     @Test
-    fun `initialize deduplicates repeated trainingPlanIds from legacy meta data`() = runTest {
+    fun `initialize preserves repeated trainingPlanIds in rotation order`() = runTest {
         val planRepo = FakeTrainingPlanRepository()
         val metaRepo = FakeMetaTrainingPlanRepository()
         val planAId = planRepo.savePlan(TrainingPlan(name = "A"))
@@ -91,8 +92,8 @@ class MetaPlanEditorViewModelTest {
                 name = "Meta",
                 items = listOf(
                     MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 0),
-                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 1),
-                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 2)
+                    MetaTrainingPlanItem(trainingPlanId = planBId, orderIndex = 1),
+                    MetaTrainingPlanItem(trainingPlanId = planAId, orderIndex = 2)
                 )
             )
         )
@@ -101,6 +102,50 @@ class MetaPlanEditorViewModelTest {
         vm.initialize(metaId)
         advanceUntilIdle()
 
-        assertEquals(listOf(planAId, planBId), vm.uiState.value.selectedPlanIds)
+        assertEquals(listOf(planAId, planBId, planAId), vm.uiState.value.selectedPlanIds)
+    }
+
+    @Test
+    fun `adding a repeated plan and saving preserves the A B A rotation`() = runTest {
+        val planRepo = FakeTrainingPlanRepository()
+        val metaRepo = FakeMetaTrainingPlanRepository()
+        val planAId = planRepo.savePlan(TrainingPlan(name = "A"))
+        val planBId = planRepo.savePlan(TrainingPlan(name = "B"))
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        advanceUntilIdle()
+
+        vm.updateName("Rotation")
+        vm.addPlan(planAId)
+        vm.addPlan(planBId)
+        vm.addPlan(planAId)
+        vm.saveMetaPlan()
+        advanceUntilIdle()
+
+        val saved = metaRepo.getAllMetaPlans().first().single()
+        assertEquals(
+            listOf(planAId, planBId, planAId),
+            saved.items.sortedBy { it.orderIndex }.map { it.trainingPlanId }
+        )
+    }
+
+    @Test
+    fun `saveMetaPlan ignores duplicate requests while save is in flight`() = runTest {
+        val planRepo = FakeTrainingPlanRepository()
+        val metaRepo = FakeMetaTrainingPlanRepository()
+        val planId = planRepo.savePlan(TrainingPlan(name = "Kraft"))
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        advanceUntilIdle()
+
+        vm.updateName("Meine Rotation")
+        vm.togglePlan(planId)
+        vm.saveMetaPlan()
+        vm.saveMetaPlan()
+
+        assertTrue(vm.uiState.value.isSaving)
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.isSaved)
+        assertEquals(1, metaRepo.getAllMetaPlans().first().size)
+        assertTrue(!vm.uiState.value.isSaving)
     }
 }

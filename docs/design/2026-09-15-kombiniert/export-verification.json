@@ -1,0 +1,53 @@
+{
+  "exporter": "Open Design 0.22.2 official image export",
+  "images": [
+    {
+      "source": "A-logging.html",
+      "image": "A-logging.png",
+      "sha256": "ba7f23042d8a35af369f24a125fe58236c72bcafd2367ca190b06ecdd8f3a72f",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/A-logging.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/A-logging.png",
+        "bytes": 163889,
+        "format": "image"
+      }
+    },
+    {
+      "source": "B-planung.html",
+      "image": "B-planung.png",
+      "sha256": "0ce7987695255e619889d98b53641734ff41a53f93c21a08a79beb8be7fdf363",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/B-planung.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/B-planung.png",
+        "bytes": 171180,
+        "format": "image"
+      }
+    },
+    {
+      "source": "C-abschluss.html",
+      "image": "C-abschluss.png",
+      "sha256": "bb7c766e14c966ac2a683e0686d5dd71b8d4964102bc07360e2793abed314468",
+      "export": {
+        "ok": true,
+        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/C-abschluss.png",
+        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/C-abschluss.png",
+        "bytes": 184973,
+        "format": "image"
+      }
+    }
+  ],
+  "visualReview": {
+    "status": "passed",
+    "boards": 3,
+    "screens": 7,
+    "checks": [
+      "No clipped board footer or viewport scrollbars",
+      "Exercise and radio-option subtitles clearly separated",
+      "Continue training remains primary action",
+      "Plan unchanged remains default choice",
+      "2 completed sets and 1140 kg displayed consistently"
+    ]
+  }
+}

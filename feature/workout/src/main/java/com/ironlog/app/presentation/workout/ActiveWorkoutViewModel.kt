@@ -21,11 +21,14 @@ import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.util.AppLogger
 import com.ironlog.app.domain.util.RpeAutoregulation
+import com.ironlog.app.domain.util.WorkoutNumericValidation
+import com.ironlog.shared.readinessdata.SetIntention
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -59,6 +62,7 @@ data class ExerciseWithSets(
     val exercise: Exercise,
     val sets: List<WorkoutSet>,
     val planTarget: WorkoutPlanTarget? = null,
+    val originalPlanTarget: WorkoutPlanTarget? = null,
     val previousSession: PreviousExerciseSessionUi? = null
 ) {
     val supersetGroupId: Int?
@@ -93,7 +97,8 @@ data class NextSetRecommendationUi(
     val recommendedWeightKg: Double,
     val lastWeightKg: Double,
     val lastRpe: Double,
-    val targetRpe: Double?
+    val targetRpe: Double?,
+    val backoffPercent: Double = RpeAutoregulation.DEFAULT_BACKOFF_PERCENT
 ) {
     val isOvershoot: Boolean
         get() = lastRpe >= RpeAutoregulation.OVERSHOOT_RPE
@@ -101,7 +106,7 @@ data class NextSetRecommendationUi(
     /** Dedicated backoff-set load; only meaningful after an overshoot. */
     val backoffWeightKg: Double?
         get() = if (isOvershoot) {
-            RpeAutoregulation.backoffSetWeightKg(lastWeightKg)
+            RpeAutoregulation.backoffSetWeightKg(lastWeightKg, backoffPercent)
         } else {
             null
         }
@@ -119,14 +124,16 @@ sealed interface WorkoutRetryDescriptor {
         val weightKg: Double,
         val setType: SetType,
         val intensity: String,
-        val submissionId: Long
+        val submissionId: Long,
+        val intention: SetIntention
     ) : WorkoutRetryDescriptor
 
     data class UpdateSet(
         val setId: Long,
         val reps: Int,
         val weightKg: Double,
-        val intensity: String
+        val intensity: String,
+        val intention: SetIntention?
     ) : WorkoutRetryDescriptor
 
     data class DeleteSet(val setId: Long) : WorkoutRetryDescriptor
@@ -152,6 +159,21 @@ data class ActiveWorkoutUiState(
     val logSuccessSubmissions: Set<Long> = emptySet(),
     val updateInFlightBySet: Map<Long, Int> = emptyMap(),
     val updateSuccessCountBySet: Map<Long, Int> = emptyMap(),
+    /**
+     * Why each logged set ended, keyed by durable set id. A set without a record is
+     * [SetIntention.UNKNOWN]; the map never invents an answer for legacy data.
+     */
+    val setIntentions: Map<Long, SetIntention> = emptyMap(),
+    /**
+     * True once the stored intentions were read at least once. While false the picker must
+     * not present [SetIntention.UNKNOWN] as if it were a stored answer.
+     */
+    val setIntentionsLoaded: Boolean = false,
+    /**
+     * True when the readiness side channel could not be read. The failure is surfaced in
+     * the UI and never crashes the view model scope.
+     */
+    val setIntentionsFailed: Boolean = false,
     val finishState: WorkoutFinishState = WorkoutFinishState.Idle
 )
 
@@ -208,17 +230,115 @@ internal fun applyDeloadToTarget(
     DeloadMode.HALVE_SET_VOLUME -> target.copy(
         target = target.target.copy(
             sets = maxOf(1, (target.target.sets + 1) / 2)
-        )
+        ),
+        setTargets = target.setTargets.let { slots ->
+            var work = 0
+            slots.filter { it.kind == "WARMUP" || ++work <= maxOf(1, (target.target.sets + 1) / 2) }
+        }
     )
     DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT -> target.copy(
         target = target.target.copy(
             weightKg = roundToOneDecimal(target.target.weightKg * 0.85)
-        )
+        ),
+        setTargets = target.setTargets.map { it.copy(weightKg = roundToOneDecimal(it.weightKg * 0.85)) }
     )
 }
 
 private fun roundToOneDecimal(value: Double): Double =
     kotlin.math.round(value * 10.0) / 10.0
+
+/**
+ * Returns whether logging [newSetType] completes the planned slots for one exact row.
+ * Planned slots are fulfilled by NORMAL sets only; warmups, drop sets and failure sets remain
+ * useful workout evidence but must not make a planned exercise appear complete. The active
+ * deload mode changes the effective set target used for this decision.
+ */
+internal fun isPlannedExerciseComplete(
+    planTarget: WorkoutPlanTarget?,
+    deloadMode: DeloadMode?,
+    previousSets: List<WorkoutSet>,
+    newSetType: SetType
+): Boolean {
+    val effectiveTarget = planTarget?.let { applyDeloadToTarget(it, deloadMode) } ?: return false
+    val targetSetCount = effectiveTarget.target.sets
+    if (targetSetCount <= 0) return false
+
+    val normalSetCount = previousSets.count { it.setType == SetType.NORMAL } +
+        if (newSetType == SetType.NORMAL) 1 else 0
+    return normalSetCount >= targetSetCount
+}
+
+private fun configuredBackoffPercent(config: ProgressionConfig?): Double = when (config) {
+    is ProgressionConfig.Linear -> config.failurePolicy.backoffPercent
+    is ProgressionConfig.DoubleProgression -> config.failurePolicy.backoffPercent
+    is ProgressionConfig.TotalReps -> config.failurePolicy.backoffPercent
+    is ProgressionConfig.RpeRir -> config.failurePolicy.backoffPercent
+    null,
+    is ProgressionConfig.Manual,
+    is ProgressionConfig.Invalid -> RpeAutoregulation.DEFAULT_BACKOFF_PERCENT
+}
+
+private const val REST_TIMER_PAYLOAD_SEPARATOR = "#"
+private const val REST_TIMER_STATE_SEPARATOR = ";"
+private const val REST_TIMER_FIELD_SEPARATOR = ","
+private const val REST_TIMER_PLANNED = "planned"
+private const val REST_TIMER_AD_HOC = "adhoc"
+
+private fun encodeRestTimerState(
+    timers: Map<WorkoutExerciseKey, RestTimerUi>,
+    sessionStartEpochMillis: Long
+): String {
+    val records = timers.entries.joinToString(REST_TIMER_STATE_SEPARATOR) { (key, timer) ->
+        val keyType = when (key) {
+            is WorkoutExerciseKey.Planned -> REST_TIMER_PLANNED
+            is WorkoutExerciseKey.AdHoc -> REST_TIMER_AD_HOC
+        }
+        val keyId = when (key) {
+            is WorkoutExerciseKey.Planned -> key.snapshotId
+            is WorkoutExerciseKey.AdHoc -> key.exerciseId
+        }
+        listOf(
+            keyType,
+            keyId.toString(),
+            timer.startTime.toEpochMilli().toString(),
+            timer.durationSeconds.toString()
+        ).joinToString(REST_TIMER_FIELD_SEPARATOR)
+    }
+    return sessionStartEpochMillis.toString() + REST_TIMER_PAYLOAD_SEPARATOR + records
+}
+
+private fun decodeRestTimerState(
+    encodedState: String,
+    expectedSessionStartEpochMillis: Long
+): Map<WorkoutExerciseKey, RestTimerUi> {
+    val payloadSeparatorIndex = encodedState.indexOf(REST_TIMER_PAYLOAD_SEPARATOR)
+    if (payloadSeparatorIndex <= 0) return emptyMap()
+    val storedSessionStart = encodedState
+        .substring(0, payloadSeparatorIndex)
+        .toLongOrNull()
+        ?: return emptyMap()
+    if (storedSessionStart != expectedSessionStartEpochMillis) return emptyMap()
+
+    val records = encodedState.substring(payloadSeparatorIndex + 1)
+    if (records.isBlank()) return emptyMap()
+    return records.split(REST_TIMER_STATE_SEPARATOR).mapNotNull { record ->
+        val fields = record.split(REST_TIMER_FIELD_SEPARATOR, limit = 4)
+        if (fields.size != 4) return@mapNotNull null
+        val keyId = fields[1].toLongOrNull() ?: return@mapNotNull null
+        val startEpochMillis = fields[2].toLongOrNull() ?: return@mapNotNull null
+        val durationSeconds = fields[3].toIntOrNull()?.takeIf { it >= 0 }
+            ?: return@mapNotNull null
+        val key = when (fields[0]) {
+            REST_TIMER_PLANNED -> WorkoutExerciseKey.Planned(keyId)
+            REST_TIMER_AD_HOC -> WorkoutExerciseKey.AdHoc(keyId)
+            else -> return@mapNotNull null
+        }
+        key to RestTimerUi(
+            startTime = Instant.ofEpochMilli(startEpochMillis),
+            durationSeconds = durationSeconds
+        )
+    }.toMap()
+}
 
 class ActiveWorkoutViewModel(
     private val savedStateHandle: SavedStateHandle,
@@ -238,6 +358,14 @@ class ActiveWorkoutViewModel(
     private val addedExercises = MutableStateFlow<List<Exercise>>(emptyList())
     private val _error = MutableStateFlow<WorkoutErrorUi?>(null)
     private val _restTimers = MutableStateFlow<Map<WorkoutExerciseKey, RestTimerUi>>(emptyMap())
+    private var restTimerSessionStartEpochMillis: Long? = null
+    /**
+     * Serializes restore, in-memory timer updates and their durable writes. The restore read can
+     * suspend on DataStore; keeping it under this mutex prevents a later cleanup write from
+     * racing a timer mutation that started while the read was in flight.
+     */
+    private val restTimerMutationMutex = Mutex()
+    private var restTimerMutationGeneration = 0L
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
@@ -308,6 +436,7 @@ class ActiveWorkoutViewModel(
                 sets = sets.filter { it.planTargetSnapshotId == target.id }
                     .sortedBy { it.setNumber },
                 planTarget = applyDeloadToTarget(target, activeDeloadMode),
+                originalPlanTarget = target,
                 previousSession = previousSession?.let {
                     PreviousExerciseSessionUi(
                         sessionId = it.sessionId,
@@ -377,7 +506,8 @@ class ActiveWorkoutViewModel(
                 recommendedWeightKg = recommended,
                 lastWeightKg = lastWorkSet.weightKg,
                 lastRpe = lastRpe,
-                targetRpe = targetRpe
+                targetRpe = targetRpe,
+                backoffPercent = configuredBackoffPercent(row.planTarget?.config)
             )
         }.toMap()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
@@ -410,13 +540,44 @@ class ActiveWorkoutViewModel(
         )
     }
 
+    /**
+     * The stored intention per durable set id plus whether that read actually succeeded.
+     * The loaded/failed pair is what keeps an unread or unreadable channel from being
+     * presented as "no answer", which would silently erase a stored intention on edit.
+     */
+    private data class IntentionSnapshot(
+        val bySetId: Map<Long, SetIntention> = emptyMap(),
+        val loaded: Boolean = false,
+        val failed: Boolean = false
+    )
+
+    private val intentions: StateFlow<IntentionSnapshot> =
+        workoutRepository.observeSetIntentions()
+            .map { IntentionSnapshot(bySetId = it, loaded = true) }
+            .catch { error ->
+                // A corrupt readiness row degrades the picker instead of crashing the
+                // workout screen; the UI shows a note rather than faking UNKNOWN.
+                AppLogger.w(
+                    "ActiveWorkoutVM",
+                    "Satzabsichten konnten nicht geladen werden: ${error.message}",
+                    error
+                )
+                emit(IntentionSnapshot(failed = true))
+            }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                IntentionSnapshot()
+            )
+
     val uiState: StateFlow<ActiveWorkoutUiState> = combine(
         sessionPhase,
-        exercisesWithSets,
+        combine(exercisesWithSets, intentions) { exercises, snapshot -> exercises to snapshot },
         nextSetRecommendations,
         chromeState,
         operationState
-    ) { phase, exercises, recommendations, chrome, operation ->
+    ) { phase, exercisesAndIntentions, recommendations, chrome, operation ->
+        val (exercises, intentionSnapshot) = exercisesAndIntentions
         ActiveWorkoutUiState(
             sessionPhase = phase,
             exercisesWithSets = exercises,
@@ -429,6 +590,9 @@ class ActiveWorkoutViewModel(
             logSuccessSubmissions = operation.logSuccessSubmissions,
             updateInFlightBySet = operation.updateInFlightBySet,
             updateSuccessCountBySet = operation.updateSuccessCountBySet,
+            setIntentions = intentionSnapshot.bySetId,
+            setIntentionsLoaded = intentionSnapshot.loaded,
+            setIntentionsFailed = intentionSnapshot.failed,
             finishState = operation.finishState
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ActiveWorkoutUiState())
@@ -436,6 +600,7 @@ class ActiveWorkoutViewModel(
     init {
         restoreAddedExercises()
         persistAddedExerciseIds()
+        restoreAndPersistRestTimers()
         observeExerciseReconciliation()
         recoverCompletedSession()
     }
@@ -469,6 +634,129 @@ class ActiveWorkoutViewModel(
                 savedStateHandle[KEY_ADDED_EXERCISE_IDS] = exercises.map { it.id }
             }
         }
+    }
+
+    /**
+     * Rest timers are runtime UI state, but losing one during an Android process restart is
+     * surprising while the workout session itself remains active. The app preferences DataStore
+     * provides durable storage, keyed by session, so the timer can be reconstructed in a fresh
+     * ViewModel. The payload stays opaque to the preferences repository.
+     */
+    private fun restoreAndPersistRestTimers() {
+        viewModelScope.launch {
+            restTimerMutationMutex.withLock {
+                val hasLiveMutation = restTimerMutationGeneration > 0L
+                val sessionResult = runCatching { workoutRepository.getSessionById(sessionId) }
+                    .onFailure { e ->
+                        AppLogger.w(
+                            "ActiveWorkoutVM",
+                            "Aktive Session fuer Rest-Timer konnte nicht geladen werden: ${e.message}",
+                            e
+                        )
+                    }
+                val session = sessionResult.getOrNull()
+                val sessionStartEpochMillis = session?.startTime
+                    ?.atZone(ZoneId.systemDefault())
+                    ?.toInstant()
+                    ?.toEpochMilli()
+                restTimerSessionStartEpochMillis = sessionStartEpochMillis
+
+                val encodedStateResult = runCatching {
+                    appPreferencesRepository.readRestTimerState(sessionId)
+                }
+                val encodedState = encodedStateResult.getOrNull()
+
+                if (sessionResult.isFailure || encodedStateResult.isFailure) {
+                    // Keep any live state intact when either read fails. A transient DataStore or
+                    // database error must not turn a visible timer into an empty map. Subsequent
+                    // timer mutations still persist through [replaceRestTimers]. If state is
+                    // already present, refresh its durable copy while the mutex is held.
+                    if (_restTimers.value.isNotEmpty() && sessionStartEpochMillis != null) {
+                        persistRestTimerState(
+                            encodeRestTimerState(_restTimers.value, sessionStartEpochMillis)
+                        )
+                    }
+                    if (encodedStateResult.isFailure) {
+                        AppLogger.w(
+                            "ActiveWorkoutVM",
+                            "Rest-Timer konnten nicht gelesen werden: ${encodedStateResult.exceptionOrNull()?.message}",
+                            encodedStateResult.exceptionOrNull()
+                        )
+                    }
+                    return@withLock
+                }
+
+                // Restore only a still-active session. A completed or missing session must clear
+                // any stale payload left behind by navigation, import, or a reused database id.
+                // If a timer mutation won the mutex before this restore started, preserve that
+                // live state and make it the durable source of truth instead of overwriting it
+                // with an older payload (or an empty read after a failed write).
+                if (session?.endTime != null || session == null || sessionStartEpochMillis == null) {
+                    _restTimers.value = emptyMap()
+                } else if (!hasLiveMutation) {
+                    if (session?.endTime == null && sessionStartEpochMillis != null && encodedState != null) {
+                        _restTimers.value = decodeRestTimerState(
+                            encodedState = encodedState,
+                            expectedSessionStartEpochMillis = sessionStartEpochMillis
+                        )
+                    } else {
+                        _restTimers.value = emptyMap()
+                    }
+                }
+
+                if (session?.endTime != null || session == null || sessionStartEpochMillis == null) {
+                    persistRestTimerState(null)
+                } else if (hasLiveMutation) {
+                    persistRestTimerState(
+                        if (_restTimers.value.isEmpty()) {
+                            null
+                        } else {
+                            encodeRestTimerState(_restTimers.value, sessionStartEpochMillis)
+                        }
+                    )
+                } else if (encodedState != null && _restTimers.value.isEmpty()) {
+                    // Invalid or stale payload (including a different session start) is removed
+                    // so it cannot be reconsidered on every subsequent ViewModel recreation.
+                    persistRestTimerState(null)
+                }
+            }
+        }
+    }
+
+    private suspend fun persistRestTimerState(encodedState: String?) {
+        runCatching {
+            appPreferencesRepository.writeRestTimerState(
+                sessionId = sessionId,
+                encodedState = encodedState
+            )
+        }.onFailure { e ->
+            AppLogger.w(
+                "ActiveWorkoutVM",
+                "Rest-Timer konnten nicht gespeichert werden: ${e.message}",
+                e
+            )
+        }
+    }
+
+    private suspend fun replaceRestTimers(
+        transform: (Map<WorkoutExerciseKey, RestTimerUi>) -> Map<WorkoutExerciseKey, RestTimerUi>
+    ) {
+        restTimerMutationMutex.withLock {
+            restTimerMutationGeneration += 1L
+            val updatedTimers = transform(_restTimers.value)
+            _restTimers.value = updatedTimers
+            val sessionStartEpochMillis = restTimerSessionStartEpochMillis
+            val encodedState = if (updatedTimers.isEmpty() || sessionStartEpochMillis == null) {
+                null
+            } else {
+                encodeRestTimerState(updatedTimers, sessionStartEpochMillis)
+            }
+            persistRestTimerState(encodedState)
+        }
+    }
+
+    private suspend fun clearRestTimers() {
+        replaceRestTimers { emptyMap() }
     }
 
     private fun observeExerciseReconciliation() {
@@ -521,7 +809,8 @@ class ActiveWorkoutViewModel(
         setType: SetType = SetType.NORMAL,
         intensity: String = "",
         submissionId: Long = nextSubmissionId(),
-        key: WorkoutExerciseKey = WorkoutExerciseKey.AdHoc(exerciseId)
+        key: WorkoutExerciseKey = WorkoutExerciseKey.AdHoc(exerciseId),
+        intention: SetIntention = SetIntention.UNKNOWN
     ) {
         viewModelScope.launch {
             if ((operationState.value.logInFlightByExercise[key] ?: 0) > 0) return@launch
@@ -532,6 +821,7 @@ class ActiveWorkoutViewModel(
             try {
                 mutationMutex.withLock {
                     if (!sessionIsMutable()) return@withLock
+                    requireValidSetInput(reps, weightKg)
                     require(key !is WorkoutExerciseKey.AdHoc || key.exerciseId == exerciseId) {
                         "Ad-hoc exercise key does not match exercise"
                     }
@@ -580,28 +870,32 @@ class ActiveWorkoutViewModel(
                     } else {
                         null
                     }
-                    workoutRepository.addSet(set)
+                    workoutRepository.addSet(set, intention)
                     persisted = true
                     if (setType != SetType.WARMUP && recordsBefore != null) {
                         emitImprovedRecords(exerciseId, recordsBefore)
                     }
-                    // With auto-rest enabled in settings, a countdown timer starts after
-                    // every work set - no matter whether the planned set count is already
-                    // reached (extra sets, sets re-added after a delete). Warmup sets never
-                    // start a timer and cancel a pending one for the same exercise. Timers
-                    // are cleared when the workout is finished (see finishWorkout).
-                    _restTimers.update { currentTimers ->
-                        if (setType == SetType.WARMUP) {
+                    // A zero duration selects the elapsed-time display. Count only NORMAL sets
+                    // against the deload-adjusted target for this exact planned row.
+                    val plannedTarget = (key as? WorkoutExerciseKey.Planned)?.let { planned ->
+                        planTargets.value.find { it.id == planned.snapshotId }
+                    }
+                    val exerciseComplete = isPlannedExerciseComplete(
+                        planTarget = plannedTarget,
+                        deloadMode = prefs.deloadMode,
+                        previousSets = persistedSets,
+                        newSetType = setType
+                    )
+                    replaceRestTimers { currentTimers ->
+                        if (setType == SetType.WARMUP || exerciseComplete) {
                             currentTimers - key
-                        } else if (prefs.autoRestTimerEnabled) {
+                        } else {
                             currentTimers + (
                                 key to RestTimerUi(
                                     startTime = completedAtInstant,
-                                    durationSeconds = prefs.defaultRestTimeSeconds
+                                    durationSeconds = if (prefs.autoRestTimerEnabled) prefs.defaultRestTimeSeconds else 0
                                 )
                             )
-                        } else {
-                            currentTimers
                         }
                     }
                 }
@@ -620,7 +914,8 @@ class ActiveWorkoutViewModel(
                         weightKg = weightKg,
                         setType = setType,
                         intensity = intensity,
-                        submissionId = submissionId
+                        submissionId = submissionId,
+                        intention = intention
                     )
                 )
             } finally {
@@ -637,8 +932,12 @@ class ActiveWorkoutViewModel(
     }
 
     fun dismissRestTimer(key: WorkoutExerciseKey) {
-        _restTimers.update { current ->
-            current - key
+        viewModelScope.launch {
+            mutationMutex.withLock {
+                replaceRestTimers { current ->
+                    current - key
+                }
+            }
         }
     }
 
@@ -666,11 +965,17 @@ class ActiveWorkoutViewModel(
 
     private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {
         if (intensity.isBlank()) return null
-        val rawVal = parseDecimal(intensity) ?: return null
-        return when (intensitySystem) {
-            IntensitySystem.OFF -> null
-            IntensitySystem.RPE -> rawVal
-            IntensitySystem.RIR -> 10.0 - rawVal
+        val rawVal = parseDecimal(intensity)
+            ?: throw IllegalArgumentException("Ungültiger ${intensitySystem.displayName}-Wert")
+        return WorkoutNumericValidation.storedRpe(rawVal, intensitySystem)
+    }
+
+    private fun requireValidSetInput(reps: Int, weightKg: Double) {
+        require(WorkoutNumericValidation.isValidReps(reps)) {
+            "Wiederholungen müssen größer als 0 sein"
+        }
+        require(WorkoutNumericValidation.isValidWeightKg(weightKg)) {
+            "Gewicht muss endlich und nicht negativ sein"
         }
     }
 
@@ -729,7 +1034,13 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    fun updateSet(setId: Long, reps: Int, weightKg: Double, intensity: String = "") {
+    fun updateSet(
+        setId: Long,
+        reps: Int,
+        weightKg: Double,
+        intensity: String = "",
+        intention: SetIntention? = null
+    ) {
         viewModelScope.launch {
             operationState.update {
                 it.copy(updateInFlightBySet = incrementCounter(it.updateInFlightBySet, setId))
@@ -737,30 +1048,10 @@ class ActiveWorkoutViewModel(
             try {
                 mutationMutex.withLock {
                     if (!sessionIsMutable()) return@withLock
-                    // A cleared/invalid reps or a negative/non-finite weight must never be
-                    // persisted. Raise an error instead of silently returning; for reps the
-                    // edit still counts as handled so the edit row leaves edit mode and the
-                    // user sees the feedback via the error snackbar.
-                    if (reps <= 0 || weightKg < 0.0 || !weightKg.isFinite()) {
-                        setError(
-                            message = if (reps <= 0) {
-                                "Wiederholungen müssen größer als 0 sein"
-                            } else {
-                                "Ungültiges Gewicht"
-                            }
-                        )
-                        if (reps <= 0) {
-                            operationState.update {
-                                it.copy(
-                                    updateSuccessCountBySet = incrementCounter(
-                                        it.updateSuccessCountBySet,
-                                        setId
-                                    )
-                                )
-                            }
-                        }
-                        return@withLock
-                    }
+                    // Failed validation must leave the edit row open so the user's values can be
+                    // corrected in place. The retry descriptor below also keeps the submitted
+                    // values available when the repository is temporarily unavailable.
+                    requireValidSetInput(reps, weightKg)
 
                     val sets = workoutRepository.getSetsForSessionList(sessionId)
                     val set = sets.find { it.id == setId } ?: return@withLock
@@ -787,7 +1078,7 @@ class ActiveWorkoutViewModel(
                         rpe = newRpe
                     )
                     val recordsBefore = snapshotRecordsBefore(updatedSet.exerciseId)
-                    workoutRepository.updateSet(updatedSet)
+                    workoutRepository.updateSet(updatedSet, intention)
                     if (recordsBefore != null) {
                         emitImprovedRecords(updatedSet.exerciseId, recordsBefore)
                     }
@@ -807,7 +1098,8 @@ class ActiveWorkoutViewModel(
                         setId = setId,
                         reps = reps,
                         weightKg = weightKg,
-                        intensity = intensity
+                        intensity = intensity,
+                        intention = intention
                     )
                 )
             } finally {
@@ -836,7 +1128,7 @@ class ActiveWorkoutViewModel(
                                 it.copy(finishState = WorkoutFinishState.CompletedWithoutReview)
                             }
                             // No session left to rest between sets of.
-                            _restTimers.value = emptyMap()
+                            clearRestTimers()
                         }
                         session.endTime != null -> {
                             showFinishDialog.value = false
@@ -845,7 +1137,7 @@ class ActiveWorkoutViewModel(
                             }
                             generateAfterFinish = true
                             // The session is over; pending rest timers must not linger.
-                            _restTimers.value = emptyMap()
+                            clearRestTimers()
                         }
                         else -> {
                             discardEmptySession =
@@ -858,6 +1150,7 @@ class ActiveWorkoutViewModel(
                                         finishState = WorkoutFinishState.CompletedWithoutReview
                                     )
                                 }
+                                clearRestTimers()
                             } else {
                                 workoutRepository.finishWorkout(sessionId)
                                 showFinishDialog.value = false
@@ -866,7 +1159,7 @@ class ActiveWorkoutViewModel(
                                 }
                                 generateAfterFinish = true
                                 // The session is over; pending rest timers must not linger.
-                                _restTimers.value = emptyMap()
+                                clearRestTimers()
                             }
                         }
                     }
@@ -910,6 +1203,7 @@ class ActiveWorkoutViewModel(
                     val session = workoutRepository.getSessionById(sessionId)
                     if (session?.endTime != null) {
                         completedSessionId = session.id
+                        clearRestTimers()
                         operationState.update { it.copy(finishState = WorkoutFinishState.Generating) }
                     }
                 }
@@ -979,13 +1273,15 @@ class ActiveWorkoutViewModel(
                 weightKg = retry.weightKg,
                 setType = retry.setType,
                 intensity = retry.intensity,
-                submissionId = retry.submissionId
+                submissionId = retry.submissionId,
+                intention = retry.intention
             )
             is WorkoutRetryDescriptor.UpdateSet -> updateSet(
                 setId = retry.setId,
                 reps = retry.reps,
                 weightKg = retry.weightKg,
-                intensity = retry.intensity
+                intensity = retry.intensity,
+                intention = retry.intention
             )
             is WorkoutRetryDescriptor.DeleteSet -> deleteSet(retry.setId)
             is WorkoutRetryDescriptor.FinishWorkout -> finishWorkout()

@@ -1,0 +1,49 @@
+{
+  "export": "Open Design official image export",
+  "images": [
+    {
+      "name": "01-logging-android.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "c8b655a4eccd42a5bd28cce7ec21d1ca2d3a5def403ff7ff1a44d3a20a922331"
+    },
+    {
+      "name": "02-logging-ios.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "e5ddc81e8a85eef396ff85bb121c500be938b2056ff80d2783a8abfc1595c2be"
+    },
+    {
+      "name": "03-exercise-picker.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "e0b0d2b96e8a97788fb5a56ce27c3f4ab0c47bd9c34e902151145292c8cf40ce"
+    },
+    {
+      "name": "04-plan-create.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "df5355825108f31ad699152dd6c261d4a67fa4cad1019ca8b01e541c77cbe39b"
+    },
+    {
+      "name": "05-finish-early.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "eec2d9614bc2591735510d202f4945595acc9597fff2e830a66748b86f964795"
+    },
+    {
+      "name": "06-completion.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "e09f6c8219db6d304eb9e649a349b10ccddd0d9074570a1bd8157558d5f5358b"
+    },
+    {
+      "name": "07-plan-changes.png",
+      "width": 1440,
+      "height": 1100,
+      "sha256": "72b822519530e44916ed5600fe69fb4a3cc5868cc61f9502d571b080063de38d"
+    }
+  ],
+  "visualReview": "All seven exports inspected: all three versions visible, no caption/header overlap, no export scrollbars. Existing design contents preserved.",
+  "scope": "Comparison artifact only; no app implementation or new functional QA."
+}

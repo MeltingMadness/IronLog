@@ -139,3 +139,28 @@ val Typography = Typography(
         fontFeatureSettings = "tnum"
     )
 )
+
+val AthleticHero = TextStyle(
+    fontFamily = FigtreeFamily,
+    fontWeight = FontWeight.Black,
+    fontSize = 32.sp,
+    lineHeight = 36.sp,
+    letterSpacing = (-1.0).sp,
+    fontFeatureSettings = "tnum"
+)
+
+val AthleticNumber = TextStyle(
+    fontFamily = FigtreeFamily,
+    fontWeight = FontWeight.ExtraBold,
+    fontSize = 20.sp,
+    lineHeight = 24.sp,
+    fontFeatureSettings = "tnum"
+)
+
+val AthleticLabel = TextStyle(
+    fontFamily = FigtreeFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize = 11.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 0.08.sp
+)

@@ -28,6 +28,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.heightIn
+import com.ironlog.shared.readinessdata.SetIntention
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,7 +45,9 @@ import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ProgressionScheme
 import com.ironlog.app.domain.model.ProgressionSuggestionStatus
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.LoadingScreen
@@ -53,8 +61,16 @@ import com.ironlog.app.presentation.progression.ProgressionReasonText
 import com.ironlog.app.presentation.progression.ProgressionReviewItemUi
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.feature.history.R as HistoryR
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+
+/**
+ * Keeps meaningful history rows visible. A zero-repetition FAILURE still records an attempt that
+ * reached failure before a repetition was completed; empty normal rows remain hidden.
+ */
+fun visibleHistorySets(sets: List<WorkoutSet>): List<WorkoutSet> =
+    sets.filter { it.reps > 0 || it.setType == SetType.FAILURE }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalSharedTransitionApi::class)
 @Composable
@@ -69,6 +85,30 @@ fun WorkoutDetailScreen(
         initialValue = AppPreferences()
     )
     val dims = ironLogDimens
+    var intentionSetId by remember { mutableStateOf<Long?>(null) }
+    intentionSetId?.let { setId ->
+        AlertDialog(
+            onDismissRequest = { if (!state.intentionSaving) intentionSetId = null },
+            title = { Text("Satzabsicht") },
+            text = {
+                Column {
+                    Text("Optional. Beschreibt, warum der Satz so endete. Die Trainingswerte bleiben erhalten.")
+                    state.intentionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    SetIntention.entries.forEach { value ->
+                        TextButton(
+                            onClick = { viewModel.updateSetIntention(setId, value) { intentionSetId = null } },
+                            enabled = state.intentionsLoaded && !state.intentionSaving,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                        ) {
+                            val current = state.setIntentions[setId] ?: SetIntention.UNKNOWN
+                            Text((if (current == value) "✓ " else "") + historyIntentionLabel(value))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { intentionSetId = null }, enabled = !state.intentionSaving) { Text("Abbrechen") } }
+        )
+    }
 
     IronLogScreenScaffold(
         topBar = {
@@ -109,6 +149,9 @@ fun WorkoutDetailScreen(
                 contentPadding = PaddingValues(dims.spacingMd),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
             ) {
+                state.intentionError?.let { message ->
+                    item { Text(message, color = MaterialTheme.colorScheme.error) }
+                }
                 item {
                     state.session?.let { session ->
                         Column(
@@ -191,20 +234,16 @@ fun WorkoutDetailScreen(
 
                             Spacer(modifier = Modifier.height(dims.spacingXs))
 
-                            exerciseDetail.sets.filter { it.reps > 0 }.forEach { set ->
+                            visibleHistorySets(exerciseDetail.sets).forEach { set ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = if (set.isWarmup) {
-                                            stringResource(id = R.string.workout_detail_set_warmup, set.setNumber)
-                                        } else {
-                                            stringResource(id = R.string.workout_detail_set_work, set.setNumber)
-                                        },
+                                        text = setTypeLabel(set.setType, set.setNumber),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontStyle = if (set.isWarmup) FontStyle.Italic else FontStyle.Normal
+                                        fontStyle = if (set.setType == SetType.WARMUP) FontStyle.Italic else FontStyle.Normal
                                     )
                                     val rpe = set.rpe
                                     val intensityString = if (rpe == null) {
@@ -229,6 +268,13 @@ fun WorkoutDetailScreen(
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
+                                }
+                                TextButton(
+                                    onClick = { intentionSetId = set.id },
+                                    enabled = state.intentionsLoaded && !state.intentionSaving,
+                                    modifier = Modifier.heightIn(min = 48.dp)
+                                ) {
+                                    Text("Absicht: " + if (state.intentionsLoaded) historyIntentionLabel(state.setIntentions[set.id] ?: SetIntention.UNKNOWN) else "Wird geladen …")
                                 }
                             }
                         }
@@ -260,6 +306,14 @@ fun WorkoutDetailScreen(
             }
         }
     }
+}
+
+@Composable
+private fun setTypeLabel(type: SetType, setNumber: Int): String = when (type) {
+    SetType.NORMAL -> stringResource(id = R.string.workout_detail_set_work, setNumber)
+    SetType.WARMUP -> stringResource(id = R.string.workout_detail_set_warmup, setNumber)
+    SetType.DROP_SET -> stringResource(id = HistoryR.string.history_set_drop, setNumber)
+    SetType.FAILURE -> stringResource(id = HistoryR.string.history_set_failure, setNumber)
 }
 
 @Composable
@@ -389,3 +443,8 @@ private fun progressionStatusColor(status: ProgressionSuggestionStatus): Color =
     ProgressionSuggestionStatus.STALE -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
+private fun historyIntentionLabel(value: SetIntention): String = when (value) {
+    SetIntention.UNKNOWN -> "Nicht angegeben"
+    SetIntention.PLANNED_FAILURE -> "Geplantes Versagen"
+    SetIntention.UNEXPECTED_TARGET_MISS -> "Ziel unerwartet verfehlt"
+}

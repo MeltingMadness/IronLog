@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import com.ironlog.app.presentation.common.HistorySkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -58,6 +60,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
+import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.util.DateFormatting
@@ -69,8 +72,10 @@ import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.ironLogSharedElement
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.staggeredEntrance
+import com.ironlog.feature.history.R as HistoryR
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import androidx.compose.foundation.rememberScrollState
 
 internal enum class HistoryListContentState {
     Loading,
@@ -122,62 +127,91 @@ fun WorkoutHistoryScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
-            HistoryListContentState.Loading -> {
-                HistorySkeleton(modifier = Modifier.padding(padding))
-            }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            HistoryFilterBar(
+                filter = state.filter,
+                plans = state.plans,
+                onPlanSelected = viewModel::setPlanFilter,
+                onTimeRangeSelected = viewModel::setTimeRange
+            )
 
-            HistoryListContentState.Empty -> {
-                EmptyStateScreen(
-                    title = stringResource(id = R.string.history_empty_title),
-                    subtitle = stringResource(id = R.string.history_empty_subtitle),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                )
-            }
+            when (resolveHistoryContentState(pagedWorkouts.loadState.refresh, pagedWorkouts.itemCount)) {
+                HistoryListContentState.Loading -> {
+                    HistorySkeleton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                }
 
-            HistoryListContentState.Error -> {
-                EmptyStateScreen(
-                    title = stringResource(id = R.string.history_error_title),
-                    subtitle = stringResource(id = R.string.history_error_subtitle),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    action = {
-                        TextButton(onClick = { pagedWorkouts.retry() }) {
-                            Text(text = stringResource(id = R.string.common_retry))
+                HistoryListContentState.Empty -> {
+                    EmptyStateScreen(
+                        title = stringResource(
+                            id = if (state.filter.isActive) {
+                                HistoryR.string.history_filter_empty_title
+                            } else {
+                                R.string.history_empty_title
+                            }
+                        ),
+                        subtitle = stringResource(
+                            id = if (state.filter.isActive) {
+                                HistoryR.string.history_filter_empty_subtitle
+                            } else {
+                                R.string.history_empty_subtitle
+                            }
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                }
+
+                HistoryListContentState.Error -> {
+                    EmptyStateScreen(
+                        title = stringResource(id = R.string.history_error_title),
+                        subtitle = stringResource(id = R.string.history_error_subtitle),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        action = {
+                            TextButton(onClick = { pagedWorkouts.retry() }) {
+                                Text(text = stringResource(id = R.string.common_retry))
+                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            HistoryListContentState.Content -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(dims.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                ) {
-                    items(
-                        count = pagedWorkouts.itemCount,
-                        key = pagedWorkouts.itemKey { it.session.id }
-                    ) { index ->
-                        val item = pagedWorkouts[index]
-                        if (item != null) {
-                            val entranceModifier = if (index < 8) Modifier.staggeredEntrance(index) else Modifier
-                            SwipeToDeleteCard(
-                                item = item,
-                                unitSystem = preferences.unitSystem,
-                                onClick = { onWorkoutClick(item.session.id) },
-                                onDelete = { deleteSessionId = item.session.id },
-                                modifier = entranceModifier
-                            )
+                HistoryListContentState.Content -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(dims.spacingMd),
+                        verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                    ) {
+                        items(
+                            count = pagedWorkouts.itemCount,
+                            key = pagedWorkouts.itemKey { it.session.id }
+                        ) { index ->
+                            val item = pagedWorkouts[index]
+                            if (item != null) {
+                                val entranceModifier = if (index < 8) Modifier.staggeredEntrance(index) else Modifier
+                                SwipeToDeleteCard(
+                                    item = item,
+                                    unitSystem = preferences.unitSystem,
+                                    onClick = { onWorkoutClick(item.session.id) },
+                                    onDelete = { deleteSessionId = item.session.id },
+                                    modifier = entranceModifier
+                                )
+                            }
                         }
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(dims.spacingXl))
+                        item {
+                            Spacer(modifier = Modifier.height(dims.spacingXl))
+                        }
                     }
                 }
             }
@@ -208,6 +242,103 @@ fun WorkoutHistoryScreen(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HistoryFilterBar(
+    filter: HistoryFilter,
+    plans: List<TrainingPlan>,
+    onPlanSelected: (Long?) -> Unit,
+    onTimeRangeSelected: (HistoryTimeRange) -> Unit
+) {
+    val dims = ironLogDimens
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+        verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+    ) {
+        FilterRow(
+            label = stringResource(HistoryR.string.history_filter_time_label),
+            chips = HistoryTimeRange.entries.map { range ->
+                HistoryFilterChip(
+                    text = stringResource(timeRangeLabelRes(range)),
+                    selected = filter.timeRange == range,
+                    onClick = { onTimeRangeSelected(range) }
+                )
+            }
+        )
+        FilterRow(
+            label = stringResource(HistoryR.string.history_filter_plan_label),
+            chips = buildList {
+                add(
+                    HistoryFilterChip(
+                        text = stringResource(HistoryR.string.history_filter_plan_all),
+                        selected = filter.planId == null,
+                        onClick = { onPlanSelected(null) }
+                    )
+                )
+                plans.forEach { plan ->
+                    add(
+                        HistoryFilterChip(
+                            text = plan.name,
+                            selected = filter.planId == plan.id,
+                            onClick = { onPlanSelected(plan.id) }
+                        )
+                    )
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterRow(
+    label: String,
+    chips: List<HistoryFilterChip>
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(ironLogDimens.spacingXs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(end = ironLogDimens.spacing2)
+        )
+        chips.forEach { chip ->
+            FilterChip(
+                selected = chip.selected,
+                onClick = chip.onClick,
+                label = {
+                    Text(
+                        text = chip.text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            )
+        }
+    }
+}
+
+private data class HistoryFilterChip(
+    val text: String,
+    val selected: Boolean,
+    val onClick: () -> Unit
+)
+
+private fun timeRangeLabelRes(range: HistoryTimeRange): Int = when (range) {
+    HistoryTimeRange.ALL_TIME -> HistoryR.string.history_filter_time_all
+    HistoryTimeRange.LAST_30_DAYS -> HistoryR.string.history_filter_time_30_days
+    HistoryTimeRange.LAST_90_DAYS -> HistoryR.string.history_filter_time_90_days
+    HistoryTimeRange.THIS_YEAR -> HistoryR.string.history_filter_time_this_year
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.animation.ExperimentalSharedTransitionApi::class)
@@ -287,7 +418,7 @@ private fun WorkoutCard(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(dims.spacingXs))
-                
+
                 Text(
                     text = item.session.startTime.format(DateFormatting.DATE_FULL),
                     style = MaterialTheme.typography.bodyMedium,
@@ -296,7 +427,7 @@ private fun WorkoutCard(
                 )
 
                 Spacer(modifier = Modifier.height(dims.spacingSm))
-                
+
                 val durationMin = item.session.durationSeconds / 60
                 val statsList = mutableListOf<String>()
                 statsList.add("$durationMin min")
@@ -304,7 +435,7 @@ private fun WorkoutCard(
                 if (item.totalVolume > 0) {
                     statsList.add(WeightFormatting.formatVolume(item.totalVolume, unitSystem))
                 }
-                
+
                 Text(
                     text = statsList.joinToString(" • "),
                     style = MaterialTheme.typography.bodyMedium,

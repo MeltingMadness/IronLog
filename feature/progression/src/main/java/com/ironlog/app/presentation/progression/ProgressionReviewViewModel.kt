@@ -16,6 +16,7 @@ import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.ProgressionRepository
 import com.ironlog.app.domain.util.WeightFormatting
 import java.math.BigDecimal
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,6 +35,8 @@ data class ProgressionReviewItemUi(
     val exerciseId: Long,
     /** Resolved display name; null when the exercise is unknown to the repository. */
     val exerciseName: String? = null,
+    val planName: String? = null,
+    val createdAtEpochMillis: Long = 0,
     val orderIndex: Int,
     val scheme: ProgressionScheme,
     val source: ProgressionTarget,
@@ -65,17 +69,25 @@ data class ProgressionReviewUiState(
     val edits: Map<Long, ProgressionEditDraft> = emptyMap(),
     val unitSystem: UnitSystem = UnitSystem.METRIC,
     val isWorking: Boolean = false,
-    val message: ProgressionReviewMessage? = null
-)
+    val message: ProgressionReviewMessage? = null,
+    val isLoading: Boolean = true,
+    val isSessionScoped: Boolean = false
+) {
+    val safePendingItems: List<ProgressionReviewItemUi>
+        get() = items.filter { it.canDecide && it.proposed != null }
+            .sortedByDescending { it.sourceSessionId }
+            .distinctBy { Triple(it.planId, it.exerciseId, it.orderIndex) }
+}
 
 class ProgressionReviewViewModel(
     savedStateHandle: SavedStateHandle,
     private val progressionRepository: ProgressionRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
-    private val exerciseRepository: ExerciseRepository
+    private val exerciseRepository: ExerciseRepository,
+    private val trainingPlanRepository: TrainingPlanRepository
 ) : ViewModel() {
     private val sessionId = savedStateHandle.get<Long>(SESSION_ID_KEY)?.takeIf { it > 0L }
-    private val _uiState = MutableStateFlow(ProgressionReviewUiState())
+    private val _uiState = MutableStateFlow(ProgressionReviewUiState(isSessionScoped = sessionId != null))
     val uiState: StateFlow<ProgressionReviewUiState> = _uiState.asStateFlow()
 
     init {
@@ -86,16 +98,21 @@ class ProgressionReviewViewModel(
             combine(
                 progressionRepository.observeReviewItems(sessionId),
                 appPreferencesRepository.preferences,
-                exerciseRepository.getAllExercises()
-            ) { suggestions, preferences, exercises ->
+                exerciseRepository.getAllExercises(),
+                trainingPlanRepository.getAllPlans()
+            ) { suggestions, preferences, exercises, plans ->
                 val exerciseNames = exercises.associate { it.id to it.name }
+                val planNames = plans.associate { it.id to it.name }
                 suggestions.map { suggestion ->
-                    suggestion.toUi(exerciseNames[suggestion.sourceTarget.exerciseId])
+                    suggestion.toUi(exerciseNames[suggestion.sourceTarget.exerciseId], planNames[suggestion.sourceTarget.planId])
                 } to preferences.unitSystem
+            }.catch {
+                _uiState.update { it.copy(isLoading = false, message = ProgressionReviewMessage.ACTION_FAILED) }
             }.collect { (items, unitSystem) ->
                 _uiState.update { current ->
                     current.copy(
                         items = items,
+                        isLoading = false,
                         edits = current.edits.filterKeys { id ->
                             items.any { item -> item.id == id && item.canDecide }
                         },
@@ -163,17 +180,11 @@ class ProgressionReviewViewModel(
 
     fun acceptAllSafe() {
         val state = _uiState.value
-        if (state.isWorking) return
-        val selected = state.items
-            .asSequence()
-            .filter { item ->
-                item.status == ProgressionSuggestionStatus.PENDING &&
-                    item.proposed != null &&
-                    item.canDecide
-            }
-            .sortedByDescending(ProgressionReviewItemUi::sourceSessionId)
-            .distinctBy { item -> Triple(item.planId, item.exerciseId, item.orderIndex) }
-            .associate { item -> item.id to requireNotNull(item.proposed) }
+        // Never silently discard a user's in-progress edit through a bulk action.
+        if (state.isWorking || state.edits.isNotEmpty()) return
+        val selected = state.safePendingItems.associate { item ->
+            item.id to requireNotNull(item.proposed)
+        }
         if (selected.isEmpty()) return
         accept(selected)
     }
@@ -278,7 +289,7 @@ class ProgressionReviewViewModel(
         _uiState.update { it.copy(message = ProgressionReviewMessage.ACTION_FAILED) }
     }
 
-    private fun ProgressionSuggestion.toUi(exerciseName: String?): ProgressionReviewItemUi {
+    private fun ProgressionSuggestion.toUi(exerciseName: String?, planName: String?): ProgressionReviewItemUi {
         val proposed = (outcome as? ProgressionOutcome.ProposeChange)?.proposedTarget
         return ProgressionReviewItemUi(
             id = id,
@@ -286,6 +297,8 @@ class ProgressionReviewViewModel(
             planId = sourceTarget.planId,
             exerciseId = sourceTarget.exerciseId,
             exerciseName = exerciseName,
+            planName = planName,
+            createdAtEpochMillis = createdAtEpochMillis,
             orderIndex = sourceTarget.orderIndex,
             scheme = sourceTarget.config.scheme,
             source = sourceTarget.target,

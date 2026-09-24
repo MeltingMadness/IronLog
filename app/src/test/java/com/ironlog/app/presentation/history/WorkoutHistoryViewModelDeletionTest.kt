@@ -4,6 +4,7 @@ import androidx.paging.PagingData
 import androidx.paging.map
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,18 +20,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutHistoryViewModelDeletionTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var workoutRepo: FakeWorkoutRepository
+    private lateinit var planRepo: FakeTrainingPlanRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         workoutRepo = FakeWorkoutRepository()
+        planRepo = FakeTrainingPlanRepository()
     }
 
     @After
@@ -46,7 +51,7 @@ class WorkoutHistoryViewModelDeletionTest {
             isActive = false
         )
         
-        val vm = WorkoutHistoryViewModel(workoutRepo)
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
         
         // delete the session
         vm.deleteSession(1L)
@@ -68,7 +73,7 @@ class WorkoutHistoryViewModelDeletionTest {
             isActive = false
         )
 
-        val vm = WorkoutHistoryViewModel(workoutRepo)
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
 
         workoutRepo.failDeleteSession = true
         vm.deleteSession(2L)
@@ -84,5 +89,32 @@ class WorkoutHistoryViewModelDeletionTest {
             "delete failure must surface an error",
             vm.uiState.value.error?.contains("Training löschen") == true
         )
+    }
+
+    @Test
+    fun `history filter requests plan and time predicates from the full dataset query`() = runTest {
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
+
+        vm.setPlanFilter(42L)
+        vm.setTimeRange(HistoryTimeRange.LAST_30_DAYS)
+        vm.pagedWorkouts.first()
+
+        val call = workoutRepo.lastPagedCompletedWorkoutSummariesFilter
+        assertTrue("the filtered repository query must be invoked", call != null)
+        assertEquals(42L, call!!.first)
+        assertTrue("a bounded time range must provide a lower bound", call.second != null)
+        assertEquals(null, call.third)
+    }
+
+    @Test
+    fun `history time range converts to start of local calendar day`() {
+        val anchor = LocalDateTime.of(2026, 4, 15, 18, 30)
+        val expected = LocalDate.of(2026, 3, 16)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        assertEquals(expected, HistoryTimeRange.LAST_30_DAYS.fromEpochMillis(anchor))
+        assertEquals(null, HistoryTimeRange.ALL_TIME.fromEpochMillis(anchor))
     }
 }

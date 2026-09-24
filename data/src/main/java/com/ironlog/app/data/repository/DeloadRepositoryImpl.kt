@@ -10,6 +10,7 @@ import com.ironlog.app.domain.model.DeloadAssessment
 import com.ironlog.app.domain.model.DeloadSessionInput
 import com.ironlog.app.domain.repository.DeloadRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * Lädt die abgeschlossenen Trainingseinheiten des rollierenden Deload-Fensters
@@ -23,16 +24,18 @@ class DeloadRepositoryImpl(
     private val setDao: WorkoutSetDao,
     private val exerciseDao: ExerciseDao,
     private val detector: DeloadDetector = DeloadDetector(),
-    private val now: () -> LocalDate = LocalDate::now
+    private val now: () -> LocalDate = LocalDate::now,
+    private val nowEpochMillis: () -> Long = { EpochConverter.toLong(LocalDateTime.now()) }
 ) : DeloadRepository {
 
     override suspend fun assess(): DeloadAssessment {
         val today = now()
         val windowStart = today.minusWeeks(detector.config.windowWeeks.toLong())
         val windowStartMillis = EpochConverter.toLong(windowStart.atStartOfDay())
+        val nowMillis = nowEpochMillis()
 
         val sessionsInWindow = sessionDao.getAllCompletedSessionsList()
-            .filter { it.startTime >= windowStartMillis }
+            .filter { it.startTime >= windowStartMillis && it.startTime <= nowMillis }
             .sortedBy { it.startTime }
         if (sessionsInWindow.isEmpty()) {
             return detector.assess(
@@ -43,6 +46,7 @@ class DeloadRepositoryImpl(
         }
 
         val setsBySession = setDao.getSetsForSessions(sessionsInWindow.map { it.id })
+            .filter { it.completedAt <= nowMillis }
             .groupBy { it.sessionId }
 
         val compoundExerciseIds = exerciseDao

@@ -80,8 +80,8 @@
     <string name="workout_target_completed">Ziel erreicht</string>
     <string name="workout_progression_scheme">Schema: %1$s</string>
     <string name="workout_progression_manual">Manuell</string>
-    <string name="workout_progression_linear">Linear</string>
-    <string name="workout_progression_double">Doppelte Progression</string>
+    <string name="workout_progression_linear">Gewicht steigern</string>
+    <string name="workout_progression_double">Wiederholungen, dann Gewicht</string>
     <string name="workout_progression_total_reps">Gesamtwiederholungen</string>
     <string name="workout_progression_rpe_rir">RPE/RIR</string>
     <string name="workout_progression_invalid">Konfiguration ungültig</string>
@@ -95,6 +95,14 @@
     <string name="workout_set_type_normal">Normal</string>
     <string name="workout_set_type_drop_set">Drop-Set</string>
     <string name="workout_set_type_failure">Fehlversuch</string>
+    <!-- Satzintention: eigener Vertrag, unabhaengig von der Satzart oben. -->
+    <string name="workout_set_intention_label">Absicht</string>
+    <string name="workout_set_intention_unknown">Nicht angegeben</string>
+    <string name="workout_set_intention_planned_failure">Geplantes Versagen</string>
+    <string name="workout_set_intention_unexpected_miss">Ziel unerwartet verfehlt</string>
+    <string name="workout_set_intention_hint">Optional. Beschreibt, warum der Satz so endete.</string>
+    <string name="workout_set_intention_chip_cd">Satzabsicht: %1$s</string>
+    <string name="workout_set_intention_load_failed">Satzabsicht konnte nicht geladen werden</string>
     <string name="workout_previous_show_cd">Vorheriges Training einblenden</string>
     <string name="workout_previous_hide_cd">Vorheriges Training ausblenden</string>
     <string name="workout_previous_session_title">Letztes Training (%1$s)</string>
@@ -153,8 +161,8 @@
     <string name="plan_editor_progression_invalid">Ungültig</string>
     <string name="plan_editor_progression_title">Progression konfigurieren</string>
     <string name="plan_editor_progression_scheme_manual">Aus</string>
-    <string name="plan_editor_progression_scheme_linear">Linear</string>
-    <string name="plan_editor_progression_scheme_double">Doppelte Progression</string>
+    <string name="plan_editor_progression_scheme_linear">Gewicht steigern</string>
+    <string name="plan_editor_progression_scheme_double">Wiederholungen, dann Gewicht</string>
     <string name="plan_editor_progression_scheme_total_reps">Gesamtwiederholungen</string>
     <string name="plan_editor_progression_scheme_rpe_rir">RPE/RIR</string>
     <string name="plan_editor_progression_step">Schrittweite (%1$s)</string>
@@ -329,12 +337,26 @@
     <string name="meta_plan_editor_save_cd">Meta-Plan speichern</string>
     <string name="meta_plan_editor_name_label">Meta-Planname</string>
     <string name="meta_plan_editor_available_subplans">Unterpläne auswählen</string>
+    <string name="meta_plan_editor_add_subplan_cd">Unterplan hinzufügen</string>
     <string name="meta_plan_editor_subplan_order">Reihenfolge</string>
     <string name="meta_plan_editor_subplan_order_empty">Keine Unterpläne ausgewählt.</string>
     <string name="settings_theme_scheme_title">Farbschema</string>
     <string name="settings_scheme_amber">Amber</string>
     <string name="settings_scheme_deep_cyan">Deep Cyan</string>
     <string name="settings_scheme_neon_red">Neon Red</string>
+    <string name="settings_scheme_forge">Forge</string>
+    <string name="settings_scheme_raster">Raster</string>
+    <string name="settings_scheme_tide">Tide</string>
+    <string name="settings_scheme_pulse">Pulse</string>
+    <string name="settings_section_barbell">Hantel &amp; Scheiben</string>
+    <string name="settings_plate_calculator_title">Hantelscheiben-Rechner</string>
+    <string name="settings_plate_calculator_subtitle">Berechnet automatisch die benötigten Scheiben pro Seite</string>
+    <string name="settings_barbell_weight_title">Stangengewicht</string>
+    <string name="settings_available_plates_title">Verfügbare Hantelscheiben</string>
+    <string name="settings_available_plates_subtitle">Wähle die Scheibengrößen aus, die du besitzt</string>
+    <string name="workout_plate_calc_per_side">%1$s pro Seite</string>
+    <string name="workout_plate_calc_barbell">Stange: %1$s</string>
+    <string name="workout_plate_calc_remainder">+ %1$s Rest</string>
     <string name="settings_intensity_system_title">Intensitäts-System</string>
     <string name="settings_intensity_off">Aus</string>
     <string name="common_unknown">Unbekannt</string>
@@ -359,8 +381,8 @@
     <string name="workout_autoregulation_overshoot">Zu schwer (RPE %1$s)</string>
     <string name="workout_autoregulation_backoff_set">Backoff-Satz: %1$s</string>
     <string name="settings_section_rest_timer">Pause</string>
-    <string name="settings_auto_rest_timer_title">Rest-Timer automatisch starten</string>
-    <string name="settings_auto_rest_timer_subtitle">Nach jedem Arbeitssatz startet automatisch eine Pause mit der Standarddauer.</string>
+    <string name="settings_auto_rest_timer_title">Feste Pausendauer verwenden</string>
+    <string name="settings_auto_rest_timer_subtitle">Zwischen Arbeitssätzen läuft ein Countdown mit der Standarddauer. Ohne feste Dauer zählt die Pausenzeit hoch.</string>
     <string name="settings_rest_time_title">Standard-Pausendauer</string>
 
     <string name="progression_review_title">Progression prüfen</string>
@@ -370,8 +392,8 @@
     <string name="progression_review_exercise">Übung %1$d</string>
     <string name="progression_review_scheme">Schema: %1$s</string>
     <string name="progression_review_scheme_manual">Manuell</string>
-    <string name="progression_review_scheme_linear">Linear</string>
-    <string name="progression_review_scheme_double">Doppelte Progression</string>
+    <string name="progression_review_scheme_linear">Gewicht steigern</string>
+    <string name="progression_review_scheme_double">Wiederholungen, dann Gewicht</string>
     <string name="progression_review_scheme_total_reps">Gesamtwiederholungen</string>
     <string name="progression_review_scheme_rpe_rir">RPE/RIR</string>
     <string name="progression_review_evidence_title">Gewertete Arbeitssätze</string>
@@ -405,9 +427,9 @@
     <string name="progression_review_reason_weight_basis"> — Basis: trainierte %1$s statt Ziel %2$s</string>
     <string name="progression_review_reason_total_completed">%1$s von %2$s Zielwiederholungen wurden erreicht; das Gewicht steigt um %3$s %4$s.</string>
     <string name="progression_review_reason_rpe_within_target">Die höchste RPE war %1$s bei Ziel %2$s ± %3$s; das Gewicht steigt um %4$s %5$s.</string>
-    <string name="progression_review_reason_repeat_reps">Mindestens %1$s Wiederholungen waren erwartet, erreicht wurden %2$s. Das Ziel bleibt gleich.</string>
-    <string name="progression_review_reason_repeat_total">%1$s von %2$s Zielwiederholungen wurden erreicht. Das Ziel bleibt gleich.</string>
-    <string name="progression_review_reason_repeat_rpe">Die höchste RPE war %1$s. Das Ziel bleibt gleich.</string>
+    <string name="progression_review_reason_repeat_reps">Mindestens %1$s Wiederholungen waren erwartet, erreicht wurden %2$s. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
+    <string name="progression_review_reason_repeat_total">%1$s von %2$s Zielwiederholungen wurden erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
+    <string name="progression_review_reason_repeat_rpe">Die höchste RPE war %1$s. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
     <string name="progression_review_reason_stall_backoff">Nach wiederholten Fehlversuchen sinkt das Gewicht um %1$s Prozent.</string>
     <string name="progression_review_reason_weight_deviation">Die gewerteten Sätze haben unterschiedliche Gewichte (%1$s und %2$s); deshalb wird nichts automatisch geändert.</string>
     <string name="progression_review_reason_too_few_sets">Für die Auswertung waren %1$s Arbeitssätze nötig, vorhanden waren %2$s.</string>
@@ -420,5 +442,23 @@
     <string name="progression_review_reason_set_value_invalid">Mindestens ein Satz enthält ungültige Werte.</string>
     <string name="progression_review_reason_backoff_floor">Ein Backoff um %1$s Prozent würde das Gewicht nicht weiter sicher senken.</string>
     <string name="progression_review_reason_unavailable">Die Begründung kann wegen unvollständiger Auswertungsdaten nicht sicher angezeigt werden.</string>
-</resources>
+    <string name="workout_active_set_badge">⚡ AKTIVER SATZ %1$d</string>
+    <string name="workout_active_set_edit_badge">⚡ SATZ %1$d BEARBEITEN</string>
+    <string name="workout_planned_set_preview">Satz %1$d: %2$s (geplant)</string>
+    <string name="workout_log_set_button">Satz %1$d loggen — %2$s %3$s × %4$d Wdh ✓</string>
+    <string name="workout_log_set_button_short">Satz %1$d loggen ✓</string>
+    <string name="workout_update_set_button">Satz %1$d aktualisieren ✓</string>
+    <string name="workout_weight_label">Gewicht</string>
+    <string name="workout_reps_label">Wiederholungen</string>
+    <string name="workout_barbell_loading_side">Hantel-Beladung (%1$s je Seite)</string>
+    <string name="dashboard_hero_tag">🔥 Heutige Session</string>
+    <string name="dashboard_hero_start">Training jetzt starten ➔</string>
+    <string name="dashboard_hero_continue">Training fortsetzen ➔</string>
+    <string name="dashboard_readiness_title">Readiness</string>
+    <string name="dashboard_readiness_optimal">Optimal</string>
+    <string name="dashboard_readiness_fatigue">Ermüdung %1$d/100</string>
 
+    <string name="plan_editor_progression_linear_hint">Feste Wiederholungszahl: Sobald alle vorgesehenen Arbeitssätze das Ziel erreichen, wird mehr Gewicht vorgeschlagen.</string>
+    <string name="plan_editor_progression_double_hint">Zuerst Wiederholungen steigern. Sobald alle vorgesehenen Arbeitssätze die Obergrenze erreichen, wird mehr Gewicht vorgeschlagen und das Wiederholungsziel auf die Untergrenze gesetzt.</string>
+    <string name="settings_msg_progression_recovery_failed">Daten wurden importiert, aber Progressionen konnten noch nicht vollständig nachberechnet werden. Bitte starte die App erneut.</string>
+</resources>

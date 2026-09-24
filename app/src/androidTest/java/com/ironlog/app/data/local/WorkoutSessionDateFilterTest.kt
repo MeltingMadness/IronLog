@@ -64,6 +64,31 @@ class WorkoutSessionDateFilterTest {
     }
 
     @Test
+    fun getCompletedSessionCountBetween_schliesstZukuenftigeStartsAus() = runBlocking {
+        insertSession(id = 1L, startTime = 2_000L, endTime = 3_000L)
+        insertSession(id = 2L, startTime = 4_000L, endTime = 5_000L)
+        insertSession(id = 3L, startTime = 6_000L, endTime = 7_000L)
+        insertSession(id = 4L, startTime = 8_000L, endTime = null)
+
+        assertEquals(
+            2,
+            sessionDao.getCompletedSessionCountBetween(
+                sinceEpochMillis = 2_000L,
+                untilEpochMillis = 5_000L
+            )
+        )
+    }
+
+    @Test
+    fun getLastCompletedSessionBefore_ueberspringtZukuenftigeLetzteSession() = runBlocking {
+        insertSession(id = 1L, startTime = 2_000L, endTime = 3_000L)
+        insertSession(id = 2L, startTime = 4_000L, endTime = 5_000L)
+        insertSession(id = 3L, startTime = 6_000L, endTime = 7_000L)
+
+        assertEquals(2L, sessionDao.getLastCompletedSessionBefore(5_000L)?.id)
+    }
+
+    @Test
     fun getWorkSetsCompletedSince_filtertWarmupUndAktiveSessionsUndSortiertNachSessionstart() = runBlocking {
         val exerciseId = database.exerciseDao().insert(
             ExerciseEntity(
@@ -80,8 +105,8 @@ class WorkoutSessionDateFilterTest {
 
         // Session B: beendet, startTime exakt am Fensterrand -> Arbeits-Set zaehlt
         insertSession(id = 2L, startTime = 2_500L, endTime = 3_500L)
-        insertSet(sessionId = 2L, exerciseId = exerciseId, weightKg = 30.0, isWarmup = false)
-        insertSet(sessionId = 2L, exerciseId = exerciseId, weightKg = 35.0, isWarmup = true)
+        insertSet(sessionId = 2L, exerciseId = exerciseId, weightKg = 30.0, isWarmup = false, completedAt = 2_500L)
+        insertSet(sessionId = 2L, exerciseId = exerciseId, weightKg = 35.0, isWarmup = true, completedAt = 3_000L)
 
         // Session C: aktiv (endTime IS NULL) -> Sets zaehlen nie
         insertSession(id = 3L, startTime = 4_000L, endTime = null)
@@ -89,12 +114,34 @@ class WorkoutSessionDateFilterTest {
 
         // Session D: beendet, im Fenster -> Arbeits-Set zaehlt
         insertSession(id = 4L, startTime = 6_000L, endTime = 7_000L)
-        insertSet(sessionId = 4L, exerciseId = exerciseId, weightKg = 50.0, isWarmup = false)
+        insertSet(sessionId = 4L, exerciseId = exerciseId, weightKg = 50.0, isWarmup = false, completedAt = 6_500L)
 
         val result = setDao.getWorkSetsCompletedSince(sinceEpochMillis = 2_500L)
 
         // ORDER BY s.startTime ASC: Session B (2500) vor Session D (6000)
         assertEquals(listOf(30.0, 50.0), result.map { it.weightKg })
+    }
+
+    @Test
+    fun getWorkSetsCompletedSince_zaehltSaetzeNachWochenwechselAusFrueherGestartetemTraining() = runBlocking {
+        val exerciseId = database.exerciseDao().insert(
+            ExerciseEntity(
+                name = "Wochenwechsel",
+                primaryMuscleGroup = "BRUST",
+                secondaryMuscleGroups = "",
+                category = "LANGHANTEL"
+            )
+        )
+        // Das Training beginnt vor der Grenze, endet aber erst danach.
+        insertSession(id = 1L, startTime = 1_000L, endTime = 4_000L)
+        insertSet(1L, exerciseId, 10.0, false, completedAt = 2_499L)
+        insertSet(1L, exerciseId, 20.0, false, completedAt = 2_500L)
+        insertSet(1L, exerciseId, 30.0, false, completedAt = 3_000L)
+
+        assertEquals(
+            listOf(20.0, 30.0),
+            setDao.getWorkSetsCompletedSince(2_500L).map { it.weightKg }
+        )
     }
 
     private suspend fun insertSession(
@@ -117,7 +164,8 @@ class WorkoutSessionDateFilterTest {
         sessionId: Long,
         exerciseId: Long,
         weightKg: Double,
-        isWarmup: Boolean
+        isWarmup: Boolean,
+        completedAt: Long = sessionId * 1_000L
     ) {
         setDao.insert(
             WorkoutSetEntity(
@@ -127,7 +175,7 @@ class WorkoutSessionDateFilterTest {
                 reps = 8,
                 weightKg = weightKg,
                 setType = if (isWarmup) "WARMUP" else "NORMAL",
-                completedAt = sessionId * 1_000L
+                completedAt = completedAt
             )
         )
     }

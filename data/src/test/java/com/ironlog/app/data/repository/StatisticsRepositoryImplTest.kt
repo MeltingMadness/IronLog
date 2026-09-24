@@ -4,12 +4,15 @@ import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
+import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.domain.model.RecordType
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -60,5 +63,29 @@ class StatisticsRepositoryImplTest {
             "achievedAt should not match the old UTC-based (bugged) calculation",
             kotlin.math.abs(achievedAt - buggyUtcValue) > 60_000L
         )
+    }
+
+    @Test
+    fun `getCompletedSetsForExerciseList delegates the bounded statistics query`() = runTest {
+        val now = 8_000L
+        val entity = WorkoutSetEntity(
+            id = 4L,
+            sessionId = 2L,
+            exerciseId = 7L,
+            setNumber = 1,
+            reps = 5,
+            weightKg = 80.0,
+            setType = "NORMAL",
+            completedAt = 7_000L
+        )
+        coEvery {
+            workoutSetDao.getCompletedSetsForExerciseList(7L, now)
+        } returns listOf(entity)
+
+        val result = repository.getCompletedSetsForExerciseList(7L, now)
+
+        assertEquals(1, result.size)
+        assertEquals(entity.id, result.single().id)
+        coVerify(exactly = 1) { workoutSetDao.getCompletedSetsForExerciseList(7L, now) }
     }
 }

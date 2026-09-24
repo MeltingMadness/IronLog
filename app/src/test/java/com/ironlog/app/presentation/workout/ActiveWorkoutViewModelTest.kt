@@ -3,6 +3,8 @@ package com.ironlog.app.presentation.workout
 import androidx.lifecycle.SavedStateHandle
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
+import com.ironlog.app.domain.model.DeloadMode
+import com.ironlog.app.domain.model.FailurePolicy
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.ProgressionConfig
@@ -51,6 +53,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -161,14 +164,63 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `logSet ignoriert ungueltige intensitaet`() = runTest {
+    fun `logSet weist ungueltige intensitaet zurueck`() = runTest {
         prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
         val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
 
         vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, setType = SetType.NORMAL, intensity = "abc")
 
         val sets = workoutRepo.getSetsForSessionList(sessionId)
-        assertEquals(null, sets[0].rpe)
+        assertTrue(sets.isEmpty())
+        assertNotNull(vm.uiState.value.error)
+        collector.cancel()
+    }
+
+    @Test
+    fun `logSet weist nicht endliche und ausserhalb liegende RPE-Werte zurueck`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        listOf("0", "11", "NaN", "Infinity").forEach { value ->
+            vm.logSet(
+                exerciseId = 1L,
+                reps = 10,
+                weightKg = 80.0,
+                setType = SetType.NORMAL,
+                intensity = value
+            )
+        }
+
+        assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
+        assertNotNull(vm.uiState.value.error)
+        collector.cancel()
+    }
+
+    @Test
+    fun `logSet weist RIR ausserhalb des gueltigen Bereichs zurueck`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RIR)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.logSet(
+            exerciseId = 1L,
+            reps = 10,
+            weightKg = 80.0,
+            setType = SetType.NORMAL,
+            intensity = "10"
+        )
+
+        assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
+        assertNotNull(vm.uiState.value.error)
+        collector.cancel()
     }
 
     @Test
@@ -463,6 +515,29 @@ class ActiveWorkoutViewModelTest {
 
         val updated = workoutRepo.getSetsForSessionList(sessionId).first { it.id == logged.id }
         assertEquals(9.0, updated.rpe)
+    }
+
+    @Test
+    fun `updateSet weist ungueltige Intensitaet zurueck und behaelt Bearbeitung`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        val vm = createViewModel()
+        val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            vm.uiState.collect { }
+        }
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0, intensity = "8.0")
+        val logged = workoutRepo.getSetsForSessionList(sessionId).single()
+
+        vm.updateSet(setId = logged.id, reps = 12, weightKg = 82.5, intensity = "NaN")
+
+        val unchanged = workoutRepo.getSetsForSessionList(sessionId).single()
+        assertEquals(10, unchanged.reps)
+        assertEquals(80.0, unchanged.weightKg, 0.01)
+        assertEquals(8.0, unchanged.rpe)
+        assertEquals(0, workoutRepo.updateSetCallCount)
+        assertEquals(0, vm.uiState.value.updateSuccessCountBySet[logged.id] ?: 0)
+        assertNotNull(vm.uiState.value.error)
+        collector.cancel()
     }
 
     @Test
@@ -1393,7 +1468,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `rest timer bleibt auch nach letztem geplanten Arbeitssatz aktiv`() = runTest {
+    fun `rest timer endet nach letztem geplanten Arbeitssatz mit Countdown`() = runTest {
         prefsRepo.updateAutoRestTimerEnabled(true)
         val planId = 88L
         val plan = com.ironlog.app.domain.model.TrainingPlan(
@@ -1436,8 +1511,7 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
 
-        // The planned set count (2) is now reached - the rest timer must keep running so the
-        // athlete can rest before extra sets instead of being dismissed prematurely.
+        // Reaching the planned count cancels the previous pause.
         vm.logSet(
             key = WorkoutExerciseKey.Planned(881L),
             exerciseId = testExercise.id,
@@ -1446,9 +1520,9 @@ class ActiveWorkoutViewModelTest {
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
+        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
 
-        // An extra set beyond the plan keeps the timer running too.
+        // Extra sets beyond the target must not restart a pause.
         vm.logSet(
             key = WorkoutExerciseKey.Planned(881L),
             exerciseId = testExercise.id,
@@ -1457,7 +1531,126 @@ class ActiveWorkoutViewModelTest {
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
+        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `rest timer endet nach letztem geplanten Arbeitssatz ohne feste Dauer`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(false)
+        val planId = 88L
+        val plan = com.ironlog.app.domain.model.TrainingPlan(
+            id = planId,
+            name = "Push Day",
+            exercises = listOf(
+                com.ironlog.app.domain.model.PlanExercise(
+                    exerciseId = testExercise.id,
+                    orderIndex = 0,
+                    targetSets = 2,
+                    targetReps = 8,
+                    targetWeightKg = 80.0
+                )
+            )
+        )
+        planRepo.savePlan(plan)
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 881L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                planId = planId,
+                sets = 2,
+                reps = 8,
+                weightKg = 80.0
+            )
+        )
+
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(WorkoutExerciseKey.Planned(881L) in vm.uiState.value.restTimers)
+
+        // Reaching the planned count cancels the previous pause.
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
+
+        // Extra sets beyond the target must not restart a pause.
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(881L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 80.0
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(WorkoutExerciseKey.Planned(881L) !in vm.uiState.value.restTimers)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `rest timer counts only normal sets against the deload target`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
+        prefsRepo.updateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
+        val planId = 89L
+        progressionTargets.value = listOf(
+            snapshotTarget(
+                id = 891L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                planId = planId,
+                sets = 4
+            )
+        )
+
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId)),
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            progressionRepo,
+            prefsRepo
+        )
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val key = WorkoutExerciseKey.Planned(891L)
+        vm.logSet(key = key, exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(key in vm.uiState.value.restTimers)
+
+        // FAILURE is recorded but must not fill one of the two effective deload slots.
+        vm.logSet(
+            key = key,
+            exerciseId = testExercise.id,
+            reps = 5,
+            weightKg = 80.0,
+            setType = SetType.FAILURE
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(key in vm.uiState.value.restTimers)
+
+        // The second NORMAL set completes ceil(4 / 2) effective slots.
+        vm.logSet(key = key, exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(key !in vm.uiState.value.restTimers)
 
         collector.cancel()
     }
@@ -1569,6 +1762,85 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `rest timer survives ViewModel recreation through durable preference state`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
+        prefsRepo.updateDefaultRestTimeSeconds(180)
+        val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
+        val vm = ActiveWorkoutViewModel(
+            savedStateHandle,
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            progressionRepo,
+            prefsRepo
+        )
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        val key = WorkoutExerciseKey.AdHoc(testExercise.id)
+        val persistedTimer = vm.uiState.value.restTimers.getValue(key)
+
+        // A new ViewModel models process death while the DataStore-backed preferences object
+        // remains available to the recreated activity.
+        val restoredVm = ActiveWorkoutViewModel(
+            savedStateHandle,
+            workoutRepo,
+            exerciseRepo,
+            statsRepo,
+            progressionRepo,
+            prefsRepo
+        )
+        val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val restoredTimer = restoredVm.uiState.value.restTimers.getValue(key)
+        // DataStore persists epoch milliseconds, so nanoseconds from Instant.now() are
+        // intentionally normalized at the persistence boundary.
+        assertEquals(persistedTimer.startTime.toEpochMilli(), restoredTimer.startTime.toEpochMilli())
+        assertEquals(persistedTimer.durationSeconds, restoredTimer.durationSeconds)
+
+        collector.cancel()
+        restoredCollector.cancel()
+    }
+
+    @Test
+    fun `new timer wins when restore cleanup is still waiting`() = runTest {
+        prefsRepo.updateAutoRestTimerEnabled(true)
+        val sessionStartEpochMillis = workoutRepo.getSessionById(sessionId)!!
+            .startTime
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        // A malformed payload makes restore schedule a durable cleanup. Gate that cleanup so
+        // logging can race it; the ViewModel must serialize the cleanup before the new timer.
+        prefsRepo.writeRestTimerState(sessionId, "$sessionStartEpochMillis#malformed")
+        val readGate = CompletableDeferred<Unit>()
+        val clearGate = CompletableDeferred<Unit>()
+        prefsRepo.restTimerReadGate = readGate
+        prefsRepo.restTimerClearGate = clearGate
+
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
+
+        readGate.complete(Unit)
+        testDispatcher.scheduler.runCurrent()
+        // Restore is currently waiting inside the durable cleanup. The new timer has not been
+        // allowed to mutate state yet, which proves that the same mutex covers both paths.
+        assertTrue(vm.uiState.value.restTimers.isEmpty())
+
+        clearGate.complete(Unit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val key = WorkoutExerciseKey.AdHoc(testExercise.id)
+        assertTrue(key in vm.uiState.value.restTimers)
+        assertNotNull(prefsRepo.readRestTimerState(sessionId))
+        collector.cancel()
+    }
+
+    @Test
     fun `missing session sets phase Missing and clears Loading`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to 98765L))
         val vm = ActiveWorkoutViewModel(
@@ -1625,7 +1897,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `updateSet bei reps kleiner gleich 0 persistiert nicht, setzt Fehler und beendet Edit`() = runTest {
+    fun `updateSet bei reps kleiner gleich 0 persistiert nicht und behaelt Bearbeitung`() = runTest {
         val vm = createViewModel()
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
@@ -1640,9 +1912,9 @@ class ActiveWorkoutViewModelTest {
         val unchanged = workoutRepo.getSetsForSessionList(sessionId).first()
         assertEquals(10, unchanged.reps)
         assertEquals(80.0, unchanged.weightKg, 0.01)
-        // ...but the user gets an error and the edit row leaves edit mode (success count).
+        // ...but the user gets an error while the edit row remains open for correction.
         assertNotNull(vm.uiState.value.error)
-        assertEquals(1, vm.uiState.value.updateSuccessCountBySet[logged.id])
+        assertEquals(0, vm.uiState.value.updateSuccessCountBySet[logged.id] ?: 0)
 
         collector.cancel()
     }
@@ -2567,7 +2839,8 @@ class ActiveWorkoutViewModelTest {
         sets: Int = 3,
         reps: Int = 8,
         weightKg: Double = 100.0,
-        targetRpe: Double = 8.0
+        targetRpe: Double = 8.0,
+        backoffPercent: Double = 10.0
     ) = snapshotTarget(
         id = id,
         exerciseId = exerciseId,
@@ -2578,12 +2851,13 @@ class ActiveWorkoutViewModelTest {
         config = ProgressionConfig.RpeRir(
             targetRpe = targetRpe,
             tolerance = 0.5,
-            step = WeightStep(originalValue = 2.5, originalUnit = UnitSystem.METRIC, kilograms = 2.5)
+            step = WeightStep(originalValue = 2.5, originalUnit = UnitSystem.METRIC, kilograms = 2.5),
+            failurePolicy = FailurePolicy(backoffPercent = backoffPercent)
         )
     )
 
     @Test
-    fun `logSet startet keinen Rest Timer wenn Auto-Pause deaktiviert ist`() = runTest {
+    fun `logSet startet hochzaehlenden Rest Timer ohne feste Pausenzeit`() = runTest {
         val vm = createViewModel()
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -2591,7 +2865,7 @@ class ActiveWorkoutViewModelTest {
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 80.0)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertTrue(vm.uiState.value.restTimers.isEmpty())
+        assertEquals(0, vm.uiState.value.restTimers.getValue(WorkoutExerciseKey.AdHoc(testExercise.id)).durationSeconds)
 
         collector.cancel()
     }
@@ -2669,6 +2943,41 @@ class ActiveWorkoutViewModelTest {
         assertNull(recommendation.targetRpe)
         // Dedizierter Backoff-Satz: 10 % unter dem Arbeitsgewicht
         assertEquals(90.0, recommendation.backoffWeightKg!!, 0.01)
+
+        collector.cancel()
+    }
+
+    @Test
+    fun `Overshoot uses configured plan backoff percent`() = runTest {
+        prefsRepo.updateIntensitySystem(IntensitySystem.RPE)
+        progressionTargets.value = listOf(
+            rpeSnapshotTarget(
+                id = 882L,
+                exerciseId = testExercise.id,
+                orderIndex = 0,
+                sets = 2,
+                weightKg = 100.0,
+                backoffPercent = 20.0
+            )
+        )
+        val vm = createViewModel()
+        val collector = backgroundScope.launch { vm.uiState.collect { } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.logSet(
+            key = WorkoutExerciseKey.Planned(882L),
+            exerciseId = testExercise.id,
+            reps = 8,
+            weightKg = 100.0,
+            intensity = "9.5"
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val recommendation = vm.uiState.value.nextSetRecommendations.getValue(
+            WorkoutExerciseKey.Planned(882L)
+        )
+        assertEquals(20.0, recommendation.backoffPercent, 0.01)
+        assertEquals(80.0, recommendation.backoffWeightKg!!, 0.01)
 
         collector.cancel()
     }

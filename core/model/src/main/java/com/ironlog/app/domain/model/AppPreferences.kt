@@ -1,4 +1,4 @@
-﻿package com.ironlog.app.domain.model
+package com.ironlog.app.domain.model
 
 import java.time.DayOfWeek
 
@@ -21,7 +21,11 @@ enum class ThemeMode {
 enum class ThemeScheme {
     AMBER,
     DEEP_CYAN,
-    NEON_RED
+    NEON_RED,
+    FORGE,
+    RASTER,
+    TIDE,
+    PULSE
 }
 
 data class ReminderConfig(
@@ -50,5 +54,12 @@ data class AppPreferences(
     val shareWeightHistoryAcrossContexts: Boolean = false,
     val autoRestTimerEnabled: Boolean = false,
     val defaultRestTimeSeconds: Int = 120,
-    val deloadMode: DeloadMode? = null
+    val deloadMode: DeloadMode? = null,
+    val plateCalculatorEnabled: Boolean = true,
+    val availablePlates: List<Double> = listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25),
+    val barbellWeightKg: Double = 20.0,
+    /** Epoch millis of the most recent completed export to a user-selected document. */
+    val lastSuccessfulExportEpochMillis: Long? = null,
+    /** Opt-in for the local Settings reminder when the external export is stale. */
+    val backupReminderEnabled: Boolean = false
 )

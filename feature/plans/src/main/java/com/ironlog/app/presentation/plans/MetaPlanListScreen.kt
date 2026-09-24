@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.plans.R as PlansR
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
@@ -248,6 +249,17 @@ private fun MetaPlanListCard(
                     color = MaterialTheme.semantic.violet
                 )
             }
+
+            Text(
+                text = when (val daysAgo = item.lastDoneDaysAgo) {
+                    null -> stringResource(id = PlansR.string.meta_plans_last_done_never)
+                    0L -> stringResource(id = PlansR.string.meta_plans_last_done_today)
+                    1L -> stringResource(id = PlansR.string.meta_plans_last_done_yesterday)
+                    else -> stringResource(id = PlansR.string.meta_plans_last_done_days, daysAgo)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

@@ -216,6 +216,15 @@ class TrainingPlanRepositoryImplTest {
     }
 
     private class FakeTrainingPlanDao : TrainingPlanDao {
+        override suspend fun targetsForApply(sessionId: Long): List<com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity> = error("Workout apply is outside this plan CRUD fake")
+        override suspend fun setsForApply(sessionId: Long): List<com.ironlog.app.data.local.entity.WorkoutSetEntity> = error("Workout apply is outside this plan CRUD fake")
+        override suspend fun sessionForApply(sessionId: Long): com.ironlog.app.data.local.entity.WorkoutSessionEntity? = error("Workout apply is outside this plan CRUD fake")
+        override suspend fun updateExercise(exercise: PlanExerciseEntity) {
+            val list = exercisesByPlan[exercise.planId] ?: error("Plan not found")
+            val index = list.indexOfFirst { it.id == exercise.id }
+            check(index >= 0)
+            list[index] = exercise
+        }
         val plans = linkedMapOf<Long, TrainingPlanEntity>()
         val exercisesByPlan = linkedMapOf<Long, MutableList<PlanExerciseEntity>>()
         val operationOrder = mutableListOf<String>()

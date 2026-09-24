@@ -1,0 +1,7 @@
+c83342ee81630f81f443da53b614696e5b1e2a78e66fcac81f42c2c222a446f6  app/build.gradle.kts
+22c680b8bc420a747952fdd75bf036d7cb5c9d1399c23f9c5cde23b2c1d9673a  feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardScreen.kt
+bc5a0bcf87e4eabe2249f755d92db83e7df43be9fe4ad050c6274aa9880dc3e2  feature/dashboard/src/main/res/values/ui_audit_strings.xml
+5c5680c8ddd967910b61de6ad65ab7e5b55aad72e869042fcba9a0e6b5fb9dfe  core/designsystem/src/main/java/com/ironlog/app/presentation/common/WeeklyMuscleVolumeCard.kt
+47bafaf2d248ecc8f8f82a6fab0f424f438996e1213c139935b3f30ed4a7a6a4  core/designsystem/src/main/res/values/weekly_volume_strings.xml
+d7bd29db800ea3523e03058972bd40893da842a38ee8b8f69c0ea288520b54c7  feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardViewModel.kt
+8a2ef9d2b9c4509324e4fc1c8506abdd2f0e2300ce0be3f6551c3a705f986aa5  feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/WeeklyVolumeCard.kt

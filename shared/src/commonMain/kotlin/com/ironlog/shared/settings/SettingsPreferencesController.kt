@@ -1,6 +1,7 @@
 package com.ironlog.shared.settings
 
 import com.ironlog.shared.model.AppPreferences
+import com.ironlog.shared.model.DeloadMode
 import com.ironlog.shared.model.IntensitySystem
 import com.ironlog.shared.model.ReminderConfig
 import com.ironlog.shared.model.ThemeMode
@@ -32,6 +33,12 @@ interface SharedAppPreferencesRepository {
     suspend fun updateShareWeightHistoryAcrossContexts(enabled: Boolean)
     suspend fun updateAutoRestTimerEnabled(enabled: Boolean)
     suspend fun updateDefaultRestTimeSeconds(seconds: Int)
+    suspend fun updateDeloadMode(mode: DeloadMode)
+    suspend fun updatePlateCalculatorEnabled(enabled: Boolean)
+    suspend fun updateAvailablePlates(plates: List<Double>)
+    suspend fun updateBarbellWeightKg(weightKg: Double)
+    suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?)
+    suspend fun updateBackupReminderEnabled(enabled: Boolean)
 }
 
 interface SharedReminderScheduler {
@@ -42,6 +49,26 @@ interface SharedReminderScheduler {
 data class SettingsPreferencesState(
     val preferences: AppPreferences = AppPreferences()
 )
+
+/** The export is considered stale at the seven-day boundary, not after it. */
+const val BACKUP_REMINDER_THRESHOLD_MILLIS: Long = 7L * 24L * 60L * 60L * 1_000L
+
+/**
+ * Returns whether an opt-in reminder should be shown in Settings.
+ *
+ * A missing export is actionable as soon as the user opts in. Future timestamps are
+ * treated as fresh, which keeps a device clock adjustment from producing a false warning.
+ */
+fun isBackupReminderDue(
+    reminderEnabled: Boolean,
+    lastSuccessfulExportEpochMillis: Long?,
+    nowEpochMillis: Long
+): Boolean {
+    if (!reminderEnabled) return false
+    val lastExport = lastSuccessfulExportEpochMillis ?: return true
+    if (nowEpochMillis < lastExport) return false
+    return nowEpochMillis - lastExport >= BACKUP_REMINDER_THRESHOLD_MILLIS
+}
 
 class SettingsPreferencesController(
     scope: CoroutineScope,
@@ -118,5 +145,31 @@ class SettingsPreferencesController(
 
     fun updateDefaultRestTimeSeconds(seconds: Int) {
         controllerScope.launch { appPreferencesRepository.updateDefaultRestTimeSeconds(seconds) }
+    }
+
+    fun updateDeloadMode(mode: DeloadMode) {
+        controllerScope.launch { appPreferencesRepository.updateDeloadMode(mode) }
+    }
+
+    fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updatePlateCalculatorEnabled(enabled) }
+    }
+
+    fun updateAvailablePlates(plates: List<Double>) {
+        controllerScope.launch { appPreferencesRepository.updateAvailablePlates(plates) }
+    }
+
+    fun updateBarbellWeightKg(weightKg: Double) {
+        controllerScope.launch { appPreferencesRepository.updateBarbellWeightKg(weightKg) }
+    }
+
+    fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        controllerScope.launch {
+            appPreferencesRepository.updateLastSuccessfulExportEpochMillis(timestampMillis)
+        }
+    }
+
+    fun updateBackupReminderEnabled(enabled: Boolean) {
+        controllerScope.launch { appPreferencesRepository.updateBackupReminderEnabled(enabled) }
     }
 }

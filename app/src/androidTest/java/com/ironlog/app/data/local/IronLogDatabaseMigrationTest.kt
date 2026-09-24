@@ -431,6 +431,46 @@ class IronLogDatabaseMigrationTest {
         context.deleteDatabase(dbName)
     }
 
+    @Test
+    fun migration12To13_addsDeloadContextAndReadinessRow() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dbName = "ironlog-migration-12-13-test.db"
+        context.deleteDatabase(dbName)
+
+        val legacyHelper = createLegacyV12Helper(context, dbName)
+        legacyHelper.writableDatabase.use { db ->
+            db.execSQL(
+                """
+                INSERT INTO workout_sessions (id, startTime, endTime, durationSeconds, name, notes, planId, metaPlanId)
+                VALUES (1, 1000, 2000, 1, 'Push', '', NULL, NULL)
+                """.trimIndent()
+            )
+        }
+        legacyHelper.close()
+
+        val migratedHelper = createMigratingV13Helper(context, dbName)
+        migratedHelper.writableDatabase.use { db ->
+            assertTrue("isDeload column must be added", hasColumn(db, "workout_sessions", "isDeload"))
+            assertTrue("readiness_data table must be added", tableExists(db, "readiness_data"))
+
+            // A pre-migration session keeps an unknown context (NULL) instead of
+            // silently becoming "not a deload".
+            db.query("SELECT isDeload FROM workout_sessions WHERE id = 1").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertTrue("existing session must keep an unknown deload context", cursor.isNull(0))
+            }
+
+            // The new single-row document is writable and readable after the migration.
+            db.execSQL("INSERT INTO readiness_data (id, payload) VALUES (0, '{\"formatVersion\":1}')")
+            assertEquals(
+                "{\"formatVersion\":1}",
+                queryString(db, "SELECT payload FROM readiness_data WHERE id = 0")
+            )
+        }
+        migratedHelper.close()
+        context.deleteDatabase(dbName)
+    }
+
     private fun createLegacyV11Helper(
         context: Context,
         dbName: String
@@ -483,6 +523,61 @@ class IronLogDatabaseMigrationTest {
                 assertEquals(11, oldVersion)
                 assertEquals(12, newVersion)
                 IronLogDatabase.migration11To12ForTests().migrate(db)
+            }
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
+    private fun createLegacyV12Helper(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(12) {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS workout_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        startTime INTEGER NOT NULL,
+                        endTime INTEGER,
+                        durationSeconds INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        notes TEXT NOT NULL,
+                        planId INTEGER,
+                        metaPlanId INTEGER
+                    )
+                    """.trimIndent()
+                )
+            }
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+
+        return FrameworkSQLiteOpenHelperFactory().create(
+            SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbName)
+                .callback(callback)
+                .build()
+        )
+    }
+
+    private fun createMigratingV13Helper(
+        context: Context,
+        dbName: String
+    ): SupportSQLiteOpenHelper {
+        val callback = object : SupportSQLiteOpenHelper.Callback(13) {
+            override fun onCreate(db: SupportSQLiteDatabase) = Unit
+
+            override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                assertEquals(12, oldVersion)
+                assertEquals(13, newVersion)
+                IronLogDatabase.migration12To13ForTests().migrate(db)
             }
         }
 

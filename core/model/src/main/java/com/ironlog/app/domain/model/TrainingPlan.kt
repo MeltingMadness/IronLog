@@ -15,5 +15,6 @@ data class PlanExercise(
     val targetSets: Int = 3,
     val targetReps: Int = 10,
     val targetWeightKg: Double = 0.0,
-    val progressionConfig: ProgressionConfig = ProgressionConfig.Manual()
+    val progressionConfig: ProgressionConfig = ProgressionConfig.Manual(),
+    val setTargets: List<com.ironlog.shared.plans.PlannedSet> = emptyList()
 )

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_backup_last_external_export">Letzter erfolgreicher externer Export: %1$s</string>
+    <string name="settings_backup_no_external_export">Noch kein erfolgreicher externer Export.</string>
+    <string name="settings_backup_reminder_title">An externes Backup erinnern</string>
+    <string name="settings_backup_reminder_subtitle">Zeigt nach sieben Tagen ohne erfolgreichen Export einen Hinweis in den Einstellungen.</string>
+    <string name="settings_backup_reminder_due_title">Externes Backup empfohlen</string>
+    <string name="settings_backup_reminder_due_message">Seit dem letzten erfolgreichen Export sind mindestens sieben Tage vergangen. Das interne Sicherheitsbackup hilft nur auf diesem Gerät; ein externer Export schützt zusätzlich bei Geräteverlust.</string>
+    <string name="settings_backup_recovery_note">Internes Sicherheitsbackup: schützt vor versehentlichen Änderungen auf diesem Gerät.</string>
+</resources>

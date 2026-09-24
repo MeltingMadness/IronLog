@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.PreviousExerciseSession
 import com.ironlog.app.domain.model.PreviousSessionScope
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.shared.readinessdata.SetIntention
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
@@ -17,8 +18,30 @@ interface WorkoutRepository {
     suspend fun finishWorkout(sessionId: Long)
     suspend fun getActiveSession(): WorkoutSession?
     fun observeActiveSession(): Flow<WorkoutSession?>
-    suspend fun addSet(set: WorkoutSet): Long
-    suspend fun updateSet(set: WorkoutSet)
+    /**
+     * Inserts [set] and, in the same transaction, stores [intention] for the new row.
+     *
+     * [SetIntention.UNKNOWN] carries no information and stores no record, so a set
+     * logged without an answer stays "unknown" instead of fake-neutral. Writing both
+     * together keeps a logged set and its intention from ever diverging.
+     */
+    suspend fun addSet(set: WorkoutSet, intention: SetIntention = SetIntention.UNKNOWN): Long
+
+    /**
+     * Updates [set] and, in the same transaction, applies the tri-state [intention].
+     *
+     * `null` (the default) leaves any stored intention untouched, so a caller that only
+     * edits reps/weight can never erase an answer the user made earlier. An explicit
+     * [SetIntention.UNKNOWN] removes the record, and a concrete value replaces it.
+     */
+    suspend fun updateSet(set: WorkoutSet, intention: SetIntention? = null)
+
+    /**
+     * Streams the stored intention per durable set id. A set without a record resolves to
+     * [SetIntention.UNKNOWN]; the map never invents an answer for legacy data.
+     */
+    fun observeSetIntentions(): Flow<Map<Long, SetIntention>>
+
     suspend fun deleteSet(setId: Long)
     fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>>
     suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet>
@@ -26,6 +49,16 @@ interface WorkoutRepository {
     fun getAllCompletedSessions(): Flow<List<WorkoutSession>>
     fun getPagedCompletedSessions(): Flow<PagingData<WorkoutSession>>
     fun getPagedCompletedWorkoutSummaries(): Flow<PagingData<CompletedWorkoutSummary>>
+    /**
+     * Streams completed workout summaries after applying the filters in the database query.
+     * Keeping the predicates in the PagingSource is important: filtering a collected
+     * PagingData would only inspect the page that has already been loaded.
+     */
+    fun getPagedCompletedWorkoutSummaries(
+        planId: Long?,
+        fromEpochMillis: Long?,
+        toEpochMillis: Long?
+    ): Flow<PagingData<CompletedWorkoutSummary>>
     suspend fun getSessionById(id: Long): WorkoutSession?
     fun observeSessionById(id: Long): Flow<WorkoutSession?>
     suspend fun deleteSession(sessionId: Long)
@@ -33,7 +66,13 @@ interface WorkoutRepository {
     suspend fun getSetCountForSession(sessionId: Long): Int
     suspend fun getTotalVolumeForSession(sessionId: Long): Double
     suspend fun getCompletedSessionCountSince(sinceEpochMillis: Long): Int
+    /** Counts completed sessions whose start timestamps are inside the bounded window. */
+    suspend fun getCompletedSessionCountBetween(sinceEpochMillis: Long, untilEpochMillis: Long): Int =
+        getCompletedSessionCountSince(sinceEpochMillis)
     suspend fun getLastCompletedSession(): WorkoutSession?
+    /** Returns the latest completed session whose start is not in the future. */
+    suspend fun getLastCompletedSessionBefore(untilEpochMillis: Long): WorkoutSession? =
+        getLastCompletedSession()
     suspend fun getAllCompletedSessionsList(): List<WorkoutSession>
     suspend fun getPreviousSessionDataForExercises(
         currentSessionId: Long,

@@ -7,14 +7,58 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.repository.WorkoutRepository
+import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.update
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+
+/** The bounded periods offered by the history filter. */
+enum class HistoryTimeRange {
+    ALL_TIME,
+    LAST_30_DAYS,
+    LAST_90_DAYS,
+    THIS_YEAR
+}
+
+data class HistoryFilter(
+    val planId: Long? = null,
+    val timeRange: HistoryTimeRange = HistoryTimeRange.ALL_TIME
+) {
+    val isActive: Boolean
+        get() = planId != null || timeRange != HistoryTimeRange.ALL_TIME
+
+    fun fromEpochMillis(now: LocalDateTime = LocalDateTime.now()): Long? =
+        timeRange.fromEpochMillis(now)
+}
+
+/**
+ * Converts a UI time range to the lower bound used by the Room query. Keeping this conversion
+ * outside the composable makes the filter behavior deterministic and directly testable.
+ */
+fun HistoryTimeRange.fromEpochMillis(now: LocalDateTime = LocalDateTime.now()): Long? {
+    val date = when (this) {
+        HistoryTimeRange.ALL_TIME -> return null
+        HistoryTimeRange.LAST_30_DAYS -> now.toLocalDate().minusDays(30)
+        HistoryTimeRange.LAST_90_DAYS -> now.toLocalDate().minusDays(90)
+        HistoryTimeRange.THIS_YEAR -> LocalDate.of(now.year, 1, 1)
+    }
+    return date.atStartOfDay()
+        .atZone(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+}
 
 data class WorkoutHistoryItem(
     val session: WorkoutSession,
@@ -24,17 +68,34 @@ data class WorkoutHistoryItem(
 )
 
 data class WorkoutHistoryUiState(
+    val filter: HistoryFilter = HistoryFilter(),
+    val plans: List<TrainingPlan> = emptyList(),
     val error: String? = null
 )
 
 class WorkoutHistoryViewModel(
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val trainingPlanRepository: TrainingPlanRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
     val uiState: StateFlow<WorkoutHistoryUiState> = _uiState.asStateFlow()
 
-    val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = workoutRepository.getPagedCompletedWorkoutSummaries()
+    private val filter = MutableStateFlow(HistoryFilter())
+
+    /**
+     * Recreates the PagingSource whenever a filter changes. The repository applies the predicates
+     * before paging, so a filtered result can never miss a matching session that sits on a later
+     * page of the unfiltered history.
+     */
+    val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = filter
+        .flatMapLatest { selected ->
+            workoutRepository.getPagedCompletedWorkoutSummaries(
+                planId = selected.planId,
+                fromEpochMillis = selected.fromEpochMillis(),
+                toEpochMillis = null
+            )
+        }
         .map { pagingData ->
             pagingData.map { summary ->
                 WorkoutHistoryItem(
@@ -44,7 +105,36 @@ class WorkoutHistoryViewModel(
                     totalVolume = summary.totalVolume
                 )
             }
-        }.cachedIn(viewModelScope)
+        }
+        .cachedIn(viewModelScope)
+
+    init {
+        observePlans()
+    }
+
+    private fun observePlans() {
+        viewModelScope.launch {
+            trainingPlanRepository.getAllPlans()
+                .catch { error ->
+                    _uiState.update {
+                        it.copy(error = error.toAppError().toUserMessage("Pläne laden"))
+                    }
+                }
+                .collect { plans ->
+                    _uiState.update { it.copy(plans = plans, error = null) }
+                }
+        }
+    }
+
+    fun setPlanFilter(planId: Long?) {
+        filter.update { it.copy(planId = planId) }
+        _uiState.update { it.copy(filter = filter.value) }
+    }
+
+    fun setTimeRange(timeRange: HistoryTimeRange) {
+        filter.update { it.copy(timeRange = timeRange) }
+        _uiState.update { it.copy(filter = filter.value) }
+    }
 
     fun deleteSession(sessionId: Long) {
         viewModelScope.launch {

@@ -102,6 +102,48 @@ class PlanEditorViewModelTest {
     )
 
     @Test
+    fun `quick progression choice closes sheet and persists after saving plan`() = runTest {
+        val original = ProgressionConfig.DoubleProgression(
+            minReps = 8, maxReps = 12,
+            step = WeightStep(1.5, UnitSystem.METRIC, 1.5),
+            failurePolicy = FailurePolicy(stallThreshold = 3, backoffPercent = 12.0)
+        )
+        val planId = seedPlanExercise(original)
+        val viewModel = createViewModel(planId)
+        advanceUntilIdle()
+        viewModel.openProgressionEditor(0)
+
+        viewModel.chooseProgressionScheme(ProgressionScheme.LINEAR)
+
+        assertNull("Choosing a progression must close the menu", viewModel.uiState.value.progressionEditor)
+        val expected = ProgressionConfig.Linear(original.step, original.failurePolicy)
+        assertEquals(expected, viewModel.uiState.value.exercises.single().planExercise.progressionConfig)
+        assertTrue(viewModel.uiState.value.hasUnsavedChanges)
+        viewModel.dismissProgressionEditor()
+        viewModel.savePlan()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isSaved)
+        val reopened = createViewModel(planId)
+        advanceUntilIdle()
+        assertEquals(expected, reopened.uiState.value.exercises.single().planExercise.progressionConfig)
+    }
+
+    @Test
+    fun `explicit progression apply persists linear choice`() = runTest {
+        val planId = seedPlanExercise(ProgressionConfig.DoubleProgression(
+            minReps = 8, maxReps = 12, step = WeightStep(2.5, UnitSystem.METRIC, 2.5)
+        ))
+        val viewModel = createViewModel(planId)
+        advanceUntilIdle()
+        viewModel.openProgressionEditor(0)
+        viewModel.selectProgressionScheme(ProgressionScheme.LINEAR)
+        viewModel.saveProgressionEditor()
+        viewModel.savePlan()
+        advanceUntilIdle()
+        assertEquals(ProgressionScheme.LINEAR, fakePlanRepo.getPlanById(planId)!!.exercises.single().progressionConfig.scheme)
+    }
+
+    @Test
     fun `updatePlanName correctly updates ui state`() = runTest {
         val viewModel = createViewModel()
         
@@ -433,6 +475,27 @@ class PlanEditorViewModelTest {
     }
 
     @Test
+    fun `clean target weight draft follows a changed display unit`() = runTest {
+        val planId = seedPlanExercise(
+            config = ProgressionConfig.Manual(),
+            targetWeightKg = 100.0
+        )
+        val viewModel = createViewModel(planId)
+        advanceUntilIdle()
+
+        assertEquals("100", viewModel.uiState.value.exercises.single().targetWeightInput)
+
+        preferencesRepository.updateUnitSystem(UnitSystem.IMPERIAL)
+        advanceUntilIdle()
+
+        assertEquals(
+            WeightFormatting.convertToDisplay(100.0, UnitSystem.IMPERIAL).toString(),
+            viewModel.uiState.value.exercises.single().targetWeightInput
+        )
+        assertEquals(UnitSystem.IMPERIAL, viewModel.uiState.value.exercises.single().targetWeightInputUnit)
+    }
+
+    @Test
     fun `removeExercise removes the exercise at correct index`() = runTest {
         val viewModel = createViewModel()
         viewModel.addExercise(mockExercise1)
@@ -532,6 +595,67 @@ class PlanEditorViewModelTest {
         assertEquals(mockExercise1.id, savedPlans[0].exercises[0].exerciseId)
         // Check order indices
         assertEquals(0, savedPlans[0].exercises[0].orderIndex)
+    }
+
+    @Test
+    fun `savePlan rejects an empty exercise plan`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.updatePlanName("Leerer Plan")
+
+        viewModel.savePlan()
+        advanceUntilIdle()
+
+        assertEquals(0, fakePlanRepo.saveCallCount)
+        assertFalse(viewModel.uiState.value.isSaved)
+        assertEquals("Bitte füge mindestens eine Übung hinzu.", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `savePlan keeps editable numeric drafts and rejects invalid target input`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.updatePlanName("Zielwerte")
+        viewModel.addExercise(mockExercise1)
+
+        viewModel.updateTargetSetsInput(0, "")
+        viewModel.updateTargetRepsInput(0, "2,")
+        viewModel.updateTargetWeightInput(0, ".")
+
+        assertEquals("", viewModel.uiState.value.exercises.single().targetSetsInput)
+        assertEquals("2,", viewModel.uiState.value.exercises.single().targetRepsInput)
+        assertEquals(".", viewModel.uiState.value.exercises.single().targetWeightInput)
+
+        viewModel.savePlan()
+        advanceUntilIdle()
+
+        assertEquals(0, fakePlanRepo.saveCallCount)
+        assertFalse(viewModel.uiState.value.isSaved)
+        assertEquals(
+            setOf(
+                PlanExerciseNumericField.SETS,
+                PlanExerciseNumericField.REPS,
+                PlanExerciseNumericField.WEIGHT
+            ),
+            viewModel.uiState.value.targetInputErrors[0]
+        )
+    }
+
+    @Test
+    fun `savePlan ignores duplicate requests while save is in flight`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.updatePlanName("Einmal speichern")
+        viewModel.addExercise(mockExercise1)
+
+        viewModel.savePlan()
+        viewModel.savePlan()
+
+        assertTrue(viewModel.uiState.value.isSaving)
+        assertEquals(0, fakePlanRepo.saveCallCount)
+
+        advanceUntilIdle()
+
+        assertEquals(1, fakePlanRepo.saveCallCount)
+        assertTrue(viewModel.uiState.value.isSaved)
+        assertFalse(viewModel.uiState.value.isSaving)
     }
 
     @Test

@@ -13,6 +13,49 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TrainingPlanDao {
 
+    @Query("SELECT * FROM workout_plan_targets WHERE sessionId = :sessionId ORDER BY orderIndex")
+    suspend fun targetsForApply(sessionId: Long): List<com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity>
+
+    @Query("SELECT * FROM workout_sets WHERE sessionId = :sessionId ORDER BY setNumber, id")
+    suspend fun setsForApply(sessionId: Long): List<com.ironlog.app.data.local.entity.WorkoutSetEntity>
+
+    @Query("SELECT * FROM workout_sessions WHERE id = :sessionId")
+    suspend fun sessionForApply(sessionId: Long): com.ironlog.app.data.local.entity.WorkoutSessionEntity?
+
+    @Update
+    suspend fun updateExercise(exercise: PlanExerciseEntity)
+
+    @Transaction
+    suspend fun applyPerformedSetTargets(sessionId: Long) {
+        val session = sessionForApply(sessionId) ?: error("Training nicht gefunden")
+        check(session.endTime != null) { "Bitte Training zuerst beenden" }
+        val sets = setsForApply(sessionId).filter { it.reps > 0 }
+        val targets = targetsForApply(sessionId)
+        check(targets.isNotEmpty()) { "Kein Plan für dieses Training vorhanden" }
+        val updates = targets.mapNotNull { target ->
+            val recorded = sets.filter { it.planTargetSnapshotId == target.id }
+            if (recorded.isEmpty()) return@mapNotNull null
+            val plan = getPlanExerciseAt(target.planId, target.exerciseId, target.orderIndex) ?: error("Plan wurde geändert. Bitte im Editor prüfen.")
+            check(plan.targetSets == target.target.sets && plan.targetReps == target.target.reps &&
+                plan.targetWeightKg == target.target.weightKg && plan.setTargetsJson == target.setTargetsJson &&
+                plan.progression == target.progression && plan.supersetGroupId == target.supersetGroupId) {
+                "Plan wurde seit dem Training geändert. Bitte im Editor prüfen."
+            }
+            val original = com.ironlog.shared.plans.PlannedSets.decode(target.setTargetsJson).ifEmpty {
+                List(target.target.sets) { com.ironlog.shared.plans.PlannedSet(reps = target.target.reps, weightKg = target.target.weightKg) }
+            }
+            val merged = com.ironlog.shared.plans.PlannedSets.mergePerformed(original, recorded.map {
+                com.ironlog.shared.plans.PlannedSet(it.setType, it.reps, it.weightKg)
+            })
+            if (merged == original) return@mapNotNull null
+            val work = merged.filter { it.kind != "WARMUP" }
+            plan.copy(setTargetsJson = com.ironlog.shared.plans.PlannedSets.encode(merged), targetSets = work.size,
+                targetReps = work.first().reps, targetWeightKg = work.first().weightKg,
+                progression = com.ironlog.app.data.local.entity.ProgressionConfigColumns())
+        }
+        updates.forEach { updateExercise(it) }
+    }
+
     @Query("SELECT * FROM training_plans ORDER BY createdAt DESC")
     fun getAllPlans(): Flow<List<TrainingPlanEntity>>
 

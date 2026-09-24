@@ -15,10 +15,13 @@ import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import com.ironlog.app.data.local.entity.ProgressionConfigColumns
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
 import com.ironlog.app.domain.model.PreviousSessionScope
+import com.ironlog.app.domain.model.DeloadMode
 import com.ironlog.app.domain.model.RecordType
 import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.WorkoutSet
+import com.ironlog.app.domain.repository.ReadinessRepository
 import com.ironlog.app.domain.util.WorkoutCalculations
+import com.ironlog.shared.readinessdata.SetIntention
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
@@ -77,6 +80,34 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 1) {
             sessionDao.insert(match { entity -> entity.name == "Neues Training" })
         }
+    }
+
+    @Test
+    fun `startWorkout captures an active deload mode as the session context`() = runTest {
+        val deloadRepository = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            transactionRunner
+        ) { DeloadMode.HALVE_SET_VOLUME }
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        deloadRepository.startWorkout("Deload")
+
+        coVerify(exactly = 1) { sessionDao.insert(match { it.isDeload == true }) }
+    }
+
+    @Test
+    fun `startWorkout records an explicit non-deload session without an active deload mode`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        repository.startWorkout("Normal")
+
+        coVerify(exactly = 1) { sessionDao.insert(match { it.isDeload == false }) }
     }
 
     @Test
@@ -867,6 +898,61 @@ class WorkoutRepositoryImplTest {
     }
 
     @Test
+    fun `finishWorkout ist transaktional und idempotent`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+        val sessionId = 12L
+        val active = activeSession(sessionId)
+        val completed = completedSession(sessionId)
+        coEvery { sessionDao.getSessionById(sessionId) } returnsMany listOf(active, completed)
+        coEvery { sessionDao.update(any()) } returns Unit
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(1L)
+        coEvery { setDao.getSetsForExerciseList(1L) } returns emptyList()
+
+        repo.finishWorkout(sessionId)
+        repo.finishWorkout(sessionId)
+
+        assertEquals(2, runner.invocations)
+        coVerify(exactly = 1) { sessionDao.update(any()) }
+        coVerify(exactly = 1) { setDao.getExerciseIdsForSession(sessionId) }
+        coVerify(exactly = 1) { setDao.getSetsForExerciseList(1L) }
+    }
+
+    @Test
+    fun `addSet weist nicht endliche oder ungueltige RPE-Werte vor Insert zurueck`() = runTest {
+        val invalidValues = listOf(Double.NaN, Double.POSITIVE_INFINITY, 0.0, 10.5)
+
+        invalidValues.forEach { rpe ->
+            try {
+                repository.addSet(
+                    WorkoutSet(
+                        sessionId = 3L,
+                        exerciseId = 1L,
+                        setNumber = 1,
+                        reps = 8,
+                        weightKg = 100.0,
+                        setType = SetType.NORMAL,
+                        rpe = rpe
+                    )
+                )
+                fail("Expected invalid RPE $rpe to be rejected")
+            } catch (_: IllegalArgumentException) {
+                // Expected fail-closed repository boundary.
+            }
+        }
+
+        coVerify(exactly = 0) { setDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
     fun `addSet propagates errors thrown by insert and skips record rebuild`() = runTest {
         val boom = IllegalStateException("DB boom")
         coEvery { setDao.insert(any()) } throws boom
@@ -993,6 +1079,48 @@ class WorkoutRepositoryImplTest {
         coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
         coVerify(exactly = 0) { personalRecordDao.insert(any()) }
         coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    /**
+     * The tri-state contract the Android UI relies on (mirrors SharedStateStore.updateSet
+     * on iOS): a plain reps/weight edit must not erase an intention it never touched, an
+     * explicit UNKNOWN clears it, and a concrete value replaces it.
+     */
+    @Test
+    fun `updateSet preserves, clears or replaces the stored intention`() = runTest {
+        val readiness = mockk<ReadinessRepository>(relaxed = true)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            transactionRunner,
+            readinessRepository = readiness
+        )
+        val stored = storedSet()
+        coEvery { setDao.getSetById(stored.id) } returns stored
+
+        // No intention argument: the previously stored answer must survive the edit.
+        repo.updateSet(stored.toDomain().copy(reps = 12, weightKg = 105.0))
+        coVerify(exactly = 0) { readiness.clearSetIntention(any()) }
+        coVerify(exactly = 0) { readiness.setSetIntention(any(), any(), any()) }
+
+        // Explicit UNKNOWN is the user clearing the answer.
+        repo.updateSet(
+            stored.toDomain().copy(reps = 12, weightKg = 105.0),
+            SetIntention.UNKNOWN
+        )
+        coVerify(exactly = 1) { readiness.clearSetIntention(stored.id) }
+
+        // A concrete value replaces whatever was stored.
+        repo.updateSet(
+            stored.toDomain().copy(reps = 12, weightKg = 105.0),
+            SetIntention.PLANNED_FAILURE
+        )
+        coVerify(exactly = 1) {
+            readiness.setSetIntention(stored.id, SetIntention.PLANNED_FAILURE, any())
+        }
     }
 
     private fun linkedSet() = WorkoutSet(

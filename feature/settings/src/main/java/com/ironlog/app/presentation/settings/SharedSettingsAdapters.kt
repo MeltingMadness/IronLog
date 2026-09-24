@@ -77,6 +77,30 @@ internal class AndroidSharedAppPreferencesRepository(
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         delegate.updateDefaultRestTimeSeconds(seconds)
     }
+
+    override suspend fun updateDeloadMode(mode: com.ironlog.shared.model.DeloadMode) {
+        delegate.updateDeloadMode(mode.toApp())
+    }
+
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        delegate.updatePlateCalculatorEnabled(enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        delegate.updateAvailablePlates(plates)
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        delegate.updateBarbellWeightKg(weightKg)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        delegate.updateLastSuccessfulExportEpochMillis(timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        delegate.updateBackupReminderEnabled(enabled)
+    }
 }
 
 internal class AndroidSharedReminderScheduler(
@@ -106,7 +130,15 @@ internal fun AppPreferences.toShared(): com.ironlog.shared.model.AppPreferences 
         intensitySystem = intensitySystem.toShared(),
         shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts,
         autoRestTimerEnabled = autoRestTimerEnabled,
-        defaultRestTimeSeconds = defaultRestTimeSeconds
+        defaultRestTimeSeconds = defaultRestTimeSeconds,
+        deloadMode = deloadMode
+            ?.let { com.ironlog.shared.model.DeloadMode.valueOf(it.name) }
+            ?: com.ironlog.shared.model.DeloadMode.NONE,
+        plateCalculatorEnabled = plateCalculatorEnabled,
+        availablePlates = availablePlates,
+        barbellWeightKg = barbellWeightKg,
+        lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
+        backupReminderEnabled = backupReminderEnabled
     )
 
 internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
@@ -124,7 +156,13 @@ internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
         intensitySystem = intensitySystem.toApp(),
         shareWeightHistoryAcrossContexts = shareWeightHistoryAcrossContexts,
         autoRestTimerEnabled = autoRestTimerEnabled,
-        defaultRestTimeSeconds = defaultRestTimeSeconds
+        defaultRestTimeSeconds = defaultRestTimeSeconds,
+        deloadMode = deloadMode.toApp(),
+        plateCalculatorEnabled = plateCalculatorEnabled,
+        availablePlates = availablePlates,
+        barbellWeightKg = barbellWeightKg,
+        lastSuccessfulExportEpochMillis = lastSuccessfulExportEpochMillis,
+        backupReminderEnabled = backupReminderEnabled
     )
 
 internal fun ReminderConfig.toShared(): com.ironlog.shared.model.ReminderConfig =
@@ -147,6 +185,10 @@ internal fun UnitSystem.toShared(): com.ironlog.shared.model.UnitSystem =
     com.ironlog.shared.model.UnitSystem.valueOf(name)
 
 internal fun com.ironlog.shared.model.UnitSystem.toApp(): UnitSystem = UnitSystem.valueOf(name)
+
+private fun com.ironlog.shared.model.DeloadMode.toApp(): com.ironlog.app.domain.model.DeloadMode? =
+    takeUnless { this == com.ironlog.shared.model.DeloadMode.NONE }
+        ?.let { com.ironlog.app.domain.model.DeloadMode.valueOf(it.name) }
 
 internal fun WeekStart.toShared(): com.ironlog.shared.model.WeekStart =
     com.ironlog.shared.model.WeekStart.valueOf(name)

@@ -13,6 +13,7 @@ import com.ironlog.app.domain.model.ProgressionSuggestion
 import com.ironlog.app.domain.model.ProgressionSuggestionStatus
 import com.ironlog.app.domain.model.ProgressionTarget
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeightStep
 import com.ironlog.app.domain.model.WorkoutPlanTarget
@@ -22,6 +23,14 @@ import com.ironlog.app.fakes.FakeExerciseRepository
 import com.ironlog.app.fakes.FakeProgressionRepository
 import com.ironlog.app.fakes.FakeStatisticsRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
+import com.ironlog.app.domain.repository.ReadinessRepository
+import io.mockk.mockk
+import io.mockk.every
+import io.mockk.coVerify
+import io.mockk.coEvery
+import kotlinx.coroutines.flow.flow
+import com.ironlog.shared.readinessdata.SetIntention
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -46,10 +55,12 @@ class WorkoutHistoryAndDetailViewModelTest {
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var statisticsRepo: FakeStatisticsRepository
     private lateinit var progressionRepo: FakeProgressionRepository
+    private val readinessRepo = mockk<ReadinessRepository>(relaxed = true)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        every { readinessRepo.observeSetIntentions() } returns flowOf(emptyMap())
         workoutRepo = FakeWorkoutRepository()
         exerciseRepo = FakeExerciseRepository()
         statisticsRepo = FakeStatisticsRepository()
@@ -59,6 +70,37 @@ class WorkoutHistoryAndDetailViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `historical intention edits preserve completed workout values and reject foreign set ids`() = runTest {
+        val now = LocalDateTime.now()
+        val set = WorkoutSet(id = 101L, sessionId = 7L, exerciseId = 1L, setNumber = 1, reps = 8, weightKg = 80.0, completedAt = now.minusDays(1))
+        workoutRepo.addSession(WorkoutSession(id = 7L, startTime = now.minusDays(1), endTime = now), isActive = false)
+        workoutRepo.addSetDirectly(set)
+        every { readinessRepo.observeSetIntentions() } returns flowOf(mapOf(101L to SetIntention.PLANNED_FAILURE))
+        val vm = WorkoutDetailViewModel(SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(SetIntention.PLANNED_FAILURE, vm.uiState.value.setIntentions[101L])
+        vm.updateSetIntention(999L, SetIntention.UNKNOWN)
+        vm.updateSetIntention(101L, SetIntention.UNKNOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 0) { readinessRepo.setSetIntention(999L, any(), any()) }
+        coVerify(exactly = 1) { readinessRepo.setSetIntention(101L, SetIntention.UNKNOWN, any()) }
+        assertEquals(set, workoutRepo.getSetsForSessionList(7L).single())
+        assertEquals(now, workoutRepo.getSessionById(7L)?.endTime)
+    }
+
+    @Test
+    fun `failed intention load stays visible and prevents overwriting unknown data`() = runTest {
+        every { readinessRepo.observeSetIntentions() } returns flow { throw IllegalStateException("corrupt") }
+        val vm = WorkoutDetailViewModel(SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(vm.uiState.value.intentionsLoaded)
+        assertTrue(vm.uiState.value.intentionError != null)
+        vm.updateSetIntention(101L, SetIntention.UNKNOWN)
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 0) { readinessRepo.setSetIntention(any(), any(), any()) }
     }
 
     @Test
@@ -121,7 +163,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
-            progressionRepository = progressionRepo
+            progressionRepository = progressionRepo,
+            readinessRepository = readinessRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -168,7 +211,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
-            progressionRepository = progressionRepo
+            progressionRepository = progressionRepo,
+            readinessRepository = readinessRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -196,7 +240,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
-            progressionRepository = progressionRepo
+            progressionRepository = progressionRepo,
+            readinessRepository = readinessRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -212,13 +257,31 @@ class WorkoutHistoryAndDetailViewModelTest {
             workoutRepository = workoutRepo,
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
-            progressionRepository = progressionRepo
+            progressionRepository = progressionRepo,
+            readinessRepository = readinessRepo
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(vm.uiState.value.notFound)
         assertEquals(false, vm.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `history detail keeps zero rep failure rows while hiding empty normal rows`() {
+        val base = WorkoutSet(
+            id = 1L,
+            sessionId = 7L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 0,
+            weightKg = 80.0,
+            setType = SetType.NORMAL
+        )
+        val failure = base.copy(id = 2L, setNumber = 2, setType = SetType.FAILURE)
+        val drop = base.copy(id = 3L, setNumber = 3, setType = SetType.DROP_SET, reps = 5)
+
+        assertEquals(listOf(failure, drop), visibleHistorySets(listOf(base, failure, drop)))
     }
 
     private fun suggestion(

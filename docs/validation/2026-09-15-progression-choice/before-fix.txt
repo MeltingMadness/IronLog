@@ -1,0 +1,4 @@
+PlanEditorViewModelTest > quick progression choice closes sheet and persists after saving plan FAILED
+    java.lang.AssertionError at PlanEditorViewModelTest.kt:105
+2 tests completed, 1 failed
+BUILD FAILED in 18s

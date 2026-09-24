@@ -1,0 +1,51 @@
+[
+  {
+    "file": "01-logging-android.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-weight.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/logging.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/01-logging-android.html",
+    "sha256": "c355cfacc9a93af9b50df0f44459b1632af6c090f37b73c56568fda6863399db"
+  },
+  {
+    "file": "02-logging-ios.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-ios-second-set-default.jpg",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/ios.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/02-logging-ios.html",
+    "sha256": "03698c61092c1aee4b19ab954e01e6600f25a965acc5e7cb8c3c117fe3752a37"
+  },
+  {
+    "file": "03-exercise-picker.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-picker.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/auswahl.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/03-exercise-picker.html",
+    "sha256": "3c5d47d47059d7d0cfc51f71a456da5d7602b1aaf4571bf6087edf8cea3b5eff"
+  },
+  {
+    "file": "04-plan-create.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-plan-bench.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/satzplanung.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/04-plan-create.html",
+    "sha256": "d74aabfc8c555b0ec0c684dd5ced56d80578b6616786458dc7bcc33ea8f88592"
+  },
+  {
+    "file": "05-finish-early.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-finish.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/abschluss.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/05-finish-early.html",
+    "sha256": "fbfe697836a08d84954959c7e8cd3be667ebf97aac5c60297c98301d2e2815cf"
+  },
+  {
+    "file": "06-completion.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-finished.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/ergebnis.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/06-completion.html",
+    "sha256": "f10bdb8ff70347f064523a83a1cabf41634f176b381af24e0a34820176972ebc"
+  },
+  {
+    "file": "07-plan-changes.html",
+    "original": "/Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/evidence/ironlog-android-history-detail.png",
+    "firstDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/planuebernahme.svg",
+    "openDesignDraft": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/07-plan-changes.html",
+    "sha256": "e3773cf004295054284e4c19a2d6a49cfd834dedb692ae5793c0dd1d9897e136"
+  }
+]

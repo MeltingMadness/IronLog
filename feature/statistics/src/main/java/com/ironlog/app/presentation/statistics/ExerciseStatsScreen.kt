@@ -34,7 +34,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.RecordType
+import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.repository.AppPreferencesRepository
+import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
@@ -42,8 +44,10 @@ import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.common.StatCardVariant
+import com.ironlog.app.presentation.common.WeeklyMuscleVolumeCard
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.feature.statistics.R as StatisticsR
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
@@ -334,6 +338,16 @@ fun ExerciseStatsScreen(
                             )
                         }
                     }
+
+                    state.lastWorkoutComparison?.let { comparison ->
+                        item {
+                            LastWorkoutComparisonCard(
+                                comparison = comparison,
+                                metric = state.selectedMetric,
+                                unitSystem = preferences.unitSystem
+                            )
+                        }
+                    }
                 } else {
                     item {
                         Text(
@@ -348,9 +362,164 @@ fun ExerciseStatsScreen(
                     }
                 }
 
+                if (state.recentSets.isNotEmpty()) {
+                    item {
+                        RecentSetsCard(
+                            sets = state.recentSets,
+                            unitSystem = preferences.unitSystem
+                        )
+                    }
+                }
+
                 item { Spacer(modifier = Modifier.height(dims.spacingMd)) }
             }
         }
     }
+}
+
+@Composable
+private fun LastWorkoutComparisonCard(
+    comparison: ChartComparison,
+    metric: ChartMetric,
+    unitSystem: com.ironlog.app.domain.model.UnitSystem
+) {
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED
+    ) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(ironLogDimens.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(ironLogDimens.spacingXs)
+        ) {
+            Text(
+                text = stringResource(StatisticsR.string.stats_comparison_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(
+                    StatisticsR.string.stats_comparison_previous,
+                    chartPointDate(comparison.previous)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = formatMetricValue(comparison.previous.value, metric, unitSystem),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = stringResource(
+                    StatisticsR.string.stats_comparison_latest,
+                    chartPointDate(comparison.latest)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = formatMetricValue(comparison.latest.value, metric, unitSystem),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = stringResource(
+                    StatisticsR.string.stats_comparison_delta,
+                    formatMetricDelta(comparison.delta, metric, unitSystem)
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (comparison.delta >= 0f) {
+                    MaterialTheme.semantic.success
+                } else {
+                    MaterialTheme.semantic.danger
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecentSetsCard(
+    sets: List<com.ironlog.app.domain.model.WorkoutSet>,
+    unitSystem: com.ironlog.app.domain.model.UnitSystem
+) {
+    val dims = ironLogDimens
+    IronLogSurfaceCard(
+        modifier = Modifier.fillMaxWidth(),
+        tone = IronLogSurfaceTone.MUTED
+    ) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
+        ) {
+            Text(
+                text = stringResource(StatisticsR.string.stats_recent_sets_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            sets.take(12).forEach { set ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = set.completedAt.format(DateFormatting.DATE_TIME),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(
+                            StatisticsR.string.stats_recent_set_value,
+                            recentSetTypeLabel(set.setType),
+                            WeightFormatting.formatWeight(set.weightKg, unitSystem),
+                            set.reps
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(start = dims.spacingSm)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun recentSetTypeLabel(type: SetType): String = stringResource(
+    when (type) {
+        SetType.NORMAL -> StatisticsR.string.stats_set_type_normal
+        SetType.WARMUP -> StatisticsR.string.stats_set_type_warmup
+        SetType.DROP_SET -> StatisticsR.string.stats_set_type_drop
+        SetType.FAILURE -> StatisticsR.string.stats_set_type_failure
+    }
+)
+
+private fun chartPointDate(point: ChartDataPoint): String =
+    point.timestamp?.format(DateFormatting.DATE_TIME) ?: point.dateLabel
+
+private fun formatMetricValue(
+    value: Float,
+    metric: ChartMetric,
+    unitSystem: com.ironlog.app.domain.model.UnitSystem
+): String = when (metric) {
+    ChartMetric.VOLUME -> WeightFormatting.formatVolume(value.toDouble(), unitSystem)
+    ChartMetric.WEIGHT,
+    ChartMetric.E1RM -> WeightFormatting.formatWeight(value.toDouble(), unitSystem)
+}
+
+private fun formatMetricDelta(
+    value: Float,
+    metric: ChartMetric,
+    unitSystem: com.ironlog.app.domain.model.UnitSystem
+): String {
+    if (metric != ChartMetric.VOLUME) {
+        return WeightFormatting.formatWeightDelta(value.toDouble(), unitSystem)
+    }
+    val sign = if (value > 0f) "+" else ""
+    return sign + WeightFormatting.formatVolume(value.toDouble(), unitSystem)
 }
 

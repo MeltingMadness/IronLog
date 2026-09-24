@@ -13,6 +13,7 @@ import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.ReadinessDataDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -105,14 +106,14 @@ class BackupLifecycleRoundTripTest {
             assertTrue("export must contain skip", payload.metaPlanSkips.any { it.id == SKIP_ID })
             assertTrue("export must contain targets", payload.workoutPlanTargets.any { it.id == TARGET_ID })
             assertTrue("export must contain suggestions", payload.progressionSuggestions.any { it.id == SUGGESTION_ID })
-            assertEquals(11, payload.schemaVersion)
+            assertEquals(12, payload.schemaVersion)
 
             // Mutate/empty the database so the imported document must prove itself.
             harness.mutateAwayFromSeededState()
 
             val preview = harness.repository.previewImport(MEMORY_URI)
             assertTrue("preview must validate", preview.isValid)
-            assertEquals(11, preview.schemaVersion)
+            assertEquals(12, preview.schemaVersion)
             assertEquals(sha256Hex(exported), preview.sha256)
             assertPreviewCounts(preview, payload)
 
@@ -334,6 +335,7 @@ class BackupLifecycleRoundTripTest {
         val metaTrainingPlanDao: MetaTrainingPlanDao = database.metaTrainingPlanDao()
         val personalRecordDao: PersonalRecordDao = database.personalRecordDao()
         val progressionDao: ProgressionDao = database.progressionDao()
+        val readinessDataDao: ReadinessDataDao = database.readinessDataDao()
 
         val repository: BackupRepositoryImpl = BackupRepositoryImpl(
             transactionRunner = transactionRunner,
@@ -346,6 +348,7 @@ class BackupLifecycleRoundTripTest {
             metaTrainingPlanDao = metaTrainingPlanDao,
             personalRecordDao = personalRecordDao,
             progressionDao = progressionDao,
+            readinessDataDao = readinessDataDao,
             buildInfo = BuildInfo(versionName = "test", versionCode = 1)
         )
 
@@ -678,7 +681,7 @@ private fun WorkoutSetEntity.toBackup() = BackupWorkoutSet(
     setNumber = setNumber,
     reps = reps,
     weightKg = weightKg,
-    isWarmup = isWarmup,
+    setType = setType,
     completedAt = completedAt,
     rpe = rpe,
     planTargetSnapshotId = planTargetSnapshotId

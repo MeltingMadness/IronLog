@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dashboard_ui_this_week">Diese Woche</string>
+    <string name="dashboard_ui_this_month">Dieser Monat</string>
+    <plurals name="dashboard_ui_training_count">
+        <item quantity="one">%d Training</item>
+        <item quantity="other">%d Trainings</item>
+    </plurals>
+    <string name="dashboard_ui_volume_unit">Volumen in kg × Wiederholungen · Datum = Wochenbeginn</string>
+</resources>

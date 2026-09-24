@@ -41,7 +41,7 @@ class ProgressionEngineTest {
     }
 
     @Test
-    fun `load advance rounds the proposal to the configured step grid`() {
+    fun `load advance preserves offset from zero`() {
         val result = engine.evaluate(
             context(
                 linear(),
@@ -50,12 +50,44 @@ class ProgressionEngineTest {
             )
         )
         val change = result as ProgressionOutcome.ProposeChange
-        assertEquals(102.5, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(102.9, change.proposedTarget.weightKg, 0.000001)
         assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
     }
 
     @Test
-    fun `imperial load advance rounds to the nearest plate multiple`() {
+    fun `custom dumbbell increment is relative to trained weight in every scheme`() {
+        val configs = listOf(linear(stepKg = 2.0), double(min = 8, max = 10, stepKg = 2.0),
+            totalReps(target = 30, stepKg = 2.0), rpe(8.0, 0.5, stepKg = 2.0))
+        configs.forEach { config ->
+            val result = engine.evaluate(context(config, targetWeightKg = 0.0,
+                weights = List(3) { 23.0 }, reps = List(3) { 10 }, rpes = List(3) { 8.0 }))
+            assertEquals(25.0, (result as ProgressionOutcome.ProposeChange).proposedTarget.weightKg, 0.000001)
+        }
+    }
+
+    @Test
+    fun `dumbbell series starting at four advances by one point five without zero based rounding`() {
+        val configs = listOf(linear(stepKg = 1.5), double(min = 8, max = 10, stepKg = 1.5),
+            totalReps(target = 30, stepKg = 1.5), rpe(8.0, 0.5, stepKg = 1.5))
+        configs.forEach { config ->
+            listOf(4.0, 5.5, 7.0, 8.5, 10.0, 40.0, 41.5).forEach { load ->
+                val result = engine.evaluate(context(config, targetWeightKg = load,
+                    weights = List(3) { load }, reps = List(3) { 10 }, rpes = List(3) { 8.0 }))
+                assertEquals(load + 1.5, (result as ProgressionOutcome.ProposeChange).proposedTarget.weightKg, 0.000001)
+            }
+        }
+    }
+
+    @Test
+    fun `dumbbell backoff stays on the offset one point five series`() {
+        val result = engine.evaluate(context(linear(stepKg = 1.5), targetWeightKg = 10.0,
+            weights = List(3) { 10.0 }, reps = listOf(8, 8, 7),
+            previous = listOf(previous(ProgressionStreakEffect.INCREMENT))))
+        assertEquals(8.5, (result as ProgressionOutcome.ProposeChange).proposedTarget.weightKg, 0.000001)
+    }
+
+    @Test
+    fun `imperial load advance preserves offset from zero`() {
         val result = engine.evaluate(
             context(
                 linearImperial(stepLb = 5.0, backoff = 10.0),
@@ -64,7 +96,7 @@ class ProgressionEngineTest {
         )
         val change = result as ProgressionOutcome.ProposeChange
         assertEquals(
-            105.0,
+            106.0,
             WeightFormatting.convertToDisplay(change.proposedTarget.weightKg, UnitSystem.IMPERIAL),
             0.000001
         )
@@ -85,6 +117,32 @@ class ProgressionEngineTest {
         assertEquals(8, change.proposedTarget.reps)
         assertEquals(102.5, change.proposedTarget.weightKg, 0.000001)
         assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
+    }
+
+    @Test
+    fun `double progression advances load when counted reps reach upper bound before stored target`() {
+        val result = engine.evaluate(
+            context(
+                double(min = 8, max = 10),
+                targetReps = 8,
+                reps = listOf(10, 10, 10)
+            )
+        )
+
+        val change = result as ProgressionOutcome.ProposeChange
+        assertEquals(ProgressionReasonCode.LOAD_ADVANCED, change.reasonCode)
+        assertEquals(8, change.proposedTarget.reps)
+        assertEquals(102.5, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(8, change.sourceTarget.reps)
+        assertEquals(
+            mapOf(
+                "targetReps" to 8.0,
+                "actualReps" to 10.0,
+                "stepOriginalValue" to 2.5,
+                "actualWeightKg" to 100.0
+            ),
+            change.reasonArguments
+        )
     }
 
     @Test
@@ -224,6 +282,91 @@ class ProgressionEngineTest {
     }
 
     @Test
+    fun `repeat adopts actual baseline and preserves source snapshot across all rules`() {
+        val contexts = listOf(
+            context(
+                linear(),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7)
+            ),
+            context(
+                double(min = 8, max = 10),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7)
+            ),
+            context(
+                totalReps(30),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(8, 8, 8)
+            ),
+            context(
+                rpe(8.0, 0.5),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7)
+            )
+        )
+
+        contexts.forEach { current ->
+            val result = engine.evaluate(current)
+            val change = result as ProgressionOutcome.ProposeChange
+            assertEquals(ProgressionReasonCode.REPEAT_TARGET, change.reasonCode)
+            assertEquals(ProgressionStreakEffect.INCREMENT, change.streakEffect)
+            assertEquals(0.0, change.sourceTarget.weightKg, 0.0)
+            assertEquals(50.0, change.proposedTarget.weightKg, 0.0)
+            assertEquals(50.0, requireNotNull(change.reasonArguments["actualWeightKg"]), 0.0)
+        }
+    }
+
+    @Test
+    fun `stall backoff uses actual zero-source basis across all rules`() {
+        val contexts = listOf(
+            context(
+                linear(),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            ),
+            context(
+                double(min = 8, max = 10),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            ),
+            context(
+                totalReps(30),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(8, 8, 8),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            ),
+            context(
+                rpe(8.0, 0.5),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(7, 7, 7),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            )
+        )
+
+        contexts.forEach { current ->
+            val result = engine.evaluate(current)
+            val change = result as ProgressionOutcome.ProposeChange
+            assertEquals(ProgressionReasonCode.STALL_BACKOFF, change.reasonCode)
+            assertEquals(ProgressionStreakEffect.INCREMENT, change.streakEffect)
+            assertEquals(0.0, change.sourceTarget.weightKg, 0.0)
+            assertEquals(45.0, change.proposedTarget.weightKg, 0.000001)
+            assertEquals(10.0, requireNotNull(change.reasonArguments["backoffPercent"]), 0.0)
+            assertEquals(50.0, requireNotNull(change.reasonArguments["actualWeightKg"]), 0.0)
+        }
+    }
+
+    @Test
     fun `missing rpe ignores rather than resets failure streak`() {
         val result = engine.evaluate(context(rpe(8.0, 0.5), reps = listOf(8, 8, 8), rpes = listOf(8.0, null, 8.0)))
         assertEquals(ProgressionReasonCode.RPE_MISSING, result.reasonCode)
@@ -244,7 +387,10 @@ class ProgressionEngineTest {
         assertTrue(result is ProgressionOutcome.ProposeChange)
         assertEquals(ProgressionReasonCode.STALL_BACKOFF, result.reasonCode)
         assertEquals(ProgressionStreakEffect.INCREMENT, result.streakEffect)
-        assertEquals(mapOf("backoffPercent" to 10.0), result.reasonArguments)
+        assertEquals(
+            mapOf("backoffPercent" to 10.0, "actualWeightKg" to 100.0),
+            result.reasonArguments
+        )
     }
 
     @Test
@@ -261,7 +407,10 @@ class ProgressionEngineTest {
         assertTrue(result is ProgressionOutcome.ProposeChange)
         assertEquals(ProgressionReasonCode.STALL_BACKOFF, result.reasonCode)
         assertEquals(ProgressionStreakEffect.INCREMENT, result.streakEffect)
-        assertEquals(mapOf("backoffPercent" to 10.0), result.reasonArguments)
+        assertEquals(
+            mapOf("backoffPercent" to 10.0, "actualWeightKg" to 100.0),
+            result.reasonArguments
+        )
     }
 
     @Test
@@ -269,7 +418,10 @@ class ProgressionEngineTest {
         val result = engine.evaluate(context(rpe(8.0, 0.5), reps = listOf(8, 8, 8), rpes = listOf(8.0, 9.0, 8.0)))
         assertTrue(result is ProgressionOutcome.KeepTarget)
         assertEquals(ProgressionStreakEffect.INCREMENT, result.streakEffect)
-        assertEquals(mapOf("highestRpe" to 9.0), result.reasonArguments)
+        assertEquals(
+            mapOf("highestRpe" to 9.0, "actualWeightKg" to 100.0),
+            result.reasonArguments
+        )
     }
 
     @Test
@@ -283,13 +435,48 @@ class ProgressionEngineTest {
         val second = engine.evaluate(
             context(
                 rpe(8.0, 0.5),
-                reps = listOf(8, 8, 7),
+                reps = listOf(8, 8, 8),
                 rpes = listOf(8.0, 9.0, 8.0),
                 previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
             )
         )
         assertTrue(second is ProgressionOutcome.ProposeChange)
         assertEquals(ProgressionReasonCode.STALL_BACKOFF, second.reasonCode)
+        assertEquals(
+            mapOf(
+                "highestRpe" to 9.0,
+                "backoffPercent" to 10.0,
+                "actualWeightKg" to 100.0
+            ),
+            second.reasonArguments
+        )
+    }
+
+    @Test
+    fun `high rpe uses actual zero-source basis when threshold triggers backoff`() {
+        val result = engine.evaluate(
+            context(
+                rpe(8.0, 0.5),
+                targetWeightKg = 0.0,
+                weights = List(3) { 50.0 },
+                reps = listOf(8, 8, 8),
+                rpes = listOf(8.0, 9.0, 8.0),
+                previous = listOf(previous(ProgressionStreakEffect.INCREMENT))
+            )
+        )
+
+        val change = result as ProgressionOutcome.ProposeChange
+        assertEquals(ProgressionReasonCode.STALL_BACKOFF, change.reasonCode)
+        assertEquals(0.0, change.sourceTarget.weightKg, 0.0)
+        assertEquals(45.0, change.proposedTarget.weightKg, 0.000001)
+        assertEquals(
+            mapOf(
+                "highestRpe" to 9.0,
+                "backoffPercent" to 10.0,
+                "actualWeightKg" to 50.0
+            ),
+            change.reasonArguments
+        )
     }
 
     @Test
@@ -300,7 +487,10 @@ class ProgressionEngineTest {
         )
         val result = engine.evaluate(context(linear(stallThreshold = 2), reps = listOf(8, 8, 7), previous = previous))
         assertEquals(ProgressionReasonCode.STALL_BACKOFF, result.reasonCode)
-        assertEquals(mapOf("backoffPercent" to 10.0), result.reasonArguments)
+        assertEquals(
+            mapOf("backoffPercent" to 10.0, "actualWeightKg" to 100.0),
+            result.reasonArguments
+        )
     }
 
     @Test
@@ -342,7 +532,10 @@ class ProgressionEngineTest {
         assertTrue(result is ProgressionOutcome.KeepTarget)
         assertEquals(ProgressionReasonCode.BACKOFF_FLOOR_REACHED, result.reasonCode)
         assertEquals(ProgressionStreakEffect.INCREMENT, result.streakEffect)
-        assertEquals(mapOf("backoffPercent" to 10.0), result.reasonArguments)
+        assertEquals(
+            mapOf("backoffPercent" to 10.0, "actualWeightKg" to 0.0),
+            result.reasonArguments
+        )
     }
 
     @Test

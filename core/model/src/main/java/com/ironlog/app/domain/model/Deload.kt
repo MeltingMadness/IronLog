@@ -30,6 +30,23 @@ enum class DeloadSignal {
     FAILURE_FREQUENCY
 }
 
+/**
+ * Einordnung der verfügbaren Daten für die Deload-Heuristik.
+ *
+ * Das ist eine Aussage über die Auswertbarkeit der gespeicherten Trainingsdaten,
+ * keine medizinische Einschätzung der Person.
+ */
+enum class DeloadAssessmentStatus {
+    /** Im Analysefenster liegen noch nicht genug Einheiten für eine Auswertung. */
+    INSUFFICIENT_DATA,
+
+    /** Genug Einheiten liegen vor, aber kein Signal überschreitet eine Heuristik. */
+    NO_NOTABLE_STRAIN,
+
+    /** Mindestens ein Deload-Signal wurde aus den Daten abgeleitet. */
+    SIGNALS_PRESENT
+}
+
 /** Eine Trainingseinheit, wie sie der [com.ironlog.app.domain.deload.DeloadDetector] erwartet. */
 data class DeloadSessionInput(
     val id: Long,
@@ -59,5 +76,21 @@ data class DeloadAssessment(
     /** Anteil der FAILURE-Sätze an den Arbeitssätzen (NORMAL + FAILURE). */
     val failureRate: Double = 0.0,
     /** Anzahl der Verbundübungen mit genug wöchentlichen E1RM-Punkten. */
-    val analyzedCompoundCount: Int = 0
-)
+    val analyzedCompoundCount: Int = 0,
+    /** Länge des ausgewerteten Fensters; dient nur zur transparenten UI-Anzeige. */
+    val analysisWindowWeeks: Int = 4,
+    /** Mindestanzahl Einheiten, bevor Signale interpretiert werden. */
+    val minimumSessionCount: Int = 3
+) {
+    /** Ob die Heuristik auf genügend abgeschlossenen Einheiten basiert. */
+    val hasSufficientData: Boolean
+        get() = sessionCount >= minimumSessionCount
+
+    /** Transparente Einordnung für die Darstellung der Auswertung. */
+    val status: DeloadAssessmentStatus
+        get() = when {
+            !hasSufficientData -> DeloadAssessmentStatus.INSUFFICIENT_DATA
+            signals.isEmpty() -> DeloadAssessmentStatus.NO_NOTABLE_STRAIN
+            else -> DeloadAssessmentStatus.SIGNALS_PRESENT
+        }
+}

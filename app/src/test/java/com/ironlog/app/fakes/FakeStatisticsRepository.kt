@@ -71,6 +71,15 @@ class FakeStatisticsRepository : StatisticsRepository {
     override suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet> =
         exerciseSets.value.filter { it.exerciseId == exerciseId }
 
+    override suspend fun getCompletedSetsForExerciseList(
+        exerciseId: Long,
+        nowEpochMillis: Long
+    ): List<WorkoutSet> = exerciseSets.value.filter { set ->
+        set.exerciseId == exerciseId &&
+            set.sessionId in completedSessionIds &&
+            EpochConverter.toLong(set.completedAt) <= nowEpochMillis
+    }
+
     override suspend fun getMaxWeightForExercise(exerciseId: Long): Double? =
         exerciseSets.value.filter { it.exerciseId == exerciseId }.maxByOrNull { it.weightKg }?.weightKg
 
@@ -83,4 +92,11 @@ class FakeStatisticsRepository : StatisticsRepository {
                 !set.isWarmup &&
                 EpochConverter.toLong(set.completedAt) >= sinceEpochMillis
         }
+
+    override suspend fun getWorkSetsCompletedBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): List<WorkoutSet> = getWorkSetsCompletedSince(sinceEpochMillis).filter { set ->
+        EpochConverter.toLong(set.completedAt) <= untilEpochMillis
+    }
 }

@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.ProgressionReasonCode
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.progression.R as ProgressionR
 import java.text.NumberFormat
 import kotlin.math.abs
 
@@ -17,7 +18,7 @@ fun ProgressionReasonText(
     val arguments = item.reasonArguments
     return when (item.reasonCode) {
         ProgressionReasonCode.REP_TARGET_ADVANCED ->
-            stringResource(R.string.progression_review_reason_rep_advanced) + weightBasisSuffix(item, displayUnitSystem)
+            stringResource(R.string.progression_review_reason_rep_advanced)
 
         ProgressionReasonCode.LOAD_ADVANCED -> loadAdvancedText(item, displayUnitSystem)
         ProgressionReasonCode.TOTAL_REPS_COMPLETED -> totalRepsCompletedText(item, displayUnitSystem)
@@ -41,7 +42,10 @@ fun ProgressionReasonText(
             val actual = arguments.validNumber("actualWeightKg")
             if (expected != null && actual != null && expected >= 0.0 && actual >= 0.0) {
                 stringResource(
-                    R.string.progression_review_reason_weight_deviation,
+                    if (item.countedSets.size == item.source.sets &&
+                        isHistoricalPlanWeightDeviation(item.countedSets, item.source.weightKg, expected, actual))
+                        ProgressionR.string.review_legacy_weight_comparison
+                    else R.string.progression_review_reason_weight_deviation,
                     WeightFormatting.formatWeight(expected, displayUnitSystem),
                     WeightFormatting.formatWeight(actual, displayUnitSystem)
                 )
@@ -100,7 +104,7 @@ private fun loadAdvancedText(item: ProgressionReviewItemUi, displayUnitSystem: U
         R.string.progression_review_reason_load_advanced,
         formatNumber(step.originalValue),
         WeightFormatting.unitLabel(step.originalUnit)
-    ) + weightBasisSuffix(item, displayUnitSystem)
+    )
 }
 
 @Composable
@@ -115,7 +119,7 @@ private fun totalRepsCompletedText(item: ProgressionReviewItemUi, displayUnitSys
             target.toString(),
             formatNumber(step.originalValue),
             WeightFormatting.unitLabel(step.originalUnit)
-        ) + weightBasisSuffix(item, displayUnitSystem)
+        )
     } else {
         unavailableReason()
     }
@@ -140,29 +144,10 @@ private fun rpeWithinTargetText(item: ProgressionReviewItemUi, displayUnitSystem
             formatNumber(tolerance),
             formatNumber(step.originalValue),
             WeightFormatting.unitLabel(step.originalUnit)
-        ) + weightBasisSuffix(item, displayUnitSystem)
+        )
     } else {
         unavailableReason()
     }
-}
-
-/**
- * Explains a proposal whose weight basis differs from the plan target: the
- * suggestion was derived from the actually trained weight, not from the
- * (stale) plan target. Empty when both agree.
- */
-@Composable
-private fun weightBasisSuffix(item: ProgressionReviewItemUi, displayUnitSystem: UnitSystem): String {
-    val actual = item.reasonArguments.validNumber("actualWeightKg") ?: return ""
-    val expected = item.source.weightKg
-    if (actual < 0.0 || expected < 0.0 || abs(actual - expected) <= WEIGHT_BASIS_TOLERANCE_KG) {
-        return ""
-    }
-    return stringResource(
-        R.string.progression_review_reason_weight_basis,
-        WeightFormatting.formatWeight(actual, displayUnitSystem),
-        WeightFormatting.formatWeight(expected, displayUnitSystem)
-    )
 }
 
 @Composable
@@ -227,4 +212,3 @@ private fun unavailableReason(): String =
     stringResource(R.string.progression_review_reason_unavailable)
 
 private const val STEP_TOLERANCE = 0.000001
-private const val WEIGHT_BASIS_TOLERANCE_KG = 0.1

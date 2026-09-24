@@ -28,6 +28,7 @@ import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.ReadinessDataDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -40,16 +41,21 @@ import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.ProgressionConfigColumns
 import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
+import com.ironlog.app.data.local.entity.ReadinessDataEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
-import com.ironlog.app.domain.model.SetType
 import com.ironlog.app.domain.repository.BackupContentCounts
 import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.RecoveryBackup
 import com.ironlog.app.domain.util.BuildInfo
+import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
+import com.ironlog.shared.backup.SUPPORTED_BACKUP_SET_TYPES
+import com.ironlog.shared.readinessdata.ReadinessData
+import com.ironlog.shared.readinessdata.ReadinessDataCodec
+import com.ironlog.shared.readinessdata.ReadinessDataValidationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -71,6 +77,7 @@ class BackupRepositoryImpl(
     private val metaTrainingPlanDao: MetaTrainingPlanDao,
     private val personalRecordDao: PersonalRecordDao,
     private val progressionDao: ProgressionDao,
+    private val readinessDataDao: ReadinessDataDao,
     private val buildInfo: BuildInfo
 ) : BackupRepository {
 
@@ -99,6 +106,16 @@ class BackupRepositoryImpl(
         }
     }
 
+    /**
+     * Read-only snapshot for consumers that must not duplicate the storage
+     * mapping, e.g. the shared readiness projection.
+     *
+     * Deliberately does not take [mutex]: it only reads, so a concurrent export or
+     * import cannot be starved by it.
+     */
+    override suspend fun currentPayload(): BackupPayloadV1 =
+        readSnapshot().canonicalPayload(SCHEMA_VERSION)
+
     override suspend fun previewImport(uri: Uri): BackupImportPreview {
         return mutex.withLock {
             val bytes = documentIo.readBytes(uri)
@@ -110,7 +127,7 @@ class BackupRepositoryImpl(
                 appVersion = payload.appVersion,
                 exportedAtEpochMillis = payload.exportedAtEpochMillis,
                 counts = payload.toCounts(),
-                validationErrors = validation.errors
+                validationErrors = validation.errors + readinessValidationErrors(payload)
             )
         }
     }
@@ -141,6 +158,7 @@ class BackupRepositoryImpl(
                 progressionDao.deleteAllSuggestions()
                 personalRecordDao.deleteAll()
                 workoutSetDao.deleteAll()
+                readinessDataDao.deleteAll()
                 progressionDao.deleteAllTargets()
                 metaTrainingPlanDao.deleteAllMetaPlanSkips()
                 metaTrainingPlanDao.deleteAllMetaPlanItems()
@@ -191,19 +209,33 @@ class BackupRepositoryImpl(
     private suspend fun readSnapshot(): BackupSnapshot =
         transactionRunner.runInTransaction { readSnapshotBlock() }
 
-    private suspend fun readSnapshotBlock(): BackupSnapshot = BackupSnapshot(
-        exercises = exerciseDao.getAllExercisesList().map { it.toBackup() },
-        workoutSessions = workoutSessionDao.getAllSessionsList().map { it.toBackup() },
-        workoutSets = workoutSetDao.getAllSetsList().map { it.toBackupWorkoutSet() },
-        trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
-        planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
-        personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
-        metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
-        metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() },
-        metaPlanSkips = metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() },
-        workoutPlanTargets = progressionDao.getAllTargets().map { it.toBackup() },
-        progressionSuggestions = progressionDao.getAllSuggestions().map { it.toBackup() }
-    )
+    private suspend fun readSnapshotBlock(): BackupSnapshot {
+        val backupSets = workoutSetDao.getAllSetsList().map { it.toBackupWorkoutSet() }
+        // Prune intentions whose set is gone before they ever reach a document, so an
+        // export is always self-consistent even if a deleted set left a record behind.
+        val validSetIds = backupSets.map { it.id }.toSet()
+        val storedReadiness = readinessDataDao.getPayload().toReadinessData()
+        val readiness = storedReadiness.copy(
+            setIntentions = storedReadiness.setIntentions.filter { record -> record.setId in validSetIds }
+        )
+        return BackupSnapshot(
+            exercises = exerciseDao.getAllExercisesList().map { it.toBackup() },
+            workoutSessions = workoutSessionDao.getAllSessionsList().map { it.toBackup() },
+            workoutSets = backupSets,
+            trainingPlans = trainingPlanDao.getAllPlansList().map { it.toBackup() },
+            planExercises = trainingPlanDao.getAllPlanExercisesList().map { it.toBackup() },
+            personalRecords = personalRecordDao.getAllRecordsList().map { it.toBackup() },
+            metaTrainingPlans = metaTrainingPlanDao.getAllMetaPlansList().map { it.toBackup() },
+            metaPlanItems = metaTrainingPlanDao.getAllMetaPlanItemsList().map { it.toBackup() },
+            metaPlanSkips = metaTrainingPlanDao.getAllMetaPlanSkipsList().map { it.toBackup() },
+            workoutPlanTargets = progressionDao.getAllTargets().map { it.toBackup() },
+            progressionSuggestions = progressionDao.getAllSuggestions().map { it.toBackup() },
+            readinessData = readiness
+        )
+    }
+
+    private fun String?.toReadinessData(): ReadinessData =
+        if (this == null) ReadinessData() else ReadinessDataCodec.decode(this)
 
     private suspend fun canonicalBytes(snapshot: BackupSnapshot): ByteArray =
         encodePayload(snapshot.canonicalPayload(SCHEMA_VERSION))
@@ -240,9 +272,35 @@ class BackupRepositoryImpl(
 
     private fun validateOrThrow(payload: BackupPayloadV1) {
         val validation = BackupPayloadValidator.validate(payload, SCHEMA_VERSION)
-        require(validation.isValid) {
-            "Backup validation failed: ${validation.errors.joinToString("; ")}"
+        val errors = validation.errors + readinessValidationErrors(payload)
+        require(errors.isEmpty()) {
+            "Backup validation failed: ${errors.joinToString("; ")}"
         }
+    }
+
+    /**
+     * Validates the readiness side channel independently of the workout graph.
+     *
+     * The document itself is checked with the shared codec/validator (fail closed).
+     * Every intention must reference a workout set contained in the same payload:
+     * the import replaces the whole graph, so an intention for a set that is not
+     * part of the document could never be attached afterwards and would be a
+     * silently wrong record.
+     */
+    private fun readinessValidationErrors(payload: BackupPayloadV1): List<String> {
+        val errors = mutableListOf<String>()
+        try {
+            ReadinessDataCodec.validateOrThrow(payload.readinessData)
+        } catch (error: ReadinessDataValidationException) {
+            errors += error.errors
+        }
+        val setIds = payload.workoutSets.map { it.id }.toSet()
+        payload.readinessData.setIntentions.forEach { record ->
+            if (record.setId !in setIds) {
+                errors += "Readiness intention ${record.setId} references a missing workout set"
+            }
+        }
+        return errors
     }
 
     private fun BackupPayloadV1.toCounts(): BackupContentCounts = BackupContentCounts(
@@ -270,13 +328,15 @@ class BackupRepositoryImpl(
         metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() },
         metaPlanSkips = metaPlanSkips.distinctBy { it.id }.map { it.toEntity() },
         workoutPlanTargets = workoutPlanTargets.distinctBy { it.id }.map { it.toEntity() },
-        progressionSuggestions = progressionSuggestions.distinctBy { it.id }.map { it.toEntity() }
+        progressionSuggestions = progressionSuggestions.distinctBy { it.id }.map { it.toEntity() },
+        readinessData = readinessData
     )
 
     private suspend fun deleteAllInOrder() {
         progressionDao.deleteAllSuggestions()
         personalRecordDao.deleteAll()
         workoutSetDao.deleteAll()
+        readinessDataDao.deleteAll()
         progressionDao.deleteAllTargets()
         metaTrainingPlanDao.deleteAllMetaPlanSkips()
         metaTrainingPlanDao.deleteAllMetaPlanItems()
@@ -315,6 +375,12 @@ class BackupRepositoryImpl(
         if (data.personalRecords.isNotEmpty()) {
             personalRecordDao.replaceAll(data.personalRecords)
         }
+        // Always replace the readiness row, even when the incoming document is
+        // empty: an import is a full restore, and a stale local check-in must not
+        // survive a restore of an older backup.
+        readinessDataDao.upsert(
+            ReadinessDataEntity(payload = ReadinessDataCodec.encode(data.readinessData))
+        )
     }
 
     private fun ExerciseEntity.toBackup(): BackupExercise = BackupExercise(
@@ -336,7 +402,8 @@ class BackupRepositoryImpl(
         name = name,
         notes = notes,
         planId = planId,
-        metaPlanId = metaPlanId
+        metaPlanId = metaPlanId,
+        isDeload = isDeload
     )
 
     private fun TrainingPlanEntity.toBackup(): BackupTrainingPlan = BackupTrainingPlan(
@@ -354,7 +421,8 @@ class BackupRepositoryImpl(
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg,
-        progression = progression.toBackup()
+        progression = progression.toBackup(),
+        setTargets = com.ironlog.shared.plans.PlannedSets.decode(setTargetsJson)
     )
 
     private fun ProgressionConfigColumns.toBackup(): BackupProgressionConfig =
@@ -385,7 +453,8 @@ class BackupRepositoryImpl(
             orderIndex = orderIndex,
             supersetGroupId = supersetGroupId,
             target = target.toBackup(),
-            progression = progression.toBackup()
+            progression = progression.toBackup(),
+        setTargets = com.ironlog.shared.plans.PlannedSets.decode(setTargetsJson)
         )
 
     private fun ProgressionSuggestionEntity.toBackup(): BackupProgressionSuggestion =
@@ -465,7 +534,8 @@ class BackupRepositoryImpl(
         name = name,
         notes = notes,
         planId = planId,
-        metaPlanId = metaPlanId
+        metaPlanId = metaPlanId,
+        isDeload = isDeload
     )
 
     private fun BackupTrainingPlan.toEntity(): TrainingPlanEntity = TrainingPlanEntity(
@@ -483,7 +553,8 @@ class BackupRepositoryImpl(
         targetSets = targetSets,
         targetReps = targetReps,
         targetWeightKg = targetWeightKg,
-        progression = progression.toEntity()
+        progression = progression.toEntity(),
+        setTargetsJson = com.ironlog.shared.plans.PlannedSets.encode(setTargets)
     )
 
     private fun BackupProgressionConfig.toEntity(): ProgressionConfigColumns =
@@ -514,7 +585,8 @@ class BackupRepositoryImpl(
             orderIndex = orderIndex,
             supersetGroupId = supersetGroupId,
             target = target.toEntity(),
-            progression = progression.toEntity()
+            progression = progression.toEntity(),
+        setTargetsJson = com.ironlog.shared.plans.PlannedSets.encode(setTargets)
         )
 
     private fun BackupProgressionSuggestion.toEntity(): ProgressionSuggestionEntity =
@@ -589,38 +661,56 @@ class BackupRepositoryImpl(
         val metaPlanItems: List<MetaPlanItemEntity>,
         val metaPlanSkips: List<MetaPlanSkipEntity>,
         val workoutPlanTargets: List<WorkoutPlanTargetEntity>,
-        val progressionSuggestions: List<ProgressionSuggestionEntity>
+        val progressionSuggestions: List<ProgressionSuggestionEntity>,
+        val readinessData: ReadinessData
     )
 
     private companion object {
-        const val SCHEMA_VERSION = 11
+        // This is the serialized backup payload version. It is independent of
+        // the Room database schema version (currently 12 as well by
+        // coincidence, but the two evolve separately).
+        const val SCHEMA_VERSION = CURRENT_BACKUP_SCHEMA_VERSION
         val REASON_ARGUMENTS_SERIALIZER = MapSerializer(String.serializer(), Double.serializer())
         val COUNTED_SET_IDS_SERIALIZER = ListSerializer(Long.serializer())
     }
 }
 
-internal fun WorkoutSetEntity.toBackupWorkoutSet(): BackupWorkoutSet = BackupWorkoutSet(
-    id = id,
-    sessionId = sessionId,
-    exerciseId = exerciseId,
-    setNumber = setNumber,
-    reps = reps,
-    weightKg = weightKg,
-    isWarmup = setType == SetType.WARMUP.name,
-    completedAt = completedAt,
-    rpe = rpe,
-    planTargetSnapshotId = planTargetSnapshotId
-)
+internal fun WorkoutSetEntity.toBackupWorkoutSet(): BackupWorkoutSet {
+    require(setType in SUPPORTED_BACKUP_SET_TYPES) {
+        "Cannot export workout set $id with unsupported set type: $setType"
+    }
+    return BackupWorkoutSet(
+        id = id,
+        sessionId = sessionId,
+        exerciseId = exerciseId,
+        setNumber = setNumber,
+        reps = reps,
+        weightKg = weightKg,
+        setType = setType,
+        completedAt = completedAt,
+        rpe = rpe,
+        planTargetSnapshotId = planTargetSnapshotId
+    )
+}
 
-internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity = WorkoutSetEntity(
-    id = id,
-    sessionId = sessionId,
-    exerciseId = exerciseId,
-    setNumber = setNumber,
-    reps = reps,
-    weightKg = weightKg,
-    setType = if (isWarmup) SetType.WARMUP.name else SetType.NORMAL.name,
-    completedAt = completedAt,
-    rpe = rpe,
-    planTargetSnapshotId = planTargetSnapshotId
-)
+internal fun BackupWorkoutSet.toWorkoutSetEntity(): WorkoutSetEntity {
+    require(!hasConflictingWarmupFlag()) {
+        "Cannot import workout set $id with conflicting setType $setType and isWarmup flag"
+    }
+    val resolvedType = resolvedSetType()
+    require(resolvedType in SUPPORTED_BACKUP_SET_TYPES) {
+        "Cannot import workout set $id with unsupported set type: $setType"
+    }
+    return WorkoutSetEntity(
+        id = id,
+        sessionId = sessionId,
+        exerciseId = exerciseId,
+        setNumber = setNumber,
+        reps = reps,
+        weightKg = weightKg,
+        setType = resolvedType,
+        completedAt = completedAt,
+        rpe = rpe,
+        planTargetSnapshotId = planTargetSnapshotId
+    )
+}

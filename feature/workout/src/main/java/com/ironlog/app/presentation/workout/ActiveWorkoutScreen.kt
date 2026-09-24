@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,6 +58,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.workout.R as WorkoutR
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ProgressionConfig
@@ -83,7 +87,22 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
+import com.ironlog.app.presentation.common.PlateVisualizer
 import com.ironlog.app.presentation.common.SetInputRow
+import com.ironlog.shared.readinessdata.SetIntention
+import kotlin.math.roundToInt
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.unit.sp
+import com.ironlog.app.presentation.theme.AthleticHero
+import com.ironlog.app.presentation.theme.AthleticNumber
+import com.ironlog.app.presentation.theme.AthleticLabel
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -113,6 +132,8 @@ private data class ExerciseRenderGroup(
 fun ActiveWorkoutScreen(
     onWorkoutFinished: () -> Unit,
     onProgressionReview: (Long) -> Unit,
+    onWorkoutDetails: (Long) -> Unit = {},
+    onPlanEditor: (Long) -> Unit = {},
     viewModel: ActiveWorkoutViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -163,10 +184,25 @@ fun ActiveWorkoutScreen(
 
     LaunchedEffect(state.finishState) {
         when (val finishState = state.finishState) {
-            is WorkoutFinishState.ReviewReady -> onProgressionReview(finishState.sessionId)
-            WorkoutFinishState.CompletedWithoutReview -> onWorkoutFinished()
+            is WorkoutFinishState.ReviewReady -> Unit
+            WorkoutFinishState.CompletedWithoutReview -> if (activeSession == null) onWorkoutFinished()
             else -> Unit
         }
+    }
+
+    if (activeSession?.endTime != null) {
+        WorkoutCompletionScreen(
+            session = activeSession,
+            rows = state.exercisesWithSets,
+            unitSystem = preferences.unitSystem,
+            finishState = state.finishState,
+            onClose = onWorkoutFinished,
+            onDetails = { onWorkoutDetails(activeSession.id) },
+            onPlanEditor = { activeSession.planId?.let(onPlanEditor) },
+            onProgression = { onProgressionReview(activeSession.id) },
+            onRetryProgression = viewModel::retryProgressionGeneration
+        )
+        return
     }
 
     IronLogScreenScaffold(
@@ -182,7 +218,7 @@ fun ActiveWorkoutScreen(
                     TextButton(onClick = viewModel::showFinishDialog) {
                         Text(
                             text = stringResource(id = R.string.workout_finish_action),
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -222,6 +258,8 @@ fun ActiveWorkoutScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         WorkoutTimer(startTime = session.startTime)
+                        Spacer(Modifier.width(16.dp))
+                        Text("${state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }} Sätze · ${formatTargetWeight(state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }, preferences.unitSystem)}", style = MaterialTheme.typography.bodySmall)
                     }
 
                     AnimatedVisibility(
@@ -254,19 +292,6 @@ fun ActiveWorkoutScreen(
                 }
             }
 
-            Button(
-                onClick = viewModel::showExercisePicker,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Text(
-                    text = stringResource(id = R.string.workout_add_exercise),
-                    modifier = Modifier.padding(start = dims.spacingXs)
-                )
-            }
-
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
@@ -291,11 +316,17 @@ fun ActiveWorkoutScreen(
                                 defaultWarmupFlag = preferences.defaultWarmupFlag,
                                 intensitySystem = preferences.intensitySystem,
                                 unitSystem = preferences.unitSystem,
+                                plateCalculatorEnabled = preferences.plateCalculatorEnabled,
+                                availablePlates = preferences.availablePlates,
+                                barbellWeightKg = preferences.barbellWeightKg,
                                 isLogging = (state.logInFlightByExercise[exerciseWithSets.key] ?: 0) > 0,
                                 logSuccessSubmissions = state.logSuccessSubmissions,
                                 updateInFlightBySet = state.updateInFlightBySet,
                                 updateSuccessCountBySet = state.updateSuccessCountBySet,
-                                onLogSet = { reps, weight, setType, intensity, submissionId ->
+                                setIntentions = state.setIntentions,
+                                setIntentionsLoaded = state.setIntentionsLoaded,
+                                setIntentionsFailed = state.setIntentionsFailed,
+                                onLogSet = { reps, weight, setType, intensity, submissionId, intention ->
                                     viewModel.logSet(
                                         key = exerciseWithSets.key,
                                         exerciseId = exerciseWithSets.exercise.id,
@@ -303,7 +334,11 @@ fun ActiveWorkoutScreen(
                                         weightKg = weight,
                                         setType = setType,
                                         intensity = intensity,
-                                        submissionId = submissionId
+                                        submissionId = submissionId,
+                                        // A brand-new set has no stored answer to preserve:
+                                        // "no deliberate choice" becomes the explicit UNKNOWN,
+                                        // which stores no record.
+                                        intention = intention ?: SetIntention.UNKNOWN
                                     )
                                 },
                                 onUpdateSet = viewModel::updateSet,
@@ -312,6 +347,21 @@ fun ActiveWorkoutScreen(
                             )
                         }
                     }
+                }
+                item {
+            TextButton(
+                onClick = viewModel::showExercisePicker,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Text(
+                    text = stringResource(id = R.string.workout_add_exercise),
+                    modifier = Modifier.padding(start = dims.spacingXs)
+                )
+            }
+
                 }
             }
         }
@@ -328,43 +378,12 @@ fun ActiveWorkoutScreen(
         }
 
         if (state.showFinishDialog) {
-            AlertDialog(
-                onDismissRequest = viewModel::dismissFinishDialog,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                title = { Text(stringResource(id = R.string.workout_finish_dialog_title)) },
-                text = {
-                    val error = state.error
-                    Column {
-                        Text(stringResource(id = R.string.workout_finish_dialog_text))
-                        if (error != null && error.retry is WorkoutRetryDescriptor.FinishWorkout) {
-                            Text(
-                                text = error.message,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(top = dims.spacingSm)
-                            )
-                            TextButton(
-                                onClick = viewModel::retryLastError,
-                                modifier = Modifier.padding(top = dims.spacingXs)
-                            ) {
-                                Text(stringResource(id = R.string.common_retry))
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = viewModel::finishWorkout,
-                        enabled = state.finishState == WorkoutFinishState.Idle
-                    ) {
-                        Text(stringResource(id = R.string.workout_finish_dialog_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = viewModel::dismissFinishDialog) {
-                        Text(stringResource(id = R.string.workout_finish_dialog_cancel))
-                    }
-                }
+            WorkoutFinishSheet(
+                rows = state.exercisesWithSets,
+                busy = state.finishState != WorkoutFinishState.Idle || state.logInFlightByExercise.values.any { it > 0 } || state.updateInFlightBySet.values.any { it > 0 },
+                error = state.error?.message,
+                onContinue = viewModel::dismissFinishDialog,
+                onFinish = viewModel::finishWorkout
             )
         }
 
@@ -537,12 +556,18 @@ private fun ExerciseCard(
     defaultWarmupFlag: Boolean,
     intensitySystem: IntensitySystem,
     unitSystem: UnitSystem,
+    plateCalculatorEnabled: Boolean,
+    availablePlates: List<Double>,
+    barbellWeightKg: Double,
     isLogging: Boolean,
     logSuccessSubmissions: Set<Long>,
     updateInFlightBySet: Map<Long, Int>,
     updateSuccessCountBySet: Map<Long, Int>,
-    onLogSet: (Int, Double, SetType, String, Long) -> Unit,
-    onUpdateSet: (Long, Int, Double, String) -> Unit,
+    setIntentions: Map<Long, SetIntention>,
+    setIntentionsLoaded: Boolean,
+    setIntentionsFailed: Boolean,
+    onLogSet: (Int, Double, SetType, String, Long, SetIntention?) -> Unit,
+    onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: HapticFeedbackHelper
 ) {
@@ -572,13 +597,14 @@ private fun ExerciseCard(
     var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
     val completedWorkSets = loggedSets.count { it.setType == SetType.NORMAL }
-    val targetSetCount = planTarget?.target?.sets ?: 0
+    val slots = planTarget?.loggingSlots().orEmpty()
+    val targetSetCount = slots.size
 
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
         tone = IronLogSurfaceTone.MUTED,
         border = tintColor?.let { BorderStroke(1.dp, it.copy(alpha = 0.3f)) },
-        alpha = 0.68f
+        alpha = 1f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
             Row(
@@ -624,14 +650,14 @@ private fun ExerciseCard(
             if (planTarget != null) {
                 val targetText = if (planTarget.target.weightKg > 0) {
                     stringResource(
-                        id = R.string.workout_target_with_weight,
+                        id = WorkoutR.string.workout_audit_plan_target_with_weight,
                         planTarget.target.sets,
                         planTarget.target.reps,
                         formatTargetWeight(planTarget.target.weightKg, unitSystem)
                     )
                 } else {
                     stringResource(
-                        id = R.string.workout_target_no_weight,
+                        id = WorkoutR.string.workout_audit_plan_target_no_weight,
                         planTarget.target.sets,
                         planTarget.target.reps
                     )
@@ -670,13 +696,22 @@ private fun ExerciseCard(
             Spacer(modifier = Modifier.height(dims.spacingXs))
 
             if (planTarget != null && targetSetCount > 0) {
+                val matched = com.ironlog.shared.plans.PlannedSets.matchedIndices(slots, loggedSets.map { it.setType.name })
+                val nextSlotIndex = matched.indexOfFirst { it == null }
+
                 for (setIndex in 1..targetSetCount) {
-                    val matchingSet = loggedSets.filter { it.setType == SetType.NORMAL }.getOrNull(setIndex - 1)
+                    val slot = slots[setIndex - 1]
+                    val matchingSet = matched[setIndex - 1]?.let { loggedSets[it] }
                     if (matchingSet != null) {
                         LoggedSetRow(
                             set = matchingSet,
+                            intention = setIntentions[matchingSet.id],
+                            intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
+                            plateCalculatorEnabled = plateCalculatorEnabled,
+                            availablePlates = availablePlates,
+                            barbellWeightKg = barbellWeightKg,
                             isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
                             updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
                             onUpdateSet = onUpdateSet,
@@ -684,41 +719,62 @@ private fun ExerciseCard(
                             haptic = haptic
                         )
                     } else {
-                        PendingSetRow(
-                            setNumber = setIndex,
-                            repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
-                            defaultWeight = "",
-                            weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
-                            intensityPlaceholder = intensityPlaceholder,
-                            intensitySystem = rowIntensitySystem,
-                            unitSystem = unitSystem,
-                            locked = isLogging,
-                            completedSubmissions = logSuccessSubmissions,
-                            onLog = { reps, weight, intensity, submissionId ->
-                                onLogSet(reps, weight, SetType.NORMAL, intensity, submissionId)
+                        val isNextToLog = setIndex - 1 == nextSlotIndex
+                        if (isNextToLog) {
+                            val coachHint = nextSetRecommendation?.recommendedWeightKg?.let {
+                                stringResource(
+                                    WorkoutR.string.workout_audit_coach_suggestion,
+                                    "${formatWeightValue(it, unitSystem)} ${WeightFormatting.unitLabel(unitSystem)}"
+                                )
                             }
-                        )
+                            ActiveSetCockpitCard(
+                                setNumber = setIndex,
+                                setType = if (slot.kind == "WARMUP") SetType.WARMUP else SetType.NORMAL,
+                                isExtraOrAdHoc = false,
+                                isEditMode = false,
+                                coachHint = coachHint,
+                                valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { it.setType == SetType.NORMAL }) "Werte aus dem letzten Satz übernommen · editierbar" else "Werte aus dem Plan · editierbar",
+                                coachRecommendation = nextSetRecommendation,
+                                defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
+                                weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                                defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.reps ?: slot.reps else slot.reps).toString(),
+                                repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
+                                defaultIntensity = "",
+                                intensityPlaceholder = intensityPlaceholder,
+                                intensitySystem = rowIntensitySystem,
+                                unitSystem = unitSystem,
+                                locked = isLogging,
+                                completedSubmissions = logSuccessSubmissions,
+                                plateCalculatorEnabled = plateCalculatorEnabled,
+                                availablePlates = availablePlates,
+                                barbellWeightKg = barbellWeightKg,
+                                haptic = haptic,
+                                intentionFailed = setIntentionsFailed,
+                                onLog = { reps, weight, setType, intensity, submissionId, intention ->
+                                    onLogSet(reps, weight, setType, intensity, submissionId, intention)
+                                }
+                            )
+                        } else {
+                            PlannedSetPreviewRow(
+                                setNumber = setIndex,
+                                targetWeight = formatWeightValue(slot.weightKg, unitSystem),
+                                targetReps = slot.reps.toString(),
+                                unitSystem = unitSystem
+                            )
+                        }
                     }
                 }
 
-                loggedSets.filter { it.setType == SetType.NORMAL }.drop(targetSetCount).forEach { set ->
+                loggedSets.filterIndexed { index, _ -> index !in matched.filterNotNull() }.forEach { set ->
                     LoggedSetRow(
                         set = set,
+                        intention = setIntentions[set.id],
+                        intentionFailed = setIntentionsFailed,
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
-                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
-                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
-                        onUpdateSet = onUpdateSet,
-                        onDeleteSet = onDeleteSet,
-                        haptic = haptic
-                    )
-                }
-
-                loggedSets.filter { it.setType != SetType.NORMAL }.forEach { set ->
-                    LoggedSetRow(
-                        set = set,
-                        intensitySystem = rowIntensitySystem,
-                        unitSystem = unitSystem,
+                        plateCalculatorEnabled = plateCalculatorEnabled,
+                        availablePlates = availablePlates,
+                        barbellWeightKg = barbellWeightKg,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
                         onUpdateSet = onUpdateSet,
@@ -731,21 +787,38 @@ private fun ExerciseCard(
 
                 var showExtraInput by remember { mutableStateOf(false) }
                 AnimatedVisibility(visible = showExtraInput) {
-                    ExtraSetInput(
-                        planTarget = planTarget,
-                        defaultWarmupFlag = defaultWarmupFlag,
+                    val nextExtraSetNumber = loggedSets.size + 1
+                    ActiveSetCockpitCard(
+                        setNumber = nextExtraSetNumber,
+                        setType = if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL,
+                        isExtraOrAdHoc = true,
+                        isEditMode = false,
+                        coachHint = null,
+                        defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: targetWeightHint(planTarget, unitSystem, previousWeightHint).orEmpty(),
+                        weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                        defaultReps = (loggedSets.lastOrNull()?.reps ?: planTarget.target.reps).toString(),
+                        repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
+                        defaultIntensity = "",
+                        intensityPlaceholder = intensityPlaceholder,
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
-                        weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
-                        intensityPlaceholder = intensityPlaceholder,
                         locked = isLogging,
-                        logSuccessSubmissions = logSuccessSubmissions,
-                        onLogSet = onLogSet,
-                        haptic = haptic
+                        completedSubmissions = logSuccessSubmissions,
+                        plateCalculatorEnabled = plateCalculatorEnabled,
+                        availablePlates = availablePlates,
+                        barbellWeightKg = barbellWeightKg,
+                        haptic = haptic,
+                        intentionFailed = setIntentionsFailed,
+                        onLog = { reps, weight, setType, intensity, submissionId, intention ->
+                            onLogSet(reps, weight, setType, intensity, submissionId, intention)
+                        },
+                        onCancelEdit = { showExtraInput = false }
                     )
                 }
                 if (!showExtraInput) {
                     TextButton(onClick = { showExtraInput = true }) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(id = R.string.workout_add_extra_set))
                     }
                 }
@@ -753,8 +826,13 @@ private fun ExerciseCard(
                 loggedSets.forEach { set ->
                     LoggedSetRow(
                         set = set,
+                        intention = setIntentions[set.id],
+                        intentionFailed = setIntentionsFailed,
                         intensitySystem = rowIntensitySystem,
                         unitSystem = unitSystem,
+                        plateCalculatorEnabled = plateCalculatorEnabled,
+                        availablePlates = availablePlates,
+                        barbellWeightKg = barbellWeightKg,
                         isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
                         updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
                         onUpdateSet = onUpdateSet,
@@ -765,16 +843,31 @@ private fun ExerciseCard(
 
                 Spacer(modifier = Modifier.height(dims.spacingXs))
 
-                ExtraSetInput(
-                    planTarget = null,
-                    defaultWarmupFlag = defaultWarmupFlag,
+                val nextSetNumber = loggedSets.size + 1
+                ActiveSetCockpitCard(
+                    setNumber = nextSetNumber,
+                    setType = if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL,
+                    isExtraOrAdHoc = true,
+                    isEditMode = false,
+                    coachHint = null,
+                    defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: previousWeightHint.orEmpty(),
+                    weightPlaceholder = previousWeightHint,
+                    defaultReps = loggedSets.lastOrNull()?.reps?.toString().orEmpty(),
+                    repsPlaceholder = null,
+                    defaultIntensity = "",
+                    intensityPlaceholder = intensityPlaceholder,
                     intensitySystem = rowIntensitySystem,
                     unitSystem = unitSystem,
-                    weightPlaceholder = previousWeightHint,
                     locked = isLogging,
-                    logSuccessSubmissions = logSuccessSubmissions,
-                    onLogSet = onLogSet,
-                    haptic = haptic
+                    completedSubmissions = logSuccessSubmissions,
+                    plateCalculatorEnabled = plateCalculatorEnabled,
+                    availablePlates = availablePlates,
+                    barbellWeightKg = barbellWeightKg,
+                    haptic = haptic,
+                    intentionFailed = setIntentionsFailed,
+                    onLog = { reps, weight, setType, intensity, submissionId, intention ->
+                        onLogSet(reps, weight, setType, intensity, submissionId, intention)
+                    }
                 )
             }
 
@@ -831,7 +924,7 @@ private fun PreviousSessionMiniHistory(
         verticalArrangement = Arrangement.spacedBy(dims.spacing2)
     ) {
         Text(
-            text = stringResource(id = R.string.workout_previous_session_title, dateLabel),
+            text = stringResource(id = WorkoutR.string.workout_audit_previous_session_title, dateLabel),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold
@@ -990,7 +1083,10 @@ private fun NextSetRecommendationChips(
                 color = MaterialTheme.semantic.danger
             )
         }
-        RecommendationPill(text = loadText, color = accent)
+        RecommendationPill(
+            text = stringResource(WorkoutR.string.workout_audit_coach_suggestion, loadText),
+            color = accent
+        )
         recommendation.backoffWeightKg?.let { backoff ->
             RecommendationPill(
                 text = stringResource(
@@ -1038,6 +1134,77 @@ private fun SetType.labelRes(): Int = when (this) {
     SetType.WARMUP -> R.string.workout_warmup_chip
     SetType.DROP_SET -> R.string.workout_set_type_drop_set
     SetType.FAILURE -> R.string.workout_set_type_failure
+}
+
+private fun SetIntention.labelRes(): Int = when (this) {
+    SetIntention.UNKNOWN -> R.string.workout_set_intention_unknown
+    SetIntention.PLANNED_FAILURE -> R.string.workout_set_intention_planned_failure
+    SetIntention.UNEXPECTED_TARGET_MISS -> R.string.workout_set_intention_unexpected_miss
+}
+
+/**
+ * Tri-state selector for a set's intention, stacked vertically so the long German labels
+ * always wrap instead of being clipped. The selection is nullable: `null` means "nothing
+ * stored or not read yet" and highlights no chip, while [SetIntention.UNKNOWN] is an
+ * explicit "no answer" choice that clears any stored record.
+ */
+@Composable
+private fun SetIntentionChipRow(
+    selected: SetIntention?,
+    onSelect: (SetIntention) -> Unit
+) {
+    val options = listOf(
+        SetIntention.UNKNOWN,
+        SetIntention.PLANNED_FAILURE,
+        SetIntention.UNEXPECTED_TARGET_MISS
+    )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        options.forEach { option ->
+            val isSelected = option == selected
+            Surface(
+                onClick = { onSelect(option) },
+                shape = RoundedCornerShape(8.dp),
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                },
+                border = BorderStroke(
+                    1.dp,
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = stringResource(option.labelRes()),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -1092,13 +1259,707 @@ private fun LoggedSetBox(
 }
 
 @Composable
+private fun CockpitBigNumberBox(
+    label: String,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    placeholderText: String,
+    onStepMinus: () -> Unit,
+    onStepPlus: () -> Unit,
+    minusStepText: String,
+    plusStepText: String,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType = KeyboardType.Decimal,
+    imeAction: ImeAction = ImeAction.Next
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = label,
+                style = AthleticLabel,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+            )
+
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = AthleticHero.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+                decorationBox = { innerTextField ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp)
+                    ) {
+                        if (value.text.isEmpty()) {
+                            Text(
+                                text = placeholderText,
+                                style = AthleticHero.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                                    textAlign = TextAlign.Center
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    onClick = onStepMinus,
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = minusStepText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Surface(
+                    onClick = onStepPlus,
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = plusStepText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlannedSetPreviewRow(
+    setNumber: Int,
+    targetWeight: String?,
+    targetReps: String?,
+    unitSystem: UnitSystem,
+    modifier: Modifier = Modifier
+) {
+    val dims = ironLogDimens
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = dims.spacingXs),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(6.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = setNumber.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            val targetDesc = buildString {
+                if (targetWeight != null) {
+                    append(targetWeight)
+                    append(" ")
+                    append(WeightFormatting.unitLabel(unitSystem))
+                }
+                if (targetReps != null) {
+                    if (isNotEmpty()) append(" × ")
+                    append(targetReps)
+                    append(" ")
+                    append(stringResource(R.string.common_reps_short))
+                }
+            }
+
+            Text(
+                text = stringResource(R.string.workout_planned_set_preview, setNumber, targetDesc.ifEmpty { "-" }),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActiveSetCockpitCard(
+    setNumber: Int,
+    setType: SetType = SetType.NORMAL,
+    onSetTypeChange: ((SetType) -> Unit)? = null,
+    isExtraOrAdHoc: Boolean = false,
+    isEditMode: Boolean = false,
+    coachHint: String? = null,
+    valueSource: String? = null,
+    coachRecommendation: NextSetRecommendationUi? = null,
+    defaultWeight: String = "",
+    weightPlaceholder: String? = null,
+    defaultReps: String = "",
+    repsPlaceholder: String? = null,
+    defaultIntensity: String = "",
+    intensityPlaceholder: String? = null,
+    /**
+     * The stored answer to prefill, or `null` when nothing is stored or the readiness
+     * channel has not been read. `null` is never rendered as "Nicht angegeben", so an
+     * unread channel cannot masquerade as a deliberate answer.
+     */
+    defaultIntention: SetIntention? = null,
+    intentionLoaded: Boolean = false,
+    intentionFailed: Boolean = false,
+    intensitySystem: IntensitySystem,
+    unitSystem: UnitSystem,
+    locked: Boolean = false,
+    completedSubmissions: Set<Long> = emptySet(),
+    plateCalculatorEnabled: Boolean,
+    availablePlates: List<Double>,
+    barbellWeightKg: Double,
+    haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper,
+    onLog: (Int, Double, SetType, String, Long, SetIntention?) -> Unit,
+    onCancelEdit: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val dims = ironLogDimens
+    var showDetails by remember(setNumber) { mutableStateOf(isEditMode) }
+    val tracksIntensity = intensitySystem != IntensitySystem.OFF
+    val weightStep = if (unitSystem == UnitSystem.IMPERIAL) 5.0 else 2.5
+    val weightStepText = if (weightStep % 1.0 == 0.0) weightStep.toInt().toString() else weightStep.toString()
+    val weightSuffix = WeightFormatting.unitLabel(unitSystem)
+
+    var currentSetType by remember(setNumber, setType) { mutableStateOf(setType) }
+    var currentIntention by remember(setNumber) { mutableStateOf(defaultIntention) }
+    var intentionDirty by remember(setNumber) { mutableStateOf(false) }
+    // Adopt a late-arriving stored answer only while the user has not chosen one.
+    LaunchedEffect(defaultIntention) {
+        if (!intentionDirty) currentIntention = defaultIntention
+    }
+    var weightInput by remember(setNumber, defaultWeight) {
+        mutableStateOf(TextFieldValue(defaultWeight, TextRange(defaultWeight.length)))
+    }
+    var repsInput by remember(setNumber, defaultReps) {
+        mutableStateOf(TextFieldValue(defaultReps, TextRange(defaultReps.length)))
+    }
+    var intensityInput by remember(setNumber, defaultIntensity) {
+        mutableStateOf(TextFieldValue(defaultIntensity, TextRange(defaultIntensity.length)))
+    }
+    var activeSubmissionId by remember(setNumber) { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(activeSubmissionId, completedSubmissions) {
+        val submissionId = activeSubmissionId ?: return@LaunchedEffect
+        if (submissionId in completedSubmissions) {
+            if (!isEditMode) {
+                weightInput = TextFieldValue("", TextRange.Zero)
+                repsInput = TextFieldValue("", TextRange.Zero)
+                intensityInput = TextFieldValue("", TextRange.Zero)
+            }
+            activeSubmissionId = null
+            haptic.confirm()
+        }
+    }
+
+    val adjustWeight: (Double) -> Unit = { delta ->
+        val current = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal) ?: 0.0
+        val next = maxOf(0.0, ((current + delta) * 100.0).roundToInt() / 100.0)
+        val text = if (next % 1.0 == 0.0) next.toInt().toString() else next.toString()
+        weightInput = TextFieldValue(text, TextRange(text.length))
+        haptic.tick()
+    }
+
+    val adjustReps: (Int) -> Unit = { delta ->
+        val current = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull() ?: 0
+        val next = maxOf(0, current + delta)
+        val text = if (next > 0) next.toString() else ""
+        repsInput = TextFieldValue(text, TextRange(text.length))
+        haptic.tick()
+    }
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = dims.spacingXs),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Header Row: Set tag + Coach badge
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val tagText = when {
+                    isEditMode -> stringResource(R.string.workout_active_set_edit_badge, setNumber)
+                    currentSetType == SetType.WARMUP ->
+                        stringResource(WorkoutR.string.workout_audit_warmup_set, setNumber)
+                    currentSetType == SetType.DROP_SET ->
+                        stringResource(WorkoutR.string.workout_audit_drop_set, setNumber)
+                    currentSetType == SetType.FAILURE ->
+                        stringResource(WorkoutR.string.workout_audit_failure_set, setNumber)
+                    else -> stringResource(R.string.workout_active_set_badge, setNumber)
+                }
+                Text(
+                    text = tagText,
+                    style = AthleticLabel,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+
+                if (coachHint != null) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = coachHint,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            coachRecommendation?.let { recommendation ->
+                                val suggestedWeight = formatWeightValue(
+                                    recommendation.recommendedWeightKg,
+                                    unitSystem
+                                )
+                                TextButton(
+                                    onClick = {
+                                        val nextValue = TextFieldValue(
+                                            suggestedWeight,
+                                            TextRange(suggestedWeight.length)
+                                        )
+                                        // Applying a coach suggestion is an explicit action. It
+                                        // updates only the current draft and never overwrites a
+                                        // saved or in-flight set by itself.
+                                        weightInput = nextValue
+                                        haptic.tick()
+                                    },
+                                    enabled = !locked && activeSubmissionId == null,
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(WorkoutR.string.workout_audit_apply_coach_weight),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            valueSource?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = weightInput, onValueChange = { weightInput = it },
+                    label = { Text(weightSuffix) }, singleLine = true,
+                    modifier = Modifier.weight(1f), enabled = !locked,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next)
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = repsInput, onValueChange = { repsInput = it },
+                    label = { Text("Wdh.") }, singleLine = true,
+                    modifier = Modifier.weight(1f), enabled = !locked,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
+                )
+            }
+            TextButton(onClick = { showDetails = !showDetails }) {
+                Text(if (showDetails) "Details schließen" else "RPE / RIR · Satztyp · Absicht · Scheiben")
+            }
+            if (showDetails) {
+            // Set Type Selector (if Extra or Ad-Hoc)
+            if (isExtraOrAdHoc) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    SetType.entries.forEach { type ->
+                        val selected = currentSetType == type
+                        Surface(
+                            onClick = {
+                                currentSetType = type
+                                onSetTypeChange?.invoke(type)
+                                haptic.tick()
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            border = BorderStroke(
+                                1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(28.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = stringResource(id = type.labelRes()),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Intensity Selector Row (RPE / RIR Chips)
+            if (tracksIntensity) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = intensitySystem.displayName.uppercase(),
+                            style = AthleticLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                        if (intensityInput.text.isNotEmpty()) {
+                            val rpeVal = intensityInput.text.toDoubleOrNull()
+                            val accent = rpeColor(rpeVal) ?: MaterialTheme.colorScheme.primary
+                            Text(
+                                text = "${intensitySystem.displayName} ${intensityInput.text}",
+                                style = AthleticLabel,
+                                color = accent,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (intensitySystem == IntensitySystem.RPE) {
+                        val rpeChips = listOf(7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            rpeChips.forEach { rpe ->
+                                val rpeStr = if (rpe % 1.0 == 0.0) rpe.toInt().toString() else rpe.toString()
+                                val isSelected = intensityInput.text == rpeStr
+                                val chipColor = rpeColor(rpe) ?: MaterialTheme.colorScheme.primary
+
+                                Surface(
+                                    onClick = {
+                                        intensityInput = if (isSelected) {
+                                            TextFieldValue("", TextRange.Zero)
+                                        } else {
+                                            TextFieldValue(rpeStr, TextRange(rpeStr.length))
+                                        }
+                                        haptic.tick()
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) chipColor else chipColor.copy(alpha = 0.12f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) chipColor else chipColor.copy(alpha = 0.35f)
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = rpeStr,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else chipColor
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        val rirChips = listOf(0, 1, 2, 3, 4)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            rirChips.forEach { rir ->
+                                val rirStr = rir.toString()
+                                val isSelected = intensityInput.text == rirStr
+                                Surface(
+                                    onClick = {
+                                        intensityInput = if (isSelected) {
+                                            TextFieldValue("", TextRange.Zero)
+                                        } else {
+                                            TextFieldValue(rirStr, TextRange(rirStr.length))
+                                        }
+                                        haptic.tick()
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = stringResource(
+                                                WorkoutR.string.workout_audit_rir_value,
+                                                rirStr
+                                            ),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Embedded Plate Visualizer (zero disruption when disabled)
+            if (plateCalculatorEnabled) {
+                val parsedW = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal) ?: 0.0
+                val targetWeightKg = WeightFormatting.convertToKg(parsedW, unitSystem)
+                val sideWeight = maxOf(0.0, (targetWeightKg - barbellWeightKg) / 2.0)
+                val sideWeightDisplay = String.format(
+                    Locale.ROOT,
+                    "%.2f %s",
+                    WeightFormatting.convertToDisplay(sideWeight, unitSystem),
+                    WeightFormatting.unitLabel(unitSystem)
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.workout_barbell_loading_side, sideWeightDisplay).uppercase(),
+                                style = AthleticLabel,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        PlateVisualizer(
+                            targetWeightKg = targetWeightKg,
+                            barbellWeightKg = barbellWeightKg,
+                            availablePlates = availablePlates,
+                            unitSystem = unitSystem,
+                            enabled = true
+                        )
+                    }
+                }
+            }
+
+            // Log / Update Action Button
+            // Set intention: an answer to *why* the set ended, independent of the set
+            // type above. UNKNOWN is the default and stores no record.
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.workout_set_intention_label).uppercase(),
+                        style = AthleticLabel,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = stringResource(R.string.workout_set_intention_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        textAlign = TextAlign.End,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .padding(start = dims.spacingSm)
+                    )
+                }
+                SetIntentionChipRow(
+                    selected = currentIntention,
+                    onSelect = { intention ->
+                        currentIntention = intention
+                        intentionDirty = true
+                        haptic.tick()
+                    }
+                )
+                if (intentionFailed) {
+                    Text(
+                        text = stringResource(R.string.workout_set_intention_load_failed),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
+            }
+
+            val enteredWeight = if (weightInput.text.isBlank()) null else parseDecimal(weightInput.text)
+            val enteredReps = repsInput.text.toIntOrNull()
+            val canLog = !locked && activeSubmissionId == null &&
+                enteredReps != null && enteredReps > 0 &&
+                enteredWeight != null && enteredWeight.isFinite() && enteredWeight >= 0
+
+            Button(
+                onClick = {
+                    val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
+                    val weightVal = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
+                    val weightKg = weightVal?.let { WeightFormatting.convertToKg(it, unitSystem) }
+                    if (reps != null && reps > 0 && weightKg != null && weightKg >= 0 && weightKg.isFinite()) {
+                        val submissionId = nextSubmissionId()
+                        activeSubmissionId = submissionId
+                        haptic.confirm()
+                        onLog(
+                            reps,
+                            weightKg,
+                            currentSetType,
+                            if (intensitySystem != IntensitySystem.OFF) intensityInput.text else "",
+                            submissionId,
+                            // null = the user made no deliberate choice, so an edit keeps
+                            // the stored answer instead of erasing it.
+                            if (intentionDirty) currentIntention else null
+                        )
+                    }
+                },
+                enabled = canLog,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                val btnText = when {
+                    isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
+                    enteredWeight != null && enteredReps != null -> {
+                        val wStr = if (enteredWeight % 1.0 == 0.0) enteredWeight.toInt().toString() else enteredWeight.toString()
+                        stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
+                    }
+                    else -> stringResource(R.string.workout_log_set_button_short, setNumber)
+                }
+                Text(
+                    text = btnText,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (isEditMode && onCancelEdit != null) {
+                TextButton(
+                    onClick = onCancelEdit,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(id = R.string.common_cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun LoggedSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
+    /**
+     * Stored answer, or `null` when nothing is stored / the readiness channel was not read.
+     * `null` leaves the edit sheet without a preselected chip, while [SetIntention.UNKNOWN]
+     * is an explicit "no answer" that is likewise never rendered as data.
+     */
+    intention: SetIntention?,
+    intentionFailed: Boolean = false,
     intensitySystem: com.ironlog.app.domain.model.IntensitySystem,
     unitSystem: UnitSystem,
+    plateCalculatorEnabled: Boolean,
+    availablePlates: List<Double>,
+    barbellWeightKg: Double,
     isUpdating: Boolean,
     updateSuccessCount: Int,
-    onUpdateSet: (Long, Int, Double, String) -> Unit,
+    onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
     onDeleteSet: (Long) -> Unit,
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
 ) {
@@ -1111,18 +1972,6 @@ private fun LoggedSetRow(
     val intensityText = remember(set.id, set.rpe, intensitySystem) {
         formatIntensity(set.rpe, intensitySystem)
     }
-    var repsInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var weightInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var intensityInput by remember(set.id) { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-
-    LaunchedEffect(isEditing) {
-        if (isEditing) {
-            val repsText = set.reps.toString()
-            repsInput = TextFieldValue(repsText, TextRange(repsText.length))
-            weightInput = TextFieldValue(weightText, TextRange(weightText.length))
-            intensityInput = TextFieldValue(intensityText, TextRange(intensityText.length))
-        }
-    }
 
     LaunchedEffect(updateSuccessCount) {
         if (updateSuccessCount > 0 && isEditing) {
@@ -1132,75 +1981,33 @@ private fun LoggedSetRow(
     }
 
     if (isEditing) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = dims.spacingXs),
-            horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = setTypeLabel(set.setNumber, set.setType),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(20.dp)
-            )
-
-            com.ironlog.app.presentation.common.CompactTextField(
-                value = weightInput,
-                onValueChange = { weightInput = it },
-                suffix = WeightFormatting.unitLabel(unitSystem),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
-                modifier = Modifier.weight(1.2f)
-            )
-
-            com.ironlog.app.presentation.common.CompactTextField(
-                value = repsInput,
-                onValueChange = { repsInput = it },
-                suffix = stringResource(id = R.string.common_reps_short),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (tracksIntensity) ImeAction.Next else ImeAction.Done),
-                modifier = Modifier.weight(1f)
-            )
-
-            if (tracksIntensity) {
-                com.ironlog.app.presentation.common.CompactTextField(
-                    value = intensityInput,
-                    onValueChange = { intensityInput = it },
-                    suffix = intensitySystem.displayName,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    val r = repsInput.text.toIntOrNull() ?: set.reps
-                    val enteredWeight = parseDecimal(weightInput.text)
-                    val w = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) } ?: set.weightKg
-                    // Same weight guard as PendingSetRow/ExtraSetInput: never edit a set to a
-                    // negative, NaN or infinite weight. Invalid reps are forwarded to the
-                    // ViewModel so the user gets explicit feedback instead of a silent no-op.
-                    if (w.isFinite() && w >= 0) {
-                        onUpdateSet(set.id, r, w, intensityInput.text)
-                    }
-                },
-                enabled = !isUpdating,
-                modifier = Modifier.size(ButtonSize.iconButton),
-                colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = stringResource(id = R.string.common_log),
-                    modifier = Modifier.size(IconSize.sm)
-                )
-            }
-        }
+        ActiveSetCockpitCard(
+            setNumber = set.setNumber,
+            setType = set.setType,
+            isExtraOrAdHoc = false,
+            isEditMode = true,
+            defaultWeight = weightText,
+            weightPlaceholder = weightText,
+            defaultReps = set.reps.toString(),
+            repsPlaceholder = set.reps.toString(),
+            defaultIntensity = intensityText,
+            intensityPlaceholder = intensityText,
+            defaultIntention = intention,
+            intentionFailed = intentionFailed,
+            intensitySystem = intensitySystem,
+            unitSystem = unitSystem,
+            locked = isUpdating,
+            plateCalculatorEnabled = plateCalculatorEnabled,
+            availablePlates = availablePlates,
+            barbellWeightKg = barbellWeightKg,
+            haptic = haptic,
+            onLog = { reps, weightKg, _, intensityStr, _, chosenIntention ->
+                onUpdateSet(set.id, reps, weightKg, intensityStr, chosenIntention)
+            },
+            onCancelEdit = { isEditing = false }
+        )
     } else {
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = dims.spacingXs)
@@ -1208,253 +2015,121 @@ private fun LoggedSetRow(
                     isEditing = true
                     haptic.confirm()
                 },
-            horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
-            verticalAlignment = Alignment.CenterVertically
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
         ) {
-            Text(
-                text = setTypeLabel(set.setNumber, set.setType),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(20.dp)
-            )
-
-            LoggedSetBox(
-                value = weightText,
-                suffix = WeightFormatting.unitLabel(unitSystem),
-                isWarmup = set.isWarmup,
-                modifier = Modifier.weight(1.2f)
-            )
-
-            LoggedSetBox(
-                value = set.reps.toString(),
-                suffix = stringResource(id = R.string.common_reps_short),
-                isWarmup = set.isWarmup,
-                modifier = Modifier.weight(1f)
-            )
-
-            if (tracksIntensity) {
-                val accentColor = rpeColor(set.rpe)
-
-                LoggedSetBox(
-                    value = intensityText,
-                    suffix = intensitySystem.displayName,
-                    isWarmup = set.isWarmup,
-                    modifier = Modifier.weight(1f),
-                    overrideContainerColor = accentColor?.copy(alpha = 0.15f),
-                    overrideContentColor = accentColor
-                )
-            }
-
-            IconButton(
-                onClick = { haptic.reject(); onDeleteSet(set.id) },
-                modifier = Modifier.size(ButtonSize.iconButton)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // Completed set number badge
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(
+                            color = MaterialTheme.semantic.success.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = setTypeLabel(set.setNumber, set.setType),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.semantic.success
+                    )
+                }
+
+                // Set Weight and Reps
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "$weightText ${WeightFormatting.unitLabel(unitSystem)} × ${set.reps} ${stringResource(R.string.common_reps_short)}",
+                            style = AthleticNumber,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (set.isWarmup) {
+                            Text(
+                                text = "(${stringResource(R.string.workout_warmup_chip)})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    }
+
+                    // Only a known answer is shown; a set without a record stays UNKNOWN
+                    // instead of displaying "Nicht angegeben" as if it were data.
+                    if (intention != null && intention != SetIntention.UNKNOWN) {
+                        val intentionLabel = stringResource(intention.labelRes())
+                        val intentionDescription = stringResource(
+                            R.string.workout_set_intention_chip_cd,
+                            intentionLabel
+                        )
+                        Text(
+                            text = intentionLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontStyle = FontStyle.Italic,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.semantics {
+                                contentDescription = intentionDescription
+                            }
+                        )
+                    }
+                }
+
+                // RPE chip
+                if (tracksIntensity && intensityText.isNotEmpty()) {
+                    val accentColor = rpeColor(set.rpe) ?: MaterialTheme.colorScheme.primary
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = accentColor.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = "${intensitySystem.displayName} $intensityText",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                // Success checkmark icon
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(id = R.string.workout_delete_set_cd),
-                    tint = MaterialTheme.semantic.danger,
-                    modifier = Modifier.size(IconSize.sm)
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.semantic.success,
+                    modifier = Modifier.size(18.dp)
                 )
-            }
-        }
-    }
-}
 
-@Composable
-private fun PendingSetRow(
-    setNumber: Int,
-    repsPlaceholder: String? = null,
-    defaultWeight: String,
-    weightPlaceholder: String? = null,
-    intensityPlaceholder: String? = null,
-    intensitySystem: IntensitySystem,
-    unitSystem: UnitSystem,
-    locked: Boolean,
-    completedSubmissions: Set<Long>,
-    onLog: (Int, Double, String, Long) -> Unit
-) {
-    val dims = ironLogDimens
-    val tracksIntensity = intensitySystem != IntensitySystem.OFF
-    var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var weightInput by remember { mutableStateOf(TextFieldValue(defaultWeight, TextRange(defaultWeight.length))) }
-    var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var activeSubmissionId by remember(setNumber) { mutableStateOf<Long?>(null) }
-
-    LaunchedEffect(activeSubmissionId, completedSubmissions) {
-        val submissionId = activeSubmissionId ?: return@LaunchedEffect
-        if (submissionId in completedSubmissions) {
-            repsInput = TextFieldValue("", TextRange.Zero)
-            weightInput = TextFieldValue("", TextRange.Zero)
-            intensityInput = TextFieldValue("", TextRange.Zero)
-            activeSubmissionId = null
-        }
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = dims.spacingXs),
-        horizontalArrangement = Arrangement.spacedBy(dims.spacingSm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = setNumber.toString(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(20.dp)
-        )
-
-        com.ironlog.app.presentation.common.CompactTextField(
-            value = weightInput,
-            onValueChange = { weightInput = it },
-            suffix = WeightFormatting.unitLabel(unitSystem),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
-            placeholderText = weightPlaceholder ?: "-",
-            modifier = Modifier.weight(1.2f)
-        )
-
-        com.ironlog.app.presentation.common.CompactTextField(
-            value = repsInput,
-            onValueChange = { repsInput = it },
-            suffix = stringResource(id = R.string.common_reps_short),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = if (tracksIntensity) ImeAction.Next else ImeAction.Done),
-            placeholderText = repsPlaceholder ?: "-",
-            modifier = Modifier.weight(1f)
-        )
-
-        if (tracksIntensity) {
-            com.ironlog.app.presentation.common.CompactTextField(
-                value = intensityInput,
-                onValueChange = { intensityInput = it },
-                suffix = intensitySystem.displayName,
-                placeholderText = intensityPlaceholder ?: "-",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        IconButton(
-            onClick = {
-                val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
-                val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
-                val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
-                if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    val submissionId = nextSubmissionId()
-                    activeSubmissionId = submissionId
-                    onLog(
-                        reps,
-                        weight,
-                        if (tracksIntensity) intensityInput.text else "",
-                        submissionId
-                    )
-                }
-            },
-            enabled = !locked,
-            modifier = Modifier.size(ButtonSize.iconButton),
-            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = stringResource(id = R.string.common_log),
-                modifier = Modifier.size(IconSize.sm)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExtraSetInput(
-    planTarget: WorkoutPlanTarget?,
-    defaultWarmupFlag: Boolean,
-    intensitySystem: IntensitySystem,
-    unitSystem: UnitSystem,
-    weightPlaceholder: String? = null,
-    intensityPlaceholder: String? = null,
-    locked: Boolean,
-    logSuccessSubmissions: Set<Long>,
-    onLogSet: (Int, Double, SetType, String, Long) -> Unit,
-    haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
-) {
-    val dims = ironLogDimens
-    val tracksIntensity = intensitySystem != IntensitySystem.OFF
-    val repsPlaceholder = planTarget?.let {
-        if (it.target.reps > 0) it.target.reps.toString() else null
-    }
-    var repsInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var weightInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var intensityInput by remember { mutableStateOf(TextFieldValue("", TextRange.Zero)) }
-    var setType by remember { mutableStateOf(if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL) }
-    var activeSubmissionId by remember { mutableStateOf<Long?>(null) }
-
-    LaunchedEffect(activeSubmissionId, logSuccessSubmissions) {
-        val submissionId = activeSubmissionId ?: return@LaunchedEffect
-        if (submissionId in logSuccessSubmissions) {
-            repsInput = TextFieldValue("", TextRange.Zero)
-            weightInput = TextFieldValue("", TextRange.Zero)
-            intensityInput = TextFieldValue("", TextRange.Zero)
-            activeSubmissionId = null
-            haptic.confirm()
-        }
-    }
-
-    Column(modifier = Modifier.padding(top = dims.spacingXs)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingXs),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            androidx.compose.foundation.layout.FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingXs),
-                horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
-                verticalArrangement = Arrangement.spacedBy(dims.spacingXs)
-            ) {
-                SetType.entries.forEach { type ->
-                    FilterChip(
-                        selected = setType == type,
-                        onClick = { setType = type },
-                        enabled = !locked,
-                        label = { Text(stringResource(id = type.labelRes()), style = MaterialTheme.typography.labelSmall) },
-                        modifier = Modifier.height(ButtonSize.heightXs)
+                // Delete button
+                IconButton(
+                    onClick = {
+                        haptic.reject()
+                        onDeleteSet(set.id)
+                    },
+                    modifier = Modifier.size(ButtonSize.iconButton)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(id = R.string.workout_delete_set_cd),
+                        tint = MaterialTheme.semantic.danger.copy(alpha = 0.75f),
+                        modifier = Modifier.size(IconSize.sm)
                     )
                 }
             }
         }
-
-        SetInputRow(
-            reps = repsInput,
-            onRepsChange = { repsInput = it },
-            weight = weightInput,
-            onWeightChange = { weightInput = it },
-            intensity = intensityInput,
-            onIntensityChange = { intensityInput = it },
-            intensityLabel = intensitySystem.displayName,
-            intensityPlaceholder = intensityPlaceholder,
-            weightPlaceholder = weightPlaceholder,
-            repsPlaceholder = repsPlaceholder,
-            showIntensityField = tracksIntensity,
-            weightSuffix = WeightFormatting.unitLabel(unitSystem),
-            logEnabled = !locked,
-            onLog = {
-                val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
-                val enteredWeight = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
-                val weight = enteredWeight?.let { WeightFormatting.convertToKg(it, unitSystem) }
-                if (reps != null && reps > 0 && weight != null && weight >= 0) {
-                    val submissionId = nextSubmissionId()
-                    activeSubmissionId = submissionId
-                    onLogSet(
-                        reps,
-                        weight,
-                        setType,
-                        if (tracksIntensity) intensityInput.text else "",
-                        submissionId
-                    )
-                }
-            }
-        )
     }
 }
 
@@ -1488,6 +2163,3 @@ private fun rpeColor(rpe: Double?): Color? {
         else       -> MaterialTheme.semantic.danger     // Rot für RPE 10
     }
 }
-
-
-

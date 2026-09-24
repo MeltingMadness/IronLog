@@ -11,6 +11,7 @@ import com.ironlog.app.data.local.dao.ExerciseDao
 import com.ironlog.app.data.local.dao.MetaTrainingPlanDao
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.ProgressionDao
+import com.ironlog.app.data.local.dao.ReadinessDataDao
 import com.ironlog.app.data.local.dao.TrainingPlanDao
 import com.ironlog.app.data.local.dao.WorkoutSessionDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
@@ -21,6 +22,7 @@ import com.ironlog.app.data.local.entity.MetaTrainingPlanEntity
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.PlanExerciseEntity
 import com.ironlog.app.data.local.entity.ProgressionSuggestionEntity
+import com.ironlog.app.data.local.entity.ReadinessDataEntity
 import com.ironlog.app.data.local.entity.TrainingPlanEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
@@ -39,9 +41,10 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         MetaPlanItemEntity::class,
         MetaPlanSkipEntity::class,
         WorkoutPlanTargetEntity::class,
-        ProgressionSuggestionEntity::class
+        ProgressionSuggestionEntity::class,
+        ReadinessDataEntity::class
     ],
-    version = 12,
+    version = 14,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -52,6 +55,7 @@ abstract class IronLogDatabase : RoomDatabase() {
     abstract fun trainingPlanDao(): TrainingPlanDao
     abstract fun metaTrainingPlanDao(): MetaTrainingPlanDao
     abstract fun progressionDao(): ProgressionDao
+    abstract fun readinessDataDao(): ReadinessDataDao
 
     companion object {
         /** Migration 1 -> 2: Training Plans feature */
@@ -394,6 +398,40 @@ abstract class IronLogDatabase : RoomDatabase() {
         @VisibleForTesting
         fun migration11To12ForTests(): Migration = MIGRATION_11_12
 
+        /**
+         * Migration 12 -> 13.
+         *
+         * Adds the explicit per-session deload context (`workout_sessions.isDeload`,
+         * nullable = unknown for existing rows) and the single-row readiness document
+         * (`readiness_data`). Both are additive; no existing column is rewritten.
+         */
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN setTargetsJson TEXT NOT NULL DEFAULT '[]'")
+                db.execSQL("ALTER TABLE workout_plan_targets ADD COLUMN setTargetsJson TEXT NOT NULL DEFAULT '[]'")
+            }
+        }
+
+        fun migration13To14ForTests(): Migration = MIGRATION_13_14
+
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `workout_sessions` ADD COLUMN `isDeload` INTEGER")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `readiness_data` (
+                        `id` INTEGER NOT NULL,
+                        `payload` TEXT NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        @VisibleForTesting
+        fun migration12To13ForTests(): Migration = MIGRATION_12_13
+
         private fun normalizeActiveSessions(db: SupportSQLiteDatabase) {
             val cursor = db.query(
                 "SELECT id FROM workout_sessions WHERE endTime IS NULL ORDER BY startTime DESC"
@@ -583,7 +621,9 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
-                    MIGRATION_11_12
+                    MIGRATION_11_12,
+                    MIGRATION_12_13,
+                    MIGRATION_13_14
                 )
                 .addCallback(SeedCallback())
                 .build()

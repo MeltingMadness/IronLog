@@ -1,8 +1,11 @@
 package com.ironlog.app.presentation.plans
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +28,10 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,15 +48,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.feature.plans.R as PlansR
 import com.ironlog.app.domain.model.ProgressionConfig
 import com.ironlog.app.domain.model.ProgressionScheme
 import com.ironlog.app.domain.model.UnitSystem
@@ -61,9 +71,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.workout.ExercisePickerSheet
-import com.ironlog.app.presentation.workout.parseDecimal
 import org.koin.androidx.compose.koinViewModel
-import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +81,21 @@ fun PlanEditorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDiscardDialog by remember { mutableStateOf(false) }
     val dims = ironLogDimens
+
+    fun requestBack() {
+        if (state.isSaving) return
+        if (state.hasUnsavedChanges && !state.isSaved) {
+            showDiscardDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    // Keep the back event consumed while a repository write is in flight so
+    // a late completion cannot navigate away from newly entered values.
+    BackHandler(onBack = ::requestBack)
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) onBack()
@@ -100,7 +122,7 @@ fun PlanEditorScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = ::requestBack, enabled = !state.isSaving) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(id = R.string.nav_back)
@@ -108,11 +130,21 @@ fun PlanEditorScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::savePlan) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(id = R.string.plan_editor_save_cd)
-                        )
+                    IconButton(
+                        onClick = viewModel::savePlan,
+                        enabled = !state.isSaving && !state.isLoading
+                    ) {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = stringResource(id = R.string.plan_editor_save_cd)
+                            )
+                        }
                     }
                 }
             )
@@ -174,11 +206,15 @@ fun PlanEditorScreen(
                     onMoveUp = { viewModel.moveUp(index) },
                     onMoveDown = { viewModel.moveDown(index) },
                     onRemove = { viewModel.removeExercise(index) },
-                    onSetsChange = { viewModel.updateTargetSets(index, it) },
-                    onRepsChange = { viewModel.updateTargetReps(index, it) },
-                    onWeightChange = { viewModel.updateTargetWeightDisplay(index, it) },
-                    unitSystem = state.unitSystem,
-                    onOpenProgression = { viewModel.openProgressionEditor(index) }
+                    onSetsChange = { viewModel.updateTargetSetsInput(index, it) },
+                    onRepsChange = { viewModel.updateTargetRepsInput(index, it) },
+                    onWeightChange = { viewModel.updateTargetWeightInput(index, it) },
+                    targetInputErrors = state.targetInputErrors[index].orEmpty(),
+                    onTargetInputFocusLost = { field ->
+                        viewModel.validateTargetInput(index, field)
+                    },
+                    onOpenProgression = { viewModel.openProgressionEditor(index) },
+                    onSetTargetsChange = { viewModel.updateSetTargets(index, it) }
                 )
             }
 
@@ -199,10 +235,33 @@ fun PlanEditorScreen(
         state.progressionEditor?.let { draft ->
             ProgressionEditorSheet(
                 draft = draft,
-                onSchemeSelected = viewModel::selectProgressionScheme,
+                onSchemeSelected = viewModel::chooseProgressionScheme,
                 onFieldChanged = viewModel::updateProgressionField,
                 onDismiss = viewModel::dismissProgressionEditor,
                 onApply = viewModel::saveProgressionEditor
+            )
+        }
+
+        if (showDiscardDialog) {
+            AlertDialog(
+                onDismissRequest = { showDiscardDialog = false },
+                title = { Text(stringResource(id = PlansR.string.plan_editor_discard_title)) },
+                text = { Text(stringResource(id = PlansR.string.plan_editor_discard_text)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDiscardDialog = false
+                            onBack()
+                        }
+                    ) {
+                        Text(stringResource(id = PlansR.string.plan_editor_discard_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDiscardDialog = false }) {
+                        Text(stringResource(id = PlansR.string.plan_editor_discard_cancel))
+                    }
+                }
             )
         }
     }
@@ -219,13 +278,22 @@ private fun PlanExerciseCard(
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
     onRemove: () -> Unit,
-    onSetsChange: (Int) -> Unit,
-    onRepsChange: (Int) -> Unit,
-    onWeightChange: (Double) -> Unit,
-    unitSystem: UnitSystem,
-    onOpenProgression: () -> Unit
+    onSetsChange: (String) -> Unit,
+    onRepsChange: (String) -> Unit,
+    onWeightChange: (String) -> Unit,
+    targetInputErrors: Set<PlanExerciseNumericField>,
+    onTargetInputFocusLost: (PlanExerciseNumericField) -> Unit,
+    onOpenProgression: () -> Unit,
+    onSetTargetsChange: (List<com.ironlog.shared.plans.PlannedSet>) -> Unit
 ) {
     val dims = ironLogDimens
+    var showSetTargets by remember { mutableStateOf(false) }
+    if (showSetTargets) {
+        IndividualSetTargetsSheet(item, onDismiss = { showSetTargets = false }, onApply = {
+            onSetTargetsChange(it)
+            showSetTargets = false
+        })
+    }
     val supersetGroupId = item.planExercise.supersetGroupId
 
     IronLogSurfaceCard(
@@ -322,59 +390,116 @@ private fun PlanExerciseCard(
                 }
             }
 
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = item.planExercise.setTargets.isEmpty(), onClick = { onSetTargetsChange(emptyList()) }, label = { Text("Einfach") })
+                FilterChip(selected = item.planExercise.setTargets.isNotEmpty(), onClick = { showSetTargets = true }, label = { Text("Einzelne Sätze") })
+            }
+            if (item.planExercise.setTargets.isEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                com.ironlog.app.presentation.common.IronLogTextField(
-                    value = if (item.planExercise.targetSets > 0) item.planExercise.targetSets.toString() else "",
-                    onValueChange = { it.toIntOrNull()?.let(onSetsChange) },
+                TargetNumericInput(
+                    value = item.targetSetsInput,
+                    onValueChange = onSetsChange,
                     label = { Text(stringResource(id = R.string.plan_editor_sets_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(80.dp),
-                    singleLine = true
+                    singleLine = true,
+                    isError = PlanExerciseNumericField.SETS in targetInputErrors,
+                    errorText = stringResource(id = PlansR.string.plan_editor_target_sets_error),
+                    onFocusLost = { onTargetInputFocusLost(PlanExerciseNumericField.SETS) }
                 )
-                com.ironlog.app.presentation.common.IronLogTextField(
-                    value = if (item.planExercise.targetReps > 0) item.planExercise.targetReps.toString() else "",
-                    onValueChange = { it.toIntOrNull()?.let(onRepsChange) },
+                TargetNumericInput(
+                    value = item.targetRepsInput,
+                    onValueChange = onRepsChange,
                     label = { Text(stringResource(id = R.string.common_reps_short)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(80.dp),
-                    singleLine = true
+                    singleLine = true,
+                    isError = PlanExerciseNumericField.REPS in targetInputErrors,
+                    errorText = stringResource(id = PlansR.string.plan_editor_target_reps_error),
+                    onFocusLost = { onTargetInputFocusLost(PlanExerciseNumericField.REPS) }
                 )
-                com.ironlog.app.presentation.common.IronLogTextField(
-                    value = if (item.planExercise.targetWeightKg > 0) {
-                        editableNumber(
-                            WeightFormatting.convertToDisplay(
-                                item.planExercise.targetWeightKg,
-                                unitSystem
-                            )
-                        )
-                    } else {
-                        ""
-                    },
-                    onValueChange = { parseDecimal(it)?.let(onWeightChange) },
+                TargetNumericInput(
+                    value = item.targetWeightInput,
+                    onValueChange = onWeightChange,
                     label = {
                         Text(
                             stringResource(
                                 id = R.string.plan_editor_weight_label,
-                                WeightFormatting.unitLabel(unitSystem)
+                                WeightFormatting.unitLabel(item.targetWeightInputUnit)
                             )
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.width(90.dp),
-                    singleLine = true
+                    singleLine = true,
+                    isError = PlanExerciseNumericField.WEIGHT in targetInputErrors,
+                    errorText = stringResource(id = PlansR.string.plan_editor_target_weight_error),
+                    onFocusLost = { onTargetInputFocusLost(PlanExerciseNumericField.WEIGHT) }
                 )
+            }
+
+            } else {
+                item.planExercise.setTargets.forEachIndexed { i, target ->
+                    Text("${i + 1} · ${plannedSetLabel(target.kind)} · ${WeightFormatting.convertToDisplay(target.weightKg, item.targetWeightInputUnit)} · ${target.reps} Wdh.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
+                }
+                TextButton(onClick = { showSetTargets = true }) { Text("Satzvorgaben bearbeiten") }
+                Text("Einzelne Satzvorgaben werden manuell gesteigert.", style = MaterialTheme.typography.bodySmall)
             }
 
             TextButton(
                 onClick = onOpenProgression,
+                enabled = item.planExercise.setTargets.isEmpty(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(progressionSummary(item.planExercise.progressionConfig))
             }
+        }
+    }
+}
+
+@Composable
+private fun TargetNumericInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: @Composable () -> Unit,
+    keyboardOptions: KeyboardOptions,
+    modifier: Modifier,
+    singleLine: Boolean,
+    isError: Boolean,
+    errorText: String,
+    onFocusLost: () -> Unit
+) {
+    val dims = ironLogDimens
+    var wasFocused by remember { mutableStateOf(false) }
+    Column(
+        modifier = modifier.onFocusChanged { focusState ->
+            if (focusState.hasFocus) {
+                wasFocused = true
+            } else if (wasFocused) {
+                wasFocused = false
+                onFocusLost()
+            }
+        }
+    ) {
+        com.ironlog.app.presentation.common.IronLogTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = label,
+            keyboardOptions = keyboardOptions,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = singleLine
+        )
+        if (isError) {
+            Spacer(modifier = Modifier.height(dims.spacing2))
+            Text(
+                text = errorText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
@@ -389,6 +514,10 @@ private fun ProgressionEditorSheet(
     onApply: () -> Unit
 ) {
     val dims = ironLogDimens
+    var showDetails by remember(draft.exerciseIndex) { mutableStateOf(false) }
+    LaunchedEffect(draft.errors) {
+        if (draft.errors.isNotEmpty()) showDetails = true
+    }
     val schemes = listOf(
         ProgressionScheme.MANUAL,
         ProgressionScheme.LINEAR,
@@ -399,9 +528,7 @@ private fun ProgressionEditorSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxWidth().heightIn(max = 640.dp).imePadding()
                 .padding(horizontal = dims.spacingMd, vertical = dims.spacingSm),
             verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
         ) {
@@ -410,121 +537,138 @@ private fun ProgressionEditorSheet(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
+            Column(
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+            ) {
+                if (!showDetails) {
+                    schemes.forEach { scheme ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable { onSchemeSelected(scheme) }
+                                .padding(vertical = dims.spacing2),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = draft.scheme == scheme, onClick = { onSchemeSelected(scheme) })
+                            Spacer(modifier = Modifier.width(dims.spacingXs))
+                            Text(progressionSchemeName(scheme))
+                        }
+                    }
+                    Text(
+                        stringResource(PlansR.string.plan_editor_progression_choice_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(progressionSchemeName(draft.scheme), style = MaterialTheme.typography.titleMedium)
+                    if (draft.scheme == ProgressionScheme.LINEAR || draft.scheme == ProgressionScheme.DOUBLE) {
+                        Text(
+                            text = stringResource(if (draft.scheme == ProgressionScheme.LINEAR)
+                                R.string.plan_editor_progression_linear_hint else R.string.plan_editor_progression_double_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (draft.scheme != ProgressionScheme.MANUAL) {
+                        ProgressionInput(
+                            value = draft.step,
+                            onValueChange = { onFieldChanged(ProgressionField.STEP, it) },
+                            label = stringResource(
+                                id = R.string.plan_editor_progression_step,
+                                WeightFormatting.unitLabel(draft.unitSystem)
+                            ),
+                            field = ProgressionField.STEP,
+                            errors = draft.errors,
+                            keyboardType = KeyboardType.Decimal
+                        )
 
-            schemes.forEach { scheme ->
+                        when (draft.scheme) {
+                            ProgressionScheme.DOUBLE -> {
+                                ProgressionInput(
+                                    value = draft.minReps,
+                                    onValueChange = { onFieldChanged(ProgressionField.MIN_REPS, it) },
+                                    label = stringResource(id = R.string.plan_editor_progression_min_reps),
+                                    field = ProgressionField.MIN_REPS,
+                                    errors = draft.errors,
+                                    keyboardType = KeyboardType.Number
+                                )
+                                ProgressionInput(
+                                    value = draft.maxReps,
+                                    onValueChange = { onFieldChanged(ProgressionField.MAX_REPS, it) },
+                                    label = stringResource(id = R.string.plan_editor_progression_max_reps),
+                                    field = ProgressionField.MAX_REPS,
+                                    errors = draft.errors,
+                                    keyboardType = KeyboardType.Number
+                                )
+                            }
+                            ProgressionScheme.TOTAL_REPS -> ProgressionInput(
+                                value = draft.totalReps,
+                                onValueChange = { onFieldChanged(ProgressionField.TOTAL_REPS, it) },
+                                label = stringResource(id = R.string.plan_editor_progression_total_reps),
+                                field = ProgressionField.TOTAL_REPS,
+                                errors = draft.errors,
+                                keyboardType = KeyboardType.Number
+                            )
+                            ProgressionScheme.RPE_RIR -> {
+                                ProgressionInput(
+                                    value = draft.targetRpe,
+                                    onValueChange = { onFieldChanged(ProgressionField.TARGET_RPE, it) },
+                                    label = stringResource(id = R.string.plan_editor_progression_target_rpe),
+                                    field = ProgressionField.TARGET_RPE,
+                                    errors = draft.errors,
+                                    keyboardType = KeyboardType.Decimal
+                                )
+                                ProgressionInput(
+                                    value = draft.rpeTolerance,
+                                    onValueChange = { onFieldChanged(ProgressionField.RPE_TOLERANCE, it) },
+                                    label = stringResource(id = R.string.plan_editor_progression_rpe_tolerance),
+                                    field = ProgressionField.RPE_TOLERANCE,
+                                    errors = draft.errors,
+                                    keyboardType = KeyboardType.Decimal
+                                )
+                            }
+                            ProgressionScheme.MANUAL,
+                            ProgressionScheme.LINEAR -> Unit
+                        }
+
+                        ProgressionInput(
+                            value = draft.stallThreshold,
+                            onValueChange = { onFieldChanged(ProgressionField.STALL_THRESHOLD, it) },
+                            label = stringResource(id = R.string.plan_editor_progression_stall_threshold),
+                            field = ProgressionField.STALL_THRESHOLD,
+                            errors = draft.errors,
+                            keyboardType = KeyboardType.Number
+                        )
+                        ProgressionInput(
+                            value = draft.backoffPercent,
+                            onValueChange = { onFieldChanged(ProgressionField.BACKOFF_PERCENT, it) },
+                            label = stringResource(id = R.string.plan_editor_progression_backoff_percent),
+                            field = ProgressionField.BACKOFF_PERCENT,
+                            errors = draft.errors,
+                            keyboardType = KeyboardType.Decimal
+                        )
+                    }
+
+                    Text(
+                        text = progressionPreview(draft),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                }
+            }
+            if (showDetails) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSchemeSelected(scheme) }
-                        .padding(vertical = dims.spacing2),
+                    Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    RadioButton(
-                        selected = draft.scheme == scheme,
-                        onClick = { onSchemeSelected(scheme) }
-                    )
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
                     Spacer(modifier = Modifier.width(dims.spacingXs))
-                    Text(progressionSchemeName(scheme))
+                    Button(onClick = onApply) { Text(stringResource(R.string.plan_editor_progression_apply)) }
                 }
-            }
-
-            if (draft.scheme != ProgressionScheme.MANUAL) {
-                ProgressionInput(
-                    value = draft.step,
-                    onValueChange = { onFieldChanged(ProgressionField.STEP, it) },
-                    label = stringResource(
-                        id = R.string.plan_editor_progression_step,
-                        WeightFormatting.unitLabel(draft.unitSystem)
-                    ),
-                    field = ProgressionField.STEP,
-                    errors = draft.errors,
-                    keyboardType = KeyboardType.Decimal
-                )
-
-                when (draft.scheme) {
-                    ProgressionScheme.DOUBLE -> {
-                        ProgressionInput(
-                            value = draft.minReps,
-                            onValueChange = { onFieldChanged(ProgressionField.MIN_REPS, it) },
-                            label = stringResource(id = R.string.plan_editor_progression_min_reps),
-                            field = ProgressionField.MIN_REPS,
-                            errors = draft.errors,
-                            keyboardType = KeyboardType.Number
-                        )
-                        ProgressionInput(
-                            value = draft.maxReps,
-                            onValueChange = { onFieldChanged(ProgressionField.MAX_REPS, it) },
-                            label = stringResource(id = R.string.plan_editor_progression_max_reps),
-                            field = ProgressionField.MAX_REPS,
-                            errors = draft.errors,
-                            keyboardType = KeyboardType.Number
-                        )
-                    }
-                    ProgressionScheme.TOTAL_REPS -> ProgressionInput(
-                        value = draft.totalReps,
-                        onValueChange = { onFieldChanged(ProgressionField.TOTAL_REPS, it) },
-                        label = stringResource(id = R.string.plan_editor_progression_total_reps),
-                        field = ProgressionField.TOTAL_REPS,
-                        errors = draft.errors,
-                        keyboardType = KeyboardType.Number
-                    )
-                    ProgressionScheme.RPE_RIR -> {
-                        ProgressionInput(
-                            value = draft.targetRpe,
-                            onValueChange = { onFieldChanged(ProgressionField.TARGET_RPE, it) },
-                            label = stringResource(id = R.string.plan_editor_progression_target_rpe),
-                            field = ProgressionField.TARGET_RPE,
-                            errors = draft.errors,
-                            keyboardType = KeyboardType.Decimal
-                        )
-                        ProgressionInput(
-                            value = draft.rpeTolerance,
-                            onValueChange = { onFieldChanged(ProgressionField.RPE_TOLERANCE, it) },
-                            label = stringResource(id = R.string.plan_editor_progression_rpe_tolerance),
-                            field = ProgressionField.RPE_TOLERANCE,
-                            errors = draft.errors,
-                            keyboardType = KeyboardType.Decimal
-                        )
-                    }
-                    ProgressionScheme.MANUAL,
-                    ProgressionScheme.LINEAR -> Unit
-                }
-
-                ProgressionInput(
-                    value = draft.stallThreshold,
-                    onValueChange = { onFieldChanged(ProgressionField.STALL_THRESHOLD, it) },
-                    label = stringResource(id = R.string.plan_editor_progression_stall_threshold),
-                    field = ProgressionField.STALL_THRESHOLD,
-                    errors = draft.errors,
-                    keyboardType = KeyboardType.Number
-                )
-                ProgressionInput(
-                    value = draft.backoffPercent,
-                    onValueChange = { onFieldChanged(ProgressionField.BACKOFF_PERCENT, it) },
-                    label = stringResource(id = R.string.plan_editor_progression_backoff_percent),
-                    field = ProgressionField.BACKOFF_PERCENT,
-                    errors = draft.errors,
-                    keyboardType = KeyboardType.Decimal
-                )
-            }
-
-            Text(
-                text = progressionPreview(draft),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(id = R.string.common_cancel))
-                }
-                Spacer(modifier = Modifier.width(dims.spacingXs))
-                Button(onClick = onApply) {
-                    Text(stringResource(id = R.string.plan_editor_progression_apply))
+            } else if (draft.scheme != ProgressionScheme.MANUAL) {
+                TextButton(onClick = { showDetails = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(PlansR.string.plan_editor_progression_details))
                 }
             }
             Spacer(modifier = Modifier.height(dims.spacingSm))
@@ -630,9 +774,6 @@ private fun progressionError(field: ProgressionField): String = stringResource(
     }
 )
 
-private fun editableNumber(value: Double): String =
-    BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
-
 @Composable
 private fun SupersetStatusBadge(supersetGroupId: Int?) {
     val dims = ironLogDimens
@@ -662,4 +803,3 @@ private fun SupersetStatusBadge(supersetGroupId: Int?) {
         )
     }
 }
-

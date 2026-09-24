@@ -75,6 +75,14 @@ class NavigationSmokeTest {
         single<ProgressionRepository> { progressionRepository }
         single<AppPreferencesRepository> { preferencesRepository }
         single<ExerciseRepository> { NavigationSmokeExerciseRepository() }
+        single<com.ironlog.app.domain.repository.TrainingPlanRepository> {
+            object : com.ironlog.app.domain.repository.TrainingPlanRepository {
+                override fun getAllPlans() = kotlinx.coroutines.flow.flowOf(emptyList<com.ironlog.app.domain.model.TrainingPlan>())
+                override suspend fun getPlanById(id: Long): com.ironlog.app.domain.model.TrainingPlan? = null
+                override suspend fun savePlan(plan: com.ironlog.app.domain.model.TrainingPlan): Long = error("Read-only fixture")
+                override suspend fun deletePlan(planId: Long) = Unit
+            }
+        }
         viewModelOf(::ProgressionReviewViewModel)
     }
 
@@ -532,5 +540,28 @@ private class NavigationSmokePreferencesRepository : AppPreferencesRepository {
     override suspend fun updateDefaultRestTimeSeconds(seconds: Int) {
         state.value = state.value.copy(defaultRestTimeSeconds = seconds)
     }
-}
 
+    override suspend fun updatePlateCalculatorEnabled(enabled: Boolean) {
+        state.value = state.value.copy(plateCalculatorEnabled = enabled)
+    }
+
+    override suspend fun updateAvailablePlates(plates: List<Double>) {
+        state.value = state.value.copy(availablePlates = plates)
+    }
+
+    override suspend fun updateBarbellWeightKg(weightKg: Double) {
+        state.value = state.value.copy(barbellWeightKg = weightKg)
+    }
+
+    override suspend fun updateDeloadMode(mode: com.ironlog.app.domain.model.DeloadMode?) {
+        state.value = state.value.copy(deloadMode = mode)
+    }
+
+    override suspend fun updateLastSuccessfulExportEpochMillis(timestampMillis: Long?) {
+        state.value = state.value.copy(lastSuccessfulExportEpochMillis = timestampMillis)
+    }
+
+    override suspend fun updateBackupReminderEnabled(enabled: Boolean) {
+        state.value = state.value.copy(backupReminderEnabled = enabled)
+    }
+}

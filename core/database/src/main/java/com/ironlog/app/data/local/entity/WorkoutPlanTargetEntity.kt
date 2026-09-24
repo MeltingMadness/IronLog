@@ -43,6 +43,8 @@ data class WorkoutPlanTargetEntity(
     val exerciseId: Long,
     val orderIndex: Int,
     val supersetGroupId: Int?,
+    @androidx.room.ColumnInfo(defaultValue = "'[]'")
+    val setTargetsJson: String = "[]",
     @Embedded(prefix = "target") val target: ProgressionTargetColumns,
     @Embedded(prefix = "progression") val progression: ProgressionConfigColumns
 )

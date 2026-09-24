@@ -183,6 +183,215 @@ private val RedDarkColorScheme = darkColorScheme(
     onError = DarkOnError
 )
 
+private val ForgeLightColorScheme = lightColorScheme(
+    primary = ForgePrimary,
+    onPrimary = ForgeOnPrimary,
+    primaryContainer = ForgePrimaryContainer,
+    onPrimaryContainer = ForgeOnPrimaryContainer,
+    secondary = ForgeSecondary,
+    onSecondary = ForgeOnSecondary,
+    secondaryContainer = ForgeSecondaryContainer,
+    onSecondaryContainer = ForgeOnSecondaryContainer,
+    tertiary = ForgeTertiary,
+    onTertiary = ForgeOnTertiary,
+    background = ForgeLightBackground,
+    onBackground = OnBackground,
+    surface = ForgeLightSurface,
+    onSurface = OnSurface,
+    surfaceVariant = ForgeLightSurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = ForgeLightSurface,
+    surfaceContainerLow = SurfaceElevated,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = ForgeLightSurfaceVariant,
+    error = Error,
+    onError = OnError
+)
+
+private val ForgeDarkColorScheme = darkColorScheme(
+    primary = ForgePrimary,
+    onPrimary = ForgeOnPrimary,
+    primaryContainer = ForgePrimaryContainer,
+    onPrimaryContainer = ForgeOnPrimaryContainer,
+    secondary = ForgeSecondary,
+    onSecondary = ForgeOnSecondary,
+    secondaryContainer = ForgeSecondaryContainer,
+    onSecondaryContainer = ForgeOnSecondaryContainer,
+    tertiary = ForgeTertiary,
+    onTertiary = ForgeOnTertiary,
+    background = ForgeDarkBackground,
+    onBackground = ForgeDarkOnBackground,
+    surface = ForgeDarkSurface,
+    onSurface = ForgeDarkOnSurface,
+    surfaceVariant = ForgeDarkSurfaceVariant,
+    onSurfaceVariant = ForgeDarkOnSurfaceVariant,
+    surfaceContainerLowest = ForgeDarkBackground,
+    surfaceContainerLow = ForgeDarkSurface,
+    surfaceContainer = ForgeDarkSurfaceMuted,
+    surfaceContainerHigh = ForgeDarkSurfaceVariant,
+    surfaceContainerHighest = ForgeDarkSurfaceElevated,
+    error = EmberDanger,
+    onError = DarkOnError
+)
+
+private val RasterLightColorScheme = lightColorScheme(
+    primary = RasterPrimary,
+    onPrimary = RasterOnPrimary,
+    primaryContainer = RasterPrimaryContainer,
+    onPrimaryContainer = RasterOnPrimaryContainer,
+    secondary = RasterSecondary,
+    onSecondary = RasterOnSecondary,
+    secondaryContainer = RasterSecondaryContainer,
+    onSecondaryContainer = RasterOnSecondaryContainer,
+    tertiary = RasterTertiary,
+    onTertiary = RasterOnTertiary,
+    background = RasterLightBackground,
+    onBackground = OnBackground,
+    surface = RasterLightSurface,
+    onSurface = OnSurface,
+    surfaceVariant = RasterLightSurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = RasterLightSurface,
+    surfaceContainerLow = SurfaceElevated,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = RasterLightSurfaceVariant,
+    error = Error,
+    onError = OnError
+)
+
+private val RasterDarkColorScheme = darkColorScheme(
+    primary = RasterPrimary,
+    onPrimary = RasterOnPrimary,
+    primaryContainer = RasterPrimaryContainer,
+    onPrimaryContainer = RasterOnPrimaryContainer,
+    secondary = RasterSecondary,
+    onSecondary = RasterOnSecondary,
+    secondaryContainer = RasterSecondaryContainer,
+    onSecondaryContainer = RasterOnSecondaryContainer,
+    tertiary = RasterTertiary,
+    onTertiary = RasterOnTertiary,
+    background = RasterDarkBackground,
+    onBackground = RasterDarkOnBackground,
+    surface = RasterDarkSurface,
+    onSurface = RasterDarkOnSurface,
+    surfaceVariant = RasterDarkSurfaceVariant,
+    onSurfaceVariant = RasterDarkOnSurfaceVariant,
+    surfaceContainerLowest = RasterDarkBackground,
+    surfaceContainerLow = RasterDarkSurface,
+    surfaceContainer = RasterDarkSurfaceMuted,
+    surfaceContainerHigh = RasterDarkSurfaceVariant,
+    surfaceContainerHighest = RasterDarkSurfaceElevated,
+    error = DarkError,
+    onError = DarkOnError
+)
+
+private val TideLightColorScheme = lightColorScheme(
+    primary = TidePrimary,
+    onPrimary = TideOnPrimary,
+    primaryContainer = TidePrimaryContainer,
+    onPrimaryContainer = TideOnPrimaryContainer,
+    secondary = TideSecondary,
+    onSecondary = TideOnSecondary,
+    secondaryContainer = TideSecondaryContainer,
+    onSecondaryContainer = TideOnSecondaryContainer,
+    tertiary = TideTertiary,
+    onTertiary = TideOnTertiary,
+    background = TideLightBackground,
+    onBackground = OnBackground,
+    surface = TideLightSurface,
+    onSurface = OnSurface,
+    surfaceVariant = TideLightSurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = TideLightSurface,
+    surfaceContainerLow = SurfaceElevated,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = TideLightSurfaceVariant,
+    error = Error,
+    onError = OnError
+)
+
+private val TideDarkColorScheme = darkColorScheme(
+    primary = TidePrimary,
+    onPrimary = TideOnPrimary,
+    primaryContainer = TidePrimaryContainer,
+    onPrimaryContainer = TideOnPrimaryContainer,
+    secondary = TideSecondary,
+    onSecondary = TideOnSecondary,
+    secondaryContainer = TideSecondaryContainer,
+    onSecondaryContainer = TideOnSecondaryContainer,
+    tertiary = TideTertiary,
+    onTertiary = TideOnTertiary,
+    background = TideDarkBackground,
+    onBackground = TideDarkOnBackground,
+    surface = TideDarkSurface,
+    onSurface = TideDarkOnSurface,
+    surfaceVariant = TideDarkSurfaceVariant,
+    onSurfaceVariant = TideDarkOnSurfaceVariant,
+    surfaceContainerLowest = TideDarkBackground,
+    surfaceContainerLow = TideDarkSurface,
+    surfaceContainer = TideDarkSurfaceMuted,
+    surfaceContainerHigh = TideDarkSurfaceVariant,
+    surfaceContainerHighest = TideDarkSurfaceElevated,
+    error = DarkError,
+    onError = DarkOnError
+)
+
+private val PulseLightColorScheme = lightColorScheme(
+    primary = PulsePrimary,
+    onPrimary = PulseOnPrimary,
+    primaryContainer = PulsePrimaryContainer,
+    onPrimaryContainer = PulseOnPrimaryContainer,
+    secondary = PulseSecondary,
+    onSecondary = PulseOnSecondary,
+    secondaryContainer = PulseSecondaryContainer,
+    onSecondaryContainer = PulseOnSecondaryContainer,
+    tertiary = PulseTertiary,
+    onTertiary = PulseOnTertiary,
+    background = PulseLightBackground,
+    onBackground = OnBackground,
+    surface = PulseLightSurface,
+    onSurface = OnSurface,
+    surfaceVariant = PulseLightSurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    surfaceContainerLowest = PulseLightSurface,
+    surfaceContainerLow = SurfaceElevated,
+    surfaceContainer = SurfaceMuted,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = PulseLightSurfaceVariant,
+    error = Error,
+    onError = OnError
+)
+
+private val PulseDarkColorScheme = darkColorScheme(
+    primary = PulsePrimary,
+    onPrimary = PulseOnPrimary,
+    primaryContainer = PulsePrimaryContainer,
+    onPrimaryContainer = PulseOnPrimaryContainer,
+    secondary = PulseSecondary,
+    onSecondary = PulseOnSecondary,
+    secondaryContainer = PulseSecondaryContainer,
+    onSecondaryContainer = PulseOnSecondaryContainer,
+    tertiary = PulseTertiary,
+    onTertiary = PulseOnTertiary,
+    background = PulseDarkBackground,
+    onBackground = PulseDarkOnBackground,
+    surface = PulseDarkSurface,
+    onSurface = PulseDarkOnSurface,
+    surfaceVariant = PulseDarkSurfaceVariant,
+    onSurfaceVariant = PulseDarkOnSurfaceVariant,
+    surfaceContainerLowest = PulseDarkBackground,
+    surfaceContainerLow = PulseDarkSurface,
+    surfaceContainer = PulseDarkSurfaceMuted,
+    surfaceContainerHigh = PulseDarkSurfaceVariant,
+    surfaceContainerHighest = PulseDarkSurfaceElevated,
+    error = DarkError,
+    onError = DarkOnError
+)
+
+
 private fun deriveSurfaceRoles(
     colorScheme: ColorScheme,
     isDark: Boolean
@@ -223,28 +432,90 @@ fun IronLogTheme(
             ThemeScheme.AMBER -> AmberDarkColorScheme
             ThemeScheme.DEEP_CYAN -> CyanDarkColorScheme
             ThemeScheme.NEON_RED -> RedDarkColorScheme
+            ThemeScheme.FORGE -> ForgeDarkColorScheme
+            ThemeScheme.RASTER -> RasterDarkColorScheme
+            ThemeScheme.TIDE -> TideDarkColorScheme
+            ThemeScheme.PULSE -> PulseDarkColorScheme
         }
         else -> when (themeScheme) {
             ThemeScheme.AMBER -> AmberLightColorScheme
             ThemeScheme.DEEP_CYAN -> CyanLightColorScheme
             ThemeScheme.NEON_RED -> RedLightColorScheme
+            ThemeScheme.FORGE -> ForgeLightColorScheme
+            ThemeScheme.RASTER -> RasterLightColorScheme
+            ThemeScheme.TIDE -> TideLightColorScheme
+            ThemeScheme.PULSE -> PulseLightColorScheme
         }
     }
 
     val semanticColors = if (isDarkTheme) {
-        EmberSemanticColors(
-            success = EmberSuccess,
-            danger = EmberDanger,
-            warning = EmberWarning,
-            rose = EmberRose,
-            roseLight = EmberRoseLight,
-            sky = EmberSky,
-            skyLight = EmberSkyLight,
-            violet = EmberViolet,
-            violetLight = EmberVioletLight,
-            teal = EmberTeal,
-            tealLight = EmberTealLight
-        )
+        when (themeScheme) {
+            ThemeScheme.FORGE -> EmberSemanticColors(
+                success = ForgeTertiary,
+                danger = EmberDanger,
+                warning = ForgePrimary,
+                rose = ForgePrimary,
+                roseLight = EmberRoseLight,
+                sky = EmberSky,
+                skyLight = EmberSkyLight,
+                violet = EmberViolet,
+                violetLight = EmberVioletLight,
+                teal = EmberTeal,
+                tealLight = EmberTealLight
+            )
+            ThemeScheme.RASTER -> EmberSemanticColors(
+                success = RasterTertiary,
+                danger = EmberDanger,
+                warning = EmberWarning,
+                rose = EmberRose,
+                roseLight = EmberRoseLight,
+                sky = RasterPrimary,
+                skyLight = EmberSkyLight,
+                violet = EmberViolet,
+                violetLight = EmberVioletLight,
+                teal = EmberTeal,
+                tealLight = EmberTealLight
+            )
+            ThemeScheme.TIDE -> EmberSemanticColors(
+                success = TidePrimary,
+                danger = EmberDanger,
+                warning = EmberWarning,
+                rose = EmberRose,
+                roseLight = EmberRoseLight,
+                sky = TideSecondary,
+                skyLight = EmberSkyLight,
+                violet = TideTertiary,
+                violetLight = EmberVioletLight,
+                teal = TidePrimary,
+                tealLight = EmberTealLight
+            )
+            ThemeScheme.PULSE -> EmberSemanticColors(
+                success = EmberSuccess,
+                danger = PulsePrimary,
+                warning = EmberWarning,
+                rose = PulsePrimary,
+                roseLight = EmberRoseLight,
+                sky = PulseTertiary,
+                skyLight = EmberSkyLight,
+                violet = PulseSecondary,
+                violetLight = EmberVioletLight,
+                teal = EmberTeal,
+                tealLight = EmberTealLight
+            )
+            else -> EmberSemanticColors(
+                success = EmberSuccess,
+                danger = EmberDanger,
+                warning = EmberWarning,
+                rose = EmberRose,
+                roseLight = EmberRoseLight,
+                sky = EmberSky,
+                skyLight = EmberSkyLight,
+                violet = EmberViolet,
+                violetLight = EmberVioletLight,
+                teal = EmberTeal,
+                tealLight = EmberTealLight
+            )
+        }
     } else {
         EmberSemanticColors(
             success = EmberSuccessDeep,
@@ -283,6 +554,30 @@ fun IronLogTheme(
                 accentSuccess = DarkAccentSuccess,
                 accentWarning = DarkRedPrimary
             )
+            ThemeScheme.FORGE -> IronLogSurfaceRoles(
+                elevated = ForgeDarkSurfaceElevated,
+                muted = ForgeDarkSurfaceMuted,
+                accentSuccess = ForgeTertiary,
+                accentWarning = ForgePrimary
+            )
+            ThemeScheme.RASTER -> IronLogSurfaceRoles(
+                elevated = RasterDarkSurfaceElevated,
+                muted = RasterDarkSurfaceMuted,
+                accentSuccess = RasterTertiary,
+                accentWarning = RasterPrimary
+            )
+            ThemeScheme.TIDE -> IronLogSurfaceRoles(
+                elevated = TideDarkSurfaceElevated,
+                muted = TideDarkSurfaceMuted,
+                accentSuccess = TidePrimary,
+                accentWarning = TideSecondary
+            )
+            ThemeScheme.PULSE -> IronLogSurfaceRoles(
+                elevated = PulseDarkSurfaceElevated,
+                muted = PulseDarkSurfaceMuted,
+                accentSuccess = EmberSuccess,
+                accentWarning = PulsePrimary
+            )
         }
     } else {
         when (themeScheme) {
@@ -303,6 +598,30 @@ fun IronLogTheme(
                 muted = SurfaceMuted,
                 accentSuccess = AccentSuccess,
                 accentWarning = RedPrimary
+            )
+            ThemeScheme.FORGE -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = ForgePrimary
+            )
+            ThemeScheme.RASTER -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = RasterPrimary
+            )
+            ThemeScheme.TIDE -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = TidePrimary
+            )
+            ThemeScheme.PULSE -> IronLogSurfaceRoles(
+                elevated = SurfaceElevated,
+                muted = SurfaceMuted,
+                accentSuccess = AccentSuccess,
+                accentWarning = PulsePrimary
             )
         }
     }

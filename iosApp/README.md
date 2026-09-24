@@ -1,27 +1,77 @@
 # IronLog iOS
 
-Native SwiftUI-App für das iPhone. Sie bindet das KMP-Framework aus `:shared` ein.
+Dieses Verzeichnis enthält die native SwiftUI-iPhone-App für IronLog. Die
+Swift-Dateien werden direkt aus `IronLogIOS/` und `IronLogIOSTests/` inventarisiert;
+neue Swift-Dateien müssen deshalb nicht in einer zweiten Liste gepflegt werden.
 
-## Stand
+## Projekt generieren
 
-Das ist ein **Gerüst**, keine nutzbare Trainings-App:
+Die reproduzierbare Generierung benötigt nur Python 3 aus macOS:
 
-- **Umgesetzt:** Einstellungen (Anzeige, Training, Erinnerungen, Diagnose, Incident-Report). Sie werden in `NSUserDefaults` gespeichert.
-- **Platzhalter:** Dashboard, Workout, Verlauf und Pläne zeigen nur einen Titel.
-- **Backup-Export/-Import** ist in der Oberfläche vorhanden. Die iOS-Implementierung in `shared/src/iosMain/.../IosSettingsFeature.kt` meldet aber „noch nicht unterstützt“.
-- Es gibt keine lokale Datenbank auf iOS.
+```sh
+cd iosApp
+./generate_project.py
+open IronLogIOS.xcodeproj
+```
 
-## Lokale Generierung (macOS)
+`project.yml` bleibt als lesbare XcodeGen-Projektbeschreibung erhalten. Die
+dependency-freie Generierung spiegelt daraus die aktuellen Optionen
+(iOS 17, Swift 5.10, Bundle-ID und Shared-Framework-Pfad) in
+`IronLogIOS.xcodeproj/project.pbxproj`. Sie erzeugt keine Abhängigkeiten und
+führt keinen Build aus. Nach neuen Swift-Dateien genügt ein erneuter Aufruf.
 
-1. `brew install xcodegen`
-2. `cd iosApp`
-3. `xcodegen generate`
-4. `open IronLogIOS.xcodeproj`
+Das KMP-Framework wird über die Build-Phase `Build Shared Framework` erzeugt.
+`iosApp/scripts/build-shared.sh` sucht zuerst ein gültiges `JAVA_HOME` für JDK
+17, danach `/usr/libexec/java_home -v 17` und vorhandene Homebrew-JDK-17-Pfade.
+Es installiert nichts. Das erzeugte `Shared.framework` wird nur verlinkt; für
+das statische Framework gibt es keine zusätzliche Embed-/Copy-Phase.
 
-Das Projekt (`project.yml`, iOS 17) bindet `shared/build/xcode-frameworks/.../Shared.framework` über eine Build-Script-Phase ein.
+## Native Checks mit vollständigem Xcode
 
-## Build-Hinweise
+Die folgenden Befehle sind die überprüfbaren Voraussetzungen und Checks auf
+dem Mac, auf dem Xcode installiert ist:
 
-- Für Simulator-Builds kann `CODE_SIGNING_ALLOWED=NO` verwendet werden.
-- Für TestFlight sind Apple-Team, Bundle ID, Provisioning und App-Store-Connect-Secrets erforderlich.
-- iOS wird in der CI nicht gebaut.
+```sh
+xcode-select -p
+xcodebuild -version
+xcrun simctl list devices available
+```
+
+Projekt generieren und einen signierungsfreien Simulator-Build starten:
+
+```sh
+cd iosApp
+./generate_project.py
+xcodebuild \
+  -project IronLogIOS.xcodeproj \
+  -scheme IronLogIOS \
+  -configuration Debug \
+  -sdk iphonesimulator \
+  -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+Für einen gezielten Testlauf zunächst eine verfügbare Simulator-ID ausgeben
+und die für die Änderung relevante Testklasse auswählen, zum Beispiel:
+
+```sh
+SIMULATOR_UDID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
+test -n "$SIMULATOR_UDID"
+xcodebuild \
+  -project IronLogIOS.xcodeproj \
+  -scheme IronLogIOS \
+  -destination "id=$SIMULATOR_UDID" \
+  CODE_SIGNING_ALLOWED=NO \
+  -only-testing:IronLogIOSTests/BackupBridgeTests \
+  test
+```
+
+Am 9. September 2026 wurden Build und Start mit Xcode 26.6 im
+iPhone-17-Simulator (iOS 26.5) bestätigt. Den konkreten Funktionsstand und die
+Grenzen der Abnahme dokumentiert [ios-feature-parity.md](../docs/ios-feature-parity.md).
+In einer Umgebung mit ausschließlich CommandLineTools lässt sich das Projekt
+erzeugen, aber nicht als iOS-App bauen oder ausführen.
+
+Für TestFlight werden zusätzlich Apple-Team, Bundle-ID, Provisioning und
+App-Store-Connect-Zugang benötigt.
