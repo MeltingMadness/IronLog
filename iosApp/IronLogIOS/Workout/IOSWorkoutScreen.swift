@@ -115,8 +115,10 @@ struct IOSWorkoutScreen: View {
 
     var body: some View {
         screenContent
-            .background(theme.palette(for: colorScheme).background)
-            .toolbarBackground(theme.palette(for: colorScheme).background, for: .navigationBar)
+            .ironLogScreenBackground(
+                ember: theme.palette(for: colorScheme).background,
+                emberNavigationBar: theme.palette(for: colorScheme).background
+            )
             .navigationTitle(screenTitle)
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingExercisePicker) {

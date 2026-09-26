@@ -58,6 +58,8 @@ Zweite Darstellung neben Ember, wählbar unter Einstellungen → Darstellung. St
 - Nur `STRONG` weichzeichnet den Hintergrund: Android über Haze ab Android 12, iOS über `.ultraThinMaterial`. Darunter, bei reduzierten Animationen und bei „Transparenz reduzieren“ (iOS) gibt es eine fast deckende Tönung.
 - Der farbige Hintergrund (`LiquidBackground` / `IronLogLiquidBackground`) besteht aus radialen Verläufen in der Akzentfarbe, Türkis und Violett und wird einmal hinter der App gezeichnet (Android: `LiquidGlassHost` in `MainActivity`).
 - `IronLogSurfaceCard`, `Modifier.glassmorphism()` und `IronLogCard` schalten automatisch um; Ember-Karten bleiben unverändert.
+- Navigation: Android zeigt statt der `NavigationBar` eine schwebende Glas-Pille (`BottomNavBar`, Stufe `STRONG`); der aktive Tab ist ein heller Chip mit Icon und Text, die übrigen Tabs zeigen nur das Icon. iOS behält die System-Tableiste, auf iOS 26 ist sie selbst Liquid Glass.
+- iOS-Screens setzen ihren Hintergrund über `.ironLogScreenBackground(ember:emberNavigationBar:)` innerhalb des obersten `NavigationStack`. In Liquid Glass blendet der Modifier die System-Hintergründe von Listen und Formularen aus, zeichnet `IronLogLiquidBackground` und macht Navigations- und Tableiste zu Material; in Ember bleiben die bisherigen Farben.
 
 ## Zahlen und Texte
 

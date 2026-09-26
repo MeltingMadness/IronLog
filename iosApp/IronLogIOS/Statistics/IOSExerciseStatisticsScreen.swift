@@ -84,7 +84,7 @@ struct IOSExerciseStatisticsScreen: View {
                 .padding(20)
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+        .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
         .navigationTitle(exerciseName)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: "\(settings.state.weekStart)-\(settings.state.unitSystem)") {

@@ -31,7 +31,7 @@ struct IOSStatisticsScreen: View {
                     .padding(20)
                 }
             }
-            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+            .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Statistiken")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Übungen suchen")

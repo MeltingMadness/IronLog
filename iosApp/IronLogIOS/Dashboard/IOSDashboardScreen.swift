@@ -37,7 +37,7 @@ struct IOSDashboardScreen: View {
                     unavailableContent
                 }
             }
-            .background(themeBackground)
+            .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -348,11 +348,6 @@ struct IOSDashboardScreen: View {
         }
         .frame(maxWidth: .infinity, minHeight: 420)
         .padding(20)
-    }
-
-    private var themeBackground: some View {
-        Color(uiColor: .systemGroupedBackground)
-            .ignoresSafeArea()
     }
 }
 
