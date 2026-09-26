@@ -1,0 +1,240 @@
+package com.ironlog.app.presentation.workout
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.ironlog.core.designsystem.R
+import com.ironlog.app.domain.model.IntensitySystem
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.common.HapticFeedbackHelper
+import com.ironlog.shared.readinessdata.SetIntention
+import androidx.compose.material3.Surface
+import com.ironlog.app.presentation.theme.AthleticNumber
+import com.ironlog.app.presentation.theme.ButtonSize
+import com.ironlog.app.presentation.theme.IconSize
+import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semantic
+
+@Composable
+internal fun LoggedSetRow(
+    set: com.ironlog.app.domain.model.WorkoutSet,
+    /**
+     * Stored answer, or `null` when nothing is stored / the readiness channel was not read.
+     * `null` leaves the edit sheet without a preselected chip, while [SetIntention.UNKNOWN]
+     * is an explicit "no answer" that is likewise never rendered as data.
+     */
+    intention: SetIntention?,
+    intentionFailed: Boolean = false,
+    intensitySystem: com.ironlog.app.domain.model.IntensitySystem,
+    unitSystem: UnitSystem,
+    plateCalculatorEnabled: Boolean,
+    availablePlates: List<Double>,
+    barbellWeightKg: Double,
+    isUpdating: Boolean,
+    updateSuccessCount: Int,
+    onUpdateSet: (Long, Int, Double, String, SetIntention?) -> Unit,
+    onDeleteSet: (Long) -> Unit,
+    haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper
+) {
+    val dims = ironLogDimens
+    val tracksIntensity = intensitySystem != com.ironlog.app.domain.model.IntensitySystem.OFF
+    var isEditing by remember(set.id) { mutableStateOf(false) }
+    val weightText = remember(set.id, set.weightKg, unitSystem) {
+        formatWeightValue(set.weightKg, unitSystem)
+    }
+    val intensityText = remember(set.id, set.rpe, intensitySystem) {
+        formatIntensity(set.rpe, intensitySystem)
+    }
+
+    LaunchedEffect(updateSuccessCount) {
+        if (updateSuccessCount > 0 && isEditing) {
+            isEditing = false
+            haptic.confirm()
+        }
+    }
+
+    if (isEditing) {
+        ActiveSetCockpitCard(
+            setNumber = set.setNumber,
+            setType = set.setType,
+            isExtraOrAdHoc = false,
+            isEditMode = true,
+            defaultWeight = weightText,
+            weightPlaceholder = weightText,
+            defaultReps = set.reps.toString(),
+            repsPlaceholder = set.reps.toString(),
+            defaultIntensity = intensityText,
+            intensityPlaceholder = intensityText,
+            defaultIntention = intention,
+            intentionFailed = intentionFailed,
+            intensitySystem = intensitySystem,
+            unitSystem = unitSystem,
+            locked = isUpdating,
+            plateCalculatorEnabled = plateCalculatorEnabled,
+            availablePlates = availablePlates,
+            barbellWeightKg = barbellWeightKg,
+            haptic = haptic,
+            onLog = { reps, weightKg, _, intensityStr, _, chosenIntention ->
+                onUpdateSet(set.id, reps, weightKg, intensityStr, chosenIntention)
+            },
+            onCancelEdit = { isEditing = false }
+        )
+    } else {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = dims.spacingXs)
+                .clickable {
+                    isEditing = true
+                    haptic.confirm()
+                },
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Completed set number badge
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(
+                            color = MaterialTheme.semantic.success.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = setTypeLabel(set.setNumber, set.setType),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.semantic.success
+                    )
+                }
+
+                // Set Weight and Reps
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "$weightText ${WeightFormatting.unitLabel(unitSystem)} × ${set.reps} ${stringResource(R.string.common_reps_short)}",
+                            style = AthleticNumber,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (set.isWarmup) {
+                            Text(
+                                text = "(${stringResource(R.string.workout_warmup_chip)})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    }
+
+                    // Only a known answer is shown; a set without a record stays UNKNOWN
+                    // instead of displaying "Nicht angegeben" as if it were data.
+                    if (intention != null && intention != SetIntention.UNKNOWN) {
+                        val intentionLabel = stringResource(intention.labelRes())
+                        val intentionDescription = stringResource(
+                            R.string.workout_set_intention_chip_cd,
+                            intentionLabel
+                        )
+                        Text(
+                            text = intentionLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontStyle = FontStyle.Italic,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.semantics {
+                                contentDescription = intentionDescription
+                            }
+                        )
+                    }
+                }
+
+                // RPE chip
+                if (tracksIntensity && intensityText.isNotEmpty()) {
+                    val accentColor = rpeColor(set.rpe) ?: MaterialTheme.colorScheme.primary
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = accentColor.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = "${intensitySystem.displayName} $intensityText",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                // Success checkmark icon
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.semantic.success,
+                    modifier = Modifier.size(18.dp)
+                )
+
+                // Delete button
+                IconButton(
+                    onClick = {
+                        haptic.reject()
+                        onDeleteSet(set.id)
+                    },
+                    modifier = Modifier.size(ButtonSize.iconButton)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(id = R.string.workout_delete_set_cd),
+                        tint = MaterialTheme.semantic.danger.copy(alpha = 0.75f),
+                        modifier = Modifier.size(IconSize.sm)
+                    )
+                }
+            }
+        }
+    }
+}
