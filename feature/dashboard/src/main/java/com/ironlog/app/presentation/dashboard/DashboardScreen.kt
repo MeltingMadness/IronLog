@@ -160,16 +160,26 @@ fun DashboardScreen(
 
             item {
                 val isFirstTimeUser = state.lastWorkout == null && state.recentRecords.isEmpty()
-                val topPlan = state.metaPlanOptions.firstOrNull()?.nextPlan ?: state.trainingPlans.firstOrNull()?.plan
-                val previewExercises = topPlan?.exercises?.map { it.exerciseName }?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
+                val recommended = recommendedPlan(state.metaPlanOptions, state.trainingPlans)
+                val previewExercises = recommended?.plan?.exercises?.map { it.exerciseName }?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
 
                 CommandCenterCard(
                     hasActiveSession = state.activeSession != null,
                     isFirstTimeUser = isFirstTimeUser,
-                    recommendedPlanName = topPlan?.name,
-                    recommendedExerciseCount = topPlan?.exercises?.size ?: 0,
+                    recommended = recommended,
                     previewExercises = previewExercises,
-                    onStartWorkout = { viewModel.showPlanSelectionSheet() },
+                    onStartWorkout = {
+                        // Start the suggested plan directly; without one, offer the choice.
+                        when {
+                            recommended == null -> viewModel.showPlanSelectionSheet()
+                            recommended.metaPlan != null ->
+                                viewModel.startNewWorkoutWithMetaPlan(recommended.metaPlan.metaPlanId, onStartWorkout)
+                            else -> viewModel.startNewWorkoutWithPlan(recommended.plan) { sessionId, planId ->
+                                onStartWorkout(sessionId, planId, null)
+                            }
+                        }
+                    },
+                    onChoosePlan = { viewModel.showPlanSelectionSheet() },
                     onContinueWorkout = {
                         state.activeSession?.let { session ->
                             onContinueWorkout(session.id, session.planId, session.metaPlanId)
@@ -526,10 +536,10 @@ private fun GreetingHeader() {
 private fun CommandCenterCard(
     hasActiveSession: Boolean,
     isFirstTimeUser: Boolean,
-    recommendedPlanName: String? = null,
-    recommendedExerciseCount: Int = 0,
+    recommended: DashboardRecommendedPlan? = null,
     previewExercises: List<String> = emptyList(),
     onStartWorkout: () -> Unit,
+    onChoosePlan: () -> Unit,
     onContinueWorkout: () -> Unit
 ) {
     val dims = ironLogDimens
@@ -563,10 +573,9 @@ private fun CommandCenterCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            val recommendedPlanName = recommended?.plan?.name
             val heroTag = if (hasActiveSession) {
-                "⚡ TRAINING LÄUFT"
-            } else if (recommendedPlanName != null) {
-                "${stringResource(id = R.string.dashboard_hero_tag)} · $recommendedPlanName"
+                stringResource(id = R.string.dashboard_hero_active_tag)
             } else {
                 stringResource(id = R.string.dashboard_hero_tag)
             }
@@ -595,8 +604,19 @@ private fun CommandCenterCard(
 
             val heroSubtitle = if (hasActiveSession) {
                 stringResource(id = R.string.dashboard_command_subtitle_active)
-            } else if (recommendedExerciseCount > 0) {
-                "$recommendedExerciseCount Übungen · Fokus auf progressive Überlastung"
+            } else if (recommended != null) {
+                val exerciseCount = recommended.plan.exercises.size
+                val lastDone = when (val days = recommended.lastDoneDaysAgo) {
+                    null -> stringResource(R.string.dashboard_hero_last_done_never)
+                    0L -> stringResource(R.string.dashboard_hero_last_done_today)
+                    1L -> stringResource(R.string.dashboard_hero_last_done_yesterday)
+                    else -> pluralStringResource(R.plurals.dashboard_hero_last_done_days, days.toInt(), days.toInt())
+                }
+                listOfNotNull(
+                    recommended.metaPlan?.let { stringResource(R.string.dashboard_hero_from_meta, it.metaPlanName) },
+                    pluralStringResource(R.plurals.plans_exercise_count, exerciseCount, exerciseCount),
+                    lastDone
+                ).joinToString(" · ")
             } else {
                 stringResource(id = R.string.dashboard_command_subtitle_idle)
             }
@@ -657,6 +677,14 @@ private fun CommandCenterCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+            }
+            if (!hasActiveSession && recommended != null) {
+                TextButton(
+                    onClick = onChoosePlan,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(stringResource(id = R.string.dashboard_hero_choose_other))
+                }
             }
         }
     }

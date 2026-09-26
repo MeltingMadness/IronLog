@@ -79,7 +79,6 @@
     <string name="workout_finish_open_count">%1$d offen</string>
     <string name="workout_finish_saving">Speichert …</string>
     <string name="workout_finish_footer">Nur absolvierte Sätze zählen zum Ergebnis.</string>
-    <string name="workout_summary_title">Training gespeichert</string>
     <string name="workout_summary_done">Fertig</string>
     <string name="workout_summary_open_details">Trainingsdetails öffnen</string>
     <string name="workout_summary_headline_partial">Teiltraining gespeichert</string>
@@ -89,6 +88,8 @@
     <string name="workout_summary_duration_under_minute">&lt; 1 min</string>
     <string name="workout_summary_sets">Sätze</string>
     <string name="workout_summary_volume">Volumen</string>
+    <string name="workout_summary_records_title">🏆 Neue Rekorde</string>
+    <string name="workout_summary_record_line">%1$s: %2$s</string>
     <string name="workout_summary_set_line">Satz %1$d · %2$s × %3$d Wdh</string>
     <string name="workout_summary_review_plan_changes">Planänderungen prüfen</string>
     <string name="workout_summary_plan_changes_applied">Satzwerte übernommen</string>
@@ -379,7 +380,7 @@
     <string name="plan_selection_meta_skip">Überspringen</string>
     <string name="plan_selection_meta_rotation">Rotation: %1$s</string>
     <string name="plan_selection_meta_last_done">Zuletzt: %1$s</string>
-    <string name="plan_selection_meta_subplan_last_done">%1$s - %2$s</string>
+    <string name="plan_selection_meta_subplan_last_done">%1$s · %2$s</string>
     <string name="plan_selection_meta_last_done_today">Heute</string>
     <string name="plan_selection_meta_last_done_yesterday">Gestern</string>
     <string name="plan_selection_meta_last_done_never">Noch nie</string>
@@ -513,6 +514,12 @@
     <string name="dashboard_hero_tag">🔥 Heutige Session</string>
     <string name="dashboard_hero_start">Training jetzt starten</string>
     <string name="dashboard_hero_continue">Training fortsetzen</string>
+    <string name="dashboard_hero_active_tag">⚡ Training läuft</string>
+    <string name="dashboard_hero_choose_other">Anderen Plan wählen</string>
+    <string name="dashboard_hero_from_meta">aus %1$s</string>
+    <string name="dashboard_hero_last_done_never">noch nie trainiert</string>
+    <string name="dashboard_hero_last_done_today">zuletzt heute</string>
+    <string name="dashboard_hero_last_done_yesterday">zuletzt gestern</string>
     <string name="dashboard_readiness_title">Readiness</string>
     <string name="dashboard_readiness_optimal">Optimal</string>
     <string name="dashboard_readiness_fatigue">Ermüdung %1$d/100</string>

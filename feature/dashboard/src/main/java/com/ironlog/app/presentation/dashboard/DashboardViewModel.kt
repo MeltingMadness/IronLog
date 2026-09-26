@@ -69,6 +69,37 @@ data class DashboardPlanStatus(
     val lastDoneDaysAgo: Long?
 )
 
+/** Plan the dashboard suggests for the next workout, with the meta plan it comes from. */
+data class DashboardRecommendedPlan(
+    val plan: TrainingPlan,
+    val metaPlan: DashboardMetaPlanOption?,
+    val lastDoneDaysAgo: Long?
+)
+
+/**
+ * The next sub plan of the first meta plan wins. Without a meta plan the suggestion rotates
+ * through the normal plans: a plan never trained first, otherwise the one trained longest
+ * ago. Ties keep the list order.
+ */
+fun recommendedPlan(
+    metaPlanOptions: List<DashboardMetaPlanOption>,
+    trainingPlans: List<DashboardPlanStatus>
+): DashboardRecommendedPlan? {
+    metaPlanOptions.firstOrNull { it.nextPlan != null }?.let { meta ->
+        val next = meta.nextPlan!!
+        // Last training of the plan in any context; the rotation's own history only as fallback,
+        // so a plan trained outside the rotation does not read "noch nie trainiert".
+        val lastDone = trainingPlans.firstOrNull { it.plan.id == next.id }?.lastDoneDaysAgo
+            ?: meta.rotationPlans.firstOrNull { it.plan.id == next.id }?.lastDoneDaysAgo
+        return DashboardRecommendedPlan(plan = next, metaPlan = meta, lastDoneDaysAgo = lastDone)
+    }
+    val candidate = trainingPlans.firstOrNull { it.lastDoneDaysAgo == null }
+        ?: trainingPlans.maxByOrNull { it.lastDoneDaysAgo ?: Long.MAX_VALUE }
+    return candidate?.let {
+        DashboardRecommendedPlan(plan = it.plan, metaPlan = null, lastDoneDaysAgo = it.lastDoneDaysAgo)
+    }
+}
+
 /**
  * Wochenbezogene Muskelvolumen-Auswertung für das Dashboard.
  *
@@ -279,8 +310,7 @@ class DashboardViewModel(
     /** Vor dem Workout ist der als Nächstes geplante Plan der Tageskontext. */
     private fun selectedPlanIdForToday(): Long? {
         val state = _uiState.value
-        return state.metaPlanOptions.firstOrNull()?.nextPlan?.id
-            ?: state.trainingPlans.firstOrNull()?.plan?.id
+        return recommendedPlan(state.metaPlanOptions, state.trainingPlans)?.plan?.id
     }
 
     /**

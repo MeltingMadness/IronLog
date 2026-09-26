@@ -388,7 +388,7 @@ class NavigationSmokeTest {
         }
         composeRule.onNodeWithText("Training beenden").performClick()
         waitOrDump(30_000L) {
-            composeRule.onAllNodesWithText("Training gespeichert").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training geschafft").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Fertig").performClick()
         composeRule.waitForIdle()

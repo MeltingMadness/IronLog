@@ -43,4 +43,9 @@
         <item quantity="one">%1$d Satz</item>
         <item quantity="other">%1$d Sätze</item>
     </plurals>
+
+    <plurals name="dashboard_hero_last_done_days">
+        <item quantity="one">zuletzt vor %1$d Tag</item>
+        <item quantity="other">zuletzt vor %1$d Tagen</item>
+    </plurals>
 </resources>

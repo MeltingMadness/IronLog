@@ -673,6 +673,46 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `loadCompletionRecords liefert nur Rekorde aus dieser Einheit`() = runTest {
+        val stats = mockk<StatisticsRepository>(relaxed = true)
+        val vm = ActiveWorkoutViewModel(
+            SavedStateHandle(mapOf("sessionId" to sessionId)),
+            workoutRepo,
+            exerciseRepo,
+            stats,
+            progressionRepo,
+            prefsRepo
+        )
+        vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+        workoutRepo.finishWorkout(sessionId)
+        val session = workoutRepo.getSessionById(sessionId)!!
+        coEvery { stats.getRecordsForExercisesList(listOf(testExercise.id)) } returns listOf(
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 1L, exerciseId = testExercise.id, type = RecordType.MAX_E1RM, value = 133.0,
+                achievedAt = session.startTime
+            ),
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 2L, exerciseId = testExercise.id, type = RecordType.MAX_WEIGHT, value = 100.0,
+                achievedAt = session.endTime!!
+            ),
+            // Aelterer Rekord aus einem frueheren Training
+            com.ironlog.app.domain.model.PersonalRecord(
+                id = 3L, exerciseId = testExercise.id, type = RecordType.MAX_REPS, value = 12.0,
+                achievedAt = session.startTime.minusDays(3)
+            )
+        )
+
+        vm.loadCompletionRecords()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf(SessionRecordUi(testExercise.name, listOf(RecordType.MAX_WEIGHT, RecordType.MAX_E1RM))),
+            vm.completionRecords.value
+        )
+    }
+
+    @Test
     fun `init loads exercises from plan when planId is provided`() = runTest {
         // Setup a training plan
         val planId = 99L
