@@ -62,6 +62,7 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.feature.settings.R as SettingsR
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.ThemeMode
+import com.ironlog.app.domain.model.AppearanceStyle
 import com.ironlog.app.domain.model.ThemeScheme
 import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
@@ -185,6 +186,29 @@ fun SettingsScreen(
         ) {
             item {
                 PreferenceCard(title = stringResource(id = R.string.settings_section_appearance)) {
+                    Text(
+                        text = stringResource(id = R.string.settings_appearance_style_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
+                    ) {
+                        FilterChip(
+                            selected = state.preferences.appearanceStyle == AppearanceStyle.EMBER,
+                            onClick = { viewModel.updateAppearanceStyle(AppearanceStyle.EMBER) },
+                            label = { Text(stringResource(id = R.string.settings_appearance_ember)) }
+                        )
+                        FilterChip(
+                            selected = state.preferences.appearanceStyle == AppearanceStyle.LIQUID_GLASS,
+                            onClick = { viewModel.updateAppearanceStyle(AppearanceStyle.LIQUID_GLASS) },
+                            label = { Text(stringResource(id = R.string.settings_appearance_liquid_glass)) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
+
                     Text(
                         text = stringResource(id = R.string.settings_theme_mode_title),
                         style = MaterialTheme.typography.bodyMedium,

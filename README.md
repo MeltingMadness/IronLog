@@ -17,7 +17,7 @@ Android-App zum Protokollieren von Krafttraining. Offline, lokal, deutschsprachi
 | **Progressions-Coach** | Nach dem Workout: Vorschläge für neue Zielwerte, die erst nach Bestätigung in den Plan übernommen werden |
 | **Verlauf** | Alle Trainings (Paging) mit Suche und Filtern nach Zeitraum und Plan, Detailansicht mit Korrektur und Löschen einzelner Sätze sowie Trainingsnotiz, Löschen per Wischgeste |
 | **Übungen** | Übungsbibliothek mit Suche und Muskelfilter, Trainingszahlen je Übung (Einheiten, zuletzt trainiert), eigene Übungen, Archivieren, Statistik pro Übung (Rekorde, geschätztes 1RM, Verlaufsdiagramm) |
-| **Einstellungen** | Einheiten (kg/lb), Wochenstart, Design (7 Farbschemata, Hell/Dunkel/System, Dynamic Color), reduzierte Animationen, RPE/RIR/Aus, Pausen-Timer, Scheiben und Stangengewicht, Trainings-Erinnerungen, Backup-Export/-Import mit optionaler Erinnerung, internes Sicherheitsbackup, Incident-Report |
+| **Einstellungen** | Einheiten (kg/lb), Wochenstart, Design (Darstellung Ember oder Liquid Glass, 7 Farbschemata, Hell/Dunkel/System, Dynamic Color), reduzierte Animationen, RPE/RIR/Aus, Pausen-Timer, Scheiben und Stangengewicht, Trainings-Erinnerungen, Backup-Export/-Import mit optionaler Erinnerung, internes Sicherheitsbackup, Incident-Report |
 
 Die Daten bleiben auf dem Gerät. Es gibt keinen Server und keine Cloud-Anbindung.
 

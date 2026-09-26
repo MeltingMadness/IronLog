@@ -48,6 +48,12 @@ struct RootView: View {
                 )
             }
         }
+        .background {
+            if IronLogAppearance(rawPreference: settings.state.appearanceStyle) == .liquidGlass {
+                IronLogLiquidBackground()
+            }
+        }
+        .environment(\.ironLogAppearance, IronLogAppearance(rawPreference: settings.state.appearanceStyle))
         .ironLogTheme(
             IronLogTheme(
                 schemeName: settings.state.themeScheme,

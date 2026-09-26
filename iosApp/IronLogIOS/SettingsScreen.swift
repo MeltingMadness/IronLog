@@ -26,6 +26,15 @@ struct SettingsScreen: View {
                         }
                     }
 
+                    Picker("Darstellung", selection: Binding(
+                        get: { viewModel.state.appearanceStyle },
+                        set: viewModel.updateAppearanceStyle
+                    )) {
+                        ForEach(viewModel.appearanceStyleOptions, id: \.self) { option in
+                            Text(viewModel.label(for: option)).tag(option)
+                        }
+                    }
+
                     Picker("Theme-Modus", selection: Binding(
                         get: { viewModel.state.themeMode },
                         set: viewModel.updateThemeMode

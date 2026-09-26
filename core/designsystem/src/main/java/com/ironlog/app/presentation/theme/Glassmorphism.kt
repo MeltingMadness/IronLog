@@ -24,6 +24,10 @@ fun Modifier.glassmorphism(
     borderWidth: Dp = 1.dp,
     specularHighlight: Boolean = true
 ): Modifier = composed {
+    // In the Liquid Glass look every legacy glass surface becomes a standard glass panel.
+    if (LocalAppearanceStyle.current == com.ironlog.app.domain.model.AppearanceStyle.LIQUID_GLASS) {
+        return@composed this.liquidGlass(GlassLevel.STANDARD, shape)
+    }
     val scheme = MaterialTheme.colorScheme
     // Amber stays as the neutral fallback via the default parameter colors above;
     // the tint layers follow the active scheme (primary/onSurface with alpha).

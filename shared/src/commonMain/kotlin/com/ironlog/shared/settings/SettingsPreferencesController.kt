@@ -5,6 +5,7 @@ import com.ironlog.shared.model.DeloadMode
 import com.ironlog.shared.model.IntensitySystem
 import com.ironlog.shared.model.ReminderConfig
 import com.ironlog.shared.model.ThemeMode
+import com.ironlog.shared.model.AppearanceStyle
 import com.ironlog.shared.model.ThemeScheme
 import com.ironlog.shared.model.UnitSystem
 import com.ironlog.shared.model.WeekStart
@@ -23,6 +24,7 @@ interface SharedAppPreferencesRepository {
     suspend fun updateWeekStart(weekStart: WeekStart)
     suspend fun updateThemeMode(themeMode: ThemeMode)
     suspend fun updateThemeScheme(themeScheme: ThemeScheme)
+    suspend fun updateAppearanceStyle(appearanceStyle: AppearanceStyle)
     suspend fun updateUseDynamicColor(enabled: Boolean)
     suspend fun updateReducedMotion(enabled: Boolean)
     suspend fun updateDefaultWarmupFlag(enabled: Boolean)
@@ -100,6 +102,10 @@ class SettingsPreferencesController(
 
     fun updateThemeScheme(themeScheme: ThemeScheme) {
         controllerScope.launch { appPreferencesRepository.updateThemeScheme(themeScheme) }
+    }
+
+    fun updateAppearanceStyle(appearanceStyle: AppearanceStyle) {
+        controllerScope.launch { appPreferencesRepository.updateAppearanceStyle(appearanceStyle) }
     }
 
     fun updateUseDynamicColor(enabled: Boolean) {

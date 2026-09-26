@@ -5,6 +5,7 @@ import com.ironlog.shared.model.DeloadMode
 import com.ironlog.shared.model.IntensitySystem
 import com.ironlog.shared.model.ReminderConfig
 import com.ironlog.shared.model.ThemeMode
+import com.ironlog.shared.model.AppearanceStyle
 import com.ironlog.shared.model.ThemeScheme
 import com.ironlog.shared.model.UnitSystem
 import com.ironlog.shared.model.WeekStart
@@ -39,6 +40,22 @@ class SettingsPreferencesControllerTest {
         advanceUntilIdle()
 
         assertEquals(ThemeMode.DARK, repository.current.themeMode)
+    }
+
+    @Test
+    fun updateAppearanceStyle_persistsLiquidGlassAndDefaultsToEmber() = runTest {
+        val repository = FakeSharedAppPreferencesRepository()
+        val controller = SettingsPreferencesController(
+            scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
+            appPreferencesRepository = repository,
+            reminderScheduler = FakeSharedReminderScheduler()
+        )
+        assertEquals(AppearanceStyle.EMBER, repository.current.appearanceStyle)
+
+        controller.updateAppearanceStyle(AppearanceStyle.LIQUID_GLASS)
+        advanceUntilIdle()
+
+        assertEquals(AppearanceStyle.LIQUID_GLASS, repository.current.appearanceStyle)
     }
 
     @Test
@@ -254,6 +271,10 @@ private class FakeSharedAppPreferencesRepository(
 
     override suspend fun updateThemeMode(themeMode: ThemeMode) {
         state.value = state.value.copy(themeMode = themeMode)
+    }
+
+    override suspend fun updateAppearanceStyle(appearanceStyle: AppearanceStyle) {
+        state.value = state.value.copy(appearanceStyle = appearanceStyle)
     }
 
     override suspend fun updateThemeScheme(themeScheme: ThemeScheme) {

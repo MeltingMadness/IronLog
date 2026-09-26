@@ -11,7 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.domain.model.AppearanceStyle
+import com.ironlog.app.presentation.theme.GlassLevel
+import com.ironlog.app.presentation.theme.LocalAppearanceStyle
 import com.ironlog.app.presentation.theme.glassmorphism
+import com.ironlog.app.presentation.theme.liquidGlass
 import com.ironlog.app.presentation.theme.ironLogSurfaceRoles
 
 enum class IronLogSurfaceTone {
@@ -61,6 +65,25 @@ fun IronLogSurfaceCard(
         else -> MaterialTheme.colorScheme.outlineVariant.copy(
             alpha = if (tone == IronLogSurfaceTone.ELEVATED) 0.38f else 0.24f
         )
+    }
+
+    if (LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS) {
+        // Liquid Glass draws its own tint, sheen and edge; the Ember border would double it.
+        Card(
+            modifier = modifier.liquidGlass(
+                level = when (tone) {
+                    IronLogSurfaceTone.ELEVATED, IronLogSurfaceTone.ACCENT -> GlassLevel.STRONG
+                    IronLogSurfaceTone.MUTED -> GlassLevel.STANDARD
+                    IronLogSurfaceTone.COLORED -> GlassLevel.TINT
+                },
+                shape = shape,
+                tint = semanticColor
+            ),
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            content = content
+        )
+        return
     }
 
     Card(

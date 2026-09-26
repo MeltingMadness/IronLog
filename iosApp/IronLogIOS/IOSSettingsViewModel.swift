@@ -22,6 +22,7 @@ final class IOSSettingsViewModel: ObservableObject {
     let weekStartOptions: [String]
     let themeModeOptions: [String]
     let themeSchemeOptions: [String]
+    let appearanceStyleOptions: [String]
     let intensitySystemOptions: [String]
     let deloadModeOptions: [String]
     let weekdayOptions: [String]
@@ -35,6 +36,7 @@ final class IOSSettingsViewModel: ObservableObject {
         weekStartOptions = feature.weekStartOptions()
         themeModeOptions = feature.themeModeOptions()
         themeSchemeOptions = feature.themeSchemeOptions()
+        appearanceStyleOptions = feature.appearanceStyleOptions()
         intensitySystemOptions = feature.intensitySystemOptions()
         deloadModeOptions = feature.deloadModeOptions()
         weekdayOptions = feature.weekdayOptions()
@@ -67,6 +69,10 @@ final class IOSSettingsViewModel: ObservableObject {
 
     func updateThemeScheme(_ value: String) {
         feature.updateThemeScheme(value: value)
+    }
+
+    func updateAppearanceStyle(_ value: String) {
+        feature.updateAppearanceStyle(value: value)
     }
 
     func updateIntensitySystem(_ value: String) {
@@ -413,6 +419,8 @@ final class IOSSettingsViewModel: ObservableObject {
         case "RASTER": return "Raster"
         case "TIDE": return "Tide"
         case "PULSE": return "Pulse"
+        case "EMBER": return "Ember"
+        case "LIQUID_GLASS": return "Liquid Glass"
         case "OFF": return "Aus"
         case "RPE": return "RPE"
         case "RIR": return "RIR"
@@ -491,6 +499,7 @@ struct SettingsFormState {
     var weekStart: String
     var themeMode: String
     var themeScheme: String
+    var appearanceStyle: String
     var useDynamicColor: Bool
     var reducedMotion: Bool
     var defaultWarmupFlag: Bool
@@ -519,6 +528,7 @@ struct SettingsFormState {
         weekStart: String,
         themeMode: String,
         themeScheme: String,
+        appearanceStyle: String = "EMBER",
         useDynamicColor: Bool,
         reducedMotion: Bool,
         defaultWarmupFlag: Bool,
@@ -546,6 +556,7 @@ struct SettingsFormState {
         self.weekStart = weekStart
         self.themeMode = themeMode
         self.themeScheme = themeScheme
+        self.appearanceStyle = appearanceStyle
         self.useDynamicColor = useDynamicColor
         self.reducedMotion = reducedMotion
         self.defaultWarmupFlag = defaultWarmupFlag
@@ -604,6 +615,7 @@ struct SettingsFormState {
         weekStart = sharedState.weekStart
         themeMode = sharedState.themeMode
         themeScheme = sharedState.themeScheme
+        appearanceStyle = sharedState.appearanceStyle
         useDynamicColor = sharedState.useDynamicColor
         reducedMotion = sharedState.reducedMotion
         defaultWarmupFlag = sharedState.defaultWarmupFlag

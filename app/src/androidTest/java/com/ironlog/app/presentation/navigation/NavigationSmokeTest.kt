@@ -537,6 +537,10 @@ private class NavigationSmokePreferencesRepository : AppPreferencesRepository {
         state.value = state.value.copy(themeScheme = themeScheme)
     }
 
+    override suspend fun updateAppearanceStyle(appearanceStyle: com.ironlog.app.domain.model.AppearanceStyle) {
+        state.value = state.value.copy(appearanceStyle = appearanceStyle)
+    }
+
     override suspend fun updateUseDynamicColor(enabled: Boolean) {
         state.value = state.value.copy(useDynamicColor = enabled)
     }

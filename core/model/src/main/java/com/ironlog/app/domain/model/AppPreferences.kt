@@ -18,6 +18,12 @@ enum class ThemeMode {
     DARK
 }
 
+/** Overall look: the current "Ember" surfaces or the "Liquid Glass" redesign. */
+enum class AppearanceStyle {
+    EMBER,
+    LIQUID_GLASS
+}
+
 enum class ThemeScheme {
     AMBER,
     DEEP_CYAN,
@@ -44,6 +50,7 @@ data class AppPreferences(
     val weekStart: WeekStart = WeekStart.MONDAY,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val themeScheme: ThemeScheme = ThemeScheme.AMBER,
+    val appearanceStyle: AppearanceStyle = AppearanceStyle.EMBER,
     val useDynamicColor: Boolean = false,
     val reducedMotion: Boolean = false,
     val defaultWarmupFlag: Boolean = false,

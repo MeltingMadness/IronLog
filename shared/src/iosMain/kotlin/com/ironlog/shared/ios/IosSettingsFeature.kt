@@ -14,6 +14,7 @@ import com.ironlog.shared.model.IncidentAttachment
 import com.ironlog.shared.model.IntensitySystem
 import com.ironlog.shared.model.ReminderConfig
 import com.ironlog.shared.model.ThemeMode
+import com.ironlog.shared.model.AppearanceStyle
 import com.ironlog.shared.model.ThemeScheme
 import com.ironlog.shared.model.UnitSystem
 import com.ironlog.shared.model.WeekStart
@@ -105,6 +106,7 @@ class IosSettingsFeature {
     fun weekStartOptions(): List<String> = WeekStart.entries.map { it.name }
     fun themeModeOptions(): List<String> = ThemeMode.entries.map { it.name }
     fun themeSchemeOptions(): List<String> = ThemeScheme.entries.map { it.name }
+    fun appearanceStyleOptions(): List<String> = AppearanceStyle.entries.map { it.name }
     fun intensitySystemOptions(): List<String> = IntensitySystem.entries.map { it.name }
     fun deloadModeOptions(): List<String> = DeloadMode.entries.map { it.name }
     fun weekdayOptions(): List<String> = Weekday.entries.map { it.name }
@@ -123,6 +125,10 @@ class IosSettingsFeature {
 
     fun updateThemeScheme(value: String) {
         controller.updateThemeScheme(ThemeScheme.entries.firstOrNull { it.name == value } ?: ThemeScheme.AMBER)
+    }
+
+    fun updateAppearanceStyle(value: String) {
+        controller.updateAppearanceStyle(AppearanceStyle.entries.firstOrNull { it.name == value } ?: AppearanceStyle.EMBER)
     }
 
     fun updateIntensitySystem(value: String) {
@@ -362,6 +368,7 @@ class IosSettingsState(
     val weekStart: String,
     val themeMode: String,
     val themeScheme: String,
+    val appearanceStyle: String,
     val useDynamicColor: Boolean,
     val reducedMotion: Boolean,
     val defaultWarmupFlag: Boolean,
@@ -408,6 +415,7 @@ internal class IosAppPreferencesRepository(
     override suspend fun updateWeekStart(weekStart: WeekStart) = persist { it.copy(weekStart = weekStart) }
     override suspend fun updateThemeMode(themeMode: ThemeMode) = persist { it.copy(themeMode = themeMode) }
     override suspend fun updateThemeScheme(themeScheme: ThemeScheme) = persist { it.copy(themeScheme = themeScheme) }
+    override suspend fun updateAppearanceStyle(appearanceStyle: AppearanceStyle) = persist { it.copy(appearanceStyle = appearanceStyle) }
     override suspend fun updateUseDynamicColor(enabled: Boolean) = persist { it.copy(useDynamicColor = enabled) }
     override suspend fun updateReducedMotion(enabled: Boolean) = persist { it.copy(reducedMotion = enabled) }
     override suspend fun updateDefaultWarmupFlag(enabled: Boolean) = persist { it.copy(defaultWarmupFlag = enabled) }
@@ -456,6 +464,9 @@ internal class IosAppPreferencesRepository(
             themeScheme = userDefaults.stringForKey(Keys.themeScheme)
                 ?.let { value -> ThemeScheme.entries.firstOrNull { it.name == value } }
                 ?: defaults.themeScheme,
+            appearanceStyle = userDefaults.stringForKey(Keys.appearanceStyle)
+                ?.let { value -> AppearanceStyle.entries.firstOrNull { it.name == value } }
+                ?: defaults.appearanceStyle,
             useDynamicColor = userDefaults.boolOrDefault(Keys.useDynamicColor, defaults.useDynamicColor),
             reducedMotion = userDefaults.boolOrDefault(Keys.reducedMotion, defaults.reducedMotion),
             defaultWarmupFlag = userDefaults.boolOrDefault(Keys.defaultWarmupFlag, defaults.defaultWarmupFlag),
@@ -536,6 +547,7 @@ internal class IosAppPreferencesRepository(
         userDefaults.setObject(preferences.weekStart.name, Keys.weekStart)
         userDefaults.setObject(preferences.themeMode.name, Keys.themeMode)
         userDefaults.setObject(preferences.themeScheme.name, Keys.themeScheme)
+        userDefaults.setObject(preferences.appearanceStyle.name, Keys.appearanceStyle)
         userDefaults.setBool(preferences.useDynamicColor, Keys.useDynamicColor)
         userDefaults.setBool(preferences.reducedMotion, Keys.reducedMotion)
         userDefaults.setBool(preferences.defaultWarmupFlag, Keys.defaultWarmupFlag)
@@ -567,6 +579,7 @@ internal class IosAppPreferencesRepository(
         const val weekStart = "settings.weekStart"
         const val themeMode = "settings.themeMode"
         const val themeScheme = "settings.themeScheme"
+        const val appearanceStyle = "settings.appearanceStyle"
         const val useDynamicColor = "settings.useDynamicColor"
         const val reducedMotion = "settings.reducedMotion"
         const val defaultWarmupFlag = "settings.defaultWarmupFlag"
@@ -809,6 +822,7 @@ private fun SettingsPreferencesState.toIosState(buildInfo: BuildInfo): IosSettin
     weekStart = preferences.weekStart.name,
     themeMode = preferences.themeMode.name,
     themeScheme = preferences.themeScheme.name,
+    appearanceStyle = preferences.appearanceStyle.name,
     useDynamicColor = preferences.useDynamicColor,
     reducedMotion = preferences.reducedMotion,
     defaultWarmupFlag = preferences.defaultWarmupFlag,

@@ -129,6 +129,10 @@ class SettingsViewModel(
         preferencesController.updateThemeScheme(themeScheme.toShared())
     }
 
+    fun updateAppearanceStyle(appearanceStyle: com.ironlog.app.domain.model.AppearanceStyle) {
+        preferencesController.updateAppearanceStyle(appearanceStyle.toShared())
+    }
+
     fun updateUseDynamicColor(enabled: Boolean) {
         preferencesController.updateUseDynamicColor(enabled)
     }

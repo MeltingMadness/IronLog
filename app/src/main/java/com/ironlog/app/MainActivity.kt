@@ -35,6 +35,9 @@ import com.ironlog.app.presentation.navigation.IronLogNavHost
 import com.ironlog.app.presentation.navigation.Screen
 import com.ironlog.app.presentation.theme.IronLogTheme
 import org.koin.compose.koinInject
+import com.ironlog.app.domain.model.AppearanceStyle
+import com.ironlog.app.presentation.theme.LiquidGlassHost
+import androidx.compose.runtime.Composable
 
 class MainActivity : ComponentActivity() {
 
@@ -82,7 +85,8 @@ class MainActivity : ComponentActivity() {
                 themeMode = preferences.themeMode,
                 themeScheme = preferences.themeScheme,
                 useDynamicColor = preferences.useDynamicColor,
-                reducedMotion = preferences.reducedMotion
+                reducedMotion = preferences.reducedMotion,
+                appearanceStyle = preferences.appearanceStyle
             ) {
                 LaunchedEffect(isDarkTheme) {
                     val insetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -112,43 +116,48 @@ class MainActivity : ComponentActivity() {
                     Screen.ExerciseLibrary.route,
                     Screen.TrainingPlanList.route
                 )
+                val appShell: @Composable () -> Unit = {
+                    androidx.compose.material3.Scaffold(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
+                        bottomBar = {
+                            if (showBottomBar) {
+                                BottomNavBar(navController)
+                            }
+                        }
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .consumeWindowInsets(innerPadding)
+                        ) {
+                            IronLogNavHost(navController)
+                        }
+                    }
+                }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.onBackground
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                                        MaterialTheme.colorScheme.background,
-                                        MaterialTheme.colorScheme.background
+                    if (preferences.appearanceStyle == AppearanceStyle.LIQUID_GLASS) {
+                        LiquidGlassHost(modifier = Modifier.fillMaxSize()) { appShell() }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                                            MaterialTheme.colorScheme.background,
+                                            MaterialTheme.colorScheme.background
+                                        )
                                     )
                                 )
-                            )
-                    ) {
-                        androidx.compose.material3.Scaffold(
-                            containerColor = Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.onBackground,
-                            bottomBar = {
-                                if (showBottomBar) {
-                                    BottomNavBar(navController)
-                                }
-                            }
-                        ) { innerPadding ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding)
-                                    .consumeWindowInsets(innerPadding)
-                            ) {
-                                IronLogNavHost(navController)
-                            }
-                        }
+                        ) { appShell() }
                     }
                 }
             }

@@ -19,6 +19,7 @@ internal object AppPreferenceKeys {
     val WEEK_START = stringPreferencesKey("week_start")
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val THEME_SCHEME = stringPreferencesKey("theme_scheme")
+    val APPEARANCE_STYLE = stringPreferencesKey("appearance_style")
     val USE_DYNAMIC_COLOR = booleanPreferencesKey("use_dynamic_color")
     val REDUCED_MOTION = booleanPreferencesKey("reduced_motion")
     val DEFAULT_WARMUP_FLAG = booleanPreferencesKey("default_warmup_flag")
