@@ -17,6 +17,7 @@ interface AppPreferencesRepository {
     suspend fun updateWeekStart(weekStart: WeekStart)
     suspend fun updateThemeMode(themeMode: ThemeMode)
     suspend fun updateThemeScheme(themeScheme: ThemeScheme)
+    suspend fun updateAppearanceStyle(appearanceStyle: com.ironlog.app.domain.model.AppearanceStyle)
     suspend fun updateUseDynamicColor(enabled: Boolean)
     suspend fun updateReducedMotion(enabled: Boolean)
     suspend fun updateDefaultWarmupFlag(enabled: Boolean)

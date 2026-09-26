@@ -13,6 +13,8 @@ room = "2.8.4"
 paging = "3.3.6"
 koin = "4.1.1"
 vico = "2.4.3"
+# 1.7.2 is the newest Haze on Compose 1.10; 1.7.3+ needs Compose 1.12.
+haze = "1.7.2"
 core-ktx = "1.17.0"
 datastore = "1.1.1"
 work = "2.10.5"
@@ -27,6 +29,7 @@ androidx-test-runner = "1.6.2"
 espresso = "3.7.0"
 
 [libraries]
+haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }

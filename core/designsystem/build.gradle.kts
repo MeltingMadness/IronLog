@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.animation)
     implementation(libs.compose.material3)
+    implementation(libs.haze)
     implementation(libs.compose.material.icons)
     debugImplementation(libs.compose.ui.tooling)
 

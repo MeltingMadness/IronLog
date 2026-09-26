@@ -416,6 +416,7 @@ fun IronLogTheme(
     themeScheme: ThemeScheme = ThemeScheme.AMBER,
     useDynamicColor: Boolean = false,
     reducedMotion: Boolean = false,
+    appearanceStyle: com.ironlog.app.domain.model.AppearanceStyle = com.ironlog.app.domain.model.AppearanceStyle.EMBER,
     content: @Composable () -> Unit
 ) {
     val isDarkTheme = when (themeMode) {
@@ -630,7 +631,8 @@ fun IronLogTheme(
         LocalIronLogDimens provides IronLogDimens(),
         LocalIronLogMotion provides IronLogMotion(reduced = reducedMotion),
         LocalIronLogSurfaceRoles provides surfaceRoles,
-        LocalEmberSemanticColors provides semanticColors
+        LocalEmberSemanticColors provides semanticColors,
+        LocalAppearanceStyle provides appearanceStyle
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

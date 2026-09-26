@@ -72,6 +72,16 @@ class AppPreferencesDataStoreTest {
     }
 
     @Test
+    fun `appearance style defaults to ember and persists liquid glass`() = runTest {
+        val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
+
+        assertEquals(com.ironlog.app.domain.model.AppearanceStyle.EMBER, repository.preferences.first().appearanceStyle)
+        repository.updateAppearanceStyle(com.ironlog.app.domain.model.AppearanceStyle.LIQUID_GLASS)
+
+        assertEquals(com.ironlog.app.domain.model.AppearanceStyle.LIQUID_GLASS, repository.preferences.first().appearanceStyle)
+    }
+
+    @Test
     fun `auto rest timer defaults to 120s disabled and persists enabled flag with duration`() = runTest {
         val repository = AppPreferencesRepositoryImpl(createContextWithTempDataStore())
 

@@ -38,6 +38,10 @@ internal class AndroidSharedAppPreferencesRepository(
         delegate.updateThemeScheme(themeScheme.toApp())
     }
 
+    override suspend fun updateAppearanceStyle(appearanceStyle: com.ironlog.shared.model.AppearanceStyle) {
+        delegate.updateAppearanceStyle(appearanceStyle.toApp())
+    }
+
     override suspend fun updateUseDynamicColor(enabled: Boolean) {
         delegate.updateUseDynamicColor(enabled)
     }
@@ -121,6 +125,7 @@ internal fun AppPreferences.toShared(): com.ironlog.shared.model.AppPreferences 
         weekStart = weekStart.toShared(),
         themeMode = themeMode.toShared(),
         themeScheme = themeScheme.toShared(),
+        appearanceStyle = appearanceStyle.toShared(),
         useDynamicColor = useDynamicColor,
         reducedMotion = reducedMotion,
         defaultWarmupFlag = defaultWarmupFlag,
@@ -147,6 +152,7 @@ internal fun com.ironlog.shared.model.AppPreferences.toApp(): AppPreferences =
         weekStart = weekStart.toApp(),
         themeMode = themeMode.toApp(),
         themeScheme = themeScheme.toApp(),
+        appearanceStyle = appearanceStyle.toApp(),
         useDynamicColor = useDynamicColor,
         reducedMotion = reducedMotion,
         defaultWarmupFlag = defaultWarmupFlag,
@@ -204,6 +210,11 @@ internal fun ThemeScheme.toShared(): com.ironlog.shared.model.ThemeScheme =
     com.ironlog.shared.model.ThemeScheme.valueOf(name)
 
 internal fun com.ironlog.shared.model.ThemeScheme.toApp(): ThemeScheme = ThemeScheme.valueOf(name)
+
+internal fun com.ironlog.app.domain.model.AppearanceStyle.toShared(): com.ironlog.shared.model.AppearanceStyle =
+    com.ironlog.shared.model.AppearanceStyle.valueOf(name)
+
+internal fun com.ironlog.shared.model.AppearanceStyle.toApp(): com.ironlog.app.domain.model.AppearanceStyle = com.ironlog.app.domain.model.AppearanceStyle.valueOf(name)
 
 internal fun IntensitySystem.toShared(): com.ironlog.shared.model.IntensitySystem =
     com.ironlog.shared.model.IntensitySystem.valueOf(name)

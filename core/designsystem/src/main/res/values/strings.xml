@@ -321,6 +321,9 @@
     <string name="settings_section_data">Datenkontrolle</string>
     <string name="settings_section_incident">Beta-Feedback</string>
 
+    <string name="settings_appearance_style_title">Darstellung</string>
+    <string name="settings_appearance_ember">Ember</string>
+    <string name="settings_appearance_liquid_glass">Liquid Glass</string>
     <string name="settings_theme_mode_title">Theme-Modus</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Hell</string>

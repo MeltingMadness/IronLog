@@ -48,6 +48,10 @@ class AppPreferencesRepositoryImpl(
             ?.let { runCatching { ThemeScheme.valueOf(it) }.getOrNull() }
             ?: ThemeScheme.AMBER
 
+        val appearanceStyle = prefs[AppPreferenceKeys.APPEARANCE_STYLE]
+            ?.let { runCatching { com.ironlog.app.domain.model.AppearanceStyle.valueOf(it) }.getOrNull() }
+            ?: com.ironlog.app.domain.model.AppearanceStyle.EMBER
+
         val intensitySystem = prefs[AppPreferenceKeys.INTENSITY_SYSTEM]
             ?.let { runCatching { IntensitySystem.valueOf(it) }.getOrNull() }
             ?: IntensitySystem.RPE
@@ -64,6 +68,7 @@ class AppPreferencesRepositoryImpl(
             weekStart = weekStart,
             themeMode = themeMode,
             themeScheme = themeScheme,
+            appearanceStyle = appearanceStyle,
             useDynamicColor = prefs[AppPreferenceKeys.USE_DYNAMIC_COLOR] ?: false,
             reducedMotion = prefs[AppPreferenceKeys.REDUCED_MOTION] ?: false,
             defaultWarmupFlag = prefs[AppPreferenceKeys.DEFAULT_WARMUP_FLAG] ?: false,
@@ -106,6 +111,12 @@ class AppPreferencesRepositoryImpl(
     override suspend fun updateThemeScheme(themeScheme: ThemeScheme) {
         context.appPreferencesDataStore.edit { prefs ->
             prefs[AppPreferenceKeys.THEME_SCHEME] = themeScheme.name
+        }
+    }
+
+    override suspend fun updateAppearanceStyle(appearanceStyle: com.ironlog.app.domain.model.AppearanceStyle) {
+        context.appPreferencesDataStore.edit { prefs ->
+            prefs[AppPreferenceKeys.APPEARANCE_STYLE] = appearanceStyle.name
         }
     }
 

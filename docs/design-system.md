@@ -50,6 +50,15 @@ Neue Abstände und Größen gehören in die Tokens, nicht als feste `dp`-Werte i
 - `StatCard` mit den Varianten `PRIMARY`, `SECONDARY`, `TERTIARY`. Kacheln einer Gruppe nutzen dieselbe Variante und gleiche Höhe (Übungsstatistik: Standardvariante in `IntrinsicSize.Min`-Zeilen).
 - `IronLogScreenScaffold`: gemeinsames Gerüst für alle Screens
 
+## Liquid Glass (im Aufbau)
+
+Zweite Darstellung neben Ember, wählbar unter Einstellungen → Darstellung. Standard bleibt Ember, bis alle Screens umgestellt sind (Plan: [`plans/2026-09-26-liquid-glass.md`](plans/2026-09-26-liquid-glass.md)).
+
+- Glasstufen: `GlassLevel.STANDARD`, `STRONG`, `TINT` (Android, `theme/LiquidGlass.kt`, `Modifier.liquidGlass`) bzw. `IronLogGlassLevel` (iOS, `Design/IronLogLiquidGlass.swift`, `.liquidGlass(_:in:)`).
+- Nur `STRONG` weichzeichnet den Hintergrund: Android über Haze ab Android 12, iOS über `.ultraThinMaterial`. Darunter, bei reduzierten Animationen und bei „Transparenz reduzieren“ (iOS) gibt es eine fast deckende Tönung.
+- Der farbige Hintergrund (`LiquidBackground` / `IronLogLiquidBackground`) besteht aus radialen Verläufen in der Akzentfarbe, Türkis und Violett und wird einmal hinter der App gezeichnet (Android: `LiquidGlassHost` in `MainActivity`).
+- `IronLogSurfaceCard`, `Modifier.glassmorphism()` und `IronLogCard` schalten automatisch um; Ember-Karten bleiben unverändert.
+
 ## Zahlen und Texte
 
 Gilt für Android und iOS gleich:
