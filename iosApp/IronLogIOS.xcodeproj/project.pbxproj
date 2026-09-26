@@ -50,6 +50,7 @@
 		9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3370C75E31978BA1D7708CF4 /* ShareSheet.swift */; };
 		9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */; };
 		AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */; };
+		92DE893AE6108537DE6C11F9 /* IOSDashboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73A7336FCD5D60B215C3374 /* IOSDashboardGlass.swift */; };
 		B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */; };
 		BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */; };
 		C389079B8F1449C74D5761CE /* IOSWorkoutScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC145BC0285EA34356A3E221 /* IOSWorkoutScreen.swift */; };
@@ -58,6 +59,7 @@
 		D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */; };
 		DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */; };
 		E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */; };
+		38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */; };
 		EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */; };
 		F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */; };
 /* End PBXBuildFile section */
@@ -85,6 +87,7 @@
 		344853CE770AC1EFB6C76754 /* IronLogLiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogLiquidGlass.swift; sourceTree = "<group>"; };
 		6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
 		6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDayGuardTests.swift; sourceTree = "<group>"; };
+		9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWeekStripTests.swift; sourceTree = "<group>"; };
 		7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRestTimerPersistenceTests.swift; sourceTree = "<group>"; };
 		7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
 		89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogWeeklyMuscleVolume.swift; sourceTree = "<group>"; };
@@ -118,6 +121,7 @@
 		F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocument.swift; sourceTree = "<group>"; };
 		F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistorySupport.swift; sourceTree = "<group>"; };
 		FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
+		E73A7336FCD5D60B215C3374 /* IOSDashboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardGlass.swift; sourceTree = "<group>"; };
 		FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -166,6 +170,7 @@
 		children = (
 			9A84655D88907D47D386F49D /* AnalyticsPresentation.swift */,
 			FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */,
+			E73A7336FCD5D60B215C3374 /* IOSDashboardGlass.swift */,
 			06FC306405B9BEA595E777BB /* IOSDashboardScreen.swift */,
 			E57493B46D0737E1DCA25483 /* IOSWeeklyVolumeTrendCard.swift */,
 		);
@@ -280,6 +285,7 @@
 			6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */,
 			447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */,
 			6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */,
+			9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */,
 			9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */,
 			E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */,
 			90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */,
@@ -416,6 +422,7 @@
 			files = (
 				CE9AED1EDD8FBD1EE7656AF7 /* AnalyticsPresentation.swift in Sources */, 
 				AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */, 
+				92DE893AE6108537DE6C11F9 /* IOSDashboardGlass.swift in Sources */,
 				0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */, 
 				3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */, 
 				0B0DA9EA073BAD6A6C2C3656 /* IronLogCard.swift in Sources */,
@@ -467,6 +474,7 @@
 				7EE2761C3A64467F5AB8D14A /* IndividualSetTargetsTests.swift in Sources */, 
 				4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */, 
 				E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */, 
+				38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */,
 				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
 				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
 				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 

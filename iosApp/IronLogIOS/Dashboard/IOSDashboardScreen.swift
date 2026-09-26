@@ -10,6 +10,7 @@ struct IOSDashboardScreen: View {
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.ironLogAppearance) private var appearance
     @State private var showingProgressionReview = false
     @State private var showingStatistics = false
     @State private var showingCheckIn = false
@@ -40,6 +41,8 @@ struct IOSDashboardScreen: View {
             .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Dashboard")
             .navigationBarTitleDisplayMode(.large)
+            // Liquid Glass shows date, greeting and the statistics button in the content.
+            .toolbar(appearance == .liquidGlass ? .hidden : .automatic, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -141,36 +144,50 @@ struct IOSDashboardScreen: View {
         // The shared projection is the single source for trend, daily form and muscle facts.
         let assessment = store.readiness
 
-        LazyVStack(alignment: .leading, spacing: 16) {
-            greeting
+        let liquidGlass = appearance == .liquidGlass
 
-            IOSDashboardCommandCenter(
-                activeSession: store.data?.activeSession,
-                suggestion: analytics.metaRotationSuggestions.first,
-                fallbackPlan: store.data?.trainingPlans.first,
-                isBusy: store.isBusy,
-                onResume: { store.selectedTab = 1 },
-                onStartFree: {
-                    Task { _ = await store.startWorkout() }
-                },
-                onStartSuggestion: { suggestion in
-                    Task {
-                        _ = await store.startWorkout(
-                            name: suggestion.nextTrainingPlanName,
-                            planId: suggestion.nextTrainingPlanId,
-                            metaPlanId: suggestion.metaPlanId
-                        )
-                    }
-                },
-                onRequestSkip: { suggestion in
-                    skipSuggestion = suggestion
-                },
-                onStartPlan: { plan in
-                    Task {
-                        _ = await store.startWorkout(name: plan.name, planId: plan.id)
-                    }
-                }
-            )
+        LazyVStack(alignment: .leading, spacing: 16) {
+            if liquidGlass {
+                IOSDashboardGlassHeader(greeting: greetingTitle, onOpenStatistics: { showingStatistics = true })
+
+                IOSDashboardGlassCommandCenter(
+                    activeSession: store.data?.activeSession,
+                    suggestion: analytics.metaRotationSuggestions.first,
+                    fallbackPlan: store.data?.trainingPlans.first,
+                    data: store.data,
+                    unitSystem: unitSystem,
+                    isBusy: store.isBusy,
+                    onResume: resumeWorkout,
+                    onStartFree: startFreeWorkout,
+                    onStartSuggestion: startSuggestion,
+                    onRequestSkip: { suggestion in skipSuggestion = suggestion },
+                    onStartPlan: startPlan
+                )
+
+                IOSDashboardGlassWeekStrip(
+                    days: IOSDashboardWeekDay.week(
+                        startingAt: analytics.currentWeekStart,
+                        sessions: store.data?.workoutSessions ?? []
+                    ),
+                    workoutsThisWeek: analytics.workoutsThisWeek,
+                    volumeKg: analytics.weeklyVolume.first { $0.weekStart == analytics.currentWeekStart }?.volumeKg ?? 0,
+                    unitSystem: unitSystem
+                )
+            } else {
+                greeting
+
+                IOSDashboardCommandCenter(
+                    activeSession: store.data?.activeSession,
+                    suggestion: analytics.metaRotationSuggestions.first,
+                    fallbackPlan: store.data?.trainingPlans.first,
+                    isBusy: store.isBusy,
+                    onResume: resumeWorkout,
+                    onStartFree: startFreeWorkout,
+                    onStartSuggestion: startSuggestion,
+                    onRequestSkip: { suggestion in skipSuggestion = suggestion },
+                    onStartPlan: startPlan
+                )
+            }
 
             IOSDashboardTrainingTrendCard(trend: assessment?.trainingTrend)
 
@@ -183,11 +200,13 @@ struct IOSDashboardScreen: View {
 
             IOSDashboardTodayMuscleCard(muscleGroups: assessment?.muscleGroups ?? [])
 
-            IOSDashboardWorkoutCounts(
-                week: analytics.workoutsThisWeek,
-                month: analytics.workoutsThisMonth,
-                lastSessionDate: analytics.lastSessionDate
-            )
+            if !liquidGlass {
+                IOSDashboardWorkoutCounts(
+                    week: analytics.workoutsThisWeek,
+                    month: analytics.workoutsThisMonth,
+                    lastSessionDate: analytics.lastSessionDate
+                )
+            }
 
             if let trend = assessment?.trainingTrend,
                trend.deloadSuggested || trend.deloadActive || activeDeloadMode != "NONE" {
@@ -267,6 +286,30 @@ struct IOSDashboardScreen: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    private func resumeWorkout() {
+        store.selectedTab = 1
+    }
+
+    private func startFreeWorkout() {
+        Task { _ = await store.startWorkout() }
+    }
+
+    private func startSuggestion(_ suggestion: ILMetaRotationSuggestion) {
+        Task {
+            _ = await store.startWorkout(
+                name: suggestion.nextTrainingPlanName,
+                planId: suggestion.nextTrainingPlanId,
+                metaPlanId: suggestion.metaPlanId
+            )
+        }
+    }
+
+    private func startPlan(_ plan: ILTrainingPlan) {
+        Task {
+            _ = await store.startWorkout(name: plan.name, planId: plan.id)
+        }
     }
 
     /// Keeps the local "today" fresh across midnight and time-zone changes, so the

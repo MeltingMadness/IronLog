@@ -7,4 +7,15 @@
         <item quantity="other">%d Trainings</item>
     </plurals>
     <string name="dashboard_ui_volume_unit">Volumen in kg × Wiederholungen · Datum = Wochenbeginn</string>
+    <string name="dashboard_glass_up_next">Heute dran</string>
+    <string name="dashboard_glass_up_next_from">Heute dran · %1$s</string>
+    <string name="dashboard_glass_running">Training läuft</string>
+    <string name="dashboard_glass_start">Training starten</string>
+    <plurals name="dashboard_glass_more_exercises">
+        <item quantity="one">+ %d weitere Übung</item>
+        <item quantity="other">+ %d weitere Übungen</item>
+    </plurals>
+    <string name="dashboard_glass_day_trained">trainiert</string>
+    <string name="dashboard_glass_day_today">heute</string>
+    <string name="dashboard_glass_day_open">offen</string>
 </resources>

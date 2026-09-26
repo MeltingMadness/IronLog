@@ -11,6 +11,7 @@ import com.ironlog.app.domain.model.MetaTrainingPlan
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.TrainingPlan
+import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.model.WeekStart
 import com.ironlog.app.domain.model.WorkoutSession
 import com.ironlog.app.domain.util.MuscleVolume
@@ -133,6 +134,13 @@ data class DashboardTrendState(
     val error: String? = null
 )
 
+/** One day of the current week for the week strip; [trained] means a completed workout started that day. */
+data class DashboardWeekDay(
+    val date: LocalDate,
+    val trained: Boolean,
+    val isToday: Boolean
+)
+
 data class DashboardUiState(
     val activeSession: WorkoutSession? = null,
     val trainingPlans: List<DashboardPlanStatus> = emptyList(),
@@ -140,6 +148,12 @@ data class DashboardUiState(
     val showPlanSelectionSheet: Boolean = false,
     val workoutsThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
+    /** Seven days from the configured week start; empty until loaded. */
+    val weekDays: List<DashboardWeekDay> = emptyList(),
+    val volumeThisWeekKg: Double = 0.0,
+    val unitSystem: UnitSystem = UnitSystem.METRIC,
+    /** Exercise names by id for plan previews; plan rows do not always carry the name. */
+    val exerciseNames: Map<Long, String> = emptyMap(),
     val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
@@ -560,14 +574,18 @@ class DashboardViewModel(
                 trainingPlanRepository.getAllPlans(),
                 workoutRepository.observeLastSessionPerPlan()
             ) { plans, lastPlanSessions ->
+                val exerciseIds = plans.flatMap { plan -> plan.exercises.map { it.exerciseId } }.distinct()
+                val names = runCatching {
+                    exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to it.name }
+                }.getOrDefault(emptyMap())
                 buildPlanOptions(
                     plans = plans,
                     lastSessionsPerPlan = lastPlanSessions
-                )
+                ) to names
             }
                 .catchAndLog("DashboardVM_Plans")
-                .collect { plans ->
-                    _uiState.update { it.copy(trainingPlans = plans) }
+                .collect { (plans, names) ->
+                    _uiState.update { it.copy(trainingPlans = plans, exerciseNames = names) }
                     reprojectTrendIfPlanChanged()
                 }
         }
@@ -655,6 +673,20 @@ class DashboardViewModel(
                     untilEpochMillis = nowEpochMillis
                 )
 
+                // Same counting as workoutsThisWeek, split per day for the week strip.
+                val weekDays = (0L until 7L).map { offset ->
+                    val day = currentWeekStart.plusDays(offset)
+                    val trained = !day.isAfter(now) && workoutRepository.getCompletedSessionCountBetween(
+                        sinceEpochMillis = EpochConverter.toLong(day.atStartOfDay()),
+                        // The query's upper bound is inclusive, so stop one millisecond before midnight.
+                        untilEpochMillis = minOf(
+                            EpochConverter.toLong(day.plusDays(1).atStartOfDay()) - 1,
+                            nowEpochMillis
+                        )
+                    ) > 0
+                    DashboardWeekDay(date = day, trained = trained, isToday = day == now)
+                }
+
                 val startOfMonth = now.withDayOfMonth(1)
                 val startOfMonthMillis = EpochConverter.toLong(startOfMonth.atStartOfDay())
                 val workoutsThisMonth = workoutRepository.getCompletedSessionCountBetween(
@@ -741,6 +773,9 @@ class DashboardViewModel(
                     it.copy(
                         workoutsThisWeek = workoutsThisWeek,
                         workoutsThisMonth = workoutsThisMonth,
+                        weekDays = weekDays,
+                        volumeThisWeekKg = volumeByWeek.lastOrNull()?.second ?: 0.0,
+                        unitSystem = preferences.unitSystem,
                         recentRecords = recordsWithNames,
                         lastWorkout = lastWorkout,
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,

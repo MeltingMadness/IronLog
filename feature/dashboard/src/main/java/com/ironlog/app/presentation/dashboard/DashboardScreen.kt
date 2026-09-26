@@ -64,6 +64,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 import java.time.LocalDateTime
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.util.DateFormatting
@@ -94,6 +95,7 @@ fun DashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = ironLogDimens
+    val liquidGlass = isLiquidGlass()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -124,7 +126,8 @@ fun DashboardScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
+            // Liquid Glass shows date, greeting and settings in the list header instead.
+            if (!liquidGlass) TopAppBar(
                 title = { Text(stringResource(id = R.string.app_name)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
@@ -155,37 +158,74 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
         ) {
             item {
-                GreetingHeader()
+                if (liquidGlass) {
+                    GlassGreetingHeader(
+                        greeting = stringResource(id = greetingRes()),
+                        today = LocalDate.now(),
+                        onOpenSettings = onOpenSettings
+                    )
+                } else {
+                    GreetingHeader()
+                }
             }
 
             item {
                 val isFirstTimeUser = state.lastWorkout == null && state.recentRecords.isEmpty()
                 val recommended = recommendedPlan(state.metaPlanOptions, state.trainingPlans)
-                val previewExercises = recommended?.plan?.exercises?.map { it.exerciseName }?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
+                val previewExercises = recommended?.plan?.exercises
+                    ?.map { it.exerciseName.ifBlank { state.exerciseNames[it.exerciseId].orEmpty() } }
+                    ?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
 
-                CommandCenterCard(
-                    hasActiveSession = state.activeSession != null,
-                    isFirstTimeUser = isFirstTimeUser,
-                    recommended = recommended,
-                    previewExercises = previewExercises,
-                    onStartWorkout = {
-                        // Start the suggested plan directly; without one, offer the choice.
-                        when {
-                            recommended == null -> viewModel.showPlanSelectionSheet()
-                            recommended.metaPlan != null ->
-                                viewModel.startNewWorkoutWithMetaPlan(recommended.metaPlan.metaPlanId, onStartWorkout)
-                            else -> viewModel.startNewWorkoutWithPlan(recommended.plan) { sessionId, planId ->
-                                onStartWorkout(sessionId, planId, null)
-                            }
-                        }
-                    },
-                    onChoosePlan = { viewModel.showPlanSelectionSheet() },
-                    onContinueWorkout = {
-                        state.activeSession?.let { session ->
-                            onContinueWorkout(session.id, session.planId, session.metaPlanId)
+                val startRecommended = {
+                    // Start the suggested plan directly; without one, offer the choice.
+                    when {
+                        recommended == null -> viewModel.showPlanSelectionSheet()
+                        recommended.metaPlan != null ->
+                            viewModel.startNewWorkoutWithMetaPlan(recommended.metaPlan.metaPlanId, onStartWorkout)
+                        else -> viewModel.startNewWorkoutWithPlan(recommended.plan) { sessionId, planId ->
+                            onStartWorkout(sessionId, planId, null)
                         }
                     }
-                )
+                }
+                val continueActive = {
+                    state.activeSession?.let { session ->
+                        onContinueWorkout(session.id, session.planId, session.metaPlanId)
+                    }
+                    Unit
+                }
+
+                if (liquidGlass) {
+                    GlassCommandCenterCard(
+                        hasActiveSession = state.activeSession != null,
+                        recommended = recommended,
+                        unitSystem = state.unitSystem,
+                        exerciseNames = state.exerciseNames,
+                        onStartWorkout = startRecommended,
+                        onChoosePlan = { viewModel.showPlanSelectionSheet() },
+                        onContinueWorkout = continueActive
+                    )
+                } else {
+                    CommandCenterCard(
+                        hasActiveSession = state.activeSession != null,
+                        isFirstTimeUser = isFirstTimeUser,
+                        recommended = recommended,
+                        previewExercises = previewExercises,
+                        onStartWorkout = startRecommended,
+                        onChoosePlan = { viewModel.showPlanSelectionSheet() },
+                        onContinueWorkout = continueActive
+                    )
+                }
+            }
+
+            if (liquidGlass) {
+                item(key = "week_strip") {
+                    GlassWeekStrip(
+                        days = state.weekDays,
+                        workoutsThisWeek = state.workoutsThisWeek,
+                        volumeKg = state.volumeThisWeekKg,
+                        unitSystem = state.unitSystem
+                    )
+                }
             }
 
             item(key = "training_trend") {
@@ -223,12 +263,14 @@ fun DashboardScreen(
                     }
                 }
             }
-            item {
-                WorkoutStreakBentoCard(
-                    workoutsThisWeek = state.workoutsThisWeek,
-                    workoutsThisMonth = state.workoutsThisMonth,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            if (!liquidGlass) {
+                item {
+                    WorkoutStreakBentoCard(
+                        workoutsThisWeek = state.workoutsThisWeek,
+                        workoutsThisMonth = state.workoutsThisMonth,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             // Die automatische Deload-Empfehlung kommt ausschließlich aus dem
@@ -509,14 +551,19 @@ private fun PendingProgressionCard(
 }
 
 @Composable
-private fun GreetingHeader() {
+private fun greetingRes(): Int {
     val hour = remember { java.time.LocalDateTime.now().hour }
-    val greetingRes = when (hour) {
+    return when (hour) {
         in 5..11 -> R.string.dashboard_greeting_morning
         in 12..17 -> R.string.dashboard_greeting_day
         in 18..21 -> R.string.dashboard_greeting_evening
         else -> R.string.dashboard_greeting_late
     }
+}
+
+@Composable
+private fun GreetingHeader() {
+    val greetingRes = greetingRes()
     Column(modifier = Modifier.padding(bottom = 4.dp)) {
         Text(
             text = "WILLKOMMEN ZURÜCK",
