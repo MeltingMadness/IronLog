@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
@@ -70,6 +71,7 @@ fun TrainingPlanListScreen(
     onEditPlan: (Long) -> Unit,
     onStartWorkout: (Long, Long) -> Unit,
     onOpenMetaPlans: () -> Unit,
+    onOpenProgressionReview: () -> Unit,
     viewModel: TrainingPlanListViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,7 +91,16 @@ fun TrainingPlanListScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
-                title = { Text(stringResource(id = R.string.plans_title)) }
+                title = { Text(stringResource(id = R.string.plans_title)) },
+                actions = {
+                    // Open and past progression outcomes, also when nothing is pending.
+                    IconButton(onClick = onOpenProgressionReview) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                            contentDescription = stringResource(id = R.string.plans_progression_review_cd)
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {

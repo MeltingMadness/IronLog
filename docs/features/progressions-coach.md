@@ -14,6 +14,7 @@ Fachliche Grundlage: [`../research/2026-08-08-progression-schemes.md`](../resear
 4. **Workout beenden:** Danach erzeugt der Coach die Ergebnisse. Ein Fehler im Coach hält das Workout nicht offen. Das Workout bleibt gespeichert, die Auswertung lässt sich wiederholen und ist idempotent.
 5. **Review-Screen** „Progression prüfen“: pro Übung Schema, `alt → neu`, gewertete Sätze und Begründung. Aktionen: **Übernehmen**, **Bearbeiten**, **Verwerfen** sowie **Alle sicheren übernehmen**. Reine Hinweise brauchen keine Entscheidung. Schließen lässt Offenes offen.
 6. **Dashboard:** Solange Vorschläge offen sind, erscheint „N Progressionsvorschläge offen · Prüfen“.
+7. **Frühere Auswertungen:** Ohne Trainingsbezug zeigt der Review-Screen unter den offenen Vorschlägen die letzten 50 entschiedenen, veralteten und reinen Hinweis-Ergebnisse (nur lesend). Erreichbar ist er auch ohne offene Vorschläge über das Symbol in der Planliste.
 
 ## Begriffe
 

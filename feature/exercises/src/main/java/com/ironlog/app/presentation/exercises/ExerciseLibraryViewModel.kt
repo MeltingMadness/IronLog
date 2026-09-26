@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
+import com.ironlog.app.domain.model.ExerciseTrainingSummary
 import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.repository.StatisticsRepository
 import com.ironlog.app.domain.util.AppLogger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +46,8 @@ data class ExerciseLibraryUiState(
     val exercises: List<Exercise> = emptyList(),
     val searchQuery: String = "",
     val selectedMuscleGroup: MuscleGroup? = null,
+    /** Training counts per exercise id; exercises never trained are missing. */
+    val trainingSummaries: Map<Long, ExerciseTrainingSummary> = emptyMap(),
     val editor: ExerciseEditorState? = null,
     val error: String? = null,
     val isLoading: Boolean = true
@@ -53,7 +57,8 @@ data class ExerciseLibraryUiState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExerciseLibraryViewModel(
-    private val exerciseRepository: ExerciseRepository
+    private val exerciseRepository: ExerciseRepository,
+    private val statisticsRepository: StatisticsRepository
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
@@ -81,12 +86,21 @@ class ExerciseLibraryViewModel(
         emit(emptyList())
     }
 
+    // Counts are optional decoration: a failure must not hide the exercise list.
+    private val trainingSummaries = statisticsRepository.observeExerciseTrainingSummaries()
+        .map { list -> list.associateBy { it.exerciseId } }
+        .catch { e ->
+            runCatching { AppLogger.w("ExerciseLibraryVM", "Trainingszahlen nicht geladen: ${e.message}", e) }
+            emit(emptyMap())
+        }
+
     val uiState: StateFlow<ExerciseLibraryUiState> = combine(
         exercises,
         searchQuery,
         selectedMuscleGroup,
         editor,
-        error
+        error,
+        trainingSummaries
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         ExerciseLibraryUiState(
@@ -95,6 +109,7 @@ class ExerciseLibraryViewModel(
             selectedMuscleGroup = args[2] as MuscleGroup?,
             editor = args[3] as ExerciseEditorState?,
             error = args[4] as String?,
+            trainingSummaries = args[5] as Map<Long, ExerciseTrainingSummary>,
             isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseLibraryUiState())

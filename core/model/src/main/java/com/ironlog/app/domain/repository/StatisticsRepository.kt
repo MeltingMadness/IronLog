@@ -12,6 +12,9 @@ interface StatisticsRepository {
     fun getRecentRecords(limit: Int = 5): Flow<List<PersonalRecord>>
     suspend fun getRecentRecordsList(limit: Int = 5): List<PersonalRecord>
     fun getSetsForExercise(exerciseId: Long): Flow<List<WorkoutSet>>
+
+    /** Per-exercise session count and last training time, from completed sessions only. */
+    fun observeExerciseTrainingSummaries(): Flow<List<com.ironlog.app.domain.model.ExerciseTrainingSummary>>
     suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet>
     /** Historical exercise statistics: completed sessions and timestamps up to [nowEpochMillis]. */
     suspend fun getCompletedSetsForExerciseList(exerciseId: Long, nowEpochMillis: Long): List<WorkoutSet>
