@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -66,6 +67,10 @@ class ActiveWorkoutViewModel(
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
     private var lastDeletedSet: Pair<WorkoutSet, SetIntention>? = null
+    private val _completionRecords = MutableStateFlow<List<SessionRecordUi>>(emptyList())
+
+    /** Records set during this session, loaded once the session is finished. */
+    val completionRecords: StateFlow<List<SessionRecordUi>> = _completionRecords.asStateFlow()
 
     private val sessionPhase = workoutRepository.observeSessionById(sessionId)
         .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
@@ -627,6 +632,38 @@ class ActiveWorkoutViewModel(
                         retry = WorkoutRetryDescriptor.DeleteSet(setId = setId)
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Loads the personal records whose achievement falls into this finished session. Records
+     * are rebuilt from the sets, so a deleted or restored set is already reflected here.
+     */
+    fun loadCompletionRecords() {
+        viewModelScope.launch {
+            try {
+                val session = workoutRepository.getSessionById(sessionId) ?: return@launch
+                val end = session.endTime ?: return@launch
+                val exerciseIds = workoutRepository.getSetsForSessionList(sessionId)
+                    .filter { it.reps > 0 }
+                    .map { it.exerciseId }
+                    .distinct()
+                if (exerciseIds.isEmpty()) return@launch
+                val names = exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to it.name }
+                _completionRecords.value = statisticsRepository.getRecordsForExercisesList(exerciseIds)
+                    .filter { !it.achievedAt.isBefore(session.startTime) && !it.achievedAt.isAfter(end) }
+                    .groupBy { it.exerciseId }
+                    .map { (exerciseId, records) ->
+                        SessionRecordUi(
+                            exerciseName = names[exerciseId].orEmpty(),
+                            types = records.map { it.type }.distinct().sortedBy { it.ordinal }
+                        )
+                    }
+                    .sortedBy { it.exerciseName }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                AppLogger.w("ActiveWorkoutVM", "Rekorde fuer die Zusammenfassung nicht geladen: ${e.message}", e)
             }
         }
     }

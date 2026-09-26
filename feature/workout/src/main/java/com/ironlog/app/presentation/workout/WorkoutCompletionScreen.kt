@@ -72,15 +72,30 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, unitSystem: UnitSystem,
+internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<ExerciseWithSets>, records: List<SessionRecordUi>, unitSystem: UnitSystem,
     finishState: WorkoutFinishState, onClose: () -> Unit, onDetails: () -> Unit, onPlanEditor: () -> Unit,
     onProgression: () -> Unit, onRetryProgression: () -> Unit) {
     var showPlanChanges by rememberSaveable(session.id) { mutableStateOf(false) }
     var planApplied by rememberSaveable(session.id) { mutableStateOf(false) }
     val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
     val remaining = rows.sumOf { it.openSlotCount() }
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.workout_summary_title)) }, actions = { TextButton(onClose) { Text(stringResource(R.string.workout_summary_done)) } }) },
-        bottomBar = { Button(onClick = onDetails, modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_summary_open_details)) } }) { padding ->
+    // One headline in the content instead of a second title in a top bar; "Fertig" is the
+    // main action, the details are the secondary one.
+    Scaffold(
+        bottomBar = {
+            Column(
+                Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(onClick = onClose, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Text(stringResource(R.string.workout_summary_done))
+                }
+                OutlinedButton(onClick = onDetails, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.workout_summary_open_details))
+                }
+            }
+        }
+    ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(stringResource(if (remaining > 0) R.string.workout_summary_headline_partial else R.string.workout_summary_headline_complete), style = MaterialTheme.typography.headlineMedium)
             Text(if (remaining > 0) pluralStringResource(R.plurals.workout_summary_partial_subtitle, sets.size, sets.size) else session.name)
@@ -97,6 +112,30 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 SummaryMetric(stringResource(R.string.workout_summary_sets), sets.size.toString(), Modifier.weight(1f))
             }
             SummaryMetric(stringResource(R.string.workout_summary_volume), WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem), Modifier.fillMaxWidth())
+            if (records.isNotEmpty()) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            stringResource(R.string.workout_summary_records_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        records.forEach { record ->
+                            Text(
+                                stringResource(
+                                    R.string.workout_summary_record_line,
+                                    record.exerciseName,
+                                    record.types.joinToString(", ") { it.displayName }
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+            }
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.name, style = MaterialTheme.typography.titleMedium)
@@ -109,9 +148,9 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 }
             }
             when (finishState) {
-                is WorkoutFinishState.ReviewReady -> if (!planApplied) TextButton(onClick = onProgression) { Text(stringResource(R.string.workout_summary_review_progression)) }
+                is WorkoutFinishState.ReviewReady -> if (!planApplied) OutlinedButton(onClick = onProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_review_progression)) }
                 is WorkoutFinishState.Generating -> Text(stringResource(R.string.workout_summary_progression_generating), style = MaterialTheme.typography.bodySmall)
-                is WorkoutFinishState.GenerationFailed -> TextButton(onClick = onRetryProgression) { Text(stringResource(R.string.workout_summary_progression_retry)) }
+                is WorkoutFinishState.GenerationFailed -> OutlinedButton(onClick = onRetryProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_progression_retry)) }
                 else -> Unit
             }
         }

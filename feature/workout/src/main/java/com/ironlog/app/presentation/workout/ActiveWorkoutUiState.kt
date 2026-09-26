@@ -168,3 +168,9 @@ sealed class WorkoutEvent {
     /** A set was deleted; the UI offers to undo it. */
     data class SetDeleted(val setNumber: Int) : WorkoutEvent()
 }
+
+/** Records one exercise set during the finished session, shown on the summary. */
+data class SessionRecordUi(
+    val exerciseName: String,
+    val types: List<RecordType>
+)
