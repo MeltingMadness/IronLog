@@ -89,7 +89,11 @@ fun ExerciseLibraryScreen(
                 title = { Text(stringResource(id = R.string.exercises_title)) })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = viewModel::onShowAddDialog) {
+            FloatingActionButton(
+                onClick = viewModel::onShowAddDialog,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(id = R.string.exercises_add_cd)

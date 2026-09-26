@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.plans
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,16 +13,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,9 +60,7 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
-import com.ironlog.app.presentation.theme.ButtonSize
 import com.ironlog.app.presentation.theme.ironLogDimens
-import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -88,19 +89,15 @@ fun TrainingPlanListScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
-                title = { Text(stringResource(id = R.string.plans_title)) },
-                actions = {
-                    IconButton(onClick = onOpenMetaPlans) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = stringResource(id = R.string.plans_open_meta_plans_cd)
-                        )
-                    }
-                }
+                title = { Text(stringResource(id = R.string.plans_title)) }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreatePlan) {
+            FloatingActionButton(
+                onClick = onCreatePlan,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(id = R.string.plans_add_cd)
@@ -164,6 +161,25 @@ fun TrainingPlanListScreen(
                     contentPadding = PaddingValues(dims.spacingMd),
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
                 ) {
+                    item(key = "meta_header") {
+                        SectionHeader(
+                            title = stringResource(id = R.string.plans_section_meta),
+                            actionLabel = stringResource(id = R.string.plans_meta_manage),
+                            onAction = onOpenMetaPlans
+                        )
+                    }
+                    if (state.metaPlans.isEmpty()) {
+                        item(key = "meta_empty") {
+                            MetaPlanHintCard(onClick = onOpenMetaPlans)
+                        }
+                    } else {
+                        items(state.metaPlans, key = { "meta_${it.id}" }) { meta ->
+                            MetaPlanRow(meta = meta, onClick = onOpenMetaPlans)
+                        }
+                    }
+                    item(key = "plans_header") {
+                        SectionHeader(title = stringResource(id = R.string.plans_section_plans))
+                    }
                     items(state.plans, key = { it.plan.id }) { item ->
                         SwipeToDeletePlanCard(
                             item = item,
@@ -265,6 +281,13 @@ private fun PlanCard(
     onLongClick: () -> Unit
 ) {
     val dims = ironLogDimens
+    val exerciseCount = item.plan.exercises.size
+    val lastDone = when (val days = item.lastDoneDaysAgo) {
+        null -> stringResource(R.string.dashboard_hero_last_done_never)
+        0L -> stringResource(R.string.dashboard_hero_last_done_today)
+        1L -> stringResource(R.string.dashboard_hero_last_done_yesterday)
+        else -> pluralStringResource(R.plurals.dashboard_hero_last_done_days, days.toInt(), days.toInt())
+    }
 
     IronLogSurfaceCard(
         modifier = Modifier
@@ -273,54 +296,136 @@ private fun PlanCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        tone = IronLogSurfaceTone.ACCENT
+        tone = IronLogSurfaceTone.ELEVATED
     ) {
-        Column(modifier = Modifier.padding(dims.spacingLg)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dims.spacingMd)
+        ) {
             Text(
                 text = item.plan.name,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(dims.spacingXs))
-            
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = pluralStringResource(
-                    id = R.plurals.plans_exercise_count,
-                    count = item.plan.exercises.size,
-                    item.plan.exercises.size
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.semantic.violet,
-                fontWeight = FontWeight.SemiBold
+                text = listOf(
+                    pluralStringResource(R.plurals.plans_exercise_count, exerciseCount, exerciseCount),
+                    lastDone
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             if (item.exerciseNames.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(dims.spacingSm))
                 Text(
-                    text = item.exerciseNames.joinToString(" • "),
+                    text = item.exerciseNames.joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            
-            Spacer(modifier = Modifier.height(dims.spacingLg))
-            
-            Button(
+
+            Spacer(modifier = Modifier.height(dims.spacingSm))
+            FilledTonalButton(
                 onClick = onStart,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ButtonSize.height)
+                modifier = Modifier.align(Alignment.End)
             ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                Spacer(modifier = Modifier.width(dims.spacingXs))
-                Text(
-                    text = stringResource(id = R.string.dashboard_start_workout),
-                    style = MaterialTheme.typography.titleMedium
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
                 )
+                Spacer(modifier = Modifier.width(dims.spacingXs))
+                Text(text = stringResource(id = R.string.dashboard_start_workout))
             }
         }
     }
 }
 
+@Composable
+private fun SectionHeader(
+    title: String,
+    actionLabel: String? = null,
+    onAction: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 40.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        if (actionLabel != null) {
+            TextButton(onClick = onAction) {
+                Text(actionLabel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetaPlanRow(meta: PlanListMetaPlan, onClick: () -> Unit) {
+    val dims = ironLogDimens
+    IronLogSurfaceCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        tone = IronLogSurfaceTone.MUTED
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingSm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Repeat,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(dims.spacingSm))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = meta.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                if (meta.subPlanNames.isNotEmpty()) {
+                    Text(
+                        text = meta.subPlanNames.joinToString(" → "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetaPlanHintCard(onClick: () -> Unit) {
+    val dims = ironLogDimens
+    IronLogSurfaceCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        tone = IronLogSurfaceTone.MUTED
+    ) {
+        Text(
+            text = stringResource(id = R.string.meta_plans_empty_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = dims.spacingMd, vertical = dims.spacingSm)
+        )
+    }
+}
