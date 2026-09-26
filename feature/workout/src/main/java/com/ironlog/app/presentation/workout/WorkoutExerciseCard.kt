@@ -59,6 +59,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.spring
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.IconButton
+import com.ironlog.app.presentation.theme.AthleticLabel
 import com.ironlog.app.presentation.theme.ButtonSize
 import com.ironlog.app.presentation.theme.IconSize
 import com.ironlog.app.presentation.theme.Radius
@@ -68,6 +73,8 @@ import com.ironlog.app.presentation.theme.semantic
 @Composable
 internal fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
     nextSetRecommendation: NextSetRecommendationUi?,
     tintColor: Color?,
     defaultWarmupFlag: Boolean,
@@ -124,43 +131,69 @@ internal fun ExerciseCard(
         alpha = 1f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
+            val exerciseName = exerciseWithSets.exercise.name
+            val openSlots = exerciseWithSets.openSlotCount()
+            val isDone = planTarget != null && targetSetCount > 0 && openSlots == 0
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(
-                        if (showHistoryToggle) {
-                            Modifier.clickable { showPreviousSession = !showPreviousSession }
-                        } else {
-                            Modifier
-                        }
+                    .clickable(
+                        onClickLabel = stringResource(
+                            if (expanded) R.string.workout_exercise_collapse_cd else R.string.workout_exercise_expand_cd,
+                            exerciseName
+                        ),
+                        onClick = onToggleExpanded
                     )
                     .padding(vertical = dims.spacingXs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (showHistoryToggle) {
-                    Box(
-                        modifier = Modifier.size(IconSize.lg),
-                        contentAlignment = Alignment.Center
+                Text(
+                    text = exerciseName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                val progressText = if (targetSetCount > 0) {
+                    stringResource(R.string.workout_exercise_progress, targetSetCount - openSlots, targetSetCount)
+                } else if (loggedSets.isNotEmpty()) {
+                    loggedSets.size.toString()
+                } else {
+                    null
+                }
+                progressText?.let {
+                    Text(
+                        text = it,
+                        style = AthleticLabel,
+                        color = if (isDone) MaterialTheme.semantic.success else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = dims.spacingXs)
+                    )
+                }
+                if (showHistoryToggle && expanded) {
+                    IconButton(
+                        onClick = { showPreviousSession = !showPreviousSession },
+                        modifier = Modifier.size(ButtonSize.iconButton)
                     ) {
                         Icon(
-                            imageVector = if (showPreviousSession) Icons.Default.Remove else Icons.Default.Add,
+                            imageVector = Icons.Default.History,
                             contentDescription = if (showPreviousSession) {
                                 stringResource(id = R.string.workout_previous_hide_cd)
                             } else {
                                 stringResource(id = R.string.workout_previous_show_cd)
                             },
-                            tint = tintColor ?: MaterialTheme.semantic.sky,
+                            tint = if (showPreviousSession) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                             modifier = Modifier.size(IconSize.sm)
                         )
                     }
-                } else {
-                    Spacer(modifier = Modifier.width(IconSize.lg))
                 }
-                Text(
-                    text = exerciseWithSets.exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = dims.spacingXs)
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(IconSize.sm)
                 )
             }
 
@@ -180,11 +213,15 @@ internal fun ExerciseCard(
                     )
                 }
                 Text(
-                    text = targetText,
+                    text = if (isDone && !expanded) {
+                        "${stringResource(R.string.workout_exercise_done)} · $targetText"
+                    } else {
+                        targetText
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = tintColor ?: MaterialTheme.colorScheme.primary
+                    color = if (isDone) MaterialTheme.semantic.success else tintColor ?: MaterialTheme.colorScheme.primary
                 )
-                Text(
+                if (expanded) Text(
                     text = stringResource(
                         id = R.string.workout_progression_scheme,
                         progressionSchemeLabel(planTarget.config)
@@ -192,7 +229,7 @@ internal fun ExerciseCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (previousSession?.lastWorkSetReachedTarget == true) {
+                if (expanded && previousSession?.lastWorkSetReachedTarget == true) {
                     Text(
                         text = stringResource(id = R.string.workout_previous_last_set_target_reached),
                         style = MaterialTheme.typography.bodySmall,
@@ -200,7 +237,7 @@ internal fun ExerciseCard(
                         color = MaterialTheme.semantic.success
                     )
                 }
-                if (completedWorkSets >= planTarget.target.sets) {
+                if (expanded && completedWorkSets >= planTarget.target.sets) {
                     Text(
                         text = stringResource(id = R.string.workout_target_completed),
                         style = MaterialTheme.typography.bodySmall,
@@ -210,111 +247,169 @@ internal fun ExerciseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(dims.spacingXs))
+            if (expanded) {
+                Spacer(modifier = Modifier.height(dims.spacingXs))
 
-            if (planTarget != null && targetSetCount > 0) {
-                val matched = com.ironlog.shared.plans.PlannedSets.matchedIndices(slots, loggedSets.map { it.setType.name })
-                val nextSlotIndex = matched.indexOfFirst { it == null }
+                if (planTarget != null && targetSetCount > 0) {
+                    val matched = com.ironlog.shared.plans.PlannedSets.matchedIndices(slots, loggedSets.map { it.setType.name })
+                    val nextSlotIndex = matched.indexOfFirst { it == null }
 
-                for (setIndex in 1..targetSetCount) {
-                    val slot = slots[setIndex - 1]
-                    val matchingSet = matched[setIndex - 1]?.let { loggedSets[it] }
-                    if (matchingSet != null) {
+                    for (setIndex in 1..targetSetCount) {
+                        val slot = slots[setIndex - 1]
+                        val matchingSet = matched[setIndex - 1]?.let { loggedSets[it] }
+                        if (matchingSet != null) {
+                            LoggedSetRow(
+                                set = matchingSet,
+                                displayNumber = setIndex,
+                                intention = setIntentions[matchingSet.id],
+                                intentionFailed = setIntentionsFailed,
+                                intensitySystem = rowIntensitySystem,
+                                unitSystem = unitSystem,
+                                plateCalculatorEnabled = plateCalculatorEnabled,
+                                availablePlates = availablePlates,
+                                barbellWeightKg = barbellWeightKg,
+                                isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
+                                updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
+                                onUpdateSet = onUpdateSet,
+                                onDeleteSet = onDeleteSet,
+                                haptic = haptic
+                            )
+                        } else {
+                            val isNextToLog = setIndex - 1 == nextSlotIndex
+                            if (isNextToLog) {
+                                val coachHint = nextSetRecommendation?.recommendedWeightKg?.let {
+                                    stringResource(
+                                        WorkoutR.string.workout_audit_coach_suggestion,
+                                        "${formatWeightValue(it, unitSystem)} ${WeightFormatting.unitLabel(unitSystem)}"
+                                    )
+                                }
+                                ActiveSetCockpitCard(
+                                    setNumber = setIndex,
+                                    setType = if (slot.kind == "WARMUP") SetType.WARMUP else SetType.NORMAL,
+                                    isExtraOrAdHoc = false,
+                                    isEditMode = false,
+                                    coachHint = coachHint,
+                                    valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { it.setType == SetType.NORMAL }) stringResource(R.string.workout_value_source_last_set) else stringResource(R.string.workout_value_source_plan),
+                                    coachRecommendation = nextSetRecommendation,
+                                    defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
+                                    weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                                    defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.reps ?: slot.reps else slot.reps).toString(),
+                                    repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
+                                    defaultIntensity = "",
+                                    intensityPlaceholder = intensityPlaceholder,
+                                    intensitySystem = rowIntensitySystem,
+                                    unitSystem = unitSystem,
+                                    locked = isLogging,
+                                    completedSubmissions = logSuccessSubmissions,
+                                    plateCalculatorEnabled = plateCalculatorEnabled,
+                                    availablePlates = availablePlates,
+                                    barbellWeightKg = barbellWeightKg,
+                                    haptic = haptic,
+                                    intentionFailed = setIntentionsFailed,
+                                    onLog = { reps, weight, setType, intensity, submissionId, intention ->
+                                        onLogSet(reps, weight, setType, intensity, submissionId, intention)
+                                    }
+                                )
+                            } else {
+                                PlannedSetPreviewRow(
+                                    setNumber = setIndex,
+                                    targetWeight = formatWeightValue(slot.weightKg, unitSystem),
+                                    targetReps = slot.reps.toString(),
+                                    unitSystem = unitSystem
+                                )
+                            }
+                        }
+                    }
+
+                    loggedSets.filterIndexed { index, _ -> index !in matched.filterNotNull() }.forEach { set ->
                         LoggedSetRow(
-                            set = matchingSet,
-                            intention = setIntentions[matchingSet.id],
+                            set = set,
+                            intention = setIntentions[set.id],
                             intentionFailed = setIntentionsFailed,
                             intensitySystem = rowIntensitySystem,
                             unitSystem = unitSystem,
                             plateCalculatorEnabled = plateCalculatorEnabled,
                             availablePlates = availablePlates,
                             barbellWeightKg = barbellWeightKg,
-                            isUpdating = (updateInFlightBySet[matchingSet.id] ?: 0) > 0,
-                            updateSuccessCount = updateSuccessCountBySet[matchingSet.id] ?: 0,
+                            isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
+                            updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
                             onUpdateSet = onUpdateSet,
                             onDeleteSet = onDeleteSet,
                             haptic = haptic
                         )
-                    } else {
-                        val isNextToLog = setIndex - 1 == nextSlotIndex
-                        if (isNextToLog) {
-                            val coachHint = nextSetRecommendation?.recommendedWeightKg?.let {
-                                stringResource(
-                                    WorkoutR.string.workout_audit_coach_suggestion,
-                                    "${formatWeightValue(it, unitSystem)} ${WeightFormatting.unitLabel(unitSystem)}"
-                                )
-                            }
-                            ActiveSetCockpitCard(
-                                setNumber = setIndex,
-                                setType = if (slot.kind == "WARMUP") SetType.WARMUP else SetType.NORMAL,
-                                isExtraOrAdHoc = false,
-                                isEditMode = false,
-                                coachHint = coachHint,
-                                valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { it.setType == SetType.NORMAL }) "Werte aus dem letzten Satz übernommen · editierbar" else "Werte aus dem Plan · editierbar",
-                                coachRecommendation = nextSetRecommendation,
-                                defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
-                                weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
-                                defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.reps ?: slot.reps else slot.reps).toString(),
-                                repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
-                                defaultIntensity = "",
-                                intensityPlaceholder = intensityPlaceholder,
-                                intensitySystem = rowIntensitySystem,
-                                unitSystem = unitSystem,
-                                locked = isLogging,
-                                completedSubmissions = logSuccessSubmissions,
-                                plateCalculatorEnabled = plateCalculatorEnabled,
-                                availablePlates = availablePlates,
-                                barbellWeightKg = barbellWeightKg,
-                                haptic = haptic,
-                                intentionFailed = setIntentionsFailed,
-                                onLog = { reps, weight, setType, intensity, submissionId, intention ->
-                                    onLogSet(reps, weight, setType, intensity, submissionId, intention)
-                                }
-                            )
-                        } else {
-                            PlannedSetPreviewRow(
-                                setNumber = setIndex,
-                                targetWeight = formatWeightValue(slot.weightKg, unitSystem),
-                                targetReps = slot.reps.toString(),
-                                unitSystem = unitSystem
-                            )
+                    }
+
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
+
+                    var showExtraInput by remember { mutableStateOf(false) }
+                    AnimatedVisibility(visible = showExtraInput) {
+                        val nextExtraSetNumber = loggedSets.size + 1
+                        ActiveSetCockpitCard(
+                            setNumber = nextExtraSetNumber,
+                            setType = if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL,
+                            isExtraOrAdHoc = true,
+                            isEditMode = false,
+                            coachHint = null,
+                            defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: targetWeightHint(planTarget, unitSystem, previousWeightHint).orEmpty(),
+                            weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
+                            defaultReps = (loggedSets.lastOrNull()?.reps ?: planTarget.target.reps).toString(),
+                            repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
+                            defaultIntensity = "",
+                            intensityPlaceholder = intensityPlaceholder,
+                            intensitySystem = rowIntensitySystem,
+                            unitSystem = unitSystem,
+                            locked = isLogging,
+                            completedSubmissions = logSuccessSubmissions,
+                            plateCalculatorEnabled = plateCalculatorEnabled,
+                            availablePlates = availablePlates,
+                            barbellWeightKg = barbellWeightKg,
+                            haptic = haptic,
+                            intentionFailed = setIntentionsFailed,
+                            onLog = { reps, weight, setType, intensity, submissionId, intention ->
+                                onLogSet(reps, weight, setType, intensity, submissionId, intention)
+                            },
+                            onCancelEdit = { showExtraInput = false }
+                        )
+                    }
+                    if (!showExtraInput) {
+                        TextButton(onClick = { showExtraInput = true }) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(id = R.string.workout_add_extra_set))
                         }
                     }
-                }
+                } else {
+                    loggedSets.forEach { set ->
+                        LoggedSetRow(
+                            set = set,
+                            intention = setIntentions[set.id],
+                            intentionFailed = setIntentionsFailed,
+                            intensitySystem = rowIntensitySystem,
+                            unitSystem = unitSystem,
+                            plateCalculatorEnabled = plateCalculatorEnabled,
+                            availablePlates = availablePlates,
+                            barbellWeightKg = barbellWeightKg,
+                            isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
+                            updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
+                            onUpdateSet = onUpdateSet,
+                            onDeleteSet = onDeleteSet,
+                            haptic = haptic
+                        )
+                    }
 
-                loggedSets.filterIndexed { index, _ -> index !in matched.filterNotNull() }.forEach { set ->
-                    LoggedSetRow(
-                        set = set,
-                        intention = setIntentions[set.id],
-                        intentionFailed = setIntentionsFailed,
-                        intensitySystem = rowIntensitySystem,
-                        unitSystem = unitSystem,
-                        plateCalculatorEnabled = plateCalculatorEnabled,
-                        availablePlates = availablePlates,
-                        barbellWeightKg = barbellWeightKg,
-                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
-                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
-                        onUpdateSet = onUpdateSet,
-                        onDeleteSet = onDeleteSet,
-                        haptic = haptic
-                    )
-                }
+                    Spacer(modifier = Modifier.height(dims.spacingXs))
 
-                Spacer(modifier = Modifier.height(dims.spacingXs))
-
-                var showExtraInput by remember { mutableStateOf(false) }
-                AnimatedVisibility(visible = showExtraInput) {
-                    val nextExtraSetNumber = loggedSets.size + 1
+                    val nextSetNumber = loggedSets.size + 1
                     ActiveSetCockpitCard(
-                        setNumber = nextExtraSetNumber,
+                        setNumber = nextSetNumber,
                         setType = if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL,
                         isExtraOrAdHoc = true,
                         isEditMode = false,
                         coachHint = null,
-                        defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: targetWeightHint(planTarget, unitSystem, previousWeightHint).orEmpty(),
-                        weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
-                        defaultReps = (loggedSets.lastOrNull()?.reps ?: planTarget.target.reps).toString(),
-                        repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
+                        defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: previousWeightHint.orEmpty(),
+                        weightPlaceholder = previousWeightHint,
+                        defaultReps = loggedSets.lastOrNull()?.reps?.toString().orEmpty(),
+                        repsPlaceholder = null,
                         defaultIntensity = "",
                         intensityPlaceholder = intensityPlaceholder,
                         intensitySystem = rowIntensitySystem,
@@ -328,76 +423,21 @@ internal fun ExerciseCard(
                         intentionFailed = setIntentionsFailed,
                         onLog = { reps, weight, setType, intensity, submissionId, intention ->
                             onLogSet(reps, weight, setType, intensity, submissionId, intention)
-                        },
-                        onCancelEdit = { showExtraInput = false }
+                        }
                     )
                 }
-                if (!showExtraInput) {
-                    TextButton(onClick = { showExtraInput = true }) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(id = R.string.workout_add_extra_set))
-                    }
-                }
-            } else {
-                loggedSets.forEach { set ->
-                    LoggedSetRow(
-                        set = set,
-                        intention = setIntentions[set.id],
-                        intentionFailed = setIntentionsFailed,
-                        intensitySystem = rowIntensitySystem,
+
+                nextSetRecommendation?.let { recommendation ->
+                    NextSetRecommendationChips(
+                        recommendation = recommendation,
                         unitSystem = unitSystem,
-                        plateCalculatorEnabled = plateCalculatorEnabled,
-                        availablePlates = availablePlates,
-                        barbellWeightKg = barbellWeightKg,
-                        isUpdating = (updateInFlightBySet[set.id] ?: 0) > 0,
-                        updateSuccessCount = updateSuccessCountBySet[set.id] ?: 0,
-                        onUpdateSet = onUpdateSet,
-                        onDeleteSet = onDeleteSet,
-                        haptic = haptic
+                        modifier = Modifier.padding(top = dims.spacingXs)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(dims.spacingXs))
-
-                val nextSetNumber = loggedSets.size + 1
-                ActiveSetCockpitCard(
-                    setNumber = nextSetNumber,
-                    setType = if (defaultWarmupFlag) SetType.WARMUP else SetType.NORMAL,
-                    isExtraOrAdHoc = true,
-                    isEditMode = false,
-                    coachHint = null,
-                    defaultWeight = loggedSets.lastOrNull()?.let { formatWeightValue(it.weightKg, unitSystem) } ?: previousWeightHint.orEmpty(),
-                    weightPlaceholder = previousWeightHint,
-                    defaultReps = loggedSets.lastOrNull()?.reps?.toString().orEmpty(),
-                    repsPlaceholder = null,
-                    defaultIntensity = "",
-                    intensityPlaceholder = intensityPlaceholder,
-                    intensitySystem = rowIntensitySystem,
-                    unitSystem = unitSystem,
-                    locked = isLogging,
-                    completedSubmissions = logSuccessSubmissions,
-                    plateCalculatorEnabled = plateCalculatorEnabled,
-                    availablePlates = availablePlates,
-                    barbellWeightKg = barbellWeightKg,
-                    haptic = haptic,
-                    intentionFailed = setIntentionsFailed,
-                    onLog = { reps, weight, setType, intensity, submissionId, intention ->
-                        onLogSet(reps, weight, setType, intensity, submissionId, intention)
-                    }
-                )
-            }
-
-            nextSetRecommendation?.let { recommendation ->
-                NextSetRecommendationChips(
-                    recommendation = recommendation,
-                    unitSystem = unitSystem,
-                    modifier = Modifier.padding(top = dims.spacingXs)
-                )
             }
 
             AnimatedVisibility(
-                visible = showPreviousSession && previousSession != null,
+                visible = expanded && showPreviousSession && previousSession != null,
                 enter = fadeIn() + expandVertically(animationSpec = spring()),
                 exit = fadeOut() + shrinkVertically(animationSpec = spring())
             ) {
@@ -693,8 +733,11 @@ internal fun PlannedSetPreviewRow(
                 )
             }
 
+            val bodyweightLabel = stringResource(R.string.weight_bodyweight)
             val targetDesc = buildString {
-                if (targetWeight != null) {
+                if (targetWeight == "0") {
+                    append(bodyweightLabel)
+                } else if (targetWeight != null) {
                     append(targetWeight)
                     append(" ")
                     append(WeightFormatting.unitLabel(unitSystem))

@@ -270,7 +270,11 @@ fun WorkoutDetailScreen(
                                     Text(
                                         text = stringResource(
                                             id = R.string.workout_detail_set_value,
-                                            WeightFormatting.formatWeight(set.weightKg, preferences.unitSystem),
+                                            if (set.weightKg == 0.0) {
+                                                stringResource(R.string.weight_bodyweight)
+                                            } else {
+                                                WeightFormatting.formatWeight(set.weightKg, preferences.unitSystem)
+                                            },
                                             set.reps
                                         ) + intensityString,
                                         style = MaterialTheme.typography.bodyMedium,

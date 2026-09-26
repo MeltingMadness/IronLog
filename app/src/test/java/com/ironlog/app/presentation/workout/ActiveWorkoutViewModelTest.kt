@@ -646,6 +646,33 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
+    fun `deleteSet meldet SetDeleted und undoDeleteSet stellt den Satz wieder her`() = runTest {
+        val vm = createViewModel()
+        val emitted = mutableListOf<WorkoutEvent>()
+        val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
+
+        vm.logSet(exerciseId = 1L, reps = 10, weightKg = 80.0)
+        val original = workoutRepo.getSetsForSessionList(sessionId).single()
+
+        vm.deleteSet(original.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(workoutRepo.getSetsForSessionList(sessionId).isEmpty())
+        assertEquals(WorkoutEvent.SetDeleted(original.setNumber), emitted.filterIsInstance<WorkoutEvent.SetDeleted>().single())
+
+        vm.undoDeleteSet()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val restored = workoutRepo.getSetsForSessionList(sessionId).single()
+        assertEquals(original.copy(id = restored.id), restored)
+
+        // Ein zweites Rueckgaengig ohne neues Loeschen legt nichts doppelt an.
+        vm.undoDeleteSet()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, workoutRepo.getSetsForSessionList(sessionId).size)
+
+        eventCollector.cancel()
+    }
+
+    @Test
     fun `init loads exercises from plan when planId is provided`() = runTest {
         // Setup a training plan
         val planId = 99L

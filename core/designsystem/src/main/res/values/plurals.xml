@@ -39,8 +39,8 @@
         <item quantity="other">Vorzeitig beendet · %1$d bestätigte Sätze</item>
     </plurals>
 
-    <plurals name="workout_header_summary">
-        <item quantity="one">%1$d Satz · %2$s</item>
-        <item quantity="other">%1$d Sätze · %2$s</item>
+    <plurals name="workout_header_progress_free">
+        <item quantity="one">%1$d Satz</item>
+        <item quantity="other">%1$d Sätze</item>
     </plurals>
 </resources>
