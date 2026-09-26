@@ -266,3 +266,241 @@ struct IOSWorkoutGlassPrimaryButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
+
+/// Ends a countdown like the Ember timer card: one success haptic, then
+/// `onComplete` (which dismisses the timer). Liquid Glass shows timers in the dock
+/// and pause screen, so this carries the end-of-rest behavior without visible UI.
+struct IOSWorkoutRestCompletionWatcher: View {
+    let timer: IOSWorkoutRestTimer
+    let onComplete: () -> Void
+
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var didComplete = false
+
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
+            .task(id: "\(timer.id):\(timer.startedAtEpochMillis):\(timer.deadlineEpochMillis ?? 0)") {
+                didComplete = false
+                guard let deadline = timer.deadlineEpochMillis else { return }
+                let delay = max(0, deadline - Int64(Date().timeIntervalSince1970 * 1_000))
+                if delay > 0 {
+                    do { try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000) } catch { return }
+                }
+                completeIfElapsed()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { completeIfElapsed() }
+            }
+    }
+
+    private func completeIfElapsed() {
+        guard timer.isCountdown, timer.hasElapsed, !didComplete else { return }
+        didComplete = true
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.prepare()
+        feedback.notificationOccurred(.success)
+        onComplete()
+    }
+}
+
+private func pauseClock(_ seconds: Int) -> String {
+    String(format: "%d:%02d", max(0, seconds) / 60, max(0, seconds) % 60)
+}
+
+/// Floating glass dock with a mini ring for the running rest: tap opens the
+/// pause screen, "Überspringen" ends the rest right away.
+struct IOSWorkoutGlassRestDock: View {
+    let timer: IOSWorkoutRestTimer
+    let exerciseName: String
+    let onOpen: () -> Void
+    let onSkip: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let dark = colorScheme == .dark
+        let ink = dark ? Color.white : glassInk
+        TimelineView(.periodic(from: Date(), by: 1)) { context in
+            let seconds = timer.remaining(at: context.date)
+            let fraction = timer.isCountdown && timer.durationSeconds > 0
+                ? Double(seconds) / Double(timer.durationSeconds)
+                : 1
+            HStack(spacing: 12) {
+                Button(action: onOpen) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle().stroke(ink.opacity(0.18), lineWidth: 4)
+                            Circle()
+                                .trim(from: 0, to: fraction)
+                                .stroke(glassTeal, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                            Text(pauseClock(seconds))
+                                .font(.system(size: 15, weight: .bold))
+                                .monospacedDigit()
+                        }
+                        .frame(width: 56, height: 56)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("PAUSE")
+                                .font(.caption2.weight(.bold))
+                                .tracking(0.8)
+                                .foregroundStyle(.secondary)
+                            Text(exerciseName)
+                                .font(.subheadline.weight(.heavy))
+                                .lineLimit(1)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Pause öffnen, \(exerciseName)")
+                .accessibilityValue(timer.isCountdown ? "Noch \(pauseClock(seconds))" : pauseClock(seconds))
+                Button(action: onSkip) {
+                    Text("Überspringen")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(dark ? glassInk : .white)
+                        .padding(.horizontal, 18)
+                        .frame(minHeight: 48)
+                        .background(dark ? Color.white : glassInk, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(8)
+            .liquidGlass(.strong, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+}
+
+/// Pause as a full-screen lens: the glass empties with the remaining time,
+/// −15 s / +30 s, what comes next and "Pause überspringen". "Zum Training"
+/// returns to the workout while the timer keeps running in the dock.
+struct IOSWorkoutGlassPauseScreen: View {
+    let timer: IOSWorkoutRestTimer
+    let exerciseName: String
+    let nextSetNumber: Int
+    let progressText: String
+    let onMinus: () -> Void
+    let onPlus: () -> Void
+    let onSkip: () -> Void
+    let onClose: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.ironLogTheme) private var theme
+
+    var body: some View {
+        let ink = colorScheme == .dark ? Color.white : glassInk
+        TimelineView(.periodic(from: Date(), by: reduceMotion || theme.reducedMotion ? 1 : 1.0 / 30)) { context in
+            let seconds = timer.remaining(at: context.date)
+            let level = timer.isCountdown && timer.durationSeconds > 0
+                ? Double(seconds) / Double(timer.durationSeconds)
+                : 0.5
+            let phase = reduceMotion || theme.reducedMotion
+                ? 0
+                : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4) / 4 * 2 * .pi
+            VStack(spacing: 20) {
+                HStack {
+                    Text(progressText.uppercased())
+                        .font(.caption.weight(.bold))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Zum Training", action: onClose)
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(ink)
+                        .padding(.horizontal, 16)
+                        .frame(minHeight: 44)
+                        .liquidGlass(in: Capsule())
+                        .buttonStyle(.plain)
+                }
+                Spacer(minLength: 0)
+                ZStack {
+                    Canvas { canvas, size in
+                        func wave(offset: Double, amplitude: Double, shift: Double, color: Color) {
+                            let base = size.height * (1 - min(max(level, 0), 1)) + offset
+                            var path = Path()
+                            path.move(to: CGPoint(x: 0, y: base))
+                            for step in 0...48 {
+                                let x = size.width * Double(step) / 48
+                                let y = base + amplitude * sin(x / size.width * 2 * .pi + phase + shift)
+                                path.addLine(to: CGPoint(x: x, y: y))
+                            }
+                            path.addLine(to: CGPoint(x: size.width, y: size.height))
+                            path.addLine(to: CGPoint(x: 0, y: size.height))
+                            path.closeSubpath()
+                            canvas.fill(path, with: .color(color))
+                        }
+                        wave(offset: 0, amplitude: 9, shift: 0, color: ink.opacity(0.16))
+                        wave(offset: 6, amplitude: 8, shift: 1.6, color: glassTeal.opacity(0.28))
+                    }
+                    .clipShape(Circle())
+                    VStack(spacing: 2) {
+                        Text("PAUSE")
+                            .font(.caption.weight(.bold))
+                            .tracking(0.8)
+                            .foregroundStyle(.secondary)
+                        Text(pauseClock(seconds))
+                            .font(.system(size: 88, weight: .bold))
+                            .monospacedDigit()
+                            .tracking(-3)
+                            .minimumScaleFactor(0.6)
+                        if timer.isCountdown {
+                            Text("von \(pauseClock(timer.durationSeconds))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .frame(maxWidth: 296)
+                .aspectRatio(1, contentMode: .fit)
+                .liquidGlass(.strong, in: Circle())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Pause")
+                .accessibilityValue("Noch \(seconds / 60) Minuten \(seconds % 60) Sekunden")
+
+                if timer.isCountdown {
+                    HStack(spacing: 12) {
+                        pauseButton("−15 s", label: "Pause um 15 Sekunden verkürzen", action: onMinus)
+                        pauseButton("+30 s", label: "Pause um 30 Sekunden verlängern", action: onPlus)
+                    }
+                }
+                Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("ALS NÄCHSTES")
+                        .font(.caption2.weight(.bold))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                    Text("\(exerciseName) · Satz \(nextSetNumber)")
+                        .font(.title3.weight(.heavy))
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+                .accessibilityElement(children: .combine)
+
+                Button("Pause überspringen", action: onSkip)
+                    .buttonStyle(IOSWorkoutGlassPrimaryButtonStyle())
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+        }
+        .background { IronLogLiquidBackground() }
+    }
+
+    private func pauseButton(_ text: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(.body.weight(.heavy))
+                .frame(width: 104, height: 52)
+                .liquidGlass(in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}

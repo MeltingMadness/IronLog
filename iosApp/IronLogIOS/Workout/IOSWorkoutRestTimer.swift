@@ -29,6 +29,23 @@ struct IOSWorkoutRestTimer: Codable, Equatable, Identifiable {
         return Int64(Date().timeIntervalSince1970 * 1_000) >= deadlineEpochMillis
     }
 
+    /// Countdown shifted by `deltaSeconds` ("−15 s" / "+30 s"). A shortened timer never
+    /// ends before now, and at least one second after its start. Elapsed-time timers have
+    /// no deadline and stay unchanged.
+    func adjusted(by deltaSeconds: Int, now: Date = Date()) -> IOSWorkoutRestTimer {
+        guard let deadlineEpochMillis else { return self }
+        let nowMillis = Int64(now.timeIntervalSince1970 * 1_000)
+        let earliest = max(nowMillis, startedAtEpochMillis + 1_000)
+        let deadline = max(earliest, deadlineEpochMillis + Int64(deltaSeconds) * 1_000)
+        return IOSWorkoutRestTimer(
+            sessionID: sessionID,
+            rowKey: rowKey,
+            startedAtEpochMillis: startedAtEpochMillis,
+            deadlineEpochMillis: deadline,
+            durationSeconds: Int((deadline - startedAtEpochMillis + 999) / 1_000)
+        )
+    }
+
     static func make(
         sessionID: Int64,
         rowKey: String,

@@ -56,7 +56,20 @@ sealed interface WorkoutFinishState {
 data class RestTimerUi(
     val startTime: Instant,
     val durationSeconds: Int
-)
+) {
+    /**
+     * Countdown shifted by [deltaSeconds] ("−15 s" / "+30 s"). A shortened timer never ends
+     * before now: it ends at the latest right away. Elapsed-time timers (duration 0) have no
+     * end and stay unchanged.
+     */
+    fun adjustedBy(deltaSeconds: Int, now: Instant): RestTimerUi {
+        if (durationSeconds <= 0) return this
+        val elapsedSeconds = java.time.Duration.between(startTime, now).seconds.coerceAtLeast(0L)
+        val minimum = maxOf(1L, elapsedSeconds)
+        val adjusted = (durationSeconds.toLong() + deltaSeconds).coerceAtLeast(minimum)
+        return copy(durationSeconds = adjusted.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
+    }
+}
 
 /**
  * Intra-session autoregulation hint for the next work set of an exercise,

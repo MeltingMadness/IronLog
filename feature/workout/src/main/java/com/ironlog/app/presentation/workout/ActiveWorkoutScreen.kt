@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.ironlog.feature.workout.R as WorkoutR
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -97,6 +98,7 @@ fun ActiveWorkoutScreen(
     val haptic = rememberHapticFeedback()
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
     val liquidGlass = isLiquidGlass()
+    var pauseOpen by rememberSaveable { mutableStateOf(false) }
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -293,19 +295,11 @@ fun ActiveWorkoutScreen(
                                 }
                             )
                         }
+                        // Rest timers live in the dock and the pause screen below.
                         state.restTimers.forEach { (exerciseKey, timer) ->
-                            val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
-                            val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
-                            val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
-                            RestTimer(
-                                startTime = timer.startTime,
-                                durationSeconds = timer.durationSeconds.toLong(),
-                                onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
-                                onComplete = { viewModel.dismissRestTimer(exerciseKey) },
-                                titleText = exerciseWithSets?.exercise?.name,
-                                baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
-                                modifier = Modifier.padding(horizontal = dims.spacingMd)
-                            )
+                            key(exerciseKey) {
+                                RestTimerCompletionWatcher(timer) { viewModel.dismissRestTimer(exerciseKey) }
+                            }
                         }
                     } else WorkoutHeader(
                         startTime = session.startTime,
@@ -335,7 +329,16 @@ fun ActiveWorkoutScreen(
                     state = listState,
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
-                    contentPadding = PaddingValues(dims.spacingMd)
+                    contentPadding = PaddingValues(
+                        start = dims.spacingMd,
+                        end = dims.spacingMd,
+                        top = dims.spacingMd,
+                        bottom = if (liquidGlass && state.restTimers.isNotEmpty()) {
+                            dims.spacingMd + GlassDockReservedHeight
+                        } else {
+                            dims.spacingMd
+                        }
+                    )
                 ) {
                     itemsIndexed(exerciseGroups, key = { _, group -> group.key }) { groupIndex, group ->
                         Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
@@ -411,6 +414,78 @@ fun ActiveWorkoutScreen(
 
                     }
                 }
+            }
+            // Liquid Glass: the most recent rest timer shows as a dock and, when it starts,
+            // as the full-screen pause. Closing the pause keeps the timer running in the dock.
+            val latestRest = state.restTimers.entries.maxByOrNull { it.value.startTime }
+            if (liquidGlass && latestRest != null) {
+                val (restKey, restTimer) = latestRest
+                val restRow = state.exercisesWithSets.find { it.key == restKey }
+                val pauseInfo = GlassPauseInfo(
+                    timer = restTimer,
+                    exerciseName = restRow?.exercise?.name.orEmpty(),
+                    nextSetNumber = (restRow?.sets?.count { it.reps > 0 } ?: 0) + 1
+                )
+                var pauseShownFor by rememberSaveable(restKey.stableListKey()) { mutableStateOf<Long?>(null) }
+                LaunchedEffect(restTimer.startTime) {
+                    if (restTimer.durationSeconds > 0 && pauseShownFor != restTimer.startTime.toEpochMilli()) {
+                        pauseShownFor = restTimer.startTime.toEpochMilli()
+                        pauseOpen = true
+                    }
+                }
+                GlassRestDock(
+                    info = pauseInfo,
+                    pauseLabel = stringResource(WorkoutR.string.workout_glass_pause),
+                    skipLabel = stringResource(WorkoutR.string.workout_glass_pause_skip_short),
+                    openLabel = stringResource(WorkoutR.string.workout_glass_pause_open),
+                    onOpen = { pauseOpen = true },
+                    onSkip = { viewModel.dismissRestTimer(restKey) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingMd)
+                )
+                if (pauseOpen) {
+                    val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
+                    val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
+                    val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
+                    val context = LocalContext.current
+                    GlassPauseScreen(
+                        info = pauseInfo,
+                        progressText = if (plannedSetCount > 0) {
+                            stringResource(
+                                R.string.workout_header_progress_planned,
+                                plannedSetCount - openPlannedSetCount,
+                                plannedSetCount
+                            )
+                        } else {
+                            pluralStringResource(R.plurals.workout_header_progress_free, loggedSetCount, loggedSetCount)
+                        },
+                        texts = GlassPauseTexts(
+                            pause = stringResource(WorkoutR.string.workout_glass_pause),
+                            close = stringResource(WorkoutR.string.workout_glass_pause_close),
+                            minus = stringResource(WorkoutR.string.workout_glass_pause_minus),
+                            plus = stringResource(WorkoutR.string.workout_glass_pause_plus),
+                            minusDescription = stringResource(WorkoutR.string.workout_glass_pause_minus_cd),
+                            plusDescription = stringResource(WorkoutR.string.workout_glass_pause_plus_cd),
+                            next = stringResource(WorkoutR.string.workout_glass_pause_next),
+                            skip = stringResource(WorkoutR.string.workout_glass_pause_skip),
+                            ofTotal = { total -> context.getString(WorkoutR.string.workout_glass_pause_of_total, total) },
+                            nextSet = { name, number -> context.getString(WorkoutR.string.workout_glass_pause_next_set, name, number) },
+                            remainingDescription = { seconds ->
+                                context.getString(WorkoutR.string.workout_glass_pause_remaining_cd, seconds / 60, seconds % 60)
+                            }
+                        ),
+                        onMinus = { viewModel.adjustRestTimer(restKey, -15) },
+                        onPlus = { viewModel.adjustRestTimer(restKey, 30) },
+                        onSkip = {
+                            pauseOpen = false
+                            viewModel.dismissRestTimer(restKey)
+                        },
+                        onClose = { pauseOpen = false }
+                    )
+                }
+            } else if (pauseOpen) {
+                pauseOpen = false
             }
             SnackbarHost(
                 hostState = recordSnackbarHostState,

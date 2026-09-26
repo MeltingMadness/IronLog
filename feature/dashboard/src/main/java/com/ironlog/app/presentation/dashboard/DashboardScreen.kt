@@ -197,6 +197,7 @@ fun DashboardScreen(
                 if (liquidGlass) {
                     GlassCommandCenterCard(
                         hasActiveSession = state.activeSession != null,
+                        activeSessionName = state.activeSession?.name,
                         recommended = recommended,
                         unitSystem = state.unitSystem,
                         exerciseNames = state.exerciseNames,

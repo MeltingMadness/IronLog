@@ -19,4 +19,17 @@
     <string name="workout_glass_exercise_position">%1$s · Übung %2$d von %3$d</string>
     <string name="workout_glass_rail_done">erledigt</string>
     <string name="workout_glass_rail_current">aktuell</string>
+    <string name="workout_glass_pause">Pause</string>
+    <string name="workout_glass_pause_open">Pause öffnen</string>
+    <string name="workout_glass_pause_close">Zum Training</string>
+    <string name="workout_glass_pause_minus">−15 s</string>
+    <string name="workout_glass_pause_plus">+30 s</string>
+    <string name="workout_glass_pause_minus_cd">Pause um 15 Sekunden verkürzen</string>
+    <string name="workout_glass_pause_plus_cd">Pause um 30 Sekunden verlängern</string>
+    <string name="workout_glass_pause_next">Als Nächstes</string>
+    <string name="workout_glass_pause_next_set">%1$s · Satz %2$d</string>
+    <string name="workout_glass_pause_of_total">von %1$s</string>
+    <string name="workout_glass_pause_skip">Pause überspringen</string>
+    <string name="workout_glass_pause_skip_short">Überspringen</string>
+    <string name="workout_glass_pause_remaining_cd">Noch %1$d Minuten %2$d Sekunden Pause</string>
 </resources>

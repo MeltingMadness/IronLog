@@ -108,6 +108,9 @@ struct IOSWorkoutScreen: View {
     /// Android's `Map<WorkoutExerciseKey, RestTimerUi>` so supersets can count
     /// down independently.
     @State private var restTimers: [String: IOSWorkoutRestTimer] = [:]
+    /// Liquid Glass pause screen: open state and the timer start it was last opened for.
+    @State private var pauseOpen = false
+    @State private var pauseShownForStart: Int64?
     @State private var localErrorMessage: String?
 
     private var data: ILTrainingData? { store.data }
@@ -267,7 +270,16 @@ struct IOSWorkoutScreen: View {
                     workoutHeader(session: session)
                 }
 
-                restTimersView(rows: rows)
+                if liquidGlass {
+                    // Timers show in the dock and pause screen; these keep the end-of-rest behavior.
+                    ForEach(orderedRestTimers) { timer in
+                        IOSWorkoutRestCompletionWatcher(timer: timer) {
+                            dismissRestTimer(rowKey: timer.rowKey)
+                        }
+                    }
+                } else {
+                    restTimersView(rows: rows)
+                }
 
                 if let message = store.errorMessage ?? localErrorMessage {
                     Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -308,8 +320,18 @@ struct IOSWorkoutScreen: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) {
-            // Liquid Glass moves "Beenden" and "Verwerfen" into the head.
-            if !liquidGlass {
+            // Liquid Glass moves "Beenden" and "Verwerfen" into the head and shows
+            // the running rest as a dock instead.
+            if liquidGlass {
+                if let timer = orderedRestTimers.last {
+                    IOSWorkoutGlassRestDock(
+                        timer: timer,
+                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.name ?? "Pause",
+                        onOpen: { pauseOpen = true },
+                        onSkip: { dismissRestTimer(rowKey: timer.rowKey) }
+                    )
+                }
+            } else {
             HStack(spacing: 12) {
                 Button {
                     showingCancelConfirmation = true
@@ -333,6 +355,38 @@ struct IOSWorkoutScreen: View {
             .background(.thinMaterial)
             }
         }
+        }
+        .fullScreenCover(isPresented: $pauseOpen) {
+            if let timer = orderedRestTimers.last {
+                let row = rows.first { $0.id == timer.rowKey }
+                let planned = rows.reduce(0) { $0 + $1.loggingSlots.count }
+                let open = rows.reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) }
+                let logged = rows.reduce(0) { $0 + $1.sets.count }
+                IOSWorkoutGlassPauseScreen(
+                    timer: timer,
+                    exerciseName: row?.exercise.name ?? "Übung",
+                    nextSetNumber: row?.nextSetNumber ?? 1,
+                    progressText: planned > 0 ? "\(planned - open) / \(planned) Sätze" : ilCount(logged, "Satz", "Sätze"),
+                    onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
+                    onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
+                    onSkip: {
+                        pauseOpen = false
+                        dismissRestTimer(rowKey: timer.rowKey)
+                    },
+                    onClose: { pauseOpen = false }
+                )
+            }
+        }
+        .onChange(of: orderedRestTimers.last?.startedAtEpochMillis) { _, start in
+            guard let timer = orderedRestTimers.last, let start else {
+                pauseOpen = false
+                return
+            }
+            // A freshly started countdown opens the pause screen once.
+            if liquidGlass, timer.isCountdown, pauseShownForStart != start {
+                pauseShownForStart = start
+                pauseOpen = true
+            }
         }
     }
 
@@ -868,6 +922,14 @@ struct IOSWorkoutScreen: View {
         )
         restTimers[rowKey] = timer
         IOSWorkoutRestTimerPersistence.upsert(timer)
+    }
+
+    /// Lengthens or shortens a running countdown (Liquid Glass pause: "−15 s" / "+30 s").
+    private func adjustRestTimer(rowKey: String, by deltaSeconds: Int) {
+        guard let timer = restTimers[rowKey] else { return }
+        let adjusted = timer.adjusted(by: deltaSeconds)
+        restTimers[rowKey] = adjusted
+        IOSWorkoutRestTimerPersistence.upsert(adjusted)
     }
 
     private func dismissRestTimer(rowKey: String) {
