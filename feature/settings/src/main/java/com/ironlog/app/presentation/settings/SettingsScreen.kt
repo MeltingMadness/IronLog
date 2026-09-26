@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.settings
 
+import com.ironlog.app.domain.util.WeightFormatting
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.TimePickerDialog
@@ -394,7 +395,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             listOf(20.0, 15.0, 10.0, 8.0, 2.5).forEach { barWeight ->
-                                val label = if (barWeight % 1.0 == 0.0) "${barWeight.toInt()} kg" else "$barWeight kg"
+                                val label = "${WeightFormatting.formatNumber(barWeight, 2)} kg"
                                 FilterChip(
                                     selected = state.preferences.barbellWeightKg == barWeight,
                                     onClick = { viewModel.updateBarbellWeightKg(barWeight) },
@@ -426,7 +427,7 @@ fun SettingsScreen(
 
                             allPlateOptions.forEach { plate ->
                                 val isSelected = plate in currentPlates
-                                val plateLabel = if (plate % 1.0 == 0.0) "${plate.toInt()} kg" else "$plate kg"
+                                val plateLabel = "${WeightFormatting.formatNumber(plate, 2)} kg"
 
                                 FilterChip(
                                     selected = isSelected,

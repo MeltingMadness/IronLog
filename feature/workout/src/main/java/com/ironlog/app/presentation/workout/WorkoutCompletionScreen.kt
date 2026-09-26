@@ -10,7 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.*
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.util.WeightFormatting
@@ -36,23 +39,33 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
     val confirmed = rows.sumOf { row -> row.sets.count { it.reps > 0 } }
     ModalBottomSheet(onDismissRequest = { if (!busy) onContinue() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Training beenden?", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.workout_finish_dialog_title), style = MaterialTheme.typography.headlineSmall)
             Text(when {
-                remaining > 0 -> "Noch $remaining geplante Sätze offen. ${planned - remaining} von $planned absolviert."
-                confirmed == 0 -> "Du hast noch keinen Satz bestätigt. Die leere Einheit wird verworfen."
-                else -> "$confirmed bestätigte Sätze werden gespeichert."
+                remaining > 0 -> pluralStringResource(R.plurals.workout_finish_remaining, remaining, remaining, planned - remaining, planned)
+                confirmed == 0 -> stringResource(R.string.workout_finish_empty)
+                else -> pluralStringResource(R.plurals.workout_finish_confirmed, confirmed, confirmed)
             })
             Column(Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 rows.filter { it.openSlotCount() > 0 }.forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(row.exercise.name, Modifier.weight(1f)); Text("${row.openSlotCount()} offen")
+                        Text(row.exercise.name, Modifier.weight(1f)); Text(stringResource(R.string.workout_finish_open_count, row.openSlotCount()))
                     }
                 }
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Button(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Weitertrainieren") }
-            OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(if (busy) "Speichert …" else if (remaining > 0) "Trotzdem beenden" else "Training beenden") }
-            Text("Nur absolvierte Sätze zählen zum Ergebnis.", style = MaterialTheme.typography.bodySmall)
+            Button(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_finish_dialog_cancel)) }
+            OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(
+                    stringResource(
+                        when {
+                            busy -> R.string.workout_finish_saving
+                            remaining > 0 -> R.string.workout_finish_confirm_partial
+                            else -> R.string.workout_finish_confirm
+                        }
+                    )
+                )
+            }
+            Text(stringResource(R.string.workout_finish_footer), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -66,31 +79,39 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     var planApplied by rememberSaveable(session.id) { mutableStateOf(false) }
     val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
     val remaining = rows.sumOf { it.openSlotCount() }
-    Scaffold(topBar = { TopAppBar(title = { Text("Training gespeichert") }, actions = { TextButton(onClose) { Text("Fertig") } }) },
-        bottomBar = { Button(onClick = onDetails, modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp).heightIn(min = 48.dp)) { Text("Trainingsdetails öffnen") } }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.workout_summary_title)) }, actions = { TextButton(onClose) { Text(stringResource(R.string.workout_summary_done)) } }) },
+        bottomBar = { Button(onClick = onDetails, modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp).heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_summary_open_details)) } }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(if (remaining > 0) "Teiltraining gespeichert" else "Training geschafft", style = MaterialTheme.typography.headlineMedium)
-            Text(if (remaining > 0) "Vorzeitig beendet · ${sets.size} bestätigte Sätze" else session.name)
+            Text(stringResource(if (remaining > 0) R.string.workout_summary_headline_partial else R.string.workout_summary_headline_complete), style = MaterialTheme.typography.headlineMedium)
+            Text(if (remaining > 0) pluralStringResource(R.plurals.workout_summary_partial_subtitle, sets.size, sets.size) else session.name)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SummaryMetric("Dauer", "${session.durationSeconds / 60} min", Modifier.weight(1f))
-                SummaryMetric("Sätze", sets.size.toString(), Modifier.weight(1f))
+                SummaryMetric(
+                    stringResource(R.string.workout_summary_duration),
+                    if (session.durationSeconds < 60) {
+                        stringResource(R.string.workout_summary_duration_under_minute)
+                    } else {
+                        stringResource(R.string.workout_summary_duration_minutes, (session.durationSeconds / 60).toInt())
+                    },
+                    Modifier.weight(1f)
+                )
+                SummaryMetric(stringResource(R.string.workout_summary_sets), sets.size.toString(), Modifier.weight(1f))
             }
-            SummaryMetric("Volumen", "${formatTargetWeight(sets.sumOf { it.weightKg * it.reps }, unitSystem)}", Modifier.fillMaxWidth())
+            SummaryMetric(stringResource(R.string.workout_summary_volume), WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem), Modifier.fillMaxWidth())
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.name, style = MaterialTheme.typography.titleMedium)
-                    row.sets.filter { it.reps > 0 }.forEach { set -> Text("Satz ${set.setNumber} · ${formatTargetWeight(set.weightKg, unitSystem)} × ${set.reps}") }
+                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(stringResource(R.string.workout_summary_set_line, set.setNumber, formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
                 } }
             }
             if (session.planId != null && rows.any { it.planTarget != null }) {
                 OutlinedButton(onClick = { showPlanChanges = true }, enabled = !planApplied, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (planApplied) "Satzwerte übernommen" else "Planänderungen prüfen")
+                    Text(stringResource(if (planApplied) R.string.workout_summary_plan_changes_applied else R.string.workout_summary_review_plan_changes))
                 }
             }
             when (finishState) {
-                is WorkoutFinishState.ReviewReady -> if (!planApplied) TextButton(onClick = onProgression) { Text("Progressionsvorschläge prüfen") }
-                is WorkoutFinishState.Generating -> Text("Progressionsvorschläge werden vorbereitet …", style = MaterialTheme.typography.bodySmall)
-                is WorkoutFinishState.GenerationFailed -> TextButton(onClick = onRetryProgression) { Text("Progressionsvorschläge erneut laden") }
+                is WorkoutFinishState.ReviewReady -> if (!planApplied) TextButton(onClick = onProgression) { Text(stringResource(R.string.workout_summary_review_progression)) }
+                is WorkoutFinishState.Generating -> Text(stringResource(R.string.workout_summary_progression_generating), style = MaterialTheme.typography.bodySmall)
+                is WorkoutFinishState.GenerationFailed -> TextButton(onClick = onRetryProgression) { Text(stringResource(R.string.workout_summary_progression_retry)) }
                 else -> Unit
             }
         }
@@ -114,10 +135,11 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val planChangeFailedText = stringResource(R.string.workout_plan_changes_error)
     ModalBottomSheet(onDismissRequest = { if (!busy) onDismiss() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Planänderungen", style = MaterialTheme.typography.headlineSmall)
-            Text("Das Training ist gespeichert. Was soll für das nächste Training gelten?")
+            Text(stringResource(R.string.workout_plan_changes_title), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.workout_plan_changes_intro))
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 rows.filter { it.planTarget != null }.forEach { row ->
                     val slots = (row.originalPlanTarget ?: row.planTarget)!!.loggingSlots()
@@ -126,14 +148,18 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                         val today = match?.let { recorded[it] }
                         if (today != null && (today.reps != slots[index].reps || today.weightKg != slots[index].weightKg)) {
                             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
-                                Text("${row.exercise.name} · Satz ${index + 1}", style = MaterialTheme.typography.titleSmall)
-                                Text("Plan  ${formatTargetWeight(slots[index].weightKg, unitSystem)} × ${slots[index].reps}")
-                                Text("Heute  ${formatTargetWeight(today.weightKg, unitSystem)} × ${today.reps}", color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.workout_plan_changes_set_title, row.exercise.name, index + 1), style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(R.string.workout_plan_changes_plan_line, formatTargetWeight(slots[index].weightKg, unitSystem), slots[index].reps))
+                                Text(stringResource(R.string.workout_plan_changes_today_line, formatTargetWeight(today.weightKg, unitSystem), today.reps), color = MaterialTheme.colorScheme.primary)
                             } }
                         }
                     }
                 }
-                val options = listOf("Nur dieses Training" to "Plan unverändert lassen", "Satzwerte übernehmen" to "Nur ausgeführte Sätze aktualisieren · individuelle Vorgaben, manuelle Progression", "Plan im Editor anpassen" to "Übungen und Vorgaben selbst bearbeiten")
+                val options = listOf(
+                    stringResource(R.string.workout_plan_changes_option_keep) to stringResource(R.string.workout_plan_changes_option_keep_hint),
+                    stringResource(R.string.workout_plan_changes_option_apply) to stringResource(R.string.workout_plan_changes_option_apply_hint),
+                    stringResource(R.string.workout_plan_changes_option_editor) to stringResource(R.string.workout_plan_changes_option_editor_hint)
+                )
                 options.forEachIndexed { index, option ->
                     Surface(Modifier.fillMaxWidth().clickable(enabled = !busy) { choice = index },
                         shape = MaterialTheme.shapes.medium,
@@ -145,7 +171,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                         }
                     }
                 }
-                Text("Offene Übungen und Sätze bleiben im Plan.", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.workout_plan_changes_open_items), style = MaterialTheme.typography.bodySmall)
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             Button(onClick = {
@@ -155,12 +181,24 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                     else -> scope.launch {
                         busy = true
                         try { repository.applyPerformedSetTargets(sessionId); onApplied() }
-                        catch (e: Exception) { if (e is CancellationException) throw e; error = e.message ?: "Plan konnte nicht geändert werden" }
+                        catch (e: Exception) { if (e is CancellationException) throw e; error = e.message ?: planChangeFailedText }
                         finally { busy = false }
                     }
                 }
             }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(if (busy) "Speichert …" else listOf("Plan unverändert lassen", "Satzwerte übernehmen", "Planeditor öffnen")[choice])
+                Text(
+                    stringResource(
+                        if (busy) {
+                            R.string.workout_finish_saving
+                        } else {
+                            listOf(
+                                R.string.workout_plan_changes_confirm_keep,
+                                R.string.workout_plan_changes_confirm_apply,
+                                R.string.workout_plan_changes_confirm_editor
+                            )[choice]
+                        }
+                    )
+                )
             }
         }
     }

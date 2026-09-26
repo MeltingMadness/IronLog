@@ -85,6 +85,7 @@
     <string name="dashboard_checkin_skip">Überspringen</string>
     <string name="dashboard_checkin_save">Speichern</string>
     <string name="dashboard_checkin_edit">Bearbeiten</string>
+    <string name="dashboard_checkin_add">Eintragen</string>
     <string name="dashboard_checkin_delete">Löschen</string>
     <string name="dashboard_checkin_saved">Tagesform gespeichert.</string>
     <string name="dashboard_checkin_deleted">Tagesform gelöscht.</string>

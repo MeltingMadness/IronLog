@@ -5,7 +5,10 @@
     <string name="stats_weekly_volume_week_complete">Abgeschlossene Woche</string>
     <string name="stats_weekly_volume_previous_week">Vorherige Woche</string>
     <string name="stats_weekly_volume_next_week">Nächste Woche</string>
-    <string name="stats_weekly_volume_summary">%1$s gewichtete Arbeitssätze · %2$d Trainings</string>
+    <plurals name="stats_weekly_volume_summary">
+        <item quantity="one">%1$s gewichtete Arbeitssätze · %2$d Training</item>
+        <item quantity="other">%1$s gewichtete Arbeitssätze · %2$d Trainings</item>
+    </plurals>
     <string name="stats_weekly_volume_orientation_hint">MEV, MAV und MRV sind Orientierungswerte in gewichteten Arbeitssätzen. Die Einordnung ersetzt keine individuelle Trainingssteuerung.</string>
     <string name="stats_weekly_volume_error">Die Wochen-Auswertung konnte nicht geladen werden.</string>
     <string name="stats_weekly_volume_retry">Erneut laden</string>

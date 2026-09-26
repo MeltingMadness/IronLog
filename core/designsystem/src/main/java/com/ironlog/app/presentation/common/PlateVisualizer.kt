@@ -202,11 +202,7 @@ private fun PlateBlock(weightKg: Double) {
         else             -> 11.dp
     }
 
-    val labelText = if (weightKg % 1.0 == 0.0) {
-        weightKg.toInt().toString()
-    } else {
-        weightKg.toString()
-    }
+    val labelText = WeightFormatting.formatNumber(weightKg, 2)
 
     Box(
         modifier = Modifier

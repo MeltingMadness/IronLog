@@ -30,6 +30,7 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
+import com.ironlog.app.domain.util.WeightFormatting
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
@@ -94,7 +95,11 @@ fun WeeklyVolumeCard(
                                 )
                             )
                         ),
-                        startAxis = VerticalAxis.rememberStart(),
+                        startAxis = VerticalAxis.rememberStart(
+                            valueFormatter = CartesianValueFormatter { _, value, _ ->
+                                WeightFormatting.formatNumber(value, 0)
+                            }
+                        ),
                         bottomAxis = HorizontalAxis.rememberBottom(
                             valueFormatter = CartesianValueFormatter { _, value, _ ->
                                 weeklyVolume.getOrNull(value.toInt())?.first.orEmpty()

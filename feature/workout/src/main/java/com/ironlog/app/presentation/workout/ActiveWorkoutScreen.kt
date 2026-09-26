@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
+import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.repository.AppPreferencesRepository
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
@@ -202,7 +204,17 @@ fun ActiveWorkoutScreen(
                         ) {
                             WorkoutTimer(startTime = session.startTime)
                             Spacer(Modifier.width(16.dp))
-                            Text("${state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }} Sätze · ${formatTargetWeight(state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }, preferences.unitSystem)}", style = MaterialTheme.typography.bodySmall)
+                            val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
+                            val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
+                            Text(
+                                pluralStringResource(
+                                    R.plurals.workout_header_summary,
+                                    loggedSetCount,
+                                    loggedSetCount,
+                                    WeightFormatting.formatVolume(loggedVolumeKg, preferences.unitSystem)
+                                ),
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
 
                         AnimatedVisibility(

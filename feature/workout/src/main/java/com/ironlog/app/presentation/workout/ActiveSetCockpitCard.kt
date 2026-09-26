@@ -57,7 +57,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import com.ironlog.app.presentation.theme.AthleticLabel
 import com.ironlog.app.presentation.theme.ironLogDimens
-import java.util.Locale
 
 @Composable
 internal fun ActiveSetCockpitCard(
@@ -99,7 +98,7 @@ internal fun ActiveSetCockpitCard(
     var showDetails by remember(setNumber) { mutableStateOf(isEditMode) }
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
     val weightStep = if (unitSystem == UnitSystem.IMPERIAL) 5.0 else 2.5
-    val weightStepText = if (weightStep % 1.0 == 0.0) weightStep.toInt().toString() else weightStep.toString()
+    val weightStepText = WeightFormatting.formatNumber(weightStep)
     val weightSuffix = WeightFormatting.unitLabel(unitSystem)
 
     var currentSetType by remember(setNumber, setType) { mutableStateOf(setType) }
@@ -136,7 +135,7 @@ internal fun ActiveSetCockpitCard(
     val adjustWeight: (Double) -> Unit = { delta ->
         val current = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal) ?: 0.0
         val next = maxOf(0.0, ((current + delta) * 100.0).roundToInt() / 100.0)
-        val text = if (next % 1.0 == 0.0) next.toInt().toString() else next.toString()
+        val text = WeightFormatting.formatInputNumber(next)
         weightInput = TextFieldValue(text, TextRange(text.length))
         haptic.tick()
     }
@@ -412,12 +411,7 @@ internal fun ActiveSetCockpitCard(
                 val parsedW = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal) ?: 0.0
                 val targetWeightKg = WeightFormatting.convertToKg(parsedW, unitSystem)
                 val sideWeight = maxOf(0.0, (targetWeightKg - barbellWeightKg) / 2.0)
-                val sideWeightDisplay = String.format(
-                    Locale.ROOT,
-                    "%.2f %s",
-                    WeightFormatting.convertToDisplay(sideWeight, unitSystem),
-                    WeightFormatting.unitLabel(unitSystem)
-                )
+                val sideWeightDisplay = WeightFormatting.formatWeight(sideWeight, unitSystem)
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -545,7 +539,7 @@ internal fun ActiveSetCockpitCard(
                 val btnText = when {
                     isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
                     enteredWeight != null && enteredReps != null -> {
-                        val wStr = if (enteredWeight % 1.0 == 0.0) enteredWeight.toInt().toString() else enteredWeight.toString()
+                        val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
                         stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
                     }
                     else -> stringResource(R.string.workout_log_set_button_short, setNumber)

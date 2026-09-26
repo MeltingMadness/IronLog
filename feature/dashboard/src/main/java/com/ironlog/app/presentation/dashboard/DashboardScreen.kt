@@ -275,7 +275,13 @@ fun DashboardScreen(
                 if (state.recentRecords.isEmpty()) {
                     item {
                         Text(
-                            text = stringResource(id = R.string.dashboard_no_records),
+                            text = stringResource(
+                                id = if (state.lastWorkout != null) {
+                                    R.string.dashboard_no_records_with_history
+                                } else {
+                                    R.string.dashboard_no_records
+                                }
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

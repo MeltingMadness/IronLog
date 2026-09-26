@@ -265,11 +265,11 @@ class NavigationSmokeTest {
         // es gibt keine aktive Session, also MUSS "Training starten" erscheinen.
         // Ein schreibender Test darf hier kein "Training fortsetzen" hinterlassen.
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
         }
 
         val hasContinue =
-            composeRule.onAllNodesWithText("Training fortsetzen ➔").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
         assertFalse("Nach dem Leeren der App-DB darf keine aktive Session existieren", hasContinue)
     }
 
@@ -322,9 +322,9 @@ class NavigationSmokeTest {
         // 1) Dashboard: Training starten (dank Isolation garantiert "starten",
         //    nicht "fortsetzen").
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Training jetzt starten ➔").performClick()
+        composeRule.onNodeWithText("Training jetzt starten").performClick()
         composeRule.waitForIdle()
 
         // 2) Plan-Auswahl-Sheet: Freies Training waehlen -> Session startet.
@@ -371,7 +371,7 @@ class NavigationSmokeTest {
         composeRule.waitForIdle()
         composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performScrollTo().performClick()
         waitOrDump(30_000L) {
-            composeRule.onAllNodes(hasText("1 Sätze", substring = true)).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(hasText("1 Satz ·", substring = true)).fetchSemanticsNodes().isNotEmpty()
         }
 
         // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen
@@ -395,7 +395,7 @@ class NavigationSmokeTest {
 
         // 7) Zurueck auf dem Dashboard (Finish poppt zum Dashboard zurueck).
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten ➔").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
         }
 
         // 8) Verlauf pruefen: die Test-Komposition zeichnet wie alle Smoke-Tests

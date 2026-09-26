@@ -35,7 +35,7 @@ class ActiveWorkoutWeightHintTest {
             previousWeightHint = "100"
         )
 
-        assertEquals("102.5", hint)
+        assertEquals("102,5", hint)
     }
 
     @Test
@@ -46,7 +46,7 @@ class ActiveWorkoutWeightHintTest {
             previousWeightHint = "100"
         )
 
-        assertEquals("110.2", hint)
+        assertEquals("110,2", hint)
     }
 
     @Test
