@@ -186,7 +186,7 @@ struct IOSProgressionReviewScreen: View {
             }
             .padding(16)
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
     }
 
     private func exerciseName(for suggestion: ILProgressionSuggestion) -> String? {

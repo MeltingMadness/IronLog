@@ -80,6 +80,7 @@ struct IOSHistoryScreen: View {
                     historyList
                 }
             }
+            .ironLogScreenBackground()
             .navigationTitle("Verlauf")
             .searchable(text: $searchText, prompt: "Training, Notiz oder Übung")
             .toolbar {
@@ -482,7 +483,7 @@ struct IOSHistoryDetailScreen: View {
             }
             .padding(16)
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
     }
 
     private func saveSet(_ set: ILWorkoutSet, intention: ILSetIntention) {

@@ -38,6 +38,7 @@ struct IOSPlansScreen: View {
                     planList
                 }
             }
+            .ironLogScreenBackground()
             .navigationTitle("Pläne")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

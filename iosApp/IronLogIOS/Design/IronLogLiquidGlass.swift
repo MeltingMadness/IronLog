@@ -167,3 +167,41 @@ extension View {
         modifier(IronLogLiquidGlassModifier(level: level, shape: shape, tint: tint))
     }
 }
+
+/// Screen backdrop per appearance. Liquid Glass hides the system list/form
+/// backgrounds (environment-wide), draws the colored backdrop and turns the
+/// navigation and tab bars into material; Ember keeps `ember` and
+/// `emberNavigationBar` (or nothing).
+private struct IronLogScreenBackgroundModifier: ViewModifier {
+    let ember: Color?
+    let emberNavigationBar: Color?
+    @Environment(\.ironLogAppearance) private var appearance
+
+    func body(content: Content) -> some View {
+        switch appearance {
+        case .liquidGlass:
+            content
+                .scrollContentBackground(.hidden)
+                .background { IronLogLiquidBackground() }
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar, .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+        case .ember:
+            if let emberNavigationBar {
+                content
+                    .background { ember?.ignoresSafeArea() }
+                    .toolbarBackground(emberNavigationBar, for: .navigationBar)
+            } else {
+                content.background { ember?.ignoresSafeArea() }
+            }
+        }
+    }
+}
+
+extension View {
+    /// Applies the screen backdrop of the active appearance; `ember` and
+    /// `emberNavigationBar` are the backgrounds the screen used before Liquid
+    /// Glass existed.
+    func ironLogScreenBackground(ember: Color? = nil, emberNavigationBar: Color? = nil) -> some View {
+        modifier(IronLogScreenBackgroundModifier(ember: ember, emberNavigationBar: emberNavigationBar))
+    }
+}

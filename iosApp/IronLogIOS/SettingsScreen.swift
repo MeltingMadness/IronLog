@@ -262,6 +262,7 @@ struct SettingsScreen: View {
                     LabeledContent("Version", value: "\(viewModel.state.versionName) (\(viewModel.state.versionCode))")
                 }
             }
+            .ironLogScreenBackground()
             .navigationTitle("Einstellungen")
             .overlay {
                 if viewModel.isBusy {

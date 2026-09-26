@@ -1,6 +1,24 @@
 ﻿package com.ironlog.app.presentation.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import com.ironlog.app.domain.model.AppearanceStyle
+import com.ironlog.app.presentation.theme.GlassLevel
+import com.ironlog.app.presentation.theme.LocalAppearanceStyle
+import com.ironlog.app.presentation.theme.liquidGlass
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +46,22 @@ fun BottomNavBar(navController: NavController) {
     val currentRoute = navBackStackEntry?.destination?.route
     val surfaces = ironLogSurfaceRoles
     val dims = ironLogDimens
+    val navigate: (BottomNavItem) -> Unit = { item ->
+        if (currentRoute != item.screen.route) {
+            navController.navigate(item.screen.route) {
+                popUpTo(Screen.Dashboard.route) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
+    if (LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS) {
+        LiquidGlassNavBar(currentRoute = currentRoute, onSelect = navigate)
+        return
+    }
 
     NavigationBar(
         modifier = Modifier
@@ -55,19 +89,69 @@ fun BottomNavBar(navController: NavController) {
                     unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 ),
-                onClick = {
-                    if (currentRoute != item.screen.route) {
-                        navController.navigate(item.screen.route) {
-                            popUpTo(Screen.Dashboard.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                }
+                onClick = { navigate(item) }
             )
         }
     }
 }
 
+/**
+ * Floating glass pill of the Liquid Glass look: the active tab is a solid pill with icon and
+ * label, the others show their icon only (labelled for accessibility and UI tests).
+ */
+@Composable
+private fun LiquidGlassNavBar(
+    currentRoute: String?,
+    onSelect: (BottomNavItem) -> Unit
+) {
+    val pillShape = RoundedCornerShape(32.dp)
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val activeBackground = if (dark) Color.White else Color(0xFF0B0D12)
+    val activeContent = if (dark) Color(0xFF0B0D12) else Color.White
+    Row(
+        modifier = Modifier
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .fillMaxWidth()
+            .height(64.dp)
+            .liquidGlass(GlassLevel.STRONG, pillShape)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        BottomNavItem.entries.forEach { item ->
+            val label = stringResource(id = item.labelRes)
+            val selected = currentRoute == item.screen.route
+            Box(
+                modifier = Modifier
+                    .weight(if (selected) 1.8f else 1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .then(if (selected) Modifier.background(activeBackground) else Modifier)
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(item) })
+                    .semantics { contentDescription = label }
+                    .testTag(item.testTag),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = null,
+                        tint = if (selected) activeContent else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    )
+                    if (selected) {
+                        Text(
+                            text = label,
+                            color = activeContent,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
