@@ -115,7 +115,11 @@ fun ProgressionReviewScreen(
                 }
             }
 
-            if (state.items.isEmpty()) {
+            // Open suggestions first; in the global review, past outcomes follow under their
+            // own heading so decisions stay traceable (iOS parity).
+            val openItems = if (state.isSessionScoped) state.items else state.items.filter { it.status == ProgressionSuggestionStatus.PENDING }
+            val pastItems = if (state.isSessionScoped) emptyList() else state.items.filter { it.status != ProgressionSuggestionStatus.PENDING }
+            if (openItems.isEmpty()) {
                 item(key = "empty") {
                     Text(
                         text = stringResource(when {
@@ -127,18 +131,36 @@ fun ProgressionReviewScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else {
-                items(state.items, key = ProgressionReviewItemUi::id) { item ->
+            }
+            items(openItems, key = ProgressionReviewItemUi::id) { item ->
+                ProgressionReviewCard(
+                    item = item,
+                    unitSystem = state.unitSystem,
+                    isWorking = state.isWorking,
+                    onAccept = { viewModel.acceptOne(item.id) },
+                    onEdit = {
+                        viewModel.beginEdit(item.id)
+                        editingSuggestionId = item.id
+                    },
+                    onReject = { viewModel.reject(item.id) }
+                )
+            }
+            if (pastItems.isNotEmpty()) {
+                item(key = "past_header") {
+                    Text(
+                        text = stringResource(ProgressionR.string.review_past_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+                items(pastItems, key = ProgressionReviewItemUi::id) { item ->
                     ProgressionReviewCard(
                         item = item,
                         unitSystem = state.unitSystem,
                         isWorking = state.isWorking,
-                        onAccept = { viewModel.acceptOne(item.id) },
-                        onEdit = {
-                            viewModel.beginEdit(item.id)
-                            editingSuggestionId = item.id
-                        },
-                        onReject = { viewModel.reject(item.id) }
+                        onAccept = {},
+                        onEdit = {},
+                        onReject = {}
                     )
                 }
             }

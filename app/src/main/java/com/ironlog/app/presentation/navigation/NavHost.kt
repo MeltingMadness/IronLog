@@ -214,6 +214,9 @@ fun IronLogNavHost(
                 },
                 onOpenMetaPlans = {
                     navController.navigate(Screen.MetaPlanList.route)
+                },
+                onOpenProgressionReview = {
+                    navController.navigate(Screen.ProgressionReview.createRoute(null))
                 }
             )
         }

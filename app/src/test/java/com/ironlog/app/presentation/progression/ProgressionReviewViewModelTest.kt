@@ -115,6 +115,29 @@ class ProgressionReviewViewModelTest {
     }
 
     @Test
+    fun `global review lists past outcomes after open ones but never makes them decidable`() = runTest(dispatcher) {
+        repository.reviewItems.value = listOf(pendingChange(id = 2L))
+        val accepted = pendingChange(id = 1L).copy(status = ProgressionSuggestionStatus.ACCEPTED)
+        repository.recentDecisions.value = listOf(accepted)
+        val viewModel = createViewModel(sessionId = null)
+        advanceUntilIdle()
+
+        val items = viewModel.uiState.value.items
+        assertEquals(listOf(2L, 1L), items.map { it.id })
+        assertEquals(false, items.last().canDecide)
+        assertEquals(listOf(2L), viewModel.uiState.value.safePendingItems.map { it.id })
+    }
+
+    @Test
+    fun `session review does not mix in global past outcomes`() = runTest(dispatcher) {
+        repository.recentDecisions.value = listOf(pendingChange(id = 1L).copy(status = ProgressionSuggestionStatus.REJECTED))
+        val viewModel = createViewModel(sessionId = 42L)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.items.isEmpty())
+    }
+
+    @Test
     fun `negative session id observes the all pending scope`() = runTest(dispatcher) {
         createViewModel(sessionId = -9L)
         advanceUntilIdle()
@@ -674,6 +697,9 @@ class ProgressionReviewViewModelTest {
 
 private class FakeProgressionRepository : ProgressionRepository {
     val reviewItems = MutableStateFlow<List<ProgressionSuggestion>>(emptyList())
+    val recentDecisions = MutableStateFlow<List<ProgressionSuggestion>>(emptyList())
+
+    override fun observeRecentDecisions(limit: Int): Flow<List<ProgressionSuggestion>> = recentDecisions
     val observedSessionIds = mutableListOf<Long?>()
     var reconcileCalls = 0
     var reconcileError: Throwable? = null

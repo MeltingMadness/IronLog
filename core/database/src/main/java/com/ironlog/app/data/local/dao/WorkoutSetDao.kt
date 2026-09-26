@@ -8,8 +8,26 @@ import androidx.room.Update
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
 import kotlinx.coroutines.flow.Flow
 
+/** Aggregated per-exercise training counts for the exercise list. */
+data class ExerciseTrainingSummaryRow(
+    val exerciseId: Long,
+    val sessionCount: Int,
+    val lastCompletedAt: Long
+)
+
 @Dao
 interface WorkoutSetDao {
+
+    @Query("""
+        SELECT ws.exerciseId AS exerciseId,
+               COUNT(DISTINCT ws.sessionId) AS sessionCount,
+               MAX(ws.completedAt) AS lastCompletedAt
+        FROM workout_sets ws
+        INNER JOIN workout_sessions s ON ws.sessionId = s.id
+        WHERE s.endTime IS NOT NULL AND ws.setType != 'WARMUP' AND ws.reps > 0
+        GROUP BY ws.exerciseId
+    """)
+    fun observeExerciseTrainingSummaries(): Flow<List<ExerciseTrainingSummaryRow>>
 
     @Insert
     suspend fun insert(set: WorkoutSetEntity): Long

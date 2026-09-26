@@ -62,6 +62,9 @@ class ProgressionRepositoryImpl(
 
     override fun observePendingCount(): Flow<Int> = progressionDao.observePendingCount()
 
+    override fun observeRecentDecisions(limit: Int): Flow<List<ProgressionSuggestion>> =
+        progressionDao.observeRecentDecisions(limit).mapLatest(::hydrate)
+
     override suspend fun generateOutcomesForSession(sessionId: Long): ProgressionGenerationResult {
         val sourceSession = sessionDao.getSessionById(sessionId)
             ?: return EMPTY_GENERATION_RESULT

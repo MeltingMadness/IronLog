@@ -197,6 +197,7 @@
     <string name="plans_delete_title">Plan löschen?</string>
     <string name="plans_delete_text">Plan "%1$s" wird dauerhaft gelöscht.</string>
     <string name="plans_start_cd">Plan starten</string>
+    <string name="plans_progression_review_cd">Progressionsvorschläge</string>
     <string name="plans_section_meta">Meta-Pläne</string>
     <string name="plans_section_plans">Pläne</string>
     <string name="plans_meta_manage">Verwalten</string>
@@ -255,6 +256,10 @@
     <string name="exercises_search_label">Suche</string>
     <string name="exercises_empty">Keine Übungen gefunden.</string>
     <string name="exercises_custom_badge">Custom</string>
+    <plurals name="exercises_training_summary">
+        <item quantity="one">%1$d Einheit · zuletzt %2$s</item>
+        <item quantity="other">%1$d Einheiten · zuletzt %2$s</item>
+    </plurals>
     <string name="exercises_edit_cd">Übung bearbeiten</string>
     <string name="exercises_delete_title">Übung löschen?</string>
     <string name="exercises_delete_text">"%1$s" wird dauerhaft entfernt.</string>

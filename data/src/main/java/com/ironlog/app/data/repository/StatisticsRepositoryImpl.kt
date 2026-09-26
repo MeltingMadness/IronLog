@@ -3,6 +3,7 @@ package com.ironlog.app.data.repository
 import com.ironlog.app.data.local.dao.PersonalRecordDao
 import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
+import com.ironlog.app.domain.model.ExerciseTrainingSummary
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.domain.model.PersonalRecord
 import com.ironlog.app.domain.model.RecordType
@@ -50,6 +51,17 @@ class StatisticsRepositoryImpl(
 
     override fun getSetsForExercise(exerciseId: Long): Flow<List<WorkoutSet>> =
         workoutSetDao.getSetsForExercise(exerciseId).map { list -> list.map { it.toDomain() } }
+
+    override fun observeExerciseTrainingSummaries(): Flow<List<ExerciseTrainingSummary>> =
+        workoutSetDao.observeExerciseTrainingSummaries().map { rows ->
+            rows.map { row ->
+                ExerciseTrainingSummary(
+                    exerciseId = row.exerciseId,
+                    sessionCount = row.sessionCount,
+                    lastCompletedAt = EpochConverter.toLocalDateTime(row.lastCompletedAt)
+                )
+            }
+        }
 
     override suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet> =
         workoutSetDao.getSetsForExerciseList(exerciseId).map { it.toDomain() }

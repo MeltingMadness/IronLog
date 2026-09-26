@@ -57,6 +57,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
+import androidx.compose.ui.res.pluralStringResource
+import com.ironlog.app.domain.util.DateFormatting
+import com.ironlog.app.domain.model.ExerciseTrainingSummary
 import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
@@ -157,9 +160,11 @@ fun ExerciseLibraryScreen(
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(state.exercises, key = { it.id }) { exercise ->
+                        val summary = state.trainingSummaries[exercise.id]
                         if (exercise.isCustom) {
                             SwipeToDeleteExerciseItem(
                                 exercise = exercise,
+                                summary = summary,
                                 onClick = { onExerciseClick(exercise.id) },
                                 onEdit = { viewModel.onShowEditDialog(exercise) },
                                 onDelete = {
@@ -170,9 +175,7 @@ fun ExerciseLibraryScreen(
                         } else {
                             ListItem(
                                 headlineContent = { Text(exercise.name) },
-                                supportingContent = {
-                                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
-                                },
+                                supportingContent = { ExerciseSupportingText(exercise, summary) },
                                 modifier = Modifier.combinedClickable(
                                     onClick = { onExerciseClick(exercise.id) }
                                 )
@@ -238,6 +241,7 @@ fun ExerciseLibraryScreen(
 @Composable
 private fun SwipeToDeleteExerciseItem(
     exercise: Exercise,
+    summary: ExerciseTrainingSummary?,
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -278,14 +282,7 @@ private fun SwipeToDeleteExerciseItem(
     ) {
         ListItem(
             headlineContent = { Text(exercise.name) },
-            supportingContent = {
-                val notesText = exercise.notes.takeIf { it.isNotBlank() }
-                if (notesText == null) {
-                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
-                } else {
-                    Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName} • $notesText")
-                }
-            },
+            supportingContent = { ExerciseSupportingText(exercise, summary) },
             trailingContent = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -489,4 +486,31 @@ internal fun CustomExerciseDialog(
     )
 }
 
-
+/**
+ * Muscle group, category and optional note, plus how often the exercise was trained.
+ * The training line doubles as the statistics overview for the exercise list.
+ */
+@Composable
+private fun ExerciseSupportingText(exercise: Exercise, summary: ExerciseTrainingSummary?) {
+    Column {
+        Text(
+            listOfNotNull(
+                exercise.primaryMuscleGroup.displayName,
+                exercise.category.displayName,
+                exercise.notes.takeIf { exercise.isCustom && it.isNotBlank() }
+            ).joinToString(" · ")
+        )
+        if (summary != null) {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.exercises_training_summary,
+                    summary.sessionCount,
+                    summary.sessionCount,
+                    summary.lastCompletedAt.format(DateFormatting.DATE_SHORT)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}

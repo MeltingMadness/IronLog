@@ -68,6 +68,19 @@ class FakeStatisticsRepository : StatisticsRepository {
     override fun getSetsForExercise(exerciseId: Long): Flow<List<WorkoutSet>> =
         exerciseSets.map { list -> list.filter { it.exerciseId == exerciseId } }
 
+    override fun observeExerciseTrainingSummaries(): Flow<List<com.ironlog.app.domain.model.ExerciseTrainingSummary>> =
+        exerciseSets.map { list ->
+            list.filter { it.setType != com.ironlog.app.domain.model.SetType.WARMUP && it.reps > 0 }
+                .groupBy { it.exerciseId }
+                .map { (exerciseId, sets) ->
+                    com.ironlog.app.domain.model.ExerciseTrainingSummary(
+                        exerciseId = exerciseId,
+                        sessionCount = sets.map { it.sessionId }.distinct().size,
+                        lastCompletedAt = sets.maxOf { it.completedAt }
+                    )
+                }
+        }
+
     override suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet> =
         exerciseSets.value.filter { it.exerciseId == exerciseId }
 

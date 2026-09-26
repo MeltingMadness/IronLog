@@ -41,6 +41,13 @@ interface ProgressionDao {
     @Query("SELECT p.* FROM progression_suggestions p JOIN workout_sessions s ON s.id = p.sourceSessionId WHERE p.status = 'PENDING' ORDER BY s.endTime DESC, s.id DESC, p.orderIndex, p.id")
     fun observePendingSuggestions(): Flow<List<ProgressionSuggestionEntity>>
 
+    /** Most recent non-pending outcomes (decided, stale or informational), newest first. */
+    @Query(
+        "SELECT * FROM progression_suggestions WHERE status != 'PENDING' " +
+            "ORDER BY COALESCE(decidedAtEpochMillis, createdAtEpochMillis) DESC, id DESC LIMIT :limit"
+    )
+    fun observeRecentDecisions(limit: Int): Flow<List<ProgressionSuggestionEntity>>
+
     @Query("SELECT COUNT(*) FROM progression_suggestions WHERE status = 'PENDING'")
     fun observePendingCount(): Flow<Int>
 

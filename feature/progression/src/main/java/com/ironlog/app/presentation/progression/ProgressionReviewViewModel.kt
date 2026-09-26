@@ -95,8 +95,18 @@ class ProgressionReviewViewModel(
             runCatching { progressionRepository.reconcileOutstandingSuggestions() }
                 .onFailure { showFailure() }
 
+            // The global review also lists past outcomes below the open ones (iOS parity);
+            // a session-scoped review already contains every status of that session.
+            val suggestionsFlow = if (sessionId == null) {
+                combine(
+                    progressionRepository.observeReviewItems(null),
+                    progressionRepository.observeRecentDecisions()
+                ) { pending, decided -> pending + decided.filterNot { d -> pending.any { it.id == d.id } } }
+            } else {
+                progressionRepository.observeReviewItems(sessionId)
+            }
             combine(
-                progressionRepository.observeReviewItems(sessionId),
+                suggestionsFlow,
                 appPreferencesRepository.preferences,
                 exerciseRepository.getAllExercises(),
                 trainingPlanRepository.getAllPlans()

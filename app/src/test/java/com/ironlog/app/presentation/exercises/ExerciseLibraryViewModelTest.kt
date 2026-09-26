@@ -41,7 +41,7 @@ class ExerciseLibraryViewModelTest {
 
     @Test
     fun `saveCustomExercise adds custom exercise with optional fields`() = runTest {
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
         viewModel.onShowAddDialog()
 
@@ -72,7 +72,7 @@ class ExerciseLibraryViewModelTest {
             isCustom = true
         )
         exerciseRepository.addExercise(existing)
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
 
         viewModel.onShowEditDialog(existing)
@@ -115,7 +115,7 @@ class ExerciseLibraryViewModelTest {
             )
         )
 
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
 
@@ -127,7 +127,7 @@ class ExerciseLibraryViewModelTest {
     fun `error while loading exercises clears isLoading and surfaces an error message`() = runTest {
         exerciseRepository.errorToThrow = RuntimeException("DB kaputt")
 
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
 
@@ -148,7 +148,7 @@ class ExerciseLibraryViewModelTest {
             )
         )
 
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
 
@@ -178,7 +178,7 @@ class ExerciseLibraryViewModelTest {
         // workout_plan_targets - dann wird archiviert statt geloescht.
         exerciseRepository.markReferenced(6L)
 
-        val viewModel = ExerciseLibraryViewModel(exerciseRepository)
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.ironlog.app.fakes.FakeStatisticsRepository())
         backgroundScope.launch { viewModel.uiState.collect { } }
         advanceUntilIdle()
 
@@ -193,5 +193,22 @@ class ExerciseLibraryViewModelTest {
             "archived exercise must disappear from the library list",
             viewModel.uiState.value.exercises.none { it.id == 6L }
         )
+    }
+
+    @Test
+    fun `uiState liefert Trainingszahlen je Uebung ohne Aufwaermsaetze`() = runTest {
+        val stats = com.ironlog.app.fakes.FakeStatisticsRepository()
+        val day = java.time.LocalDateTime.of(2026, 9, 20, 10, 0)
+        stats.addExerciseSet(com.ironlog.app.domain.model.WorkoutSet(id = 1, sessionId = 1, exerciseId = 5, setNumber = 1, reps = 8, weightKg = 80.0, completedAt = day.minusDays(7)))
+        stats.addExerciseSet(com.ironlog.app.domain.model.WorkoutSet(id = 2, sessionId = 2, exerciseId = 5, setNumber = 1, reps = 8, weightKg = 82.5, completedAt = day))
+        stats.addExerciseSet(com.ironlog.app.domain.model.WorkoutSet(id = 3, sessionId = 3, exerciseId = 6, setNumber = 1, reps = 10, weightKg = 40.0, completedAt = day, setType = com.ironlog.app.domain.model.SetType.WARMUP))
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, stats)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        val summaries = viewModel.uiState.value.trainingSummaries
+        assertEquals(2, summaries.getValue(5L).sessionCount)
+        assertEquals(day, summaries.getValue(5L).lastCompletedAt)
+        assertFalse(summaries.containsKey(6L))
     }
 }
