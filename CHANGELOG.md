@@ -1,5 +1,18 @@
 # Änderungen
 
+## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
+
+- Startseite: „Training jetzt starten“ startet den vorgeschlagenen Plan direkt (nächster Meta-Teilplan, sonst nie oder am längsten nicht trainierter Plan); „Anderen Plan wählen“ als zweite Aktion.
+- Workout: Kopf mit Satzfortschritt, nur die aktuelle Übung aufgeklappt, Löschen im Bearbeitungsmodus mit „Rückgängig“, Verlauf-Symbol für das vorherige Training.
+- Zusammenfassung: „Fertig“ als Hauptaktion, neue Rekorde der Einheit hervorgehoben.
+- Planliste mit Meta-Plänen, „zuletzt trainiert“ und Einstieg in alle Progressions-Auswertungen; Trainingsdetails nennen den Plan; Volumen-Diagramm erklärt die laufende Woche; einheitliche Statistik-Kacheln.
+- Android-Verlauf: Suche, Sätze abgeschlossener Trainings korrigieren oder löschen (Rekorde neu berechnet, offene Vorschläge verfallen wie auf iOS), Trainingsnotiz.
+- Übungsliste mit Einheiten und letztem Training je Übung; der Progressions-Review zeigt frühere Auswertungen.
+- Deutsches Zahlenformat, Einzahl/Mehrzahl, Umlaute und einheitliche Satzanzeige („82,5 kg × 8 Wdh“, „Körpergewicht“) auf Android und iOS.
+- Aufgeräumt: Workout-Screen und ViewModel aufgeteilt, ungenutzte Muskel-Heatmap entfernt.
+
+Validierung: CI (Unit, Lint, Build, Emulator-Smoke) für PRs #20–#27 grün; iOS-Tests grün. Release-Build mit unverändertem Zertifikat auf einem Android-Gerät installiert und gestartet.
+
 ## 1.3.1 (Android versionCode 8) – Progressionsauswahl · 15.09.2026
 
 - Eine Progressionsart antippen übernimmt sie direkt in den Planentwurf und schließt das Menü. Die Übung zeigt die neue Auswahl sofort; anschließend wird der gesamte Plan gespeichert.
