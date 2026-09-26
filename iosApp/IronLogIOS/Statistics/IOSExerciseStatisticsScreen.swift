@@ -51,6 +51,8 @@ struct IOSExerciseStatisticsScreen: View {
 
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
+    @Environment(\.ironLogAppearance) private var appearance
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedMetric: IOSExerciseMetric = .e1rm
     @State private var recordFilter: IOSRecordFilter = .all
 
@@ -72,7 +74,9 @@ struct IOSExerciseStatisticsScreen: View {
 
     var body: some View {
         ScrollView {
-            if let analyticsExercise {
+            if let analyticsExercise, appearance == .liquidGlass {
+                glassContent(analyticsExercise)
+            } else if let analyticsExercise {
                 detailContent(analyticsExercise)
             } else {
                 ContentUnavailableView {
@@ -87,6 +91,8 @@ struct IOSExerciseStatisticsScreen: View {
         .ironLogScreenBackground(ember: Color(uiColor: .systemGroupedBackground))
         .navigationTitle(exerciseName)
         .navigationBarTitleDisplayMode(.inline)
+        // Liquid Glass shows a round back button and the name in the content.
+        .toolbar(appearance == .liquidGlass && analyticsExercise != nil ? .hidden : .automatic, for: .navigationBar)
         .task(id: "\(settings.state.weekStart)-\(settings.state.unitSystem)") {
             store.refreshAnalytics(
                 timeZoneId: TimeZone.current.identifier,
@@ -201,6 +207,50 @@ struct IOSExerciseStatisticsScreen: View {
             }
         }
         .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    /// Liquid Glass: back button, large name, hero card with curve and metric
+    /// switch, four record tiles; comparison, history and recent sets follow as glass cards.
+    private func glassContent(_ analyticsExercise: ILExerciseAnalytics) -> some View {
+        let unitSystem = settings.state.unitSystem
+        return LazyVStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .liquidGlass(in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Zurück")
+                if let exercise {
+                    Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilCount(analyticsExercise.sessions.count, "Einheit", "Einheiten")]
+                        .joined(separator: " · ").uppercased())
+                        .font(.caption.weight(.bold))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            Text(exerciseName)
+                .font(.system(size: 40, weight: .bold))
+                .tracking(-1.4)
+                .accessibilityAddTraits(.isHeader)
+            IOSExerciseGlassHero(sessions: analyticsExercise.sessions, metric: $selectedMetric, unitSystem: unitSystem)
+            IOSExerciseGlassRecordTiles(
+                records: store.data?.personalRecords.filter { $0.exerciseId == exerciseId } ?? [],
+                unitSystem: unitSystem
+            )
+            if let comparison = analyticsExercise.lastWorkoutComparison {
+                IOSExerciseLastWorkoutComparisonCard(comparison: comparison, metric: selectedMetric, unitSystem: unitSystem)
+            }
+            IOSExerciseSessionHistoryCard(sessions: analyticsExercise.sessions, selectedMetric: selectedMetric, unitSystem: unitSystem)
+            if !analyticsExercise.recentSets.isEmpty {
+                IOSExerciseRecentSetsCard(sets: analyticsExercise.recentSets, unitSystem: unitSystem)
+            }
+        }
+        .padding(.horizontal, 20)
         .padding(.vertical, 12)
     }
 

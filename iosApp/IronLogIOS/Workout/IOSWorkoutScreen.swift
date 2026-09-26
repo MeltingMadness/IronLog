@@ -126,7 +126,7 @@ struct IOSWorkoutScreen: View {
             .navigationTitle(screenTitle)
             .navigationBarTitleDisplayMode(.inline)
             // A running Liquid Glass workout shows its own head instead of the bar.
-            .toolbar(appearance == .liquidGlass && activeSession != nil ? .hidden : .automatic, for: .navigationBar)
+            .toolbar(appearance == .liquidGlass && (activeSession != nil || completedSessionID != 0) ? .hidden : .automatic, for: .navigationBar)
             .sheet(isPresented: $showingExercisePicker) {
                 exercisePickerSheet
             }

@@ -32,4 +32,15 @@
     <string name="workout_glass_pause_skip">Pause überspringen</string>
     <string name="workout_glass_pause_skip_short">Überspringen</string>
     <string name="workout_glass_pause_remaining_cd">Noch %1$d Minuten %2$d Sekunden Pause</string>
+    <string name="workout_glass_done_headline">Geschafft.</string>
+    <string name="workout_glass_unit_minutes">min</string>
+    <string name="workout_glass_exercises_label">Übungen</string>
+    <plurals name="workout_glass_exercise_unit">
+        <item quantity="one">Übung</item>
+        <item quantity="other">Übungen</item>
+    </plurals>
+    <plurals name="workout_glass_new_records">
+        <item quantity="one">Neuer Rekord</item>
+        <item quantity="other">Neue Rekorde</item>
+    </plurals>
 </resources>

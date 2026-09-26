@@ -79,6 +79,32 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     var planApplied by rememberSaveable(session.id) { mutableStateOf(false) }
     val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
     val remaining = rows.sumOf { it.openSlotCount() }
+    // Follow-up actions are the same in both appearances.
+    val followUps: @Composable () -> Unit = {
+        if (session.planId != null && rows.any { it.planTarget != null }) {
+            OutlinedButton(onClick = { showPlanChanges = true }, enabled = !planApplied, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(if (planApplied) R.string.workout_summary_plan_changes_applied else R.string.workout_summary_review_plan_changes))
+            }
+        }
+        when (finishState) {
+            is WorkoutFinishState.ReviewReady -> if (!planApplied) OutlinedButton(onClick = onProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_review_progression)) }
+            is WorkoutFinishState.Generating -> Text(stringResource(R.string.workout_summary_progression_generating), style = MaterialTheme.typography.bodySmall)
+            is WorkoutFinishState.GenerationFailed -> OutlinedButton(onClick = onRetryProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_progression_retry)) }
+            else -> Unit
+        }
+    }
+    if (isLiquidGlass()) {
+        GlassWorkoutCompletion(
+            session = session,
+            rows = rows,
+            records = records,
+            unitSystem = unitSystem,
+            onClose = onClose,
+            onDetails = onDetails,
+            followUps = followUps
+        )
+        return
+    }
     // One headline in the content instead of a second title in a top bar; "Fertig" is the
     // main action, the details are the secondary one.
     Scaffold(
@@ -142,17 +168,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                     row.sets.filter { it.reps > 0 }.forEach { set -> Text(stringResource(R.string.workout_summary_set_line, set.setNumber, if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
                 } }
             }
-            if (session.planId != null && rows.any { it.planTarget != null }) {
-                OutlinedButton(onClick = { showPlanChanges = true }, enabled = !planApplied, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(if (planApplied) R.string.workout_summary_plan_changes_applied else R.string.workout_summary_review_plan_changes))
-                }
-            }
-            when (finishState) {
-                is WorkoutFinishState.ReviewReady -> if (!planApplied) OutlinedButton(onClick = onProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_review_progression)) }
-                is WorkoutFinishState.Generating -> Text(stringResource(R.string.workout_summary_progression_generating), style = MaterialTheme.typography.bodySmall)
-                is WorkoutFinishState.GenerationFailed -> OutlinedButton(onClick = onRetryProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_progression_retry)) }
-                else -> Unit
-            }
+            followUps()
         }
     }
     if (showPlanChanges) {

@@ -13,6 +13,7 @@
 		0B0DA9EA073BAD6A6C2C3656 /* IronLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685AE05FC125A077D0129530 /* IronLogCard.swift */; };
 		E9F12934A40CA45C2A5EF014 /* IronLogLiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344853CE770AC1EFB6C76754 /* IronLogLiquidGlass.swift */; };
 		0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */; };
+		8BFF3495A6F50528ECEF4165 /* IOSExerciseStatisticsGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E50372B23792984003EE40 /* IOSExerciseStatisticsGlass.swift */; };
 		0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FC306405B9BEA595E777BB /* IOSDashboardScreen.swift */; };
 		187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */; };
 		19021D29F385C24A553C5FF7 /* IOSWorkoutRestTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 226BC71A1A114CF54C1A6742 /* IOSWorkoutRestTimer.swift */; };
@@ -77,6 +78,7 @@
 		226BC71A1A114CF54C1A6742 /* IOSWorkoutRestTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutRestTimer.swift; sourceTree = "<group>"; };
 		2FC05139F58925D92390B07E /* IOSWorkoutStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutStartView.swift; sourceTree = "<group>"; };
 		30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseStatisticsScreen.swift; sourceTree = "<group>"; };
+		53E50372B23792984003EE40 /* IOSExerciseStatisticsGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseStatisticsGlass.swift; sourceTree = "<group>"; };
 		3370C75E31978BA1D7708CF4 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		3A265FED18900AD07E50535B /* IOSExerciseLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseLibraryScreen.swift; sourceTree = "<group>"; };
 		3C06C7AEADD15B33F85485C2 /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 			isa = PBXGroup;
 		children = (
 			30ECE98548004CEB51CF0B77 /* IOSExerciseStatisticsScreen.swift */,
+			53E50372B23792984003EE40 /* IOSExerciseStatisticsGlass.swift */,
 			C6E7F324370A3507F4582AB4 /* IOSStatisticsScreen.swift */,
 		);
 			path = Statistics;
@@ -448,6 +451,7 @@
 				0869BF40E44EDB759F73D93B /* IOSPlansSupport.swift in Sources */, 
 				4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */, 
 				0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */, 
+				8BFF3495A6F50528ECEF4165 /* IOSExerciseStatisticsGlass.swift in Sources */,
 				77CC7D8970E0E1232B428883 /* IOSStatisticsScreen.swift in Sources */, 
 				393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */, 
 				5B7F20D9057C5D94EA50B119 /* IOSWorkoutExerciseCard.swift in Sources */, 

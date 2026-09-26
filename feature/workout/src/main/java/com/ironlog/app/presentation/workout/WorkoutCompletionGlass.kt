@@ -1,0 +1,266 @@
+package com.ironlog.app.presentation.workout
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ironlog.app.domain.model.UnitSystem
+import com.ironlog.app.domain.model.WorkoutSession
+import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.AthleticLabel
+import com.ironlog.app.presentation.theme.GlassLevel
+import com.ironlog.app.presentation.theme.liquidGlass
+import com.ironlog.core.designsystem.R
+import com.ironlog.feature.workout.R as WorkoutR
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val CompletionDateFormat = DateTimeFormatter.ofPattern("EEEE, dd.MM.", Locale.GERMAN)
+
+/**
+ * Workout summary in Liquid Glass: "Geschafft.", three lenses (duration, volume, exercises),
+ * records on tinted glass, the logged sets, and "Fertig" as the bright main action. The
+ * follow-up actions (plan changes, progression) are the same as in Ember and come in as slots.
+ */
+@Composable
+internal fun GlassWorkoutCompletion(
+    session: WorkoutSession,
+    rows: List<ExerciseWithSets>,
+    records: List<SessionRecordUi>,
+    unitSystem: UnitSystem,
+    onClose: () -> Unit,
+    onDetails: () -> Unit,
+    followUps: @Composable () -> Unit
+) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val sets = rows.flatMap { it.sets }.filter { it.reps > 0 }.distinctBy { it.id }
+    val remaining = rows.sumOf { it.openSlotCount() }
+    val trainedRows = rows.filter { row -> row.sets.any { it.reps > 0 } }
+    val volumeText = WeightFormatting.formatVolume(sets.sumOf { it.weightKg * it.reps }, unitSystem)
+    val volumeNumber = volumeText.substringBeforeLast(' ')
+    val volumeUnit = volumeText.substringAfterLast(' ')
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = listOfNotNull(
+                        session.startTime.format(CompletionDateFormat),
+                        session.name.takeIf { it.isNotBlank() }
+                    ).joinToString(" · ").uppercase(Locale.GERMAN),
+                    style = AthleticLabel,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = stringResource(
+                        if (remaining > 0) R.string.workout_summary_headline_partial else WorkoutR.string.workout_glass_done_headline
+                    ),
+                    fontSize = if (remaining > 0) 34.sp else 54.sp,
+                    lineHeight = if (remaining > 0) 38.sp else 56.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1.5).sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { heading() }
+                )
+                if (remaining > 0) {
+                    Text(
+                        pluralStringResource(R.plurals.workout_summary_partial_subtitle, sets.size, sets.size),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val minutes = (session.durationSeconds / 60).toInt()
+                CompletionLens(
+                    value = if (session.durationSeconds < 60) "< 1" else minutes.toString(),
+                    unit = stringResource(WorkoutR.string.workout_glass_unit_minutes),
+                    label = stringResource(R.string.workout_summary_duration),
+                    modifier = Modifier.weight(1f)
+                )
+                CompletionLens(
+                    value = volumeNumber,
+                    unit = volumeUnit,
+                    label = stringResource(R.string.workout_summary_volume),
+                    modifier = Modifier.weight(1f)
+                )
+                CompletionLens(
+                    value = trainedRows.size.toString(),
+                    unit = pluralStringResource(WorkoutR.plurals.workout_glass_exercise_unit, trainedRows.size),
+                    label = stringResource(WorkoutR.string.workout_glass_exercises_label),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (records.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlass(GlassLevel.TINT, RoundedCornerShape(30.dp))
+                        .padding(18.dp)
+                        .semantics(mergeDescendants = true) {},
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        Modifier
+                            .size(48.dp)
+                            .background(if (dark) Color.White else Color(0xFF0B0D12), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = if (dark) Color(0xFF0B0D12) else Color.White
+                        )
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            pluralStringResource(WorkoutR.plurals.workout_glass_new_records, records.size).uppercase(Locale.GERMAN),
+                            style = AthleticLabel
+                        )
+                        records.forEach { record ->
+                            Text(
+                                stringResource(
+                                    R.string.workout_summary_record_line,
+                                    record.exerciseName,
+                                    record.types.joinToString(", ") { it.displayName }
+                                ),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+                }
+            }
+
+            trainedRows.forEach { row ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlass(GlassLevel.STANDARD, RoundedCornerShape(26.dp))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(row.exercise.name, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    row.sets.filter { it.reps > 0 }.forEach { set ->
+                        Text(
+                            stringResource(
+                                R.string.workout_summary_set_line,
+                                set.setNumber,
+                                if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem),
+                                set.reps
+                            ),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            followUps()
+        }
+
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 54.dp)
+                    .liquidGlass(GlassLevel.STANDARD, RoundedCornerShape(27.dp))
+                    .clickable(role = Role.Button, onClick = onDetails),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(stringResource(R.string.workout_summary_open_details), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            GlassPrimaryButton(text = stringResource(R.string.workout_summary_done), enabled = true, onClick = onClose)
+        }
+    }
+}
+
+@Composable
+private fun CompletionLens(value: String, unit: String, label: String, modifier: Modifier) {
+    Column(
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = "$label: $value $unit" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .aspectRatio(1f)
+                .liquidGlass(GlassLevel.STANDARD, CircleShape),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = value,
+                fontSize = if (value.length > 5) 22.sp else 28.sp,
+                lineHeight = 30.sp,
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(fontFeatureSettings = "tnum"),
+                maxLines = 1
+            )
+            Text(unit, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+        }
+        Text(label.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
