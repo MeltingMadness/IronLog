@@ -28,6 +28,7 @@ class FakeWorkoutRepository : WorkoutRepository {
     var getSetsForSessionsListCallCount = 0
     var getAllCompletedSessionsListCallCount = 0
     var addSetCallCount = 0
+    var lastPagedCompletedWorkoutSummariesSearch: String? = null
     var updateSetCallCount = 0
     var deleteSetCallCount = 0
     var finishWorkoutCallCount = 0
@@ -164,6 +165,37 @@ class FakeWorkoutRepository : WorkoutRepository {
         setIntentions.value = setIntentions.value - setId
     }
 
+    override suspend fun updateCompletedSet(set: WorkoutSet, intention: SetIntention?) {
+        val stored = sets.value.firstOrNull { it.id == set.id }
+            ?: throw IllegalStateException("Workout set ${set.id} does not exist")
+        check(sessions.value.any { it.session.id == stored.sessionId && !it.isActive }) {
+            "Workout session ${stored.sessionId} is not completed"
+        }
+        WorkoutNumericValidation.requireValidWorkoutSet(set)
+        sets.value = sets.value.map { if (it.id == set.id) set else it }
+        when (intention) {
+            null -> Unit
+            SetIntention.UNKNOWN -> setIntentions.value = setIntentions.value - set.id
+            else -> setIntentions.value = setIntentions.value + (set.id to intention)
+        }
+    }
+
+    override suspend fun deleteCompletedSet(setId: Long) {
+        val stored = sets.value.firstOrNull { it.id == setId } ?: return
+        check(sessions.value.any { it.session.id == stored.sessionId && !it.isActive }) {
+            "Workout session ${stored.sessionId} is not completed"
+        }
+        sets.value = sets.value.filter { it.id != setId }
+        setIntentions.value = setIntentions.value - setId
+    }
+
+    override suspend fun updateSessionNotes(sessionId: Long, notes: String) {
+        check(sessions.value.any { it.session.id == sessionId }) { "Workout session $sessionId does not exist" }
+        sessions.value = sessions.value.map {
+            if (it.session.id == sessionId) it.copy(session = it.session.copy(notes = notes.trim())) else it
+        }
+    }
+
     override fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>> =
         sets.map { list -> list.filter { it.sessionId == sessionId } }
 
@@ -217,12 +249,17 @@ class FakeWorkoutRepository : WorkoutRepository {
     override fun getPagedCompletedWorkoutSummaries(
         planId: Long?,
         fromEpochMillis: Long?,
-        toEpochMillis: Long?
+        toEpochMillis: Long?,
+        searchQuery: String?
     ): Flow<PagingData<CompletedWorkoutSummary>> {
         getPagedCompletedWorkoutSummariesFilteredCallCount++
         lastPagedCompletedWorkoutSummariesFilter = Triple(planId, fromEpochMillis, toEpochMillis)
+        lastPagedCompletedWorkoutSummariesSearch = searchQuery
+        val needle = searchQuery?.trim().orEmpty()
         val filtered = completedWorkoutSummaries().filter { summary ->
             val session = summary.session
+            (needle.isEmpty() || session.name.contains(needle, ignoreCase = true) ||
+                session.notes.contains(needle, ignoreCase = true)) &&
             (planId == null || session.planId == planId) &&
                 (fromEpochMillis == null || session.startTime.toEpochMillis() >= fromEpochMillis) &&
                 (toEpochMillis == null || session.startTime.toEpochMillis() < toEpochMillis)

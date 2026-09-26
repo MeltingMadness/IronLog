@@ -150,6 +150,72 @@ class ProgressionCoachLifecycleTest {
         )
     }
 
+    @Test
+    fun historyCorrectionMarksPendingSuggestionStaleAndRebuildsRecords() = runBlocking {
+        val planId = trainingPlanRepository.savePlan(linearPlan(weightKg = 100.0, stepKg = 2.5))
+        val sessionId = workoutRepository.startWorkout("History correction", planId, null)
+        val source = database.progressionDao().getTargetsForSession(sessionId).single()
+        val setIds = (1..3).map { setNumber ->
+            workoutRepository.addSet(
+                workoutSet(sessionId, source.exerciseId, setNumber, reps = 8, weightKg = 100.0, snapshotId = source.id)
+            )
+        }
+        workoutRepository.finishWorkout(sessionId)
+        progressionRepository.generateOutcomesForSession(sessionId)
+        assertEquals(
+            ProgressionSuggestionStatus.PENDING,
+            progressionRepository.observeReviewItems(sessionId).first().single().status
+        )
+
+        // Active-session mutations stay locked for completed workouts.
+        val stored = database.workoutSetDao().getSetsForSessionList(sessionId).first().toDomain()
+        assertEquals(true, runCatching { workoutRepository.updateSet(stored.copy(reps = 5)) }.isFailure)
+
+        workoutRepository.updateCompletedSet(stored.copy(weightKg = 110.0))
+
+        assertEquals(
+            ProgressionSuggestionStatus.STALE,
+            progressionRepository.observeReviewItems(sessionId).first().single().status
+        )
+        val maxWeight = database.personalRecordDao().getRecordsForExercisesList(listOf(exerciseId))
+            .single { it.type == "MAX_WEIGHT" }
+        assertEquals(110.0, maxWeight.value, 0.0)
+
+        workoutRepository.deleteCompletedSet(setIds.first())
+        val maxAfterDelete = database.personalRecordDao().getRecordsForExercisesList(listOf(exerciseId))
+            .single { it.type == "MAX_WEIGHT" }
+        assertEquals(100.0, maxAfterDelete.value, 0.0)
+        assertEquals(2, database.workoutSetDao().getSetsForSessionList(sessionId).size)
+
+        workoutRepository.updateSessionNotes(sessionId, "  Knie ok  ")
+        assertEquals("Knie ok", database.workoutSessionDao().getSessionById(sessionId)?.notes)
+    }
+
+    @Test
+    fun historySearchMatchesNotesPlanAndExerciseNamesLiterally() = runBlocking {
+        val planId = trainingPlanRepository.savePlan(linearPlan(weightKg = 100.0, stepKg = 2.5))
+        val sessionId = workoutRepository.startWorkout("Montag", planId, null)
+        val source = database.progressionDao().getTargetsForSession(sessionId).single()
+        workoutRepository.addSet(workoutSet(sessionId, source.exerciseId, 1, reps = 5, weightKg = 90.0, snapshotId = source.id))
+        workoutRepository.finishWorkout(sessionId)
+        workoutRepository.updateSessionNotes(sessionId, "100% gegeben")
+
+        suspend fun search(query: String): List<Long> {
+            val pattern = com.ironlog.app.data.repository.historySearchPattern(query)
+            val result = database.workoutSessionDao()
+                .getPagedCompletedSessionsWithSetsFiltered(null, null, null, pattern)
+                .load(androidx.paging.PagingSource.LoadParams.Refresh(null, 20, false))
+            return (result as androidx.paging.PagingSource.LoadResult.Page).data.map { it.session.id }
+        }
+
+        assertEquals(listOf(sessionId), search("lifecycle squat"))
+        assertEquals(listOf(sessionId), search("Linear"))
+        assertEquals(listOf(sessionId), search("100%"))
+        assertEquals(emptyList<Long>(), search("50%"))
+        assertEquals(emptyList<Long>(), search("Kreuzheben"))
+        assertEquals(listOf(sessionId), search("   "))
+    }
+
     private fun linearPlan(weightKg: Double, stepKg: Double) = TrainingPlan(
         name = "Linear lifecycle",
         exercises = listOf(

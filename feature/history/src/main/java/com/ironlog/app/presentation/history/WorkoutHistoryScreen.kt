@@ -29,6 +29,10 @@ import androidx.compose.material3.AlertDialog
 import com.ironlog.app.presentation.common.HistorySkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -132,6 +136,10 @@ fun WorkoutHistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            HistorySearchField(
+                query = state.filter.query,
+                onQueryChange = viewModel::setSearchQuery
+            )
             HistoryFilterBar(
                 filter = state.filter,
                 plans = state.plans,
@@ -242,6 +250,35 @@ fun WorkoutHistoryScreen(
             )
         }
     }
+}
+
+@Composable
+private fun HistorySearchField(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
+    val dims = ironLogDimens
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+        placeholder = { Text(stringResource(HistoryR.string.history_search_placeholder)) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(HistoryR.string.history_search_clear)
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = MaterialTheme.shapes.large
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

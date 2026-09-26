@@ -13,6 +13,7 @@ import com.ironlog.app.data.local.dao.WorkoutSetDao
 import com.ironlog.app.data.local.entity.EpochConverter
 import com.ironlog.app.data.local.entity.PersonalRecordEntity
 import com.ironlog.app.data.local.entity.ProgressionTargetColumns
+import com.ironlog.app.domain.model.ProgressionSuggestionStatus
 import com.ironlog.app.data.local.entity.WorkoutPlanTargetEntity
 import com.ironlog.app.data.local.entity.WorkoutSessionEntity
 import com.ironlog.app.data.local.entity.WorkoutSetEntity
@@ -221,6 +222,77 @@ class WorkoutRepositoryImpl(
         }
     }
 
+    override suspend fun updateCompletedSet(set: WorkoutSet, intention: SetIntention?) {
+        transactionRunner.runInTransaction {
+            WorkoutNumericValidation.requireValidWorkoutSet(set)
+            val stored = setDao.getSetById(set.id)
+                ?: throw IllegalStateException("Workout set ${set.id} does not exist")
+            requireCompletedSession(stored.sessionId)
+            val updated = WorkoutSetEntity.fromDomain(set)
+            check(
+                updated.sessionId == stored.sessionId &&
+                    updated.exerciseId == stored.exerciseId &&
+                    updated.setNumber == stored.setNumber &&
+                    updated.setType == stored.setType &&
+                    updated.completedAt == stored.completedAt &&
+                    updated.planTargetSnapshotId == stored.planTargetSnapshotId
+            ) {
+                "Workout set identity fields cannot be changed"
+            }
+            setDao.update(updated)
+            applySetIntention(updated.id, intention)
+            if (updated != stored) markPendingSuggestionsStale(stored.sessionId)
+            recalculatePersonalRecords(stored.exerciseId)
+        }
+    }
+
+    override suspend fun deleteCompletedSet(setId: Long) {
+        transactionRunner.runInTransaction {
+            val stored = setDao.getSetById(setId) ?: return@runInTransaction
+            requireCompletedSession(stored.sessionId)
+            setDao.deleteSet(setId)
+            readinessRepository?.pruneSetIntentions(listOf(setId))
+            markPendingSuggestionsStale(stored.sessionId)
+            recalculatePersonalRecords(stored.exerciseId)
+        }
+    }
+
+    override suspend fun updateSessionNotes(sessionId: Long, notes: String) {
+        transactionRunner.runInTransaction {
+            val session = sessionDao.getSessionById(sessionId)
+                ?: throw IllegalStateException("Workout session $sessionId does not exist")
+            val trimmed = notes.trim()
+            if (session.notes != trimmed) sessionDao.update(session.copy(notes = trimmed))
+        }
+    }
+
+    private suspend fun requireCompletedSession(sessionId: Long): WorkoutSessionEntity {
+        val session = sessionDao.getSessionById(sessionId)
+        check(session != null && session.endTime != null) {
+            "Workout session $sessionId is not completed"
+        }
+        return session
+    }
+
+    /**
+     * A corrected history no longer matches what the coach evaluated, so open suggestions
+     * from that session must not be applied. Same rule as the shared store: decided rows stay
+     * untouched, pending rows become STALE and stay visible as history.
+     */
+    private suspend fun markPendingSuggestionsStale(sessionId: Long) {
+        val now = System.currentTimeMillis()
+        progressionDao.getPendingSuggestions()
+            .filter { it.sourceSessionId == sessionId }
+            .forEach { row ->
+                progressionDao.updateSuggestion(
+                    row.copy(
+                        status = ProgressionSuggestionStatus.STALE.name,
+                        decidedAtEpochMillis = maxOf(now, row.createdAtEpochMillis)
+                    )
+                )
+            }
+    }
+
     override suspend fun deleteSet(setId: Long) {
         transactionRunner.runInTransaction {
             val stored = setDao.getSetById(setId) ?: return@runInTransaction
@@ -296,15 +368,18 @@ class WorkoutRepositoryImpl(
     override fun getPagedCompletedWorkoutSummaries(
         planId: Long?,
         fromEpochMillis: Long?,
-        toEpochMillis: Long?
+        toEpochMillis: Long?,
+        searchQuery: String?
     ): Flow<PagingData<CompletedWorkoutSummary>> {
+        val searchPattern = historySearchPattern(searchQuery)
         return Pager(
             config = PagingConfig(pageSize = 20, enablePlaceholders = false),
             pagingSourceFactory = {
                 sessionDao.getPagedCompletedSessionsWithSetsFiltered(
                     planId = planId,
                     fromEpochMillis = fromEpochMillis,
-                    toEpochMillis = toEpochMillis
+                    toEpochMillis = toEpochMillis,
+                    searchPattern = searchPattern
                 )
             }
         ).flow.map { pagingData ->
@@ -504,4 +579,18 @@ class WorkoutRepositoryImpl(
         sessionDao.observeLastSessionPerMetaPlanSubPlan().map { rows ->
             rows.map { com.ironlog.app.domain.model.LastMetaPlanSession(it.planId, it.metaPlanId, it.lastStartTime) }
         }
+}
+
+/**
+ * Turns user text into a LIKE pattern for the history search. `%`, `_` and the escape
+ * character itself are escaped so they match literally; blank input means no filter.
+ */
+fun historySearchPattern(query: String?): String? {
+    val trimmed = query?.trim().orEmpty()
+    if (trimmed.isEmpty()) return null
+    val escaped = trimmed
+        .replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    return "%$escaped%"
 }

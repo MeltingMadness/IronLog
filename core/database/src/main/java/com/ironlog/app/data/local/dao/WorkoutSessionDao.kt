@@ -51,13 +51,28 @@ interface WorkoutSessionDao {
           AND (:planId IS NULL OR planId = :planId)
           AND (:fromEpochMillis IS NULL OR startTime >= :fromEpochMillis)
           AND (:toEpochMillis IS NULL OR startTime < :toEpochMillis)
+          AND (
+            :searchPattern IS NULL
+            OR name LIKE :searchPattern ESCAPE '\'
+            OR notes LIKE :searchPattern ESCAPE '\'
+            OR EXISTS (
+              SELECT 1 FROM training_plans p
+              WHERE p.id = workout_sessions.planId AND p.name LIKE :searchPattern ESCAPE '\'
+            )
+            OR EXISTS (
+              SELECT 1 FROM workout_sets s JOIN exercises e ON e.id = s.exerciseId
+              WHERE s.sessionId = workout_sessions.id
+                AND (e.name LIKE :searchPattern ESCAPE '\' OR e.notes LIKE :searchPattern ESCAPE '\')
+            )
+          )
         ORDER BY startTime DESC
         """
     )
     fun getPagedCompletedSessionsWithSetsFiltered(
         planId: Long?,
         fromEpochMillis: Long?,
-        toEpochMillis: Long?
+        toEpochMillis: Long?,
+        searchPattern: String?
     ): PagingSource<Int, SessionWithSets>
 
     @Query("SELECT * FROM workout_sessions ORDER BY id ASC")

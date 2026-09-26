@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -34,10 +36,12 @@ enum class HistoryTimeRange {
 
 data class HistoryFilter(
     val planId: Long? = null,
-    val timeRange: HistoryTimeRange = HistoryTimeRange.ALL_TIME
+    val timeRange: HistoryTimeRange = HistoryTimeRange.ALL_TIME,
+    /** Free text over training name, note, plan and exercise names. */
+    val query: String = ""
 ) {
     val isActive: Boolean
-        get() = planId != null || timeRange != HistoryTimeRange.ALL_TIME
+        get() = planId != null || timeRange != HistoryTimeRange.ALL_TIME || query.isNotBlank()
 
     fun fromEpochMillis(now: LocalDateTime = LocalDateTime.now()): Long? =
         timeRange.fromEpochMillis(now)
@@ -89,11 +93,16 @@ class WorkoutHistoryViewModel(
      * page of the unfiltered history.
      */
     val pagedWorkouts: Flow<PagingData<WorkoutHistoryItem>> = filter
+        // Typing should not rebuild the PagingSource for every keystroke.
+        .debounce { if (it.query.isBlank()) 0L else SEARCH_DEBOUNCE_MILLIS }
+        .map { it.copy(query = it.query.trim()) }
+        .distinctUntilChanged()
         .flatMapLatest { selected ->
             workoutRepository.getPagedCompletedWorkoutSummaries(
                 planId = selected.planId,
                 fromEpochMillis = selected.fromEpochMillis(),
-                toEpochMillis = null
+                toEpochMillis = null,
+                searchQuery = selected.query.ifBlank { null }
             )
         }
         .map { pagingData ->
@@ -136,6 +145,11 @@ class WorkoutHistoryViewModel(
         _uiState.update { it.copy(filter = filter.value) }
     }
 
+    fun setSearchQuery(query: String) {
+        filter.update { it.copy(query = query) }
+        _uiState.update { it.copy(filter = filter.value) }
+    }
+
     fun deleteSession(sessionId: Long) {
         viewModelScope.launch {
             try {
@@ -148,5 +162,9 @@ class WorkoutHistoryViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    private companion object {
+        const val SEARCH_DEBOUNCE_MILLIS = 300L
     }
 }

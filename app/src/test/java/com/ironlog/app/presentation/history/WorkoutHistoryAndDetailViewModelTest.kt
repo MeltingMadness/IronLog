@@ -72,35 +72,81 @@ class WorkoutHistoryAndDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    @Test
-    fun `historical intention edits preserve completed workout values and reject foreign set ids`() = runTest {
+    private fun completedSessionWithSet(): WorkoutSet {
         val now = LocalDateTime.now()
         val set = WorkoutSet(id = 101L, sessionId = 7L, exerciseId = 1L, setNumber = 1, reps = 8, weightKg = 80.0, completedAt = now.minusDays(1))
         workoutRepo.addSession(WorkoutSession(id = 7L, startTime = now.minusDays(1), endTime = now), isActive = false)
         workoutRepo.addSetDirectly(set)
-        every { readinessRepo.observeSetIntentions() } returns flowOf(mapOf(101L to SetIntention.PLANNED_FAILURE))
-        val vm = WorkoutDetailViewModel(SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo)
+        return set
+    }
+
+    private fun detailViewModel() = WorkoutDetailViewModel(
+        SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo
+    )
+
+    @Test
+    fun `updateSet korrigiert Werte eines abgeschlossenen Trainings und laedt neu`() = runTest {
+        val set = completedSessionWithSet()
+        val vm = detailViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
-        assertEquals(SetIntention.PLANNED_FAILURE, vm.uiState.value.setIntentions[101L])
-        vm.updateSetIntention(999L, SetIntention.UNKNOWN)
-        vm.updateSetIntention(101L, SetIntention.UNKNOWN)
+        var saved = false
+
+        vm.updateSet(set.id, reps = 10, weightKg = 82.5, rpe = 8.0, intention = SetIntention.PLANNED_FAILURE) { saved = true }
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 0) { readinessRepo.setSetIntention(999L, any(), any()) }
-        coVerify(exactly = 1) { readinessRepo.setSetIntention(101L, SetIntention.UNKNOWN, any()) }
-        assertEquals(set, workoutRepo.getSetsForSessionList(7L).single())
-        assertEquals(now, workoutRepo.getSessionById(7L)?.endTime)
+
+        assertTrue(saved)
+        val stored = workoutRepo.getSetsForSessionList(7L).single()
+        assertEquals(10, stored.reps)
+        assertEquals(82.5, stored.weightKg, 0.0)
+        assertEquals(8.0, stored.rpe!!, 0.0)
+        assertEquals(set.completedAt, stored.completedAt)
+        assertEquals(SetIntention.PLANNED_FAILURE, workoutRepo.intentionFor(set.id))
+        assertEquals(10, vm.uiState.value.exercises.single().sets.single().reps)
+        assertFalse(vm.uiState.value.editSaving)
     }
 
     @Test
-    fun `failed intention load stays visible and prevents overwriting unknown data`() = runTest {
-        every { readinessRepo.observeSetIntentions() } returns flow { throw IllegalStateException("corrupt") }
-        val vm = WorkoutDetailViewModel(SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo)
+    fun `updateSet ignoriert fremde Satz-IDs und meldet Fehler bei ungueltigen Werten`() = runTest {
+        val set = completedSessionWithSet()
+        val vm = detailViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
-        assertFalse(vm.uiState.value.intentionsLoaded)
-        assertTrue(vm.uiState.value.intentionError != null)
-        vm.updateSetIntention(101L, SetIntention.UNKNOWN)
+
+        vm.updateSet(999L, reps = 5, weightKg = 50.0, rpe = null, intention = null)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 0) { readinessRepo.setSetIntention(any(), any(), any()) }
+        assertEquals(set, workoutRepo.getSetsForSessionList(7L).single())
+
+        vm.updateSet(set.id, reps = -1, weightKg = 50.0, rpe = null, intention = null)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(set, workoutRepo.getSetsForSessionList(7L).single())
+        assertTrue(vm.uiState.value.editError != null)
+    }
+
+    @Test
+    fun `deleteSet entfernt den Satz aus Training und Ansicht`() = runTest {
+        val set = completedSessionWithSet()
+        val vm = detailViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.deleteSet(set.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(workoutRepo.getSetsForSessionList(7L).isEmpty())
+        assertTrue(vm.uiState.value.exercises.isEmpty())
+    }
+
+    @Test
+    fun `updateNotes speichert getrimmt und leerer Text loescht die Notiz`() = runTest {
+        completedSessionWithSet()
+        val vm = detailViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.updateNotes("  Schulter gezwickt  ")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("Schulter gezwickt", vm.uiState.value.session?.notes)
+
+        vm.updateNotes("")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals("", workoutRepo.getSessionById(7L)?.notes)
     }
 
     @Test
