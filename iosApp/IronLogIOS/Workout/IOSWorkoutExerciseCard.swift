@@ -169,7 +169,7 @@ private struct IOSWorkoutSetRow: View {
                 .frame(width: 58, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(set.reps) × \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem))")
+                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
                     .font(.body.weight(.medium))
                 if let intensity = iosWorkoutFormatIntensity(storedRPE: set.rpe, intensitySystem: intensitySystem) {
                     Text("\(intensitySystem.uppercased()) \(intensity)")

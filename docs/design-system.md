@@ -47,8 +47,18 @@ Neue Abstände und Größen gehören in die Tokens, nicht als feste `dp`-Werte i
 
 - `Modifier.glassmorphism()` (`theme/Glassmorphism.kt`): halbtransparente Karte mit Tönung in der Primärfarbe des aktiven Schemas und Glanzkante. Dazu `Modifier.glow()`.
 - `IronLogSurfaceCard` mit den Tönen `ELEVATED`, `MUTED`, `ACCENT`, `COLORED`
-- `StatCard` mit den Varianten `PRIMARY`, `SECONDARY`, `TERTIARY`
+- `StatCard` mit den Varianten `PRIMARY`, `SECONDARY`, `TERTIARY`. Kacheln einer Gruppe nutzen dieselbe Variante und gleiche Höhe (Übungsstatistik: Standardvariante in `IntrinsicSize.Min`-Zeilen).
 - `IronLogScreenScaffold`: gemeinsames Gerüst für alle Screens
+
+## Zahlen und Texte
+
+Gilt für Android und iOS gleich:
+
+- Deutsches Zahlenformat: „82,5 kg“, „12.305 kg“, nie „80.0“. Android: `WeightFormatting` (Eingabefelder ohne Tausenderpunkt über `formatInputNumber`). iOS: `iosWorkoutDecimal`, `IOSNumber.format`, `ilWeightText`.
+- Sätze einheitlich als „82,5 kg × 8 Wdh“. 0 kg wird als „Körpergewicht“ angezeigt.
+- Mengen mit passender Einzahl/Mehrzahl („1 Training“, „3 Trainings“). Android: `plurals`-Ressourcen. iOS: `ilCount(_:_:_:)`.
+- Umlaute in allen Anzeigenamen, keine zusätzlichen Häkchen oder Pfeile in Button-Texten. Unbekannte Werte (z. B. Satzabsicht „Nicht angegeben“) werden nicht als Daten angezeigt.
+- Links unter Kartentext stehen bündig mit dem Text (`TextButton` um die Innenpolsterung versetzt).
 
 ## Gemeinsame Komponenten (`presentation/common`)
 

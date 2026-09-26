@@ -59,7 +59,7 @@ struct IOSWorkoutCompletionScreen: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(row.exercise.name).font(.headline)
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
-                            Text("Satz \(set.setNumber) · \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").font(.subheadline).monospacedDigit()
+                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))").font(.subheadline).monospacedDigit()
                         }
                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
                         .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))

@@ -143,7 +143,6 @@ data class DashboardUiState(
     val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
-    val muscleHeatmap: Map<MuscleGroup, Int> = emptyMap(),
     val weeklyVolume: List<Pair<String, Double>> = emptyList(),
     val weeklyMuscleVolume: DashboardWeeklyMuscleVolumeState = DashboardWeeklyMuscleVolumeState(),
     val pendingProgressionCount: Int = 0,
@@ -675,24 +674,6 @@ class DashboardViewModel(
                     workoutRepository.getExerciseIdsForSession(lastWorkout.id).size
                 } else 0
 
-                val weekSets = statisticsRepository.getWorkSetsCompletedBetween(
-                    startOfWeekMillis,
-                    nowEpochMillis
-                )
-                val exerciseMap = exerciseRepository
-                    .getExercisesByIds(weekSets.map { it.exerciseId }.distinct())
-                    .associateBy { it.id }
-
-                val heatmap = mutableMapOf<MuscleGroup, Int>()
-                for (set in weekSets) {
-                    val exercise = exerciseMap[set.exerciseId] ?: continue
-                    heatmap[exercise.primaryMuscleGroup] =
-                        (heatmap[exercise.primaryMuscleGroup] ?: 0) + 1
-                    for (secondary in exercise.secondaryMuscleGroups) {
-                        heatmap[secondary] = (heatmap[secondary] ?: 0) + 1
-                    }
-                }
-
                 // Build a fixed, chronological eight-week window. The bins are
                 // derived from the configured week anchor instead of from the
                 // sets that happen to exist, so an empty week remains visible
@@ -763,7 +744,6 @@ class DashboardViewModel(
                         recentRecords = recordsWithNames,
                         lastWorkout = lastWorkout,
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,
-                        muscleHeatmap = heatmap,
                         weeklyVolume = volumeByWeek,
                         weeklyMuscleVolume = weeklyState,
                         deload = deload,

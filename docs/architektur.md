@@ -16,7 +16,7 @@ data/                   Repository-Implementierungen, DataStore-Einstellungen, B
                         Erinnerungen (WorkManager), Incident-Reports
 feature/
   dashboard/            Home: Training starten, Plan-Auswahl, Tagesform/Bereitschaft, Deload,
-                        Wochenvolumen, Muskel-Heatmap
+                        Wochenvolumen je Muskelgruppe, Volumentrend
   workout/              Aktives Workout, Übungsauswahl, Abschlussdialog und Zusammenfassung
   plans/                Trainingspläne, Meta-Pläne, Plan-Editor inkl. Progressions-Konfiguration
   progression/          Review-Bildschirm für Progressionsvorschläge

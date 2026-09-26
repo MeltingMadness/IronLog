@@ -58,8 +58,6 @@
     <string name="dashboard_greeting_evening">Guten Abend</string>
     <string name="dashboard_greeting_late">Noch wach?</string>
 
-    <string name="dashboard_muscle_heatmap_title">Trainierte Muskeln diese Woche</string>
-    <string name="dashboard_muscle_heatmap_empty">Noch keine Sätze diese Woche. Starte ein Training!</string>
     <string name="dashboard_volume_trend_title">Volumenentwicklung (8 Wochen)</string>
     <string name="dashboard_volume_trend_current_week">Letzter Punkt = laufende Woche, bisher %1$s</string>
     <string name="dashboard_volume_trend_empty">Mindestens 2 Trainingswochen für den Trend nötig.</string>
@@ -394,7 +392,7 @@
     <string name="reminder_notification_body">Dein geplanter Trainingstag wartet auf dich.</string>
 
     <string name="dashboard_onboarding_title">Willkommen bei IronLog!</string>
-    <string name="dashboard_onboarding_body">Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, Heatmaps und Statistiken.</string>
+    <string name="dashboard_onboarding_body">Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, dein Wochenvolumen und Statistiken.</string>
     <string name="plan_selection_title">Training starten</string>
     <string name="plan_selection_free_workout">Freies Training</string>
     <string name="plan_selection_free_workout_subtitle">Ohne Vorlage trainieren</string>

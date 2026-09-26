@@ -395,12 +395,12 @@ private struct IOSProgressionTargetBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.subheadline.weight(.semibold))
-            Text("\(target.sets) Sätze × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+            Text("\(ilCount(target.sets, "Satz", "Sätze")) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
                 .font(.body.monospacedDigit())
                 .foregroundStyle(tone.color)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(target.sets) Sätze, \(target.reps) Wiederholungen, \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+        .accessibilityLabel("\(title): \(ilCount(target.sets, "Satz", "Sätze")), \(ilCount(target.reps, "Wiederholung", "Wiederholungen")), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
     }
 }
 

@@ -11,7 +11,7 @@ Android-App zum Protokollieren von Krafttraining. Offline, lokal, deutschsprachi
 
 | Bereich | Was die App kann |
 |---|---|
-| **Home** | Training starten (Plan, Meta-Plan oder frei), Tagesform-Check-in und Trainingsbereitschaft, Deload-Hinweis und Deload-Modus (halbe Satzzahl oder −15 % Gewicht), Wochenvolumen je Muskelgruppe (MEV/MAV), Muskel-Heatmap, Hinweis auf offene Progressionsvorschläge |
+| **Home** | Training starten (Plan, Meta-Plan oder frei), Tagesform-Check-in und Trainingsbereitschaft, Deload-Hinweis und Deload-Modus (halbe Satzzahl oder −15 % Gewicht), Wochenvolumen je Muskelgruppe (MEV/MAV), Volumentrend über 8 Wochen, Hinweis auf offene Progressionsvorschläge |
 | **Aktives Workout** | Direktes Loggen mit vorbelegten Werten (Gewicht, Wdh.), aufklappbare Zusatzangaben (RPE/RIR, Satztyp, Satzintention, Scheibenrechner), Satztypen Normal/Aufwärm/Drop/Versagen, Pausen-Timer, Supersätze, Mehrfachauswahl beim Hinzufügen von Übungen, Live-Erkennung von Rekorden, Teilabschluss mit offenen Sätzen und Zusammenfassung |
 | **Pläne** | Trainingspläne mit Zielwerten und optional individuellen Satzvorgaben pro Übung, Meta-Pläne (Rotation über Teilpläne, inkl. „Überspringen“), Progressionsschema pro Planübung |
 | **Progressions-Coach** | Nach dem Workout: Vorschläge für neue Zielwerte, die erst nach Bestätigung in den Plan übernommen werden |

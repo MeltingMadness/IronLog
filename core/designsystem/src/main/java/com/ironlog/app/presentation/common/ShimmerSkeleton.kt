@@ -95,7 +95,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
                 )
             }
         }
-        // Heatmap placeholder
+        // Weekly volume placeholder
         Box(
             modifier = Modifier
                 .fillMaxWidth()
