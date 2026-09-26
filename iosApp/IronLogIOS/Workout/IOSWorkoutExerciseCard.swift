@@ -14,6 +14,7 @@ struct IOSWorkoutExerciseCard: View {
 
     @Environment(\.ironLogTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.ironLogAppearance) private var appearance
 
     var body: some View {
         let palette = theme.palette(for: colorScheme)
@@ -129,7 +130,11 @@ struct IOSWorkoutExerciseCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(palette.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .modifier(IOSWorkoutCardSurface(
+            liquidGlass: appearance == .liquidGlass,
+            open: row.target == nil || !row.isComplete,
+            ember: palette.surface
+        ))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(
@@ -145,6 +150,21 @@ struct IOSWorkoutExerciseCard: View {
                     .padding(.vertical, 5)
                     .padding(.leading, 1)
             }
+        }
+    }
+}
+
+/// Ember: plain surface. Liquid Glass: glass, the open exercise on the strong level.
+private struct IOSWorkoutCardSurface: ViewModifier {
+    let liquidGlass: Bool
+    let open: Bool
+    let ember: Color
+
+    func body(content: Content) -> some View {
+        if liquidGlass {
+            content.liquidGlass(open ? .strong : .standard, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        } else {
+            content.background(ember, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
     }
 }
@@ -214,6 +234,7 @@ private struct IOSWorkoutSetRow: View {
 
 private struct IOSWorkoutInlineSetEntry: View {
     @EnvironmentObject private var settings: IOSSettingsViewModel
+    @Environment(\.ironLogAppearance) private var appearance
     let row: IOSWorkoutExerciseRow
     let sessionID: Int64
     let unitSystem: String
@@ -239,6 +260,104 @@ private struct IOSWorkoutInlineSetEntry: View {
         return row.target == nil ? "Werte für diesen Satz" : "Werte aus dem Plan · editierbar"
     }
     var body: some View {
+        if appearance == .liquidGlass {
+            glassBody
+        } else {
+            emberBody
+        }
+    }
+
+    private var intensityScale: String {
+        iosWorkoutEffectiveIntensitySystem(configuredSystem: settings.state.intensitySystem, planTarget: row.target)
+    }
+
+    private var weightStep: Double { unitSystem.uppercased() == "IMPERIAL" ? 5 : 2.5 }
+
+    private func adjustWeight(_ delta: Double) {
+        let current = IOSNumber.parse(weight) ?? 0
+        weight = IOSNumber.format(max(0, ((current + delta) * 100).rounded() / 100))
+    }
+
+    private func adjustReps(_ delta: Int) {
+        let next = max(0, (IOSNumber.parseInt(reps) ?? 0) + delta)
+        reps = next > 0 ? String(next) : ""
+    }
+
+    /// Liquid Glass: large steppers, intensity as a visible bar, bright confirm pill.
+    /// Same state and the same `save()` as the Ember entry.
+    private var glassBody: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Satz \(row.nextSetNumber)").font(.headline)
+                Spacer()
+                Text(source).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            HStack(spacing: 10) {
+                let stepText = IOSNumber.format(weightStep)
+                IOSWorkoutGlassStepper(
+                    label: "Gewicht",
+                    text: $weight,
+                    unit: IOSWeight.label(unitSystem),
+                    keyboard: .decimalPad,
+                    decreaseLabel: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) verringern",
+                    increaseLabel: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) erhöhen",
+                    onDecrease: { adjustWeight(-weightStep) },
+                    onIncrease: { adjustWeight(weightStep) }
+                )
+                IOSWorkoutGlassStepper(
+                    label: "Wiederholungen",
+                    text: $reps,
+                    unit: nil,
+                    keyboard: .numberPad,
+                    decreaseLabel: "Wiederholungen verringern",
+                    increaseLabel: "Wiederholungen erhöhen",
+                    onDecrease: { adjustReps(-1) },
+                    onIncrease: { adjustReps(1) }
+                )
+            }
+            if intensityScale != "OFF" {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("ANSTRENGUNG · \(intensityScale)")
+                        .font(.caption2.weight(.bold))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                    IOSWorkoutGlassIntensityBar(
+                        options: intensityScale == "RIR"
+                            ? ["0", "1", "2", "3", "4"]
+                            : ["7", "7,5", "8", "8,5", "9", "9,5", "10"],
+                        selection: $intensity
+                    )
+                }
+            }
+            DisclosureGroup("Satztyp · Absicht") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Picker("Satztyp", selection: $kind) {
+                        ForEach(IOSWorkoutSetType.allCases) { kind in Text(kind.displayName).tag(kind) }
+                    }
+                    Picker("Absicht", selection: $intention) {
+                        Text("Nicht angegeben").tag(ILSetIntention.unknown)
+                        Text("Geplant bis zum Versagen").tag(ILSetIntention.plannedFailure)
+                        Text("Ziel unerwartet verfehlt").tag(ILSetIntention.unexpectedTargetMiss)
+                    }
+                    if settings.state.plateCalculatorEnabled, let value = IOSNumber.parse(weight) {
+                        IOSWorkoutPlateVisualizer(targetWeightKg: IOSWeight.kilograms(value: value, unit: unitSystem), barbellWeightKg: settings.state.barbellWeightKg, availablePlates: settings.state.availablePlates, unitSystem: unitSystem)
+                    }
+                }.padding(.top, 8)
+            }.font(.subheadline)
+            if let error { Text(error).font(.caption).foregroundStyle(.red) }
+            Button { Task { await save() } } label: {
+                Text(busy ? "Speichert …" : "Satz \(row.nextSetNumber) loggen")
+            }
+            .buttonStyle(IOSWorkoutGlassPrimaryButtonStyle())
+            .disabled(busy)
+            if row.loggingSlots.count > 0 {
+                let open = max(0, (row.remainingPlannedSets ?? 0) - 1)
+                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.caption).foregroundStyle(.secondary) }
+            }
+        }
+    }
+
+    private var emberBody: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Satz \(row.nextSetNumber)").font(.headline)
             Text(source).font(.caption).foregroundStyle(.tint)
