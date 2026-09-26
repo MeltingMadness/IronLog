@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -92,10 +93,12 @@ internal fun ActiveSetCockpitCard(
     haptic: com.ironlog.app.presentation.common.HapticFeedbackHelper,
     onLog: (Int, Double, SetType, String, Long, SetIntention?) -> Unit,
     onCancelEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val dims = ironLogDimens
-    var showDetails by remember(setNumber) { mutableStateOf(isEditMode) }
+    // Details start collapsed, also when editing, so "Satz löschen" and "Abbrechen" stay in view.
+    var showDetails by remember(setNumber) { mutableStateOf(false) }
     val tracksIntensity = intensitySystem != IntensitySystem.OFF
     val weightStep = if (unitSystem == UnitSystem.IMPERIAL) 5.0 else 2.5
     val weightStepText = WeightFormatting.formatNumber(weightStep)
@@ -251,7 +254,7 @@ internal fun ActiveSetCockpitCard(
                 )
             }
             TextButton(onClick = { showDetails = !showDetails }) {
-                Text(if (showDetails) "Details schließen" else "RPE / RIR · Satztyp · Absicht · Scheiben")
+                Text(stringResource(if (showDetails) R.string.workout_set_details_hide else R.string.workout_set_details_show))
             }
             if (showDetails) {
             // Set Type Selector (if Extra or Ad-Hoc)
@@ -351,7 +354,7 @@ internal fun ActiveSetCockpitCard(
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Text(
-                                            text = rpeStr,
+                                            text = rpeStr.replace('.', ','),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isSelected) Color.White else chipColor
@@ -539,8 +542,17 @@ internal fun ActiveSetCockpitCard(
                 val btnText = when {
                     isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
                     enteredWeight != null && enteredReps != null -> {
-                        val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
-                        stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
+                        if (enteredWeight == 0.0) {
+                            stringResource(
+                                R.string.workout_log_set_button_bodyweight,
+                                setNumber,
+                                stringResource(R.string.weight_bodyweight),
+                                enteredReps
+                            )
+                        } else {
+                            val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
+                            stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
+                        }
                     }
                     else -> stringResource(R.string.workout_log_set_button_short, setNumber)
                 }
@@ -551,12 +563,34 @@ internal fun ActiveSetCockpitCard(
                 )
             }
 
-            if (isEditMode && onCancelEdit != null) {
-                TextButton(
-                    onClick = onCancelEdit,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+            if (isEditMode && (onCancelEdit != null || onDelete != null)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(id = R.string.common_cancel))
+                    if (onDelete != null) {
+                        TextButton(onClick = onDelete, enabled = !locked) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(id = R.string.workout_delete_set_cd),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
+                    if (onCancelEdit != null) {
+                        TextButton(onClick = onCancelEdit) {
+                            Text(stringResource(id = R.string.common_cancel))
+                        }
+                    }
                 }
             }
         }

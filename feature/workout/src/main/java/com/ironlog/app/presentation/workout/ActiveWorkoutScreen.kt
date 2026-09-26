@@ -33,6 +33,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -96,17 +101,29 @@ fun ActiveWorkoutScreen(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            when (event) {
-                is WorkoutEvent.NewRecords -> {
-                    haptic.confirm()
-                    val types = event.types.joinToString(", ") { it.displayName }
-                    recordSnackbarHostState.showSnackbar(
-                        message = if (event.types.size == 1) {
-                            context.getString(R.string.workout_new_record_message, event.exerciseName, types)
-                        } else {
-                            context.getString(R.string.workout_new_records_message, event.exerciseName, types)
-                        }
-                    )
+            // Each message gets its own coroutine: a snackbar suspends until it is dismissed,
+            // and an undo offer must not wait behind a queued record message.
+            launch {
+                when (event) {
+                    is WorkoutEvent.NewRecords -> {
+                        haptic.confirm()
+                        val types = event.types.joinToString(", ") { it.displayName }
+                        recordSnackbarHostState.showSnackbar(
+                            message = if (event.types.size == 1) {
+                                context.getString(R.string.workout_new_record_message, event.exerciseName, types)
+                            } else {
+                                context.getString(R.string.workout_new_records_message, event.exerciseName, types)
+                            }
+                        )
+                    }
+                    is WorkoutEvent.SetDeleted -> {
+                        val result = recordSnackbarHostState.showSnackbar(
+                            message = context.getString(R.string.workout_set_deleted, event.setNumber),
+                            actionLabel = context.getString(R.string.common_undo),
+                            duration = SnackbarDuration.Long
+                        )
+                        if (result == SnackbarResult.ActionPerformed) viewModel.undoDeleteSet()
+                    }
                 }
             }
         }
@@ -162,7 +179,8 @@ fun ActiveWorkoutScreen(
                     TextButton(onClick = viewModel::showFinishDialog) {
                         Text(
                             text = stringResource(id = R.string.workout_finish_action),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -192,67 +210,53 @@ fun ActiveWorkoutScreen(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 activeSession?.let { session ->
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
+                    val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
+                    val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
+                    val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
+                    WorkoutHeader(
+                        startTime = session.startTime,
+                        loggedSetCount = loggedSetCount,
+                        plannedSetCount = plannedSetCount,
+                        completedPlannedSetCount = plannedSetCount - openPlannedSetCount,
+                        volumeText = WeightFormatting.formatVolume(loggedVolumeKg, preferences.unitSystem)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            WorkoutTimer(startTime = session.startTime)
-                            Spacer(Modifier.width(16.dp))
-                            val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
-                            val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
-                            Text(
-                                pluralStringResource(
-                                    R.plurals.workout_header_summary,
-                                    loggedSetCount,
-                                    loggedSetCount,
-                                    WeightFormatting.formatVolume(loggedVolumeKg, preferences.unitSystem)
-                                ),
-                                style = MaterialTheme.typography.bodySmall
+                        state.restTimers.forEach { (exerciseKey, timer) ->
+                            val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
+                            val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
+                            val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
+
+                            RestTimer(
+                                startTime = timer.startTime,
+                                durationSeconds = timer.durationSeconds.toLong(),
+                                onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
+                                onComplete = { viewModel.dismissRestTimer(exerciseKey) },
+                                titleText = exerciseWithSets?.exercise?.name,
+                                baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset)
                             )
-                        }
-
-                        AnimatedVisibility(
-                            visible = state.restTimers.isNotEmpty(),
-                            enter = fadeIn() + expandVertically(animationSpec = spring()),
-                            exit = fadeOut() + shrinkVertically(animationSpec = spring())
-                        ) {
-                            androidx.compose.foundation.layout.FlowRow(
-                                modifier = Modifier.fillMaxWidth().padding(bottom = dims.spacingMd),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
-                            ) {
-                                state.restTimers.forEach { (exerciseKey, timer) ->
-                                    val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
-                                    val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
-                                    val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
-
-                                    RestTimer(
-                                        startTime = timer.startTime,
-                                        durationSeconds = timer.durationSeconds.toLong(),
-                                        onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
-                                        onComplete = { viewModel.dismissRestTimer(exerciseKey) },
-                                        titleText = exerciseWithSets?.exercise?.name,
-                                        baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
-                                        modifier = Modifier.padding(horizontal = dims.spacingXs)
-                                    )
-                                }
-                            }
                         }
                     }
                 }
 
+                // Focus: the first exercise (and its superset group) with open plan sets is
+                // expanded; finished and upcoming planned exercises are collapsed. Ad-hoc
+                // exercises have no known end and stay expanded. A tap on the card header
+                // overrides the default for that exercise.
+                val focusGroupIndex = exerciseGroups.indexOfFirst { group ->
+                    group.exercises.any { it.planTarget != null && it.openSlotCount() > 0 }
+                }
+                var expansionOverrides by rememberSaveable { mutableStateOf(mapOf<String, Boolean>()) }
+                val listState = rememberLazyListState()
+                LaunchedEffect(focusGroupIndex) {
+                    if (focusGroupIndex > 0) listState.animateScrollToItem(focusGroupIndex)
+                }
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(dims.spacingSm),
                     contentPadding = PaddingValues(dims.spacingMd)
                 ) {
-                    items(exerciseGroups, key = { it.key }) { group ->
+                    itemsIndexed(exerciseGroups, key = { _, group -> group.key }) { groupIndex, group ->
                         Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
                             group.supersetGroupId?.let { supersetGroupId ->
                                 SupersetHeader(
@@ -264,8 +268,15 @@ fun ActiveWorkoutScreen(
                                 )
                             }
                             group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
+                                val expansionKey = exerciseWithSets.key.stableListKey()
+                                val defaultExpanded = exerciseWithSets.planTarget == null || groupIndex == focusGroupIndex
+                                val expanded = expansionOverrides[expansionKey] ?: defaultExpanded
                                 ExerciseCard(
                                     exerciseWithSets = exerciseWithSets,
+                                    expanded = expanded,
+                                    onToggleExpanded = {
+                                        expansionOverrides = expansionOverrides + (expansionKey to !expanded)
+                                    },
                                     nextSetRecommendation = state.nextSetRecommendations[exerciseWithSets.key],
                                     tintColor = supersetTintColor(group.supersetGroupId, indexInSuperset),
                                     defaultWarmupFlag = preferences.defaultWarmupFlag,

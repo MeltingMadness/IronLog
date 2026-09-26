@@ -164,4 +164,7 @@ internal data class OperationUiState(
 sealed class WorkoutEvent {
     /** All record types one mutation improved, so the UI can show them as a single message. */
     data class NewRecords(val exerciseName: String, val types: List<RecordType>) : WorkoutEvent()
+
+    /** A set was deleted; the UI offers to undo it. */
+    data class SetDeleted(val setNumber: Int) : WorkoutEvent()
 }

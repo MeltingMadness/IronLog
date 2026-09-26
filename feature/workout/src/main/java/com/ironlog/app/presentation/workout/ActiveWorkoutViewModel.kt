@@ -65,6 +65,7 @@ class ActiveWorkoutViewModel(
     private val operationState = MutableStateFlow(OperationUiState())
     private var errorSequence = 0L
     private val mutationMutex = Mutex()
+    private var lastDeletedSet: Pair<WorkoutSet, SetIntention>? = null
 
     private val sessionPhase = workoutRepository.observeSessionById(sessionId)
         .map<WorkoutSession?, ActiveWorkoutSessionPhase> { session ->
@@ -610,12 +611,37 @@ class ActiveWorkoutViewModel(
             mutationMutex.withLock {
                 if (!sessionIsMutable()) return@withLock
                 try {
+                    // Keep a copy so the snackbar can undo the deletion.
+                    val deleted = runCatching { workoutRepository.getSetsForSessionList(sessionId) }
+                        .getOrNull()
+                        ?.firstOrNull { it.id == setId }
+                    val deletedIntention = intentions.value.bySetId[setId] ?: SetIntention.UNKNOWN
                     workoutRepository.deleteSet(setId)
+                    if (deleted != null) {
+                        lastDeletedSet = deleted to deletedIntention
+                        _events.emit(WorkoutEvent.SetDeleted(deleted.setNumber))
+                    }
                 } catch (e: Exception) {
                     setError(
                         message = "Satz konnte nicht gelöscht werden: ${e.message}",
                         retry = WorkoutRetryDescriptor.DeleteSet(setId = setId)
                     )
+                }
+            }
+        }
+    }
+
+    /** Restores the set removed by the most recent [deleteSet] (snackbar "Rückgängig"). */
+    fun undoDeleteSet() {
+        viewModelScope.launch {
+            mutationMutex.withLock {
+                val (set, intention) = lastDeletedSet ?: return@withLock
+                lastDeletedSet = null
+                if (!sessionIsMutable()) return@withLock
+                try {
+                    workoutRepository.addSet(set.copy(id = 0), intention)
+                } catch (e: Exception) {
+                    setError(message = "Satz konnte nicht wiederhergestellt werden: ${e.message}")
                 }
             }
         }

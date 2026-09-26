@@ -14,6 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +52,8 @@ import com.ironlog.app.presentation.theme.semantic
 @Composable
 internal fun LoggedSetRow(
     set: com.ironlog.app.domain.model.WorkoutSet,
+    /** Position shown in the badge; plan rows pass their slot so gaps after a delete do not show. */
+    displayNumber: Int = set.setNumber,
     /**
      * Stored answer, or `null` when nothing is stored / the readiness channel was not read.
      * `null` leaves the edit sheet without a preselected chip, while [SetIntention.UNKNOWN]
@@ -88,7 +91,7 @@ internal fun LoggedSetRow(
 
     if (isEditing) {
         ActiveSetCockpitCard(
-            setNumber = set.setNumber,
+            setNumber = displayNumber,
             setType = set.setType,
             isExtraOrAdHoc = false,
             isEditMode = true,
@@ -110,14 +113,19 @@ internal fun LoggedSetRow(
             onLog = { reps, weightKg, _, intensityStr, _, chosenIntention ->
                 onUpdateSet(set.id, reps, weightKg, intensityStr, chosenIntention)
             },
-            onCancelEdit = { isEditing = false }
+            onCancelEdit = { isEditing = false },
+            onDelete = {
+                haptic.reject()
+                isEditing = false
+                onDeleteSet(set.id)
+            }
         )
     } else {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = dims.spacingXs)
-                .clickable {
+                .clickable(onClickLabel = stringResource(R.string.workout_edit_set_action)) {
                     isEditing = true
                     haptic.confirm()
                 },
@@ -143,7 +151,7 @@ internal fun LoggedSetRow(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = setTypeLabel(set.setNumber, set.setType),
+                        text = setTypeLabel(displayNumber, set.setType),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.semantic.success
@@ -157,7 +165,11 @@ internal fun LoggedSetRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "$weightText ${WeightFormatting.unitLabel(unitSystem)} × ${set.reps} ${stringResource(R.string.common_reps_short)}",
+                            text = if (set.weightKg == 0.0) {
+                                "${stringResource(R.string.weight_bodyweight)} × ${set.reps} ${stringResource(R.string.common_reps_short)}"
+                            } else {
+                                "$weightText ${WeightFormatting.unitLabel(unitSystem)} × ${set.reps} ${stringResource(R.string.common_reps_short)}"
+                            },
                             style = AthleticNumber,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -211,29 +223,14 @@ internal fun LoggedSetRow(
                     }
                 }
 
-                // Success checkmark icon
+                // Tapping the row edits the set (delete lives in edit mode).
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Icons.Default.Edit,
                     contentDescription = null,
-                    tint = MaterialTheme.semantic.success,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.size(18.dp)
                 )
 
-                // Delete button
-                IconButton(
-                    onClick = {
-                        haptic.reject()
-                        onDeleteSet(set.id)
-                    },
-                    modifier = Modifier.size(ButtonSize.iconButton)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(id = R.string.workout_delete_set_cd),
-                        tint = MaterialTheme.semantic.danger.copy(alpha = 0.75f),
-                        modifier = Modifier.size(IconSize.sm)
-                    )
-                }
             }
         }
     }

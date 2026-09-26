@@ -371,7 +371,7 @@ class NavigationSmokeTest {
         composeRule.waitForIdle()
         composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performScrollTo().performClick()
         waitOrDump(30_000L) {
-            composeRule.onAllNodes(hasText("1 Satz ·", substring = true)).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("1 Satz").fetchSemanticsNodes().isNotEmpty()
         }
 
         // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen

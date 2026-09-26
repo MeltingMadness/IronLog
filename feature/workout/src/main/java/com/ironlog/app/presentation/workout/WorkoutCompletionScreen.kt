@@ -100,7 +100,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(row.exercise.name, style = MaterialTheme.typography.titleMedium)
-                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(stringResource(R.string.workout_summary_set_line, set.setNumber, formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
+                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(stringResource(R.string.workout_summary_set_line, set.setNumber, if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
                 } }
             }
             if (session.planId != null && rows.any { it.planTarget != null }) {
