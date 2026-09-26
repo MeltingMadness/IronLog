@@ -61,6 +61,7 @@
 		DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */; };
 		E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */; };
 		38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */; };
+		72C2A93286ED7B7A1082E4A1 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */; };
 		EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */; };
 		F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */; };
 /* End PBXBuildFile section */
@@ -90,6 +91,7 @@
 		6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
 		6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDayGuardTests.swift; sourceTree = "<group>"; };
 		9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWeekStripTests.swift; sourceTree = "<group>"; };
+		153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerAdjustTests.swift; sourceTree = "<group>"; };
 		7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRestTimerPersistenceTests.swift; sourceTree = "<group>"; };
 		7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
 		89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogWeeklyMuscleVolume.swift; sourceTree = "<group>"; };
@@ -289,6 +291,7 @@
 			447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */,
 			6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */,
 			9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */,
+			153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */,
 			9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */,
 			E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */,
 			90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */,
@@ -479,6 +482,7 @@
 				4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */, 
 				E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */, 
 				38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */,
+				72C2A93286ED7B7A1082E4A1 /* RestTimerAdjustTests.swift in Sources */,
 				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
 				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
 				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 

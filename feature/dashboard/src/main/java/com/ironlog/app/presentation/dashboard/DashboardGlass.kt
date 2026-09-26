@@ -134,6 +134,7 @@ internal fun GlassGreetingHeader(
 @Composable
 internal fun GlassCommandCenterCard(
     hasActiveSession: Boolean,
+    activeSessionName: String?,
     recommended: DashboardRecommendedPlan?,
     unitSystem: UnitSystem,
     exerciseNames: Map<Long, String>,
@@ -178,7 +179,8 @@ internal fun GlassCommandCenterCard(
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             val title = when {
-                hasActiveSession -> stringResource(R.string.dashboard_command_title)
+                hasActiveSession -> activeSessionName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.workout_title_default)
                 recommended != null -> recommended.plan.name
                 else -> stringResource(R.string.dashboard_command_title)
             }

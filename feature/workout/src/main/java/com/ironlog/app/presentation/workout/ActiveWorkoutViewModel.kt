@@ -533,6 +533,18 @@ class ActiveWorkoutViewModel(
         }
     }
 
+    /** Lengthens or shortens a running countdown (Liquid Glass pause: "−15 s" / "+30 s"). */
+    fun adjustRestTimer(key: WorkoutExerciseKey, deltaSeconds: Int) {
+        viewModelScope.launch {
+            mutationMutex.withLock {
+                restTimers.replace { current ->
+                    val timer = current[key] ?: return@replace current
+                    current + (key to timer.adjustedBy(deltaSeconds, Instant.now()))
+                }
+            }
+        }
+    }
+
     private fun effectiveIntensitySystem(
         configured: IntensitySystem,
         key: WorkoutExerciseKey
