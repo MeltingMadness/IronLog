@@ -58,6 +58,7 @@ import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import kotlinx.coroutines.Dispatchers
@@ -327,7 +328,11 @@ fun ExerciseStatsScreen(
                                             )
                                         )
                                     ),
-                                    startAxis = VerticalAxis.rememberStart(),
+                                    startAxis = VerticalAxis.rememberStart(
+                            valueFormatter = CartesianValueFormatter { _, value, _ ->
+                                WeightFormatting.formatNumber(value, 1)
+                            }
+                        ),
                                     bottomAxis = HorizontalAxis.rememberBottom(),
                                 ),
                                 modelProducer = modelProducer,

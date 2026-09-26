@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -112,8 +113,9 @@ fun WeeklyMuscleVolumeCard(
 
             if (!isLoading && error == null && completedWorkoutCount != null) {
                 Text(
-                    text = stringResource(
-                        id = R.string.stats_weekly_volume_summary,
+                    text = pluralStringResource(
+                        R.plurals.stats_weekly_volume_summary,
+                        completedWorkoutCount,
                         formatSets(volumes.sumOf { it.weeklySets }),
                         completedWorkoutCount
                     ),

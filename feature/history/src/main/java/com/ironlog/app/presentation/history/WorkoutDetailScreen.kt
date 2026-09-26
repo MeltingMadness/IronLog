@@ -89,10 +89,10 @@ fun WorkoutDetailScreen(
     intentionSetId?.let { setId ->
         AlertDialog(
             onDismissRequest = { if (!state.intentionSaving) intentionSetId = null },
-            title = { Text("Satzabsicht") },
+            title = { Text(stringResource(R.string.workout_detail_intention_dialog_title)) },
             text = {
                 Column {
-                    Text("Optional. Beschreibt, warum der Satz so endete. Die Trainingswerte bleiben erhalten.")
+                    Text(stringResource(R.string.workout_detail_intention_dialog_text))
                     state.intentionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     SetIntention.entries.forEach { value ->
                         TextButton(
@@ -101,12 +101,13 @@ fun WorkoutDetailScreen(
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                         ) {
                             val current = state.setIntentions[setId] ?: SetIntention.UNKNOWN
-                            Text((if (current == value) "✓ " else "") + historyIntentionLabel(value))
+                            val label = stringResource(historyIntentionLabelRes(value))
+                            Text(if (current == value) stringResource(R.string.workout_detail_intention_selected, label) else label)
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { intentionSetId = null }, enabled = !state.intentionSaving) { Text("Abbrechen") } }
+            confirmButton = { TextButton(onClick = { intentionSetId = null }, enabled = !state.intentionSaving) { Text(stringResource(R.string.common_cancel)) } }
         )
     }
 
@@ -235,9 +236,19 @@ fun WorkoutDetailScreen(
                             Spacer(modifier = Modifier.height(dims.spacingXs))
 
                             visibleHistorySets(exerciseDetail.sets).forEach { set ->
+                                // Die ganze Zeile oeffnet die Absicht-Auswahl; angezeigt wird die
+                                // Absicht nur, wenn sie gesetzt ist.
+                                val intention = state.setIntentions[set.id] ?: SetIntention.UNKNOWN
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .clickable(
+                                            enabled = state.intentionsLoaded && !state.intentionSaving,
+                                            onClickLabel = stringResource(R.string.workout_detail_intention_set_action)
+                                        ) { intentionSetId = set.id },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = setTypeLabel(set.setType, set.setNumber),
@@ -251,11 +262,8 @@ fun WorkoutDetailScreen(
                                     } else {
                                         when (preferences.intensitySystem) {
                                             IntensitySystem.OFF -> ""
-                                            IntensitySystem.RPE -> " @ RPE ${rpe}"
-                                            IntensitySystem.RIR -> {
-                                                val rir = 10.0 - rpe
-                                                " @ ${if (rir % 1.0 == 0.0) rir.toInt() else rir} RIR"
-                                            }
+                                            IntensitySystem.RPE -> " @ RPE ${WeightFormatting.formatNumber(rpe)}"
+                                            IntensitySystem.RIR -> " @ ${WeightFormatting.formatNumber(10.0 - rpe)} RIR"
                                         }
                                     }
 
@@ -269,12 +277,15 @@ fun WorkoutDetailScreen(
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
-                                TextButton(
-                                    onClick = { intentionSetId = set.id },
-                                    enabled = state.intentionsLoaded && !state.intentionSaving,
-                                    modifier = Modifier.heightIn(min = 48.dp)
-                                ) {
-                                    Text("Absicht: " + if (state.intentionsLoaded) historyIntentionLabel(state.setIntentions[set.id] ?: SetIntention.UNKNOWN) else "Wird geladen …")
+                                if (state.intentionsLoaded && intention != SetIntention.UNKNOWN) {
+                                    Text(
+                                        text = stringResource(
+                                            R.string.workout_detail_intention_value,
+                                            stringResource(historyIntentionLabelRes(intention))
+                                        ),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             }
                         }
@@ -443,8 +454,8 @@ private fun progressionStatusColor(status: ProgressionSuggestionStatus): Color =
     ProgressionSuggestionStatus.STALE -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
-private fun historyIntentionLabel(value: SetIntention): String = when (value) {
-    SetIntention.UNKNOWN -> "Nicht angegeben"
-    SetIntention.PLANNED_FAILURE -> "Geplantes Versagen"
-    SetIntention.UNEXPECTED_TARGET_MISS -> "Ziel unerwartet verfehlt"
+private fun historyIntentionLabelRes(value: SetIntention): Int = when (value) {
+    SetIntention.UNKNOWN -> R.string.workout_set_intention_unknown
+    SetIntention.PLANNED_FAILURE -> R.string.workout_set_intention_planned_failure
+    SetIntention.UNEXPECTED_TARGET_MISS -> R.string.workout_set_intention_unexpected_miss
 }

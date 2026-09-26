@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.app.domain.util.WeightFormatting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -517,7 +518,7 @@ fun DailyCheckInCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Button(onClick = onStartEdit) {
-                    Text(stringResource(R.string.dashboard_checkin_edit))
+                    Text(stringResource(R.string.dashboard_checkin_add))
                 }
             }
         }
@@ -800,12 +801,7 @@ private fun String.label(): String =
     DashboardReadinessText.muscleGroupFor(this)?.displayName ?: this
 
 /** Ganze Sätze ohne Nachkommastelle, halbe Sätze mit einer. */
-private fun formatSets(value: Double): String =
-    if (value % 1.0 == 0.0) {
-        value.toInt().toString()
-    } else {
-        String.format(Locale.ROOT, "%.1f", value)
-    }
+private fun formatSets(value: Double): String = WeightFormatting.formatNumber(value)
 
 private fun MuscleGroupFlag.labelRes(): Int = when (this) {
     MuscleGroupFlag.TRAINED_TODAY -> R.string.dashboard_reason_muscle_trained_today

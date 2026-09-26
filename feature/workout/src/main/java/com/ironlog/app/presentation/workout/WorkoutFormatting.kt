@@ -14,24 +14,20 @@ import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.shared.readinessdata.SetIntention
 import com.ironlog.app.presentation.theme.semantic
-import java.util.Locale
 
-/** Formats a weight stored in kg as a plain number in the user's preferred unit system. */
+/**
+ * Formats a weight stored in kg as a plain number in the user's preferred unit system,
+ * e.g. "82,5". No thousands separator, because the value also prefills input fields.
+ */
 internal fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String {
     val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
-    return if (displayValue % 1.0 == 0.0) {
-        displayValue.toInt().toString()
-    } else {
-        String.format(Locale.ROOT, "%.1f", displayValue)
-    }
+    return WeightFormatting.formatInputNumber(
+        displayValue,
+        maxFractionDigits = WeightFormatting.weightDecimals(displayValue, unitSystem)
+    )
 }
 
-internal fun formatRpeValue(value: Double): String =
-    if (value % 1.0 == 0.0) {
-        value.toInt().toString()
-    } else {
-        String.format(Locale.ROOT, "%.1f", value)
-    }
+internal fun formatRpeValue(value: Double): String = WeightFormatting.formatNumber(value)
 
 /**
  * Weight hint for plan-based workout rows: the current plan target weight
@@ -48,11 +44,9 @@ internal fun targetWeightHint(
     ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
     ?: previousWeightHint
 
-/** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100.0 kg" or "220.5 lb". */
-fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String {
-    val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
-    return String.format(Locale.ROOT, "%.1f %s", displayValue, WeightFormatting.unitLabel(unitSystem))
-}
+/** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100 kg" or "220,5 lb". */
+fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String =
+    WeightFormatting.formatWeight(weightKg, unitSystem)
 
 internal fun setTypeLabel(setNumber: Int, setType: SetType): String = when (setType) {
     SetType.NORMAL -> setNumber.toString()
@@ -91,7 +85,7 @@ internal fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): St
     } else {
         rpe
     }
-    return if (displayValue % 1.0 == 0.0) displayValue.toInt().toString() else displayValue.toString()
+    return WeightFormatting.formatNumber(displayValue)
 }
 
 @Composable
