@@ -338,6 +338,31 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `week strip marks today as trained after a completed workout`() = runTest {
+        val start = LocalDate.now().atStartOfDay()
+        workoutRepo.addSession(
+            WorkoutSession(
+                id = 700L,
+                startTime = start,
+                endTime = start.plusHours(1),
+                durationSeconds = 3600,
+                name = "Heute"
+            ),
+            isActive = false
+        )
+
+        val vm = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val days = vm.uiState.value.weekDays
+        assertEquals(7, days.size)
+        val today = days.single { it.isToday }
+        assertEquals(LocalDate.now(), today.date)
+        assertTrue(today.trained)
+        assertEquals(1, days.count { it.trained })
+    }
+
+    @Test
     fun `dashboard reloads stats when active workout is finished`() = runTest {
         val start = LocalDate.now().atStartOfDay()
         workoutRepo.addSession(
