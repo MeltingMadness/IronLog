@@ -160,6 +160,17 @@ fun WorkoutDetailScreen(
                                 .fillMaxWidth()
                                 .ironLogSharedElement("workout_card_${session.id}")
                         ) {
+                            // Name the plan the session came from; free sessions carry an auto name.
+                            Text(
+                                text = if (session.planId != null && session.name.isNotBlank()) {
+                                    session.name
+                                } else {
+                                    stringResource(id = R.string.plan_selection_free_workout)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                             Text(
                                 text = session.startTime.format(DateFormatting.DATE_FULL),
                                 style = MaterialTheme.typography.headlineSmall,

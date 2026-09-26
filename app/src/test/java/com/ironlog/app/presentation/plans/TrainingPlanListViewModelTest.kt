@@ -6,6 +6,7 @@ import com.ironlog.app.domain.model.MuscleGroup
 import com.ironlog.app.domain.model.PlanExercise
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.fakes.FakeExerciseRepository
+import com.ironlog.app.fakes.FakeMetaTrainingPlanRepository
 import com.ironlog.app.fakes.FakeTrainingPlanRepository
 import com.ironlog.app.fakes.FakeWorkoutRepository
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ class TrainingPlanListViewModelTest {
     private lateinit var planRepo: FakeTrainingPlanRepository
     private lateinit var exerciseRepo: FakeExerciseRepository
     private lateinit var workoutRepo: FakeWorkoutRepository
+    private lateinit var metaPlanRepo: FakeMetaTrainingPlanRepository
 
     @Before
     fun setUp() {
@@ -37,6 +39,7 @@ class TrainingPlanListViewModelTest {
         planRepo = FakeTrainingPlanRepository()
         exerciseRepo = FakeExerciseRepository()
         workoutRepo = FakeWorkoutRepository()
+        metaPlanRepo = FakeMetaTrainingPlanRepository(workoutRepo)
     }
 
     @After
@@ -70,7 +73,7 @@ class TrainingPlanListViewModelTest {
         planRepo.savePlan(TrainingPlan(name = "Plan A", exercises = sharedExercises))
         planRepo.savePlan(TrainingPlan(name = "Plan B", exercises = sharedExercises))
 
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -80,7 +83,7 @@ class TrainingPlanListViewModelTest {
 
     @Test
     fun `startPlanWorkout startet neue Session wenn keine aktive Session existiert`() = runTest {
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var createdSessionId: Long? = null
@@ -109,7 +112,7 @@ class TrainingPlanListViewModelTest {
             ),
             isActive = true
         )
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var callbackCalled = false
@@ -122,5 +125,37 @@ class TrainingPlanListViewModelTest {
         assertFalse(callbackCalled)
         assertTrue(vm.uiState.value.error?.contains("anderes Training aktiv") == true)
         assertEquals(7L, workoutRepo.getActiveSession()?.id)
+    }
+
+    @Test
+    fun `loadPlans liefert zuletzt trainiert und Meta-Plaene`() = runTest {
+        val pushId = planRepo.savePlan(TrainingPlan(name = "Push", exercises = emptyList()))
+        val pullId = planRepo.savePlan(TrainingPlan(name = "Pull", exercises = emptyList()))
+        workoutRepo.addSession(
+            com.ironlog.app.domain.model.WorkoutSession(
+                id = 1L,
+                startTime = LocalDateTime.now().minusDays(3),
+                endTime = LocalDateTime.now().minusDays(3).plusHours(1),
+                name = "Push",
+                planId = pushId
+            )
+        )
+        metaPlanRepo.saveMetaPlan(
+            com.ironlog.app.domain.model.MetaTrainingPlan(
+                name = "Push/Pull",
+                items = listOf(
+                    com.ironlog.app.domain.model.MetaTrainingPlanItem(trainingPlanId = pullId, orderIndex = 1),
+                    com.ironlog.app.domain.model.MetaTrainingPlanItem(trainingPlanId = pushId, orderIndex = 0)
+                )
+            )
+        )
+
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals(3L, state.plans.first { it.plan.id == pushId }.lastDoneDaysAgo)
+        assertEquals(null, state.plans.first { it.plan.id == pullId }.lastDoneDaysAgo)
+        assertEquals(listOf("Push", "Pull"), state.metaPlans.single().subPlanNames)
     }
 }

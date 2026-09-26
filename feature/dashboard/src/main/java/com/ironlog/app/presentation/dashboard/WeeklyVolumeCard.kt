@@ -30,6 +30,7 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
+import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.util.WeightFormatting
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
@@ -110,6 +111,15 @@ fun WeeklyVolumeCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
+                )
+                // The last point is the running week, so its drop is not a real decline.
+                Text(
+                    text = stringResource(
+                        id = R.string.dashboard_volume_trend_current_week,
+                        WeightFormatting.formatVolume(weeklyVolume.last().second, UnitSystem.METRIC)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text(

@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,7 +45,6 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
-import com.ironlog.app.presentation.common.StatCardVariant
 import com.ironlog.app.presentation.common.WeeklyMuscleVolumeCard
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
@@ -126,7 +127,7 @@ fun ExerciseStatsScreen(
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = "${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}",
+                            text = "${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -156,7 +157,7 @@ fun ExerciseStatsScreen(
                 } else {
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             val maxWeight = state.records.find { it.type == RecordType.MAX_WEIGHT }
@@ -167,21 +168,19 @@ fun ExerciseStatsScreen(
                                 value = maxWeight?.let {
                                     WeightFormatting.formatWeight(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.PRIMARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_max_reps_label),
                                 value = maxReps?.let { "${it.value.toInt()}" } ?: "-",
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.TERTIARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
                     }
 
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             val maxE1rm = state.records.find { it.type == RecordType.MAX_E1RM }
@@ -192,16 +191,14 @@ fun ExerciseStatsScreen(
                                 value = maxE1rm?.let {
                                     WeightFormatting.formatWeight(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.SECONDARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_max_volume_label),
                                 value = maxVolume?.let {
                                     WeightFormatting.formatVolume(it.value, preferences.unitSystem)
                                 } ?: "-",
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.TERTIARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
                     }
@@ -227,7 +224,7 @@ fun ExerciseStatsScreen(
 
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             StatCard(
@@ -236,8 +233,7 @@ fun ExerciseStatsScreen(
                                     e1rmProgression.first.toDouble(),
                                     preferences.unitSystem
                                 ),
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.TERTIARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_e1rm_latest_label),
@@ -245,15 +241,14 @@ fun ExerciseStatsScreen(
                                     e1rmProgression.latest.toDouble(),
                                     preferences.unitSystem
                                 ),
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.PRIMARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
                     }
 
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             val deltaAbs = WeightFormatting.formatWeightDelta(
@@ -268,14 +263,12 @@ fun ExerciseStatsScreen(
                             StatCard(
                                 label = stringResource(id = R.string.stats_e1rm_abs_label),
                                 value = deltaAbs,
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.SECONDARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                             StatCard(
                                 label = stringResource(id = R.string.stats_e1rm_rel_label),
                                 value = deltaRel,
-                                modifier = Modifier.weight(1f),
-                                variant = StatCardVariant.TERTIARY
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
                     }

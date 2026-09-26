@@ -69,6 +69,9 @@ import com.ironlog.app.domain.util.DateFormatting
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.DarkCyanPrimary
+import com.ironlog.app.presentation.theme.DarkPrimary
+import com.ironlog.app.presentation.theme.DarkRedPrimary
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
 import androidx.compose.foundation.layout.FlowRow
@@ -215,26 +218,27 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    // Wraps instead of scrolling so every scheme is visible at a glance.
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                     ) {
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.AMBER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
-                            leadingIcon = { SchemeColorDot(color = MaterialTheme.colorScheme.primary) },
+                            leadingIcon = { SchemeColorDot(color = DarkPrimary) },
                             label = { Text(stringResource(id = R.string.settings_scheme_amber)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.DEEP_CYAN,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.DEEP_CYAN) },
-                            leadingIcon = { SchemeColorDot(color = MaterialTheme.semantic.sky) },
+                            leadingIcon = { SchemeColorDot(color = DarkCyanPrimary) },
                             label = { Text(stringResource(id = R.string.settings_scheme_deep_cyan)) }
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.NEON_RED,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.NEON_RED) },
-                            leadingIcon = { SchemeColorDot(color = MaterialTheme.semantic.rose) },
+                            leadingIcon = { SchemeColorDot(color = DarkRedPrimary) },
                             label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) }
                         )
                         FilterChip(

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.domain.repository.ExerciseRepository
+import com.ironlog.app.domain.repository.MetaTrainingPlanRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.presentation.common.toUserMessage
@@ -12,14 +13,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 data class PlanListItem(
     val plan: TrainingPlan,
-    val exerciseNames: List<String>
+    val exerciseNames: List<String>,
+    /** Days since the last completed session of this plan, `null` if never trained. */
+    val lastDoneDaysAgo: Long? = null
+)
+
+/** Compact meta plan row so rotations are visible without opening the meta plan screen. */
+data class PlanListMetaPlan(
+    val id: Long,
+    val name: String,
+    val subPlanNames: List<String>
 )
 
 data class PlanListUiState(
     val plans: List<PlanListItem> = emptyList(),
+    val metaPlans: List<PlanListMetaPlan> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -27,7 +42,8 @@ data class PlanListUiState(
 class TrainingPlanListViewModel(
     private val planRepository: TrainingPlanRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlanListUiState())
@@ -41,18 +57,43 @@ class TrainingPlanListViewModel(
         viewModelScope.launch {
             combine(
                 planRepository.getAllPlans(),
-                exerciseRepository.getAllExercises()
-            ) { plans, exercises ->
+                exerciseRepository.getAllExercises(),
+                workoutRepository.observeLastSessionPerPlan(),
+                metaTrainingPlanRepository.getAllMetaPlans()
+            ) { plans, exercises, lastSessions, metaPlans ->
                 val exerciseNameById = exercises.associateBy({ it.id }, { it.name })
-                plans.map { plan ->
+                val lastStartByPlanId = lastSessions.associateBy({ it.planId }, { it.lastStartTime })
+                val today = LocalDate.now()
+                val items = plans.map { plan ->
                     val names = plan.exercises.map { exercise ->
                         exerciseNameById[exercise.exerciseId] ?: "Unbekannt"
                     }
-                    PlanListItem(plan = plan, exerciseNames = names)
+                    PlanListItem(
+                        plan = plan,
+                        exerciseNames = names,
+                        lastDoneDaysAgo = lastStartByPlanId[plan.id]?.let { millis ->
+                            ChronoUnit.DAYS.between(
+                                Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate(),
+                                today
+                            )
+                        }
+                    )
                 }
-            }.collect { items ->
+                val planNameById = plans.associateBy({ it.id }, { it.name })
+                val metaItems = metaPlans.map { meta ->
+                    PlanListMetaPlan(
+                        id = meta.id,
+                        name = meta.name,
+                        subPlanNames = meta.items
+                            .sortedBy { it.orderIndex }
+                            .mapNotNull { planNameById[it.trainingPlanId] }
+                    )
+                }
+                items to metaItems
+            }.collect { (items, metaItems) ->
                 _uiState.value = _uiState.value.copy(
                     plans = items,
+                    metaPlans = metaItems,
                     isLoading = false,
                     error = null
                 )

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -137,7 +138,10 @@ private fun TrainingTrendContent(assessment: ReadinessAssessment) {
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         TrainingTrendHeader(trend)
-        TextButton(onClick = { detailsExpanded = !detailsExpanded }) {
+        TextButton(
+            onClick = { detailsExpanded = !detailsExpanded },
+            modifier = Modifier.flushStartLink()
+        ) {
             Text(
                 text = stringResource(
                     if (detailsExpanded) {
@@ -688,7 +692,10 @@ fun MuscleContextCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            TextButton(onClick = { detailsExpanded = !detailsExpanded }) {
+            TextButton(
+                onClick = { detailsExpanded = !detailsExpanded },
+                modifier = Modifier.flushStartLink()
+            ) {
                 Text(
                     text = stringResource(
                         if (detailsExpanded) {
@@ -810,3 +817,9 @@ private fun MuscleGroupFlag.labelRes(): Int = when (this) {
     MuscleGroupFlag.LOW_RECENT_VOLUME -> R.string.dashboard_reason_muscle_low_volume
     MuscleGroupFlag.NO_RECENT_LOAD -> R.string.dashboard_reason_muscle_no_load
 }
+
+/**
+ * Shifts a left-aligned [TextButton] by its inner padding so its label lines up
+ * with the card text above it; the touch target stays unchanged.
+ */
+private fun Modifier.flushStartLink(): Modifier = offset(x = (-12).dp)
