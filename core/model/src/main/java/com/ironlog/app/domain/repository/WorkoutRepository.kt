@@ -43,6 +43,19 @@ interface WorkoutRepository {
     fun observeSetIntentions(): Flow<Map<Long, SetIntention>>
 
     suspend fun deleteSet(setId: Long)
+
+    /**
+     * Corrects a set of a completed session (history edit). Records are rebuilt and pending
+     * progression suggestions of that session become stale, since they were derived from
+     * the old values. [intention] follows the same tri-state rule as [updateSet].
+     */
+    suspend fun updateCompletedSet(set: WorkoutSet, intention: SetIntention? = null)
+
+    /** Removes a set from a completed session with the same record/suggestion rules. */
+    suspend fun deleteCompletedSet(setId: Long)
+
+    /** Replaces the session notes; blank text removes the note. */
+    suspend fun updateSessionNotes(sessionId: Long, notes: String)
     fun getSetsForSession(sessionId: Long): Flow<List<WorkoutSet>>
     suspend fun getSetsForSessionList(sessionId: Long): List<WorkoutSet>
     suspend fun getSetsForSessionsList(sessionIds: List<Long>): List<WorkoutSet>
@@ -53,11 +66,15 @@ interface WorkoutRepository {
      * Streams completed workout summaries after applying the filters in the database query.
      * Keeping the predicates in the PagingSource is important: filtering a collected
      * PagingData would only inspect the page that has already been loaded.
+     *
+     * [searchQuery] matches the session name, its notes, the plan name and the names or
+     * notes of exercises trained in the session; blank means no text filter.
      */
     fun getPagedCompletedWorkoutSummaries(
         planId: Long?,
         fromEpochMillis: Long?,
-        toEpochMillis: Long?
+        toEpochMillis: Long?,
+        searchQuery: String? = null
     ): Flow<PagingData<CompletedWorkoutSummary>>
     suspend fun getSessionById(id: Long): WorkoutSession?
     fun observeSessionById(id: Long): Flow<WorkoutSession?>

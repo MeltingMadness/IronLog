@@ -61,6 +61,8 @@ Gerechnet wird in der Einheit, in der die Schrittweite konfiguriert wurde (kg od
 
 Passt etwas nicht, wird nichts übernommen und der Vorschlag wird als **nicht mehr aktuell** (`STALE`) markiert.
 
+Wird ein Satz eines abgeschlossenen Trainings im Verlauf korrigiert oder gelöscht, werden die offenen Vorschläge dieses Trainings ebenfalls `STALE`. Sie beruhen auf den alten Werten. Bereits entschiedene Vorschläge bleiben unverändert. Android und iOS verhalten sich hier gleich.
+
 ## Status eines Ergebnisses
 
 `PENDING` (offen) · `INFORMATIONAL` (Hinweis) · `ACCEPTED` · `REJECTED` · `STALE`

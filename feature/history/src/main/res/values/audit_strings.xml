@@ -8,7 +8,9 @@
     <string name="history_filter_plan_label">Plan</string>
     <string name="history_filter_plan_all">Alle Pläne</string>
     <string name="history_filter_empty_title">Keine passenden Trainings</string>
-    <string name="history_filter_empty_subtitle">Wähle einen anderen Plan oder Zeitraum.</string>
+    <string name="history_filter_empty_subtitle">Ändere Suche, Plan oder Zeitraum.</string>
+    <string name="history_search_placeholder">Training, Notiz oder Übung suchen</string>
+    <string name="history_search_clear">Suche löschen</string>
     <string name="history_set_drop">Dropsatz %1$d</string>
     <string name="history_set_failure">Failure-Satz %1$d</string>
 </resources>
