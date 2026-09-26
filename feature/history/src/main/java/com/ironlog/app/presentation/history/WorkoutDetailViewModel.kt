@@ -45,7 +45,9 @@ data class WorkoutDetailUiState(
     val setIntentions: Map<Long, SetIntention> = emptyMap(),
     val intentionsLoaded: Boolean = false,
     val intentionError: String? = null,
-    val intentionSaving: Boolean = false
+    /** True while a set or note correction is being written. */
+    val editSaving: Boolean = false,
+    val editError: String? = null
 )
 
 class WorkoutDetailViewModel(
@@ -81,22 +83,60 @@ class WorkoutDetailViewModel(
         }
     }
 
-    /** Historical metadata may change without reopening the completed workout. */
-    fun updateSetIntention(setId: Long, intention: SetIntention, onSaved: () -> Unit = {}) {
-        val state = _uiState.value
-        if (!state.intentionsLoaded || state.intentionSaving) return
-        if (state.exercises.none { group -> group.sets.any { it.id == setId } }) return
-        _uiState.update { it.copy(intentionSaving = true, intentionError = null) }
+    /**
+     * Corrects a logged set of this finished session. The repository rebuilds records and
+     * marks this session's pending progression suggestions as stale.
+     */
+    fun updateSet(
+        setId: Long,
+        reps: Int,
+        weightKg: Double,
+        rpe: Double?,
+        intention: SetIntention?,
+        onSaved: () -> Unit = {}
+    ) {
+        val set = _uiState.value.exercises.asSequence()
+            .flatMap { it.sets.asSequence() }
+            .firstOrNull { it.id == setId } ?: return
+        runEdit("Satz konnte nicht gespeichert werden", onSaved) {
+            workoutRepository.updateCompletedSet(
+                set.copy(reps = reps, weightKg = weightKg, rpe = rpe),
+                intention
+            )
+        }
+    }
+
+    fun deleteSet(setId: Long, onDeleted: () -> Unit = {}) {
+        runEdit("Satz konnte nicht gelöscht werden", onDeleted) {
+            workoutRepository.deleteCompletedSet(setId)
+        }
+    }
+
+    /** Saves the session note; blank text removes it. */
+    fun updateNotes(notes: String, onSaved: () -> Unit = {}) {
+        runEdit("Notiz konnte nicht gespeichert werden", onSaved) {
+            workoutRepository.updateSessionNotes(sessionId, notes)
+        }
+    }
+
+    fun clearEditError() {
+        _uiState.update { it.copy(editError = null) }
+    }
+
+    private fun runEdit(failureMessage: String, onDone: () -> Unit, block: suspend () -> Unit) {
+        if (_uiState.value.editSaving) return
+        _uiState.update { it.copy(editSaving = true, editError = null) }
         viewModelScope.launch {
             try {
-                readinessRepository.setSetIntention(setId, intention)
-                onSaved()
+                block()
+                reloadDetail()
+                onDone()
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                _uiState.update { it.copy(intentionError = "Satzabsicht konnte nicht gespeichert werden. Bitte erneut versuchen.") }
+                _uiState.update { it.copy(editError = "$failureMessage. Bitte prüfe die Werte.") }
             } finally {
-                _uiState.update { it.copy(intentionSaving = false) }
+                _uiState.update { it.copy(editSaving = false) }
             }
         }
     }
@@ -125,56 +165,58 @@ class WorkoutDetailViewModel(
     }
 
     private fun loadDetail() {
-        viewModelScope.launch {
-            try {
-                val session = workoutRepository.getSessionById(sessionId)
-                if (session == null) {
-                    // Session was deleted (e.g. from the history list) or the id is invalid —
-                    // surface an explicit not-found state instead of an empty scaffold.
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        notFound = true
-                    )
-                    return@launch
-                }
+        viewModelScope.launch { reloadDetail() }
+    }
 
-                val sets = workoutRepository.getSetsForSessionList(sessionId)
-                val volume = workoutRepository.getTotalVolumeForSession(sessionId)
-
-                val grouped = sets.groupBy { it.exerciseId }
-                val exerciseIds = grouped.keys.toList()
-                val exercisesById = exerciseRepository.getExercisesByIds(exerciseIds).associateBy { it.id }
-                val recordsByExercise = statisticsRepository
-                    .getRecordsForExercisesList(exerciseIds)
-                    .groupBy { it.exerciseId }
-
-                val exercises = grouped.map { (exerciseId, exerciseSets) ->
-                    ExerciseDetail(
-                        exercise = exercisesById[exerciseId] ?: Exercise(
-                            id = exerciseId,
-                            name = "Unbekannt",
-                            primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
-                            category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
-                        ),
-                        sets = exerciseSets.sortedBy { it.setNumber },
-                        records = recordsByExercise[exerciseId].orEmpty()
-                    )
-                }
-
-                _uiState.update {
-                    it.copy(
-                        session = session,
-                        exercises = exercises,
-                        totalVolume = volume,
-                        isLoading = false
-                    )
-                }
-            } catch (e: Exception) {
+    private suspend fun reloadDetail() {
+        try {
+            val session = workoutRepository.getSessionById(sessionId)
+            if (session == null) {
+                // Session was deleted (e.g. from the history list) or the id is invalid —
+                // surface an explicit not-found state instead of an empty scaffold.
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.toAppError().toUserMessage("Training-Details laden")
+                    notFound = true
+                )
+                return
+            }
+
+            val sets = workoutRepository.getSetsForSessionList(sessionId)
+            val volume = workoutRepository.getTotalVolumeForSession(sessionId)
+
+            val grouped = sets.groupBy { it.exerciseId }
+            val exerciseIds = grouped.keys.toList()
+            val exercisesById = exerciseRepository.getExercisesByIds(exerciseIds).associateBy { it.id }
+            val recordsByExercise = statisticsRepository
+                .getRecordsForExercisesList(exerciseIds)
+                .groupBy { it.exerciseId }
+
+            val exercises = grouped.map { (exerciseId, exerciseSets) ->
+                ExerciseDetail(
+                    exercise = exercisesById[exerciseId] ?: Exercise(
+                        id = exerciseId,
+                        name = "Unbekannt",
+                        primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
+                        category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
+                    ),
+                    sets = exerciseSets.sortedBy { it.setNumber },
+                    records = recordsByExercise[exerciseId].orEmpty()
                 )
             }
+
+            _uiState.update {
+                it.copy(
+                    session = session,
+                    exercises = exercises,
+                    totalVolume = volume,
+                    isLoading = false
+                )
+            }
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = e.toAppError().toUserMessage("Training-Details laden")
+            )
         }
     }
 

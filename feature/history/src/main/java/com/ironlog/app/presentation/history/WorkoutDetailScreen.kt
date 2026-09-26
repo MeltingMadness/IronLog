@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
@@ -85,29 +86,68 @@ fun WorkoutDetailScreen(
         initialValue = AppPreferences()
     )
     val dims = ironLogDimens
-    var intentionSetId by remember { mutableStateOf<Long?>(null) }
-    intentionSetId?.let { setId ->
-        AlertDialog(
-            onDismissRequest = { if (!state.intentionSaving) intentionSetId = null },
-            title = { Text(stringResource(R.string.workout_detail_intention_dialog_title)) },
-            text = {
-                Column {
-                    Text(stringResource(R.string.workout_detail_intention_dialog_text))
-                    state.intentionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    SetIntention.entries.forEach { value ->
-                        TextButton(
-                            onClick = { viewModel.updateSetIntention(setId, value) { intentionSetId = null } },
-                            enabled = state.intentionsLoaded && !state.intentionSaving,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                        ) {
-                            val current = state.setIntentions[setId] ?: SetIntention.UNKNOWN
-                            val label = stringResource(historyIntentionLabelRes(value))
-                            Text(if (current == value) stringResource(R.string.workout_detail_intention_selected, label) else label)
-                        }
+    var editSetId by remember { mutableStateOf<Long?>(null) }
+    var showNotesDialog by remember { mutableStateOf(false) }
+    var confirmNotesDelete by remember { mutableStateOf(false) }
+
+    editSetId?.let { setId ->
+        val set = state.exercises.asSequence().flatMap { it.sets.asSequence() }.firstOrNull { it.id == setId }
+        if (set == null) {
+            editSetId = null
+        } else {
+            HistorySetEditDialog(
+                set = set,
+                intention = state.setIntentions[set.id],
+                intentionsLoaded = state.intentionsLoaded,
+                unitSystem = preferences.unitSystem,
+                intensitySystem = preferences.intensitySystem,
+                isSaving = state.editSaving,
+                saveError = state.editError,
+                onSave = { input, intention ->
+                    viewModel.updateSet(set.id, input.reps, input.weightKg, input.rpe, intention) {
+                        editSetId = null
                     }
+                },
+                onDelete = { viewModel.deleteSet(set.id) { editSetId = null } },
+                onDismiss = {
+                    viewModel.clearEditError()
+                    editSetId = null
+                }
+            )
+        }
+    }
+
+    if (showNotesDialog) {
+        HistoryNotesDialog(
+            initialNotes = state.session?.notes.orEmpty(),
+            isSaving = state.editSaving,
+            saveError = state.editError,
+            onSave = { notes -> viewModel.updateNotes(notes) { showNotesDialog = false } },
+            onDismiss = {
+                viewModel.clearEditError()
+                showNotesDialog = false
+            }
+        )
+    }
+
+    if (confirmNotesDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!state.editSaving) confirmNotesDelete = false },
+            title = { Text(stringResource(R.string.workout_detail_notes_delete_title)) },
+            text = { Text(stringResource(R.string.workout_detail_notes_delete_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.updateNotes("") { confirmNotesDelete = false } },
+                    enabled = !state.editSaving
+                ) {
+                    Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
-            confirmButton = { TextButton(onClick = { intentionSetId = null }, enabled = !state.intentionSaving) { Text(stringResource(R.string.common_cancel)) } }
+            dismissButton = {
+                TextButton(onClick = { confirmNotesDelete = false }, enabled = !state.editSaving) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            }
         )
     }
 
@@ -193,6 +233,27 @@ fun WorkoutDetailScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            Row(modifier = Modifier.offset(x = (-12).dp)) {
+                                TextButton(onClick = { showNotesDialog = true }, enabled = !state.editSaving) {
+                                    Text(
+                                        stringResource(
+                                            if (session.notes.isBlank()) {
+                                                R.string.workout_detail_notes_add
+                                            } else {
+                                                R.string.workout_detail_notes_edit
+                                            }
+                                        )
+                                    )
+                                }
+                                if (session.notes.isNotBlank()) {
+                                    TextButton(onClick = { confirmNotesDelete = true }, enabled = !state.editSaving) {
+                                        Text(
+                                            stringResource(R.string.workout_detail_notes_delete),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -247,17 +308,17 @@ fun WorkoutDetailScreen(
                             Spacer(modifier = Modifier.height(dims.spacingXs))
 
                             visibleHistorySets(exerciseDetail.sets).forEach { set ->
-                                // Die ganze Zeile oeffnet die Absicht-Auswahl; angezeigt wird die
-                                // Absicht nur, wenn sie gesetzt ist.
+                                // Die ganze Zeile oeffnet die Satzbearbeitung (Werte, Absicht,
+                                // Loeschen); angezeigt wird die Absicht nur, wenn sie gesetzt ist.
                                 val intention = state.setIntentions[set.id] ?: SetIntention.UNKNOWN
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .clickable(
-                                            enabled = state.intentionsLoaded && !state.intentionSaving,
-                                            onClickLabel = stringResource(R.string.workout_detail_intention_set_action)
-                                        ) { intentionSetId = set.id },
+                                            enabled = !state.editSaving,
+                                            onClickLabel = stringResource(R.string.workout_detail_edit_set_action)
+                                        ) { editSetId = set.id },
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -469,7 +530,7 @@ private fun progressionStatusColor(status: ProgressionSuggestionStatus): Color =
     ProgressionSuggestionStatus.STALE -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
-private fun historyIntentionLabelRes(value: SetIntention): Int = when (value) {
+internal fun historyIntentionLabelRes(value: SetIntention): Int = when (value) {
     SetIntention.UNKNOWN -> R.string.workout_set_intention_unknown
     SetIntention.PLANNED_FAILURE -> R.string.workout_set_intention_planned_failure
     SetIntention.UNEXPECTED_TARGET_MISS -> R.string.workout_set_intention_unexpected_miss
