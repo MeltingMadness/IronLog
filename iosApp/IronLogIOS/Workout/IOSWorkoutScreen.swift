@@ -91,6 +91,7 @@ struct IOSWorkoutExerciseRenderGroup: Identifiable {
 struct IOSWorkoutScreen: View {
     @Environment(\.ironLogTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.ironLogAppearance) private var appearance
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
     @Environment(\.scenePhase) private var scenePhase
@@ -121,6 +122,8 @@ struct IOSWorkoutScreen: View {
             )
             .navigationTitle(screenTitle)
             .navigationBarTitleDisplayMode(.inline)
+            // A running Liquid Glass workout shows its own head instead of the bar.
+            .toolbar(appearance == .liquidGlass && activeSession != nil ? .hidden : .automatic, for: .navigationBar)
             .sheet(isPresented: $showingExercisePicker) {
                 exercisePickerSheet
             }
@@ -254,9 +257,15 @@ struct IOSWorkoutScreen: View {
     @ViewBuilder
     private func activeWorkout(session: ILWorkoutSession, data: ILTrainingData) -> some View {
         let rows = exerciseRows(session: session, data: data)
+        let liquidGlass = appearance == .liquidGlass
+        ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                workoutHeader(session: session)
+                if liquidGlass {
+                    glassWorkoutHeader(session: session, rows: rows, proxy: proxy)
+                } else {
+                    workoutHeader(session: session)
+                }
 
                 restTimersView(rows: rows)
 
@@ -280,6 +289,7 @@ struct IOSWorkoutScreen: View {
                 } else {
                     ForEach(exerciseRenderGroups(rows)) { group in
                         exerciseRenderGroup(group, sessionID: session.id)
+                            .id(group.id)
                     }
                 }
 
@@ -298,6 +308,8 @@ struct IOSWorkoutScreen: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) {
+            // Liquid Glass moves "Beenden" and "Verwerfen" into the head.
+            if !liquidGlass {
             HStack(spacing: 12) {
                 Button {
                     showingCancelConfirmation = true
@@ -319,7 +331,57 @@ struct IOSWorkoutScreen: View {
             .padding(.horizontal)
             .padding(.vertical, 10)
             .background(.thinMaterial)
+            }
         }
+        }
+    }
+
+    /// Liquid Glass head: position, time, progress and the exercise rail. A tap on
+    /// the rail scrolls to that exercise.
+    private func glassWorkoutHeader(
+        session: ILWorkoutSession,
+        rows: [IOSWorkoutExerciseRow],
+        proxy: ScrollViewProxy
+    ) -> some View {
+        let groups = exerciseRenderGroups(rows)
+        let currentIndex = groups.firstIndex { group in
+            group.rows.contains { $0.target != nil && !$0.isComplete }
+        }
+        let name = session.name.isEmpty ? "Freies Workout" : session.name
+        let planned = rows.reduce(0) { $0 + $1.loggingSlots.count }
+        let open = rows.reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) }
+        let logged = rows.reduce(0) { $0 + $1.sets.count }
+        let volume = rows.reduce(0.0) { total, row in
+            total + row.sets.reduce(0.0) { $0 + $1.weightKg * Double($1.reps) }
+        }
+        let progress = planned > 0 ? "\(planned - open) / \(planned) Sätze" : ilCount(logged, "Satz", "Sätze")
+        return VStack(alignment: .leading, spacing: 12) {
+            IOSWorkoutGlassHeader(
+                label: currentIndex.map { "\(name) · Übung \($0 + 1) von \(groups.count)" } ?? name,
+                startDate: session.startDate,
+                progressText: "\(progress) · \(ilVolumeText(volume.rounded(), unitSystem: settings.state.unitSystem))",
+                hasNotes: !session.notes.isEmpty,
+                onNotes: { showingNotes = true },
+                onDiscard: { showingCancelConfirmation = true },
+                onFinish: { showingFinishConfirmation = true }
+            )
+            if !groups.isEmpty {
+                IOSWorkoutGlassRail(
+                    items: groups.enumerated().map { index, group in
+                        let done = group.rows.allSatisfy { $0.target != nil && $0.isComplete }
+                        return IOSWorkoutRailItem(
+                            id: group.id,
+                            name: group.rows.map(\.exercise.name).joined(separator: " + "),
+                            status: index == currentIndex ? .current : (done ? .done : .upcoming)
+                        )
+                    },
+                    onSelect: { item in
+                        withAnimation { proxy.scrollTo(item.id, anchor: .top) }
+                    }
+                )
+            }
+        }
+        .padding(.top, 4)
     }
 
     @ViewBuilder

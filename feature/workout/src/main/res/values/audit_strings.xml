@@ -9,4 +9,14 @@
     <string name="workout_audit_drop_set">⚡ Drop-Set %1$d</string>
     <string name="workout_audit_failure_set">⚡ Fehlversuch %1$d</string>
     <string name="workout_audit_rir_value">%1$s RIR</string>
+    <string name="workout_glass_weight">Gewicht</string>
+    <string name="workout_glass_reps">Wiederholungen</string>
+    <string name="workout_glass_weight_decrease">Gewicht um %1$s %2$s verringern</string>
+    <string name="workout_glass_weight_increase">Gewicht um %1$s %2$s erhöhen</string>
+    <string name="workout_glass_reps_decrease">Wiederholungen verringern</string>
+    <string name="workout_glass_reps_increase">Wiederholungen erhöhen</string>
+    <string name="workout_glass_intensity_label">Anstrengung · %1$s</string>
+    <string name="workout_glass_exercise_position">%1$s · Übung %2$d von %3$d</string>
+    <string name="workout_glass_rail_done">erledigt</string>
+    <string name="workout_glass_rail_current">aktuell</string>
 </resources>

@@ -34,6 +34,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.ironlog.feature.workout.R as WorkoutR
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -94,6 +96,7 @@ fun ActiveWorkoutScreen(
     val dims = ironLogDimens
     val haptic = rememberHapticFeedback()
     val activeSession = (state.sessionPhase as? ActiveWorkoutSessionPhase.Active)?.session
+    val liquidGlass = isLiquidGlass()
 
     val exerciseGroups = remember(state.exercisesWithSets) {
         buildExerciseRenderGroups(state.exercisesWithSets)
@@ -173,7 +176,8 @@ fun ActiveWorkoutScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
+            // Liquid Glass puts title, time and "Beenden" into GlassWorkoutHeader.
+            if (!liquidGlass) TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
                     val name = activeSession?.name?.takeIf { it.isNotBlank() }
@@ -214,12 +218,96 @@ fun ActiveWorkoutScreen(
                 .padding(padding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                // Focus: the first exercise (and its superset group) with open plan sets is
+                // expanded; finished and upcoming planned exercises are collapsed. Ad-hoc
+                // exercises have no known end and stay expanded. A tap on the card header
+                // overrides the default for that exercise.
+                val focusGroupIndex = exerciseGroups.indexOfFirst { group ->
+                    group.exercises.any { it.planTarget != null && it.openSlotCount() > 0 }
+                }
+                var expansionOverrides by rememberSaveable { mutableStateOf(mapOf<String, Boolean>()) }
+                val listState = rememberLazyListState()
+                LaunchedEffect(focusGroupIndex) {
+                    if (focusGroupIndex > 0) listState.animateScrollToItem(focusGroupIndex)
+                }
+                val railScope = rememberCoroutineScope()
                 activeSession?.let { session ->
                     val plannedSetCount = state.exercisesWithSets.sumOf { it.planTarget?.loggingSlots()?.size ?: 0 }
                     val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                     val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
                     val loggedVolumeKg = state.exercisesWithSets.sumOf { row -> row.sets.filter { it.reps > 0 }.sumOf { it.weightKg * it.reps } }
-                    WorkoutHeader(
+                    if (liquidGlass) {
+                        val sessionName = session.name.takeIf { it.isNotBlank() }
+                            ?: stringResource(id = R.string.workout_title_default)
+                        val currentIndex = focusGroupIndex.takeIf { it >= 0 }
+                        GlassWorkoutHeader(
+                            label = if (currentIndex != null && exerciseGroups.isNotEmpty()) {
+                                stringResource(
+                                    WorkoutR.string.workout_glass_exercise_position,
+                                    sessionName,
+                                    currentIndex + 1,
+                                    exerciseGroups.size
+                                )
+                            } else {
+                                sessionName
+                            },
+                            startTime = session.startTime,
+                            progressText = listOf(
+                                if (plannedSetCount > 0) {
+                                    stringResource(
+                                        R.string.workout_header_progress_planned,
+                                        plannedSetCount - openPlannedSetCount,
+                                        plannedSetCount
+                                    )
+                                } else {
+                                    pluralStringResource(R.plurals.workout_header_progress_free, loggedSetCount, loggedSetCount)
+                                },
+                                WeightFormatting.formatVolume(loggedVolumeKg, preferences.unitSystem)
+                            ).joinToString(" · "),
+                            finishLabel = stringResource(id = R.string.workout_finish_action),
+                            onFinish = viewModel::showFinishDialog
+                        )
+                        if (exerciseGroups.isNotEmpty()) {
+                            GlassExerciseRail(
+                                items = exerciseGroups.mapIndexed { index, group ->
+                                    val done = group.exercises.all {
+                                        it.planTarget != null && it.openSlotCount() == 0 && it.sets.any { set -> set.reps > 0 }
+                                    }
+                                    RailItem(
+                                        key = group.key,
+                                        name = group.exercises.joinToString(" + ") { it.exercise.name },
+                                        status = when {
+                                            index == focusGroupIndex -> RailStatus.CURRENT
+                                            done -> RailStatus.DONE
+                                            else -> RailStatus.UPCOMING
+                                        }
+                                    )
+                                },
+                                doneLabel = stringResource(WorkoutR.string.workout_glass_rail_done),
+                                currentLabel = stringResource(WorkoutR.string.workout_glass_rail_current),
+                                onSelect = { index ->
+                                    val group = exerciseGroups[index]
+                                    expansionOverrides = expansionOverrides +
+                                        group.exercises.map { it.key.stableListKey() to true }
+                                    railScope.launch { listState.animateScrollToItem(index) }
+                                }
+                            )
+                        }
+                        state.restTimers.forEach { (exerciseKey, timer) ->
+                            val exerciseWithSets = state.exercisesWithSets.find { it.key == exerciseKey }
+                            val group = exerciseGroups.find { it.exercises.any { ex -> ex.key == exerciseKey } }
+                            val indexInSuperset = group?.exercises?.indexOfFirst { it.key == exerciseKey } ?: -1
+                            RestTimer(
+                                startTime = timer.startTime,
+                                durationSeconds = timer.durationSeconds.toLong(),
+                                onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
+                                onComplete = { viewModel.dismissRestTimer(exerciseKey) },
+                                titleText = exerciseWithSets?.exercise?.name,
+                                baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
+                                modifier = Modifier.padding(horizontal = dims.spacingMd)
+                            )
+                        }
+                    } else WorkoutHeader(
                         startTime = session.startTime,
                         loggedSetCount = loggedSetCount,
                         plannedSetCount = plannedSetCount,
@@ -243,18 +331,6 @@ fun ActiveWorkoutScreen(
                     }
                 }
 
-                // Focus: the first exercise (and its superset group) with open plan sets is
-                // expanded; finished and upcoming planned exercises are collapsed. Ad-hoc
-                // exercises have no known end and stay expanded. A tap on the card header
-                // overrides the default for that exercise.
-                val focusGroupIndex = exerciseGroups.indexOfFirst { group ->
-                    group.exercises.any { it.planTarget != null && it.openSlotCount() > 0 }
-                }
-                var expansionOverrides by rememberSaveable { mutableStateOf(mapOf<String, Boolean>()) }
-                val listState = rememberLazyListState()
-                LaunchedEffect(focusGroupIndex) {
-                    if (focusGroupIndex > 0) listState.animateScrollToItem(focusGroupIndex)
-                }
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.weight(1f),

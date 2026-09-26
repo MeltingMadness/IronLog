@@ -126,7 +126,8 @@ internal fun ExerciseCard(
 
     IronLogSurfaceCard(
         modifier = Modifier.fillMaxWidth(),
-        tone = IronLogSurfaceTone.MUTED,
+        // Liquid Glass lifts the open exercise to the strong glass level.
+        tone = if (expanded && isLiquidGlass()) IronLogSurfaceTone.ELEVATED else IronLogSurfaceTone.MUTED,
         border = tintColor?.let { BorderStroke(1.dp, it.copy(alpha = 0.3f)) },
         alpha = 1f
     ) {

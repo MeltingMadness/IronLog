@@ -151,19 +151,13 @@ internal fun ActiveSetCockpitCard(
         haptic.tick()
     }
 
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = dims.spacingXs),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-    ) {
+    val liquidGlass = isLiquidGlass()
+    CockpitContainer(liquidGlass = liquidGlass, modifier = modifier.padding(vertical = dims.spacingXs)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(if (liquidGlass) 4.dp else 14.dp),
+            verticalArrangement = Arrangement.spacedBy(if (liquidGlass) 14.dp else 10.dp)
         ) {
             // Header Row: Set tag + Coach badge
             Column(
@@ -239,7 +233,67 @@ internal fun ActiveSetCockpitCard(
             }
 
             valueSource?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (liquidGlass) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    GlassStepper(
+                        label = stringResource(WorkoutR.string.workout_glass_weight),
+                        value = weightInput,
+                        onValueChange = { weightInput = it },
+                        placeholder = weightPlaceholder,
+                        unit = weightSuffix,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                        enabled = !locked,
+                        decreaseLabel = stringResource(WorkoutR.string.workout_glass_weight_decrease, weightStepText, weightSuffix),
+                        increaseLabel = stringResource(WorkoutR.string.workout_glass_weight_increase, weightStepText, weightSuffix),
+                        onDecrease = { adjustWeight(-weightStep) },
+                        onIncrease = { adjustWeight(weightStep) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    GlassStepper(
+                        label = stringResource(WorkoutR.string.workout_glass_reps),
+                        value = repsInput,
+                        onValueChange = { repsInput = it },
+                        placeholder = repsPlaceholder,
+                        unit = null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        enabled = !locked,
+                        decreaseLabel = stringResource(WorkoutR.string.workout_glass_reps_decrease),
+                        increaseLabel = stringResource(WorkoutR.string.workout_glass_reps_increase),
+                        onDecrease = { adjustReps(-1) },
+                        onIncrease = { adjustReps(1) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (tracksIntensity) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = stringResource(WorkoutR.string.workout_glass_intensity_label, intensitySystem.displayName).uppercase(),
+                            style = AthleticLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val options = if (intensitySystem == IntensitySystem.RPE) {
+                            listOf(7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0).map { rpe ->
+                                val value = if (rpe % 1.0 == 0.0) rpe.toInt().toString() else rpe.toString()
+                                value to value.replace('.', ',')
+                            }
+                        } else {
+                            (0..4).map { it.toString() to it.toString() }
+                        }
+                        GlassIntensityBar(
+                            options = options,
+                            selected = intensityInput.text,
+                            onSelect = { value ->
+                                intensityInput = if (intensityInput.text == value) {
+                                    TextFieldValue("", TextRange.Zero)
+                                } else {
+                                    TextFieldValue(value, TextRange(value.length))
+                                }
+                                haptic.tick()
+                            }
+                        )
+                    }
+                }
+            } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 androidx.compose.material3.OutlinedTextField(
                     value = weightInput, onValueChange = { weightInput = it },
                     label = { Text(weightSuffix) }, singleLine = true,
@@ -294,8 +348,8 @@ internal fun ActiveSetCockpitCard(
                 }
             }
 
-            // Intensity Selector Row (RPE / RIR Chips)
-            if (tracksIntensity) {
+            // Intensity Selector Row (RPE / RIR Chips); Liquid Glass shows its own bar above.
+            if (tracksIntensity && !liquidGlass) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -502,8 +556,7 @@ internal fun ActiveSetCockpitCard(
                 enteredReps != null && enteredReps > 0 &&
                 enteredWeight != null && enteredWeight.isFinite() && enteredWeight >= 0
 
-            Button(
-                onClick = {
+            val logAction = {
                     val reps = repsInput.text.toIntOrNull() ?: repsPlaceholder?.toIntOrNull()
                     val weightVal = parseDecimal(weightInput.text) ?: weightPlaceholder?.let(::parseDecimal)
                     val weightKg = weightVal?.let { WeightFormatting.convertToKg(it, unitSystem) }
@@ -522,7 +575,29 @@ internal fun ActiveSetCockpitCard(
                             if (intentionDirty) currentIntention else null
                         )
                     }
-                },
+            }
+            val btnText = when {
+                isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
+                enteredWeight != null && enteredReps != null -> {
+                    if (enteredWeight == 0.0) {
+                        stringResource(
+                            R.string.workout_log_set_button_bodyweight,
+                            setNumber,
+                            stringResource(R.string.weight_bodyweight),
+                            enteredReps
+                        )
+                    } else {
+                        val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
+                        stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
+                    }
+                }
+                else -> stringResource(R.string.workout_log_set_button_short, setNumber)
+            }
+
+            if (liquidGlass) {
+                GlassPrimaryButton(text = btnText, enabled = canLog, onClick = logAction)
+            } else Button(
+                onClick = logAction,
                 enabled = canLog,
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -539,23 +614,6 @@ internal fun ActiveSetCockpitCard(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                val btnText = when {
-                    isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
-                    enteredWeight != null && enteredReps != null -> {
-                        if (enteredWeight == 0.0) {
-                            stringResource(
-                                R.string.workout_log_set_button_bodyweight,
-                                setNumber,
-                                stringResource(R.string.weight_bodyweight),
-                                enteredReps
-                            )
-                        } else {
-                            val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
-                            stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
-                        }
-                    }
-                    else -> stringResource(R.string.workout_log_set_button_short, setNumber)
-                }
                 Text(
                     text = btnText,
                     style = MaterialTheme.typography.titleSmall,
@@ -593,6 +651,27 @@ internal fun ActiveSetCockpitCard(
                     }
                 }
             }
+        }
+    }
+}
+
+/** Ember: bordered accent surface. Liquid Glass: no own surface, the exercise card is the glass. */
+@Composable
+private fun CockpitContainer(
+    liquidGlass: Boolean,
+    modifier: Modifier,
+    content: @Composable () -> Unit
+) {
+    if (liquidGlass) {
+        Box(modifier.fillMaxWidth()) { content() }
+    } else {
+        Surface(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+        ) {
+            content()
         }
     }
 }
