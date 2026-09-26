@@ -336,14 +336,15 @@ final class IOSSettingsViewModel: ObservableObject {
         let existingDataMessage = preview.replacesExistingData
             ? "Die vorhandenen lokalen Trainingsdaten werden vollständig ersetzt."
             : "Auf diesem Gerät sind noch keine lokalen Trainingsdaten geladen."
-        return "Schema \(preview.schemaVersion): " +
-            "\(preview.exerciseCount) Übungen, " +
-            "\(preview.workoutSessionCount) Trainings, " +
-            "\(preview.workoutSetCount) Sätze, " +
-            "\(preview.trainingPlanCount) Pläne, " +
-            "\(preview.metaPlanCount) Meta-Pläne, " +
-            "\(preview.progressionSuggestionCount) Progressionsvorschläge. " +
-            existingDataMessage
+        let counts: [String] = [
+            ilCount(preview.exerciseCount, "Übung", "Übungen"),
+            ilCount(preview.workoutSessionCount, "Training", "Trainings"),
+            ilCount(preview.workoutSetCount, "Satz", "Sätze"),
+            ilCount(preview.trainingPlanCount, "Plan", "Pläne"),
+            ilCount(preview.metaPlanCount, "Meta-Plan", "Meta-Pläne"),
+            ilCount(preview.progressionSuggestionCount, "Progressionsvorschlag", "Progressionsvorschläge")
+        ]
+        return "Schema \(preview.schemaVersion): \(counts.joined(separator: ", ")). \(existingDataMessage)"
     }
 
     func resetUserData() {

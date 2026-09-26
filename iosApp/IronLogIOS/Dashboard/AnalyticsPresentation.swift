@@ -62,6 +62,11 @@ func ilVolumeText(_ kilograms: Double?, unitSystem: String, signed: Bool = false
     ilWeightText(kilograms, unitSystem: unitSystem, signed: signed)
 }
 
+/// Count with the matching German noun, e.g. "1 Training" / "3 Trainings".
+func ilCount<T: BinaryInteger>(_ value: T, _ singular: String, _ plural: String) -> String {
+    "\(Int(value).formatted(.number)) \(value == 1 ? singular : plural)"
+}
+
 func ilCountText(_ value: Int?) -> String {
     guard let value else { return "—" }
     return value.formatted(.number)

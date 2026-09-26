@@ -65,6 +65,12 @@ func iosWorkoutDisplayWeight(
     return "\(iosWorkoutDecimal(value)) \(unit)"
 }
 
+/// Logged set as "82,5 kg × 8 Wdh"; 0 kg reads as bodyweight, like on Android.
+func iosSetValueText(weightKg: Double, reps: Int, unitSystem: String) -> String {
+    let weight = weightKg == 0 ? "Körpergewicht" : iosWorkoutDisplayWeight(kilograms: weightKg, unitSystem: unitSystem)
+    return "\(weight) × \(reps) Wdh"
+}
+
 func iosWorkoutInputWeightToKg(
     _ value: Double,
     unitSystem: String

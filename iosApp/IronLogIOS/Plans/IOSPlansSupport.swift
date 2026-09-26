@@ -186,11 +186,16 @@ enum IOSNumber {
         return parsed
     }
 
+    /// German decimal comma without grouping ("82,5"), like Android's input prefill.
+    /// [parse] accepts comma and dot, so edited values round-trip either way.
     static func format(_ value: Double) -> String {
         guard value.isFinite else { return "0" }
-        return String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), value)
-            .replacingOccurrences(of: ".00", with: "")
-            .replacingOccurrences(of: #"(\.[0-9]*?)0+$"#, with: "$1", options: .regularExpression)
+        return value.formatted(
+            .number
+                .precision(.fractionLength(0...2))
+                .grouping(.never)
+                .locale(Locale(identifier: "de_DE"))
+        )
     }
 }
 

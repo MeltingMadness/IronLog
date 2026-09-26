@@ -476,7 +476,7 @@ private struct IOSExerciseRecentSetsCard: View {
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Text("\(setTypeText(set.setType)) · \(ilWeightText(set.weightKg, unitSystem: unitSystem)) × \(set.reps)")
+                    Text("\(setTypeText(set.setType)) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
                         .font(.body.weight(.medium))
                         .multilineTextAlignment(.trailing)
                 }

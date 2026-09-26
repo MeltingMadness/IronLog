@@ -232,7 +232,7 @@ private struct IOSHistorySummaryCard: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(summary.sessionCount) Trainings, \(summary.setCount) Sätze, " +
+                "\(ilCount(summary.sessionCount, "Training", "Trainings")), \(ilCount(summary.setCount, "Satz", "Sätze")), " +
                     "\(IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem)), " +
                     "\(IOSHistoryFormatting.duration(seconds: summary.durationSeconds))"
             )
@@ -297,7 +297,7 @@ private struct IOSHistorySessionRow: View {
             }
             HStack(spacing: 14) {
                 Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
-                Label("\(visibleSets.count) Sätze", systemImage: "list.number")
+                Label(ilCount(visibleSets.count, "Satz", "Sätze"), systemImage: "list.number")
                 if volumeKg > 0 {
                     Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
                 }
@@ -586,7 +586,7 @@ private struct IOSHistoryDetailHeader: View {
     }
 
     @ViewBuilder private var metrics: some View {
-        Label("\(sets.count) Sätze", systemImage: "list.number")
+        Label(ilCount(sets.count, "Satz", "Sätze"), systemImage: "list.number")
         Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
         Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
     }
@@ -634,7 +634,7 @@ private struct IOSHistorySetRow: View {
                     .font(.subheadline.weight(.semibold))
                     .frame(width: 58, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(IOSWeightFormatter.format(set.weightKg, unitSystem: unitSystem)) × \(set.reps) Wdh")
+                Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
                     .font(.body.monospacedDigit())
                 HStack(spacing: 8) {
                     Text(set.iosSetTypeDisplayName)

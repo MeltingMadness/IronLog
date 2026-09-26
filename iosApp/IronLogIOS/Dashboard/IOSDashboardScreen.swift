@@ -514,7 +514,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     /// The single evidence line kept outside the disclosure: how many exercises the core
     /// could actually evaluate, and how many comparable units carry that statement.
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
-        Text("\(trend.exercisesWithSufficientHistory) von \(trend.analyzedExerciseCount) Übungen auswertbar · \(trend.dataQuality.comparableUnitCount) vergleichbare Einheiten")
+        Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, "Übung", "Übungen")) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, "vergleichbare Einheit", "vergleichbare Einheiten"))")
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -546,7 +546,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
-                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(strongest.comparableUnitCount) Einheiten)")
+                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, "Einheit", "Einheiten")))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -604,7 +604,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(exercise.exerciseName) · \(ilExerciseTrendStatusText(exercise.status))")
                             .font(.caption)
-                        Text("\(changeText(exercise.changePercent)) über \(exercise.comparableUnitCount) Einheiten · \(ilConfidenceText(exercise.confidence))")
+                        Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, "Einheit", "Einheiten")) · \(ilConfidenceText(exercise.confidence))")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }

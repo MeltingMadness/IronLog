@@ -358,7 +358,7 @@ struct IronLogWeeklyMuscleVolumeRow: View {
         guard let weeklySets = volume.weeklySets, weeklySets.isFinite else {
             return "—"
         }
-        return "\(ironLogFormatSets(weeklySets)) Sätze"
+        return "\(ironLogFormatSets(weeklySets)) \(weeklySets == 1 ? "Satz" : "Sätze")"
     }
 
     private var ironLogThresholdDescription: String? {
