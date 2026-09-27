@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.common
 
+import com.ironlog.app.domain.model.AppearanceStyle
+import com.ironlog.app.presentation.theme.LocalAppearanceStyle
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -27,6 +30,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.Radius
+
+/** Placeholder fill: Ember surface, or a faint neutral tint on the Liquid Glass backdrop. */
+@Composable
+private fun skeletonColor(): Color =
+    if (LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
 
 /**
  * Applies a sweeping shimmer effect to any composable.
@@ -76,7 +88,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(140.dp)
                 .clip(RoundedCornerShape(Radius.lg))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(skeletonColor())
                 .shimmerEffect()
         )
         // StatCards row placeholder
@@ -90,7 +102,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
                         .weight(1f)
                         .height(80.dp)
                         .clip(RoundedCornerShape(Radius.lg))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(skeletonColor())
                         .shimmerEffect()
                 )
             }
@@ -101,7 +113,7 @@ fun DashboardSkeleton(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(120.dp)
                 .clip(RoundedCornerShape(Radius.lg))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(skeletonColor())
                 .shimmerEffect()
         )
     }
@@ -122,7 +134,7 @@ fun HistorySkeleton(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .height(100.dp)
                     .clip(RoundedCornerShape(Radius.lg))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(skeletonColor())
                     .shimmerEffect()
             )
         }
@@ -147,7 +159,7 @@ fun LoadingSkeleton(
                     .fillMaxWidth()
                     .height(56.dp)
                     .clip(RoundedCornerShape(Radius.md))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(skeletonColor())
                     .shimmerEffect()
             )
         }

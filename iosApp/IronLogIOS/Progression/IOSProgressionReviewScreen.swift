@@ -475,19 +475,22 @@ private struct IOSProgressionEditSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Ziel bearbeiten") {
-                    TextField("Sätze", text: $setsText).keyboardType(.numberPad)
-                    TextField("Wiederholungen", text: $repsText).keyboardType(.numberPad)
-                    TextField("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))", text: $weightText).keyboardType(.decimalPad)
-                    if let errorMessage {
-                        Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                Group {
+                    Section("Ziel bearbeiten") {
+                        TextField("Sätze", text: $setsText).keyboardType(.numberPad)
+                        TextField("Wiederholungen", text: $repsText).keyboardType(.numberPad)
+                        TextField("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))", text: $weightText).keyboardType(.decimalPad)
+                        if let errorMessage {
+                            Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                        }
+                    }
+                    Section {
+                        Text("Die Quelle und ihre Evidenz bleiben unverändert. Deine Eingabe wird als finales Ziel gespeichert.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                Section {
-                    Text("Die Quelle und ihre Evidenz bleiben unverändert. Deine Eingabe wird als finales Ziel gespeichert.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                .ironLogListRows()
             }
             .navigationTitle("Ziel bearbeiten")
             .navigationBarTitleDisplayMode(.inline)

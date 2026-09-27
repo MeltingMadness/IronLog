@@ -205,3 +205,32 @@ extension View {
         modifier(IronLogScreenBackgroundModifier(ember: ember, emberNavigationBar: emberNavigationBar))
     }
 }
+
+/// Row background of lists and forms: the system cell color in Ember, translucent
+/// glass tint in Liquid Glass so the backdrop shows through like on the glass cards.
+private struct IronLogListRowsModifier: ViewModifier {
+    @Environment(\.ironLogAppearance) private var appearance
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        switch appearance {
+        case .liquidGlass:
+            content.listRowBackground(
+                colorScheme == .dark
+                    ? Color(red: 0.06, green: 0.07, blue: 0.10).opacity(0.42)
+                    : Color.white.opacity(0.55)
+            )
+        case .ember:
+            content
+        }
+    }
+}
+
+extension View {
+    /// Applies the list row background of the active appearance to every row
+    /// inside (sections, groups or single rows).
+    func ironLogListRows() -> some View {
+        modifier(IronLogListRowsModifier())
+    }
+}
+

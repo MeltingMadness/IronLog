@@ -80,88 +80,92 @@ struct IOSWorkoutSetEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    HStack {
-                        Text(context.row.exercise.name)
-                            .font(.headline)
-                        Spacer()
-                        if let target = context.row.displayTarget {
-                            Text("Ziel \(target.reps) Wdh.")
+                Group {
+                    Section {
+                        HStack {
+                            Text(context.row.exercise.name)
+                                .font(.headline)
+                            Spacer()
+                            if let target = context.row.displayTarget {
+                                Text("Ziel \(target.reps) Wdh.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    Section("Satz") {
+                        Picker("Typ", selection: $setType) {
+                            ForEach(IOSWorkoutSetType.allCases) { value in
+                                Text(value.displayName).tag(value)
+                            }
+                        }
+                        .disabled(isEditing)
+
+                        TextField("Wiederholungen", text: $repsText)
+                            .keyboardType(.numberPad)
+                            .textContentType(.none)
+                            .accessibilityLabel("Wiederholungen")
+
+                        HStack {
+                            TextField("Gewicht", text: $weightText)
+                                .keyboardType(.decimalPad)
+                                .textContentType(.none)
+                                .accessibilityLabel("Gewicht")
+                            Text(unitSystem == "IMPERIAL" ? "lb" : "kg")
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if settings.state.plateCalculatorEnabled,
+                           let enteredWeight = iosWorkoutParseDecimal(weightText),
+                           enteredWeight.isFinite,
+                           enteredWeight >= 0 {
+                            IOSWorkoutPlateVisualizer(
+                                targetWeightKg: iosWorkoutInputWeightToKg(enteredWeight, unitSystem: unitSystem),
+                                barbellWeightKg: settings.state.barbellWeightKg,
+                                availablePlates: settings.state.availablePlates,
+                                unitSystem: unitSystem
+                            )
+                        }
+
+                        if intensitySystem != "OFF" {
+                            HStack {
+                                TextField(intensitySystem, text: $intensityText)
+                                    .keyboardType(.decimalPad)
+                                    .textContentType(.none)
+                                    .accessibilityLabel(Text(intensitySystem == "RIR" ? "Reps in Reserve" : "Rate of Perceived Exertion"))
+                                Text(intensitySystem == "RIR" ? "0–9" : "1–10")
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text(intensitySystem == "RIR"
+                                 ? "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht."
+                                 : "RPE 10 entspricht maximaler Anstrengung.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                }
 
-                Section("Satz") {
-                    Picker("Typ", selection: $setType) {
-                        ForEach(IOSWorkoutSetType.allCases) { value in
-                            Text(value.displayName).tag(value)
+                    Section("Absicht") {
+                        Picker("Absicht", selection: $intention) {
+                            ForEach(ILSetIntention.allCases, id: \.self) { value in
+                                Text(ilSetIntentionText(value)).tag(value)
+                            }
                         }
-                    }
-                    .disabled(isEditing)
-
-                    TextField("Wiederholungen", text: $repsText)
-                        .keyboardType(.numberPad)
-                        .textContentType(.none)
-                        .accessibilityLabel("Wiederholungen")
-
-                    HStack {
-                        TextField("Gewicht", text: $weightText)
-                            .keyboardType(.decimalPad)
-                            .textContentType(.none)
-                            .accessibilityLabel("Gewicht")
-                        Text(unitSystem == "IMPERIAL" ? "lb" : "kg")
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if settings.state.plateCalculatorEnabled,
-                       let enteredWeight = iosWorkoutParseDecimal(weightText),
-                       enteredWeight.isFinite,
-                       enteredWeight >= 0 {
-                        IOSWorkoutPlateVisualizer(
-                            targetWeightKg: iosWorkoutInputWeightToKg(enteredWeight, unitSystem: unitSystem),
-                            barbellWeightKg: settings.state.barbellWeightKg,
-                            availablePlates: settings.state.availablePlates,
-                            unitSystem: unitSystem
-                        )
-                    }
-
-                    if intensitySystem != "OFF" {
-                        HStack {
-                            TextField(intensitySystem, text: $intensityText)
-                                .keyboardType(.decimalPad)
-                                .textContentType(.none)
-                                .accessibilityLabel(Text(intensitySystem == "RIR" ? "Reps in Reserve" : "Rate of Perceived Exertion"))
-                            Text(intensitySystem == "RIR" ? "0–9" : "1–10")
-                                .foregroundStyle(.secondary)
-                        }
-                        Text(intensitySystem == "RIR"
-                             ? "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht."
-                             : "RPE 10 entspricht maximaler Anstrengung.")
+                        Text("Optional. Beschreibt, warum der Satz so endete, und bleibt ohne Auswahl nicht angegeben.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                }
 
-                Section("Absicht") {
-                    Picker("Absicht", selection: $intention) {
-                        ForEach(ILSetIntention.allCases, id: \.self) { value in
-                            Text(ilSetIntentionText(value)).tag(value)
+                    if let errorMessage {
+                        Section {
+                            Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
                         }
                     }
-                    Text("Optional. Beschreibt, warum der Satz so endete, und bleibt ohne Auswahl nicht angegeben.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
-
-                if let errorMessage {
-                    Section {
-                        Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                    }
-                }
+                .ironLogListRows()
             }
+            .ironLogScreenBackground()
             .navigationTitle(isEditing ? "Satz bearbeiten" : "Satz hinzufügen")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { applyEnvironmentDefaults() }

@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.settings
 
+import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.domain.util.WeightFormatting
 import android.Manifest
 import android.annotation.SuppressLint
@@ -41,8 +42,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -157,8 +156,7 @@ fun SettingsScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+            IronLogTopBar(
                 title = { Text(stringResource(id = R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

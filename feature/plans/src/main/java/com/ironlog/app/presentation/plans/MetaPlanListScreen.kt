@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,9 +30,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,8 +74,7 @@ fun MetaPlanListScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+            IronLogTopBar(
                 title = { Text(stringResource(id = R.string.meta_plans_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

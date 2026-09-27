@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import com.ironlog.app.domain.model.ThemeMode
@@ -635,9 +636,35 @@ fun IronLogTheme(
         LocalAppearanceStyle provides appearanceStyle
     ) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = if (appearanceStyle == com.ironlog.app.domain.model.AppearanceStyle.LIQUID_GLASS) {
+                colorScheme.withLiquidGlassContainers(isDarkTheme)
+            } else {
+                colorScheme
+            },
             typography = Typography,
             content = content
         )
     }
+}
+
+/**
+ * Sheets, dialogs and menus sit above the colored Liquid Glass backdrop. Their containers use the
+ * same near-opaque glass tone as the tinted fallback of [liquidGlass], so they match the glass
+ * surfaces instead of the warm Ember surfaces. Selected controls follow the drafts: white on
+ * dark glass, near black on light glass.
+ */
+private fun ColorScheme.withLiquidGlassContainers(dark: Boolean): ColorScheme {
+    val low = if (dark) Color(0xFF161822) else Color(0xFFF4F5F9)
+    val mid = if (dark) Color(0xFF1A1C26) else Color(0xFFF8F9FC)
+    val high = if (dark) Color(0xFF20222E) else Color(0xFFFFFFFF)
+    return copy(
+        surfaceContainerLowest = low,
+        surfaceContainerLow = low,
+        surfaceContainer = mid,
+        surfaceContainerHigh = high,
+        surfaceContainerHighest = high,
+        // Selected chips, segments and tonal buttons: bright on dark glass, dark on light glass.
+        secondaryContainer = if (dark) Color.White else Color(0xFF0B0D12),
+        onSecondaryContainer = if (dark) Color(0xFF0B0D12) else Color.White
+    )
 }

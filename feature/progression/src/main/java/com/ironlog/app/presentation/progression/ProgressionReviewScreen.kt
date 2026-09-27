@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.progression
 
+import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,7 +77,7 @@ fun ProgressionReviewScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
+            IronLogTopBar(
                 modifier = Modifier.testTag("progression_review_top_bar"),
                 title = { Text(stringResource(R.string.progression_review_title)) },
                 navigationIcon = {

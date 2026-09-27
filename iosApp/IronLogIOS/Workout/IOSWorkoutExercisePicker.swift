@@ -30,26 +30,30 @@ struct IOSWorkoutExercisePicker: View {
                     Button("Auswahl leeren") { selected = [] }
                 }.font(.subheadline).padding(.horizontal)
                 List(filtered) { exercise in
-                    Button {
-                        if selected.contains(exercise.id) { selected.removeAll { $0 == exercise.id } }
-                        else { selected.append(exercise.id) }
-                    } label: {
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(exercise.name).font(.headline).foregroundStyle(.primary)
-                                Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")
-                                .font(.title2).foregroundStyle(.tint)
-                        }.frame(minHeight: 48).contentShape(Rectangle())
+                    Group {
+                        Button {
+                            if selected.contains(exercise.id) { selected.removeAll { $0 == exercise.id } }
+                            else { selected.append(exercise.id) }
+                        } label: {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(exercise.name).font(.headline).foregroundStyle(.primary)
+                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")
+                                    .font(.title2).foregroundStyle(.tint)
+                            }.frame(minHeight: 48).contentShape(Rectangle())
+                        }
+                        .disabled(excludedIDs.contains(exercise.id))
+                        .listRowBackground(selected.contains(exercise.id) ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
+                        .accessibilityValue(selected.contains(exercise.id) ? "Ausgewählt" : excludedIDs.contains(exercise.id) ? "Bereits hinzugefügt" : "Nicht ausgewählt")
                     }
-                    .disabled(excludedIDs.contains(exercise.id))
-                    .listRowBackground(selected.contains(exercise.id) ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
-                    .accessibilityValue(selected.contains(exercise.id) ? "Ausgewählt" : excludedIDs.contains(exercise.id) ? "Bereits hinzugefügt" : "Nicht ausgewählt")
+                    .ironLogListRows()
                 }.listStyle(.insetGrouped)
             }
             .searchable(text: $searchText, prompt: "Übung suchen")
+            .ironLogScreenBackground()
             .navigationTitle("Übungen wählen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() } } }
