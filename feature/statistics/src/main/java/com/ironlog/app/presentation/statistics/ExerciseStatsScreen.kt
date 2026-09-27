@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
@@ -81,6 +82,7 @@ fun ExerciseStatsScreen(
         initialValue = AppPreferences()
     )
     val dims = ironLogDimens
+    val liquidGlass = isLiquidGlass()
 
     LaunchedEffect(state.chartData) {
         if (state.chartData.isNotEmpty()) {
@@ -96,7 +98,8 @@ fun ExerciseStatsScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
+            // Liquid Glass shows a round back button and the name in the content.
+            if (!liquidGlass) TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
                     Text(
@@ -116,6 +119,67 @@ fun ExerciseStatsScreen(
     ) { padding ->
         if (state.isLoading) {
             LoadingScreen(modifier = Modifier.padding(padding))
+        } else if (liquidGlass) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                item {
+                    GlassStatsHeader(
+                        subtitle = state.exercise?.let { "${it.primaryMuscleGroup.displayName} · ${it.category.displayName}" },
+                        onBack = onBack
+                    )
+                }
+                item {
+                    Text(
+                        text = state.exercise?.name ?: stringResource(id = R.string.stats_title_fallback),
+                        fontSize = 40.sp,
+                        lineHeight = 42.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-1.4).sp
+                    )
+                }
+                item {
+                    GlassStatsHero(
+                        points = state.chartData,
+                        metric = state.selectedMetric,
+                        unitSystem = preferences.unitSystem,
+                        onMetricSelected = viewModel::onMetricSelected
+                    )
+                }
+                if (state.records.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(id = R.string.stats_empty_records),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    item {
+                        GlassRecordTiles(
+                            records = state.records.associate { it.type to it.value },
+                            unitSystem = preferences.unitSystem
+                        )
+                    }
+                }
+                state.lastWorkoutComparison?.takeIf { state.chartData.size >= 2 }?.let { comparison ->
+                    item {
+                        LastWorkoutComparisonCard(
+                            comparison = comparison,
+                            metric = state.selectedMetric,
+                            unitSystem = preferences.unitSystem
+                        )
+                    }
+                }
+                if (state.recentSets.isNotEmpty()) {
+                    item { RecentSetsCard(sets = state.recentSets, unitSystem = preferences.unitSystem) }
+                }
+                item { WeeklyMuscleVolumeCard(volumes = state.weeklyMuscleVolume) }
+            }
         } else {
             LazyColumn(
                 modifier = Modifier

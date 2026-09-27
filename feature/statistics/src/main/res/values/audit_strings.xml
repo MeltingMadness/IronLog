@@ -10,4 +10,8 @@
     <string name="stats_set_type_warmup">Aufwärmen</string>
     <string name="stats_set_type_drop">Dropsatz</string>
     <string name="stats_set_type_failure">Failure-Satz</string>
+    <string name="stats_glass_metric_weight">Gewicht</string>
+    <string name="stats_glass_metric_e1rm">1RM</string>
+    <string name="stats_glass_metric_volume">Volumen</string>
+    <string name="stats_glass_chart_cd">Verlauf %1$s von %2$s auf %3$s</string>
 </resources>
