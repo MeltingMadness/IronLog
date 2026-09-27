@@ -9,9 +9,9 @@ struct IOSExerciseLibraryScreen: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .active: "Aktiv"
-            case .archived: "Archiv"
-            case .all: "Alle"
+            case .active: String(localized: "Aktiv")
+            case .archived: String(localized: "Archiv")
+            case .all: String(localized: "Alle")
             }
         }
     }
@@ -75,7 +75,7 @@ struct IOSExerciseLibraryScreen: View {
                         }
                     } label: {
                         Label(
-                            muscleGroupFilter.map(IOSExerciseLibraryMuscles.displayName) ?? "Alle Muskelgruppen",
+                            muscleGroupFilter.map(IOSExerciseLibraryMuscles.displayName) ?? String(localized: "Alle Muskelgruppen"),
                             systemImage: "line.3.horizontal.decrease.circle"
                         )
                     }
@@ -83,9 +83,9 @@ struct IOSExerciseLibraryScreen: View {
 
                     if exercises.isEmpty {
                         ContentUnavailableView(
-                            searchText.isEmpty ? "Keine Übungen" : "Keine Treffer",
+                            searchText.isEmpty ? String(localized: "Keine Übungen") : String(localized: "Keine Treffer"),
                             systemImage: searchText.isEmpty ? "figure.strengthtraining.traditional" : "magnifyingglass",
-                            description: Text(searchText.isEmpty ? "Erstelle eine eigene Übung oder importiere Trainingsdaten." : "Passe Suche oder Filter an.")
+                            description: Text(searchText.isEmpty ? String(localized: "Erstelle eine eigene Übung oder importiere Trainingsdaten.") : String(localized: "Passe Suche oder Filter an."))
                         )
                         .listRowBackground(Color.clear)
                     } else {
@@ -130,7 +130,7 @@ struct IOSExerciseLibraryScreen: View {
             }
         }
         .confirmationDialog(
-            pendingDelete.map { "\($0.name) löschen?" } ?? "Übung löschen?",
+            pendingDelete.map { String(localized: "\($0.name) löschen?") } ?? String(localized: "Übung löschen?"),
             isPresented: Binding(
                 get: { pendingDelete != nil },
                 set: { if !$0 { pendingDelete = nil } }
@@ -178,16 +178,16 @@ private enum IOSExerciseLibraryMuscles {
 
     static func displayName(_ raw: String) -> String {
         switch raw {
-        case "BRUST": "Brust"
-        case "RUECKEN": "Rücken"
-        case "BEINE": "Beine"
-        case "SCHULTERN": "Schultern"
-        case "BIZEPS": "Bizeps"
-        case "TRIZEPS": "Trizeps"
-        case "GESAESS": "Gesäß"
-        case "CORE": "Core"
-        case "UNTERARME": "Unterarme"
-        case "WADEN": "Waden"
+        case "BRUST": String(localized: "Brust")
+        case "RUECKEN": String(localized: "Rücken")
+        case "BEINE": String(localized: "Beine")
+        case "SCHULTERN": String(localized: "Schultern")
+        case "BIZEPS": String(localized: "Bizeps")
+        case "TRIZEPS": String(localized: "Trizeps")
+        case "GESAESS": String(localized: "Gesäß")
+        case "CORE": String(localized: "Core")
+        case "UNTERARME": String(localized: "Unterarme")
+        case "WADEN": String(localized: "Waden")
         default: raw
         }
     }
@@ -232,14 +232,14 @@ private struct IOSExerciseListRow: View {
         .buttonStyle(.plain)
         .contextMenu {
             Button("Bearbeiten", systemImage: "pencil", action: onOpen)
-            Button(exercise.isArchived ? "Wieder aktivieren" : "Archivieren", systemImage: exercise.isArchived ? "archivebox.fill" : "archivebox", action: onArchive)
+            Button(exercise.isArchived ? String(localized: "Wieder aktivieren") : String(localized: "Archivieren"), systemImage: exercise.isArchived ? "archivebox.fill" : "archivebox", action: onArchive)
             if exercise.isCustom {
                 Button("Löschen", systemImage: "trash", role: .destructive, action: onDelete)
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(action: onArchive) {
-                Label(exercise.isArchived ? "Aktivieren" : "Archivieren", systemImage: exercise.isArchived ? "archivebox.fill" : "archivebox")
+                Label(exercise.isArchived ? String(localized: "Aktivieren") : String(localized: "Archivieren"), systemImage: exercise.isArchived ? "archivebox.fill" : "archivebox")
             }
             if exercise.isCustom {
                 Button(role: .destructive, action: onDelete) {
@@ -351,7 +351,7 @@ private struct IOSExerciseEditorScreen: View {
             .ironLogListRows()
         }
         .ironLogScreenBackground()
-        .navigationTitle(exercise == nil ? "Neue Übung" : "Übung bearbeiten")
+        .navigationTitle(exercise == nil ? String(localized: "Neue Übung") : String(localized: "Übung bearbeiten"))
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: primaryMuscle) { _, newPrimary in
             selectedSecondaryMuscles.remove(newPrimary)
@@ -361,7 +361,7 @@ private struct IOSExerciseEditorScreen: View {
                 Button("Abbrechen") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isSaving ? "Speichert …" : "Sichern") {
+                Button(isSaving ? String(localized: "Speichert …") : String(localized: "Sichern")) {
                     Task { await save() }
                 }
                 .disabled(isSaving || store.isBusy || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -413,7 +413,7 @@ private struct IOSExerciseEditorScreen: View {
         guard !isSaving else { return }
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            errorMessage = "Bitte gib einen Namen ein."
+            errorMessage = String(localized: "Bitte gib einen Namen ein.")
             return
         }
         let secondary = muscleGroups
@@ -435,7 +435,7 @@ private struct IOSExerciseEditorScreen: View {
         if await store.saveExercise(saved) {
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Die Übung konnte nicht gespeichert werden."
+            errorMessage = store.errorMessage ?? String(localized: "Die Übung konnte nicht gespeichert werden.")
         }
     }
 
@@ -446,7 +446,7 @@ private struct IOSExerciseEditorScreen: View {
         if await store.command("exercise.delete", fields: ["id": exercise.id]) {
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Die Übung konnte nicht gelöscht werden."
+            errorMessage = store.errorMessage ?? String(localized: "Die Übung konnte nicht gelöscht werden.")
         }
     }
 
@@ -465,11 +465,11 @@ private struct IOSExerciseEditorScreen: View {
 
     private func categoryDisplayName(_ raw: String) -> String {
         switch raw {
-        case "LANGHANTEL": "Langhantel"
-        case "KURZHANTEL": "Kurzhantel"
-        case "MASCHINE": "Maschine"
-        case "KABEL": "Kabel"
-        case "EIGENGEWICHT": "Eigengewicht"
+        case "LANGHANTEL": String(localized: "Langhantel")
+        case "KURZHANTEL": String(localized: "Kurzhantel")
+        case "MASCHINE": String(localized: "Maschine")
+        case "KABEL": String(localized: "Kabel")
+        case "EIGENGEWICHT": String(localized: "Eigengewicht")
         default: raw
         }
     }

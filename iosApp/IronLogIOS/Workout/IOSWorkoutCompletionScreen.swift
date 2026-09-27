@@ -11,7 +11,7 @@ struct IOSWorkoutFinishSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Training beenden?").font(.geist(.title2, weight: .bold))
-            Text(remaining > 0 ? "Noch \(remaining) \(remaining == 1 ? "geplanter Satz" : "geplante Sätze") offen. \(planned - remaining) von \(planned) absolviert." : "Deine bestätigten Sätze werden gespeichert.")
+            Text(remaining > 0 ? String(localized: "Noch \(remaining) \(remaining == 1 ? String(localized: "geplanter Satz") : String(localized: "geplante Sätze")) offen. \(planned - remaining) von \(planned) absolviert.") : String(localized: "Deine bestätigten Sätze werden gespeichert."))
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
@@ -22,7 +22,7 @@ struct IOSWorkoutFinishSheet: View {
             if let error { Text(error).font(.geist(.footnote)).foregroundStyle(.red) }
             Button(action: onContinue) { Text("Weitertrainieren").frame(maxWidth: .infinity).padding(.vertical, 7) }
                 .buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy)
-            Button(action: onFinish) { Text(busy ? "Speichert …" : remaining > 0 ? "Trotzdem beenden" : "Training beenden").frame(maxWidth: .infinity).padding(.vertical, 7) }
+            Button(action: onFinish) { Text(busy ? String(localized: "Speichert …") : remaining > 0 ? String(localized: "Trotzdem beenden") : String(localized: "Training beenden")).frame(maxWidth: .infinity).padding(.vertical, 7) }
                 .buttonStyle(.bordered).disabled(busy)
             Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.geist(.caption)).ironLogSecondaryText()
         }.padding(24).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
@@ -64,7 +64,7 @@ struct IOSWorkoutCompletionScreen: View {
         .map { id, records in
             let types = Array(Set(records.map { $0.type.uppercased() }))
                 .sorted { (order.firstIndex(of: $0) ?? 9) < (order.firstIndex(of: $1) ?? 9) }
-            return (exercise: names[id] ?? "Übung", types: types)
+            return (exercise: names[id] ?? String(localized: "Übung"), types: types)
         }
         .sorted { $0.exercise < $1.exercise }
     }
@@ -86,13 +86,13 @@ struct IOSWorkoutCompletionScreen: View {
                         .tracking(0.8)
                         .ironLogSecondaryText()
                         .multilineTextAlignment(.center)
-                    Text(remaining > 0 ? "Teiltraining gespeichert" : "Geschafft.")
+                    Text(remaining > 0 ? String(localized: "Teiltraining gespeichert") : String(localized: "Geschafft."))
                         .font(.geist(size: remaining > 0 ? 34 : 54, weight: .bold))
                         .tracking(-1.5)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                     if remaining > 0 {
-                        Text("Vorzeitig beendet · \(ilCount(sets.count, "bestätigter Satz", "bestätigte Sätze"))")
+                        Text("Vorzeitig beendet · \(ilCount(sets.count, String(localized: "bestätigter Satz"), String(localized: "bestätigte Sätze")))")
                             .ironLogSecondaryText()
                     }
                 }
@@ -100,10 +100,10 @@ struct IOSWorkoutCompletionScreen: View {
                 .padding(.top, 20)
 
                 HStack(spacing: 8) {
-                    lens(session.durationSeconds < 60 ? "< 1" : "\(session.durationSeconds / 60)", unit: "min", label: "Dauer")
+                    lens(session.durationSeconds < 60 ? "< 1" : "\(session.durationSeconds / 60)", unit: String(localized: "min"), label: String(localized: "Dauer"))
                     lens(String(volumeText.split(separator: " ").dropLast().joined(separator: " ")),
-                         unit: String(volumeText.split(separator: " ").last ?? ""), label: "Volumen")
-                    lens("\(trained.count)", unit: trained.count == 1 ? "Übung" : "Übungen", label: "Übungen")
+                         unit: String(volumeText.split(separator: " ").last ?? ""), label: String(localized: "Volumen"))
+                    lens("\(trained.count)", unit: trained.count == 1 ? String(localized: "Übung") : String(localized: "Übungen"), label: String(localized: "Übungen"))
                 }
 
                 if !records.isEmpty {
@@ -114,7 +114,7 @@ struct IOSWorkoutCompletionScreen: View {
                             .frame(width: 48, height: 48)
                             .background(dark ? Color.white : Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255), in: Circle())
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(records.count == 1 ? "NEUER REKORD" : "NEUE REKORDE")
+                            Text(records.count == 1 ? String(localized: "NEUER REKORD") : String(localized: "NEUE REKORDE"))
                                 .font(.geist(.caption, weight: .bold))
                                 .tracking(0.8)
                             ForEach(records, id: \.exercise) { record in
@@ -145,7 +145,7 @@ struct IOSWorkoutCompletionScreen: View {
                 }
 
                 if session.planId != nil {
-                    Button(planApplied ? "Satzwerte übernommen" : "Planänderungen prüfen") { showPlanChanges = true }
+                    Button(planApplied ? String(localized: "Satzwerte übernommen") : String(localized: "Planänderungen prüfen")) { showPlanChanges = true }
                         .buttonStyle(.bordered).disabled(planApplied)
                 }
             }
@@ -210,16 +210,16 @@ struct IOSWorkoutCompletionScreen: View {
     private var emberBody: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Label(remaining > 0 ? "Vorzeitig beendet · \(sets.count) bestätigte Sätze" : "Training gespeichert", systemImage: "checkmark.circle.fill")
+                Label(remaining > 0 ? String(localized: "Vorzeitig beendet · \(sets.count) bestätigte Sätze") : String(localized: "Training gespeichert"), systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green).padding().frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
-                Text(remaining > 0 ? "Teiltraining gespeichert" : "Training geschafft").font(.geist(.title, weight: .bold))
+                Text(remaining > 0 ? String(localized: "Teiltraining gespeichert") : String(localized: "Training geschafft")).font(.geist(.title, weight: .bold))
                 Text(session.name).ironLogSecondaryText()
                 HStack(spacing: 12) {
-                    metric("Dauer", "\(session.durationSeconds / 60) min")
-                    metric("Sätze", "\(sets.count)")
+                    metric(String(localized: "Dauer"), String(localized: "\(session.durationSeconds / 60) min"))
+                    metric(String(localized: "Sätze"), "\(sets.count)")
                 }
-                metric("Volumen", iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
+                metric(String(localized: "Volumen"), iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
                 ForEach(rows.filter { !$0.sets.isEmpty }) { row in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(row.exercise.name).font(.geist(.headline))
@@ -230,7 +230,7 @@ struct IOSWorkoutCompletionScreen: View {
                         .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))
                 }
                 if session.planId != nil {
-                    Button(planApplied ? "Satzwerte übernommen" : "Planänderungen prüfen") { showPlanChanges = true }
+                    Button(planApplied ? String(localized: "Satzwerte übernommen") : String(localized: "Planänderungen prüfen")) { showPlanChanges = true }
                         .buttonStyle(.bordered).disabled(planApplied)
                 }
             }.padding(20)
@@ -270,8 +270,8 @@ private struct IOSWorkoutPlanChangesSheet: View {
     @State private var choice = 0
     @State private var busy = false
     @State private var error: String?
-    private let titles = ["Nur dieses Training", "Satzwerte übernehmen", "Plan im Editor anpassen"]
-    private let subtitles = ["Plan unverändert lassen", "Nur ausgeführte Sätze aktualisieren · individuelle Vorgaben, manuelle Progression", "Übungen und Vorgaben selbst bearbeiten"]
+    private let titles = [String(localized: "Nur dieses Training"), String(localized: "Satzwerte übernehmen"), String(localized: "Plan im Editor anpassen")]
+    private let subtitles = [String(localized: "Plan unverändert lassen"), String(localized: "Nur ausgeführte Sätze aktualisieren · individuelle Vorgaben, manuelle Progression"), String(localized: "Übungen und Vorgaben selbst bearbeiten")]
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -307,7 +307,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                             }.padding().frame(maxWidth: .infinity, alignment: .leading)
                                 .background(choice == index ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                                 .overlay { RoundedRectangle(cornerRadius: 14).stroke(choice == index ? Color.accentColor : .secondary.opacity(0.3)) }
-                        }.buttonStyle(.plain).disabled(busy).accessibilityValue(choice == index ? "Ausgewählt" : "Nicht ausgewählt")
+                        }.buttonStyle(.plain).disabled(busy).accessibilityValue(choice == index ? String(localized: "Ausgewählt") : String(localized: "Nicht ausgewählt"))
                     }
                     Text("Offene Übungen und Sätze bleiben im Plan.").font(.geist(.caption))
                     if let error { Text(error).foregroundStyle(.red) }
@@ -324,11 +324,11 @@ private struct IOSWorkoutPlanChangesSheet: View {
                         busy = true
                         let success = await store.command("plan.applyPerformedSets", fields: ["sessionId": sessionID])
                         busy = false
-                        if success { onApplied(); dismiss() } else { error = store.errorMessage ?? "Plan konnte nicht geändert werden." }
+                        if success { onApplied(); dismiss() } else { error = store.errorMessage ?? String(localized: "Plan konnte nicht geändert werden.") }
                     }
                     }
                 } label: {
-                    Text(busy ? "Speichert …" : ["Plan unverändert lassen", "Satzwerte übernehmen", "Planeditor öffnen"][choice]).frame(maxWidth: .infinity).padding(.vertical, 7)
+                    Text(busy ? String(localized: "Speichert …") : [String(localized: "Plan unverändert lassen"), String(localized: "Satzwerte übernehmen"), String(localized: "Planeditor öffnen")][choice]).frame(maxWidth: .infinity).padding(.vertical, 7)
                 }.buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy).padding().background(.bar)
             }
             .interactiveDismissDisabled(busy)

@@ -94,7 +94,7 @@ struct IronLogWeeklyMuscleVolumeCard: View {
         subtitle: String? = nil,
         rows: [IronLogWeeklyMuscleVolume],
         initiallyExpanded: Bool = true,
-        emptyMessage: String = "Keine Daten verfügbar",
+        emptyMessage: String = String(localized: "Keine Daten verfügbar"),
         weekStart: String? = nil,
         currentWeekStart: String? = nil,
         completedWorkoutCount: Int? = nil,
@@ -152,8 +152,8 @@ struct IronLogWeeklyMuscleVolumeCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text(title))
-            .accessibilityValue(Text(isExpanded ? "Geöffnet" : "Geschlossen"))
-                        .accessibilityHint(Text(isExpanded ? "Zum Reduzieren tippen" : "Zum Anzeigen tippen"))
+            .accessibilityValue(Text(isExpanded ? String(localized: "Geöffnet") : String(localized: "Geschlossen")))
+                        .accessibilityHint(Text(isExpanded ? String(localized: "Zum Reduzieren tippen") : String(localized: "Zum Anzeigen tippen")))
 
             if weekStart != nil {
                 IronLogWeeklyMuscleVolumeWeekHeader(
@@ -251,7 +251,7 @@ private struct IronLogWeeklyMuscleVolumeWeekHeader: View {
                         .foregroundStyle(palette.textPrimary)
                 }
 
-                Text(isCurrentWeek ? "Aktuelle Woche" : "Abgeschlossene Woche")
+                Text(isCurrentWeek ? String(localized: "Aktuelle Woche") : String(localized: "Abgeschlossene Woche"))
                     .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
             }
@@ -358,22 +358,22 @@ struct IronLogWeeklyMuscleVolumeRow: View {
         guard let weeklySets = volume.weeklySets, weeklySets.isFinite else {
             return "—"
         }
-        return "\(ironLogFormatSets(weeklySets)) \(weeklySets == 1 ? "Satz" : "Sätze")"
+        return "\(ironLogFormatSets(weeklySets)) \(weeklySets == 1 ? String(localized: "Satz") : String(localized: "Sätze"))"
     }
 
     private var ironLogThresholdDescription: String? {
         let thresholds = volume.thresholds
         let entries: [(String, Double?)] = [
-            ("Min", thresholds.minimum),
-            ("Ziel", thresholds.target),
-            ("Max", thresholds.maximum)
+            (String(localized: "Min"), thresholds.minimum),
+            (String(localized: "Ziel"), thresholds.target),
+            (String(localized: "Max"), thresholds.maximum)
         ]
         let available: [String] = entries.compactMap { entry -> String? in
             let (label, value) = entry
             guard let value, value.isFinite else { return nil }
             return "\(label) \(ironLogFormatSets(value))"
         }
-        return available.isEmpty ? nil : available.joined(separator: " · ") + " Sätze"
+        return available.isEmpty ? nil : String(localized: "\(available.joined(separator: " · ")) Sätze")
     }
 
     private var ironLogAccessibilitySummary: String {

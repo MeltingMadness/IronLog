@@ -8,7 +8,7 @@ struct IOSPlansScreen: View {
         case metaPlans
 
         var id: String { rawValue }
-        var title: String { self == .plans ? "Pläne" : "Meta-Pläne" }
+        var title: String { self == .plans ? String(localized: "Pläne") : String(localized: "Meta-Pläne") }
     }
 
     @Environment(IOSTrainingStore.self) private var store
@@ -58,7 +58,7 @@ struct IOSPlansScreen: View {
                     } label: {
                         Label("Neu", systemImage: "plus")
                     }
-                    .accessibilityHint(mode == .plans ? "Neuen Trainingsplan anlegen" : "Neuen Meta-Plan anlegen")
+                    .accessibilityHint(mode == .plans ? String(localized: "Neuen Trainingsplan anlegen") : String(localized: "Neuen Meta-Plan anlegen"))
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -96,7 +96,7 @@ struct IOSPlansScreen: View {
             }
         }
         .confirmationDialog(
-            pendingDelete.map { "\($0.title) löschen?" } ?? "Löschen?",
+            pendingDelete.map { String(localized: "\($0.title) löschen?") } ?? String(localized: "Löschen?"),
             isPresented: Binding(
                 get: { pendingDelete != nil },
                 set: { if !$0 { pendingDelete = nil } }
@@ -247,7 +247,7 @@ private struct IOSPlanListRow: View {
                     Text(plan.name)
                         .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
-                    Text(exerciseCount == 1 ? "1 Übung" : "\(exerciseCount) Übungen")
+                    Text(exerciseCount == 1 ? String(localized: "1 Übung") : String(localized: "\(exerciseCount) Übungen"))
                         .font(.geist(.caption))
                         .ironLogSecondaryText()
                 }
@@ -294,7 +294,7 @@ private struct IOSMetaPlanListRow: View {
                     Text(plan.name)
                         .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
-                    Text(itemCount == 1 ? "1 Teilplan" : "\(itemCount) Teilpläne")
+                    Text(itemCount == 1 ? String(localized: "1 Teilplan") : String(localized: "\(itemCount) Teilpläne"))
                         .font(.geist(.caption))
                         .ironLogSecondaryText()
                 }

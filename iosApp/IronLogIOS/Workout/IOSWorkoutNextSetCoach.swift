@@ -84,7 +84,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
 
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
-                Text(deltaText.isEmpty ? "Nächster Satz: \(weight)" : "Nächster Satz: \(weight) (\(deltaText))")
+                Text(deltaText.isEmpty ? String(localized: "Nächster Satz: \(weight)") : String(localized: "Nächster Satz: \(weight) (\(deltaText))"))
                     .font(.geist(.caption, weight: .semibold))
                     .foregroundStyle(recommendationColor)
                     .lineLimit(2)
@@ -104,13 +104,13 @@ struct IOSWorkoutNextSetRecommendationView: View {
             HStack(spacing: 6) {
                 if let targetRpe = recommendation.targetRpe {
                     IOSWorkoutCoachPill(
-                        text: "Ziel-RPE \(iosWorkoutDecimal(targetRpe, fractionDigits: 1))",
+                        text: String(localized: "Ziel-RPE \(iosWorkoutDecimal(targetRpe, fractionDigits: 1))"),
                         color: palette.information
                     )
                 }
                 if recommendation.isOvershoot {
                     IOSWorkoutCoachPill(
-                        text: "Zu schwer (RPE \(iosWorkoutDecimal(recommendation.lastRpe, fractionDigits: 1)))",
+                        text: String(localized: "Zu schwer (RPE \(iosWorkoutDecimal(recommendation.lastRpe, fractionDigits: 1)))"),
                         color: palette.danger
                     )
                 }
@@ -119,7 +119,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
             if let backoff = recommendation.backoffWeightKg {
                 HStack(spacing: 6) {
                     IOSWorkoutCoachPill(
-                        text: "Backoff-Satz: \(iosWorkoutDisplayWeight(kilograms: backoff, unitSystem: unitSystem))",
+                        text: String(localized: "Backoff-Satz: \(iosWorkoutDisplayWeight(kilograms: backoff, unitSystem: unitSystem))"),
                         color: palette.danger
                     )
                     Button("Backoff übernehmen") {
@@ -142,7 +142,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Coach-Empfehlung")
-        .accessibilityValue(Text(deltaText.isEmpty ? "Nächster Satz \(weight)" : "Nächster Satz \(weight), \(deltaText)"))
+        .accessibilityValue(Text(deltaText.isEmpty ? String(localized: "Nächster Satz \(weight)") : String(localized: "Nächster Satz \(weight), \(deltaText)")))
     }
 
     private func deltaMagnitudeText(_ delta: Double) -> String {

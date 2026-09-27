@@ -24,8 +24,8 @@ struct IOSWeeklyVolumeTrendCard: View {
         let palette = theme.palette(for: colorScheme)
 
         IronLogCard(
-            title: "Volumen über acht Wochen",
-            subtitle: "Arbeitsvolumen pro Kalenderwoche · " + ilWeightUnit(unitSystem)
+            title: String(localized: "Volumen über acht Wochen"),
+            subtitle: String(localized: "Arbeitsvolumen pro Kalenderwoche · \(ilWeightUnit(unitSystem))")
         ) {
             if points.isEmpty {
                 Text("Noch keine Wochenwerte verfügbar")

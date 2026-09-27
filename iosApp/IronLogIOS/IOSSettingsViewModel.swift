@@ -140,8 +140,8 @@ final class IOSSettingsViewModel: ObservableObject {
                         self.pushReminderState(enabled: true)
                     } else {
                         self.activeAlert = SettingsAlert(
-                            title: "Reminder nicht erlaubt",
-                            message: error ?? "Bitte erlaube Mitteilungen in den iPhone-Einstellungen."
+                            title: String(localized: "Reminder nicht erlaubt"),
+                            message: error ?? String(localized: "Bitte erlaube Mitteilungen in den iPhone-Einstellungen.")
                         )
                     }
                 }
@@ -192,8 +192,8 @@ final class IOSSettingsViewModel: ObservableObject {
                     self.isExportingBackup = true
                 } else {
                     self.activeAlert = SettingsAlert(
-                        title: "Backup fehlgeschlagen",
-                        message: error ?? "Backup konnte nicht exportiert werden."
+                        title: String(localized: "Backup fehlgeschlagen"),
+                        message: error ?? String(localized: "Backup konnte nicht exportiert werden.")
                     )
                 }
             }
@@ -213,8 +213,8 @@ final class IOSSettingsViewModel: ObservableObject {
         case .success(let urls):
             guard let url = urls.first else {
                 activeAlert = SettingsAlert(
-                    title: "Import abgebrochen",
-                    message: "Es wurde keine Backup-Datei ausgewählt."
+                    title: String(localized: "Import abgebrochen"),
+                    message: String(localized: "Es wurde keine Backup-Datei ausgewählt.")
                 )
                 return
             }
@@ -240,18 +240,18 @@ final class IOSSettingsViewModel: ObservableObject {
                             self.isConfirmingBackupImport = true
                         } else {
                             self.activeAlert = SettingsAlert(
-                                title: "Import abgebrochen",
-                                message: error ?? "Backup konnte nicht geprüft werden."
+                                title: String(localized: "Import abgebrochen"),
+                                message: error ?? String(localized: "Backup konnte nicht geprüft werden.")
                             )
                         }
                     }
                 }
             } catch {
                 isBusy = false
-                activeAlert = SettingsAlert(title: "Import fehlgeschlagen", message: error.localizedDescription)
+                activeAlert = SettingsAlert(title: String(localized: "Import fehlgeschlagen"), message: error.localizedDescription)
             }
         case .failure(let error):
-            activeAlert = SettingsAlert(title: "Import abgebrochen", message: error.localizedDescription)
+            activeAlert = SettingsAlert(title: String(localized: "Import abgebrochen"), message: error.localizedDescription)
         }
     }
 
@@ -270,10 +270,10 @@ final class IOSSettingsViewModel: ObservableObject {
                 self.pendingBackupImport = nil
                 let didImport = success.boolValue && error == nil
                 self.activeAlert = SettingsAlert(
-                    title: didImport ? "Backup importiert" : "Import fehlgeschlagen",
+                    title: didImport ? String(localized: "Backup importiert") : String(localized: "Import fehlgeschlagen"),
                     message: didImport
-                        ? "Die lokalen Trainingsdaten wurden wiederhergestellt."
-                        : (error ?? "Backup konnte nicht importiert werden.")
+                        ? String(localized: "Die lokalen Trainingsdaten wurden wiederhergestellt.")
+                        : (error ?? String(localized: "Backup konnte nicht importiert werden."))
                 )
                 if didImport {
                     self.refreshRecoveryBackup()
@@ -293,7 +293,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 guard let self else { return }
                 if let error, recovery == nil {
                     self.activeAlert = SettingsAlert(
-                        title: "Wiederherstellungspunkt nicht verfügbar",
+                        title: String(localized: "Wiederherstellungspunkt nicht verfügbar"),
                         message: error
                     )
                 } else {
@@ -319,13 +319,13 @@ final class IOSSettingsViewModel: ObservableObject {
                 if let recovery {
                     self.recoveryBackup = recovery
                     self.activeAlert = SettingsAlert(
-                        title: "Trainingsdaten wiederhergestellt",
-                        message: "Der vorherige Wiederherstellungspunkt wurde geladen."
+                        title: String(localized: "Trainingsdaten wiederhergestellt"),
+                        message: String(localized: "Der vorherige Wiederherstellungspunkt wurde geladen.")
                     )
                 } else {
                     self.activeAlert = SettingsAlert(
-                        title: "Wiederherstellung fehlgeschlagen",
-                        message: error ?? "Kein Wiederherstellungspunkt ist verfügbar."
+                        title: String(localized: "Wiederherstellung fehlgeschlagen"),
+                        message: error ?? String(localized: "Kein Wiederherstellungspunkt ist verfügbar.")
                     )
                     self.refreshRecoveryBackup()
                 }
@@ -340,17 +340,17 @@ final class IOSSettingsViewModel: ObservableObject {
     var pendingImportSummary: String? {
         guard let preview = pendingBackupImport?.preview else { return nil }
         let existingDataMessage = preview.replacesExistingData
-            ? "Die vorhandenen lokalen Trainingsdaten werden vollständig ersetzt."
-            : "Auf diesem Gerät sind noch keine lokalen Trainingsdaten geladen."
+            ? String(localized: "Die vorhandenen lokalen Trainingsdaten werden vollständig ersetzt.")
+            : String(localized: "Auf diesem Gerät sind noch keine lokalen Trainingsdaten geladen.")
         let counts: [String] = [
-            ilCount(preview.exerciseCount, "Übung", "Übungen"),
-            ilCount(preview.workoutSessionCount, "Training", "Trainings"),
-            ilCount(preview.workoutSetCount, "Satz", "Sätze"),
-            ilCount(preview.trainingPlanCount, "Plan", "Pläne"),
-            ilCount(preview.metaPlanCount, "Meta-Plan", "Meta-Pläne"),
-            ilCount(preview.progressionSuggestionCount, "Progressionsvorschlag", "Progressionsvorschläge")
+            ilCount(preview.exerciseCount, String(localized: "Übung"), String(localized: "Übungen")),
+            ilCount(preview.workoutSessionCount, String(localized: "Training"), String(localized: "Trainings")),
+            ilCount(preview.workoutSetCount, String(localized: "Satz"), String(localized: "Sätze")),
+            ilCount(preview.trainingPlanCount, String(localized: "Plan"), String(localized: "Pläne")),
+            ilCount(preview.metaPlanCount, String(localized: "Meta-Plan"), String(localized: "Meta-Pläne")),
+            ilCount(preview.progressionSuggestionCount, String(localized: "Progressionsvorschlag"), String(localized: "Progressionsvorschläge"))
         ]
-        return "Schema \(preview.schemaVersion): \(counts.joined(separator: ", ")). \(existingDataMessage)"
+        return String(localized: "Schema \(preview.schemaVersion): \(counts.joined(separator: ", ")). \(existingDataMessage)")
     }
 
     func resetUserData() {
@@ -361,8 +361,8 @@ final class IOSSettingsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isBusy = false
                 self.activeAlert = SettingsAlert(
-                    title: success.boolValue ? "Daten zurückgesetzt" : "Reset fehlgeschlagen",
-                    message: success.boolValue ? "Lokale Trainingsdaten wurden zurückgesetzt." : (error ?? "Daten konnten nicht zurückgesetzt werden.")
+                    title: success.boolValue ? String(localized: "Daten zurückgesetzt") : String(localized: "Reset fehlgeschlagen"),
+                    message: success.boolValue ? String(localized: "Lokale Trainingsdaten wurden zurückgesetzt.") : (error ?? String(localized: "Daten konnten nicht zurückgesetzt werden."))
                 )
             }
         }
@@ -370,7 +370,7 @@ final class IOSSettingsViewModel: ObservableObject {
 
     func createIncidentReport() {
         guard !incidentSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            activeAlert = SettingsAlert(title: "Kurzbeschreibung fehlt", message: "Bitte füge eine kurze Zusammenfassung hinzu.")
+            activeAlert = SettingsAlert(title: String(localized: "Kurzbeschreibung fehlt"), message: String(localized: "Bitte füge eine kurze Zusammenfassung hinzu."))
             return
         }
 
@@ -391,12 +391,12 @@ final class IOSSettingsViewModel: ObservableObject {
                         self.incidentSummary = ""
                         self.incidentDetails = ""
                     } catch {
-                        self.activeAlert = SettingsAlert(title: "Report fehlgeschlagen", message: error.localizedDescription)
+                        self.activeAlert = SettingsAlert(title: String(localized: "Report fehlgeschlagen"), message: error.localizedDescription)
                     }
                 } else {
                     self.activeAlert = SettingsAlert(
-                        title: "Report fehlgeschlagen",
-                        message: error ?? "Incident-Report konnte nicht erstellt werden."
+                        title: String(localized: "Report fehlgeschlagen"),
+                        message: error ?? String(localized: "Incident-Report konnte nicht erstellt werden.")
                     )
                 }
             }
@@ -405,49 +405,49 @@ final class IOSSettingsViewModel: ObservableObject {
 
     func label(for rawValue: String) -> String {
         switch rawValue {
-        case "METRIC": return "Metrisch"
-        case "IMPERIAL": return "Imperial"
-        case "MONDAY": return "Montag"
-        case "SUNDAY": return "Sonntag"
-        case "SYSTEM": return "System"
-        case "LIGHT": return "Hell"
-        case "DARK": return "Dunkel"
-        case "AMBER": return "Amber"
-        case "DEEP_CYAN": return "Deep Cyan"
-        case "NEON_RED": return "Neon Red"
-        case "FORGE": return "Forge"
-        case "RASTER": return "Raster"
-        case "TIDE": return "Tide"
-        case "PULSE": return "Pulse"
-        case "EMBER": return "Ember"
-        case "LIQUID_GLASS": return "Liquid Glass"
-        case "OFF": return "Aus"
-        case "RPE": return "RPE"
-        case "RIR": return "RIR"
-        case "NONE": return "Aus"
-        case "HALVE_SET_VOLUME": return "Satzvolumen halbieren"
-        case "REDUCE_INTENSITY_BY_15_PERCENT": return "Intensität um 15 % reduzieren"
-        case "TUESDAY": return "Dienstag"
-        case "WEDNESDAY": return "Mittwoch"
-        case "THURSDAY": return "Donnerstag"
-        case "FRIDAY": return "Freitag"
-        case "SATURDAY": return "Samstag"
+        case "METRIC": return String(localized: "Metrisch")
+        case "IMPERIAL": return String(localized: "Imperial")
+        case "MONDAY": return String(localized: "Montag")
+        case "SUNDAY": return String(localized: "Sonntag")
+        case "SYSTEM": return String(localized: "System")
+        case "LIGHT": return String(localized: "Hell")
+        case "DARK": return String(localized: "Dunkel")
+        case "AMBER": return String(localized: "Amber")
+        case "DEEP_CYAN": return String(localized: "Deep Cyan")
+        case "NEON_RED": return String(localized: "Neon Red")
+        case "FORGE": return String(localized: "Forge")
+        case "RASTER": return String(localized: "Raster")
+        case "TIDE": return String(localized: "Tide")
+        case "PULSE": return String(localized: "Pulse")
+        case "EMBER": return String(localized: "Ember")
+        case "LIQUID_GLASS": return String(localized: "Liquid Glass")
+        case "OFF": return String(localized: "Aus")
+        case "RPE": return String(localized: "RPE")
+        case "RIR": return String(localized: "RIR")
+        case "NONE": return String(localized: "Aus")
+        case "HALVE_SET_VOLUME": return String(localized: "Satzvolumen halbieren")
+        case "REDUCE_INTENSITY_BY_15_PERCENT": return String(localized: "Intensität um 15 % reduzieren")
+        case "TUESDAY": return String(localized: "Dienstag")
+        case "WEDNESDAY": return String(localized: "Mittwoch")
+        case "THURSDAY": return String(localized: "Donnerstag")
+        case "FRIDAY": return String(localized: "Freitag")
+        case "SATURDAY": return String(localized: "Samstag")
         default: return rawValue
         }
     }
 
     func restTimeLabel(_ seconds: Int) -> String {
-        if seconds < 60 { return "\(seconds) s" }
+        if seconds < 60 { return String(localized: "\(seconds) s") }
         let minutes = seconds / 60
         let remainder = seconds % 60
-        return remainder == 0 ? "\(minutes) min" : "\(minutes) min \(remainder) s"
+        return remainder == 0 ? String(localized: "\(minutes) min") : String(localized: "\(minutes) min \(remainder) s")
     }
 
     func weightLabel(_ kilograms: Double) -> String {
         let value = kilograms.truncatingRemainder(dividingBy: 1) == 0
             ? String(Int(kilograms))
             : String(kilograms)
-        return "\(value) kg"
+        return String(localized: "\(value) kg")
     }
 
     var reminderDate: Date {
@@ -469,12 +469,7 @@ final class IOSSettingsViewModel: ObservableObject {
 
     var recoverySummary: String? {
         guard let recovery = recoveryBackup else { return nil }
-        return String(Int(recovery.exerciseCount)) + " Übungen, " +
-            String(Int(recovery.workoutSessionCount)) + " Trainings, " +
-            String(Int(recovery.workoutSetCount)) + " Sätze, " +
-            String(Int(recovery.trainingPlanCount)) + " Pläne, " +
-            String(Int(recovery.metaPlanCount)) + " Meta-Pläne, " +
-            String(Int(recovery.progressionSuggestionCount)) + " Progressionsvorschläge"
+        return String(localized: "\(Int(recovery.exerciseCount)) Übungen, \(Int(recovery.workoutSessionCount)) Trainings, \(Int(recovery.workoutSetCount)) Sätze, \(Int(recovery.trainingPlanCount)) Pläne, \(Int(recovery.metaPlanCount)) Meta-Pläne, \(Int(recovery.progressionSuggestionCount)) Progressionsvorschläge")
     }
 
     private func pushReminderState(enabled: Bool, hour: Int? = nil, minute: Int? = nil, days: [String]? = nil) {

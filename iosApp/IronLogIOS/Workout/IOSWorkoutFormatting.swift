@@ -10,19 +10,19 @@ enum IOSWorkoutSetType: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .normal: return "Arbeitsset"
-        case .warmup: return "Warmup"
-        case .dropSet: return "Drop-Set"
-        case .failure: return "Failure-Set"
+        case .normal: return String(localized: "Arbeitsset")
+        case .warmup: return String(localized: "Warmup")
+        case .dropSet: return String(localized: "Drop-Set")
+        case .failure: return String(localized: "Failure-Set")
         }
     }
 
     var shortName: String {
         switch self {
-        case .normal: return "Arbeit"
-        case .warmup: return "Warmup"
-        case .dropSet: return "Drop"
-        case .failure: return "Failure"
+        case .normal: return String(localized: "Arbeit")
+        case .warmup: return String(localized: "Warmup")
+        case .dropSet: return String(localized: "Drop")
+        case .failure: return String(localized: "Failure")
         }
     }
 }
@@ -61,14 +61,14 @@ func iosWorkoutDisplayWeight(
     unitSystem: String
 ) -> String {
     let value = unitSystem.uppercased() == "IMPERIAL" ? kilograms * 2.2046226218 : kilograms
-    let unit = unitSystem.uppercased() == "IMPERIAL" ? "lb" : "kg"
+    let unit = unitSystem.uppercased() == "IMPERIAL" ? String(localized: "lb") : String(localized: "kg")
     return "\(iosWorkoutDecimal(value)) \(unit)"
 }
 
 /// Logged set as "82,5 kg × 8 Wdh"; 0 kg reads as bodyweight, like on Android.
 func iosSetValueText(weightKg: Double, reps: Int, unitSystem: String) -> String {
-    let weight = weightKg == 0 ? "Körpergewicht" : iosWorkoutDisplayWeight(kilograms: weightKg, unitSystem: unitSystem)
-    return "\(weight) × \(reps) Wdh"
+    let weight = weightKg == 0 ? String(localized: "Körpergewicht") : iosWorkoutDisplayWeight(kilograms: weightKg, unitSystem: unitSystem)
+    return String(localized: "\(weight) × \(reps) Wdh")
 }
 
 func iosWorkoutInputWeightToKg(
@@ -125,8 +125,8 @@ enum IOSWorkoutIntensityInputError: Error, Equatable {
 
     var message: String {
         switch self {
-        case .invalidRPE: return "RPE muss zwischen 1 und 10 liegen."
-        case .invalidRIR: return "RIR muss zwischen 0 und 9 liegen."
+        case .invalidRPE: return String(localized: "RPE muss zwischen 1 und 10 liegen.")
+        case .invalidRIR: return String(localized: "RIR muss zwischen 0 und 9 liegen.")
         }
     }
 }

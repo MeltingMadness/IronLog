@@ -112,7 +112,7 @@ struct IOSWorkoutSetEditor: View {
                                 .keyboardType(.decimalPad)
                                 .textContentType(.none)
                                 .accessibilityLabel("Gewicht")
-                            Text(unitSystem == "IMPERIAL" ? "lb" : "kg")
+                            Text(unitSystem == "IMPERIAL" ? String(localized: "lb") : String(localized: "kg"))
                                 .ironLogSecondaryText()
                         }
 
@@ -133,13 +133,13 @@ struct IOSWorkoutSetEditor: View {
                                 TextField(intensitySystem, text: $intensityText)
                                     .keyboardType(.decimalPad)
                                     .textContentType(.none)
-                                    .accessibilityLabel(Text(intensitySystem == "RIR" ? "Reps in Reserve" : "Rate of Perceived Exertion"))
+                                    .accessibilityLabel(Text(intensitySystem == "RIR" ? String(localized: "Reps in Reserve") : String(localized: "Rate of Perceived Exertion")))
                                 Text(intensitySystem == "RIR" ? "0–9" : "1–10")
                                     .ironLogSecondaryText()
                             }
                             Text(intensitySystem == "RIR"
-                                 ? "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht."
-                                 : "RPE 10 entspricht maximaler Anstrengung.")
+                                 ? String(localized: "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht.")
+                                 : String(localized: "RPE 10 entspricht maximaler Anstrengung."))
                                 .font(.geist(.caption))
                                 .ironLogSecondaryText()
                         }
@@ -166,7 +166,7 @@ struct IOSWorkoutSetEditor: View {
                 .ironLogListRows()
             }
             .ironLogScreenBackground()
-            .navigationTitle(isEditing ? "Satz bearbeiten" : "Satz hinzufügen")
+            .navigationTitle(isEditing ? String(localized: "Satz bearbeiten") : String(localized: "Satz hinzufügen"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { applyEnvironmentDefaults() }
             .toolbar {
@@ -174,7 +174,7 @@ struct IOSWorkoutSetEditor: View {
                     Button("Abbrechen") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isSaving ? "Speichern …" : "Speichern") {
+                    Button(isSaving ? String(localized: "Speichern …") : String(localized: "Speichern")) {
                         Task { await save() }
                     }
                     .disabled(isSaving)
@@ -186,11 +186,11 @@ struct IOSWorkoutSetEditor: View {
     private func save() async {
         guard !isSaving else { return }
         guard let reps = Int(repsText.trimmingCharacters(in: .whitespacesAndNewlines)), reps > 0 else {
-            errorMessage = "Bitte gib mindestens eine Wiederholung ein."
+            errorMessage = String(localized: "Bitte gib mindestens eine Wiederholung ein.")
             return
         }
         guard let enteredWeight = iosWorkoutParseDecimal(weightText), enteredWeight.isFinite, enteredWeight >= 0 else {
-            errorMessage = "Bitte gib ein gültiges Gewicht ein."
+            errorMessage = String(localized: "Bitte gib ein gültiges Gewicht ein.")
             return
         }
 
@@ -207,7 +207,7 @@ struct IOSWorkoutSetEditor: View {
             errorMessage = error.message
             return
         } catch {
-            errorMessage = "Bitte gib eine gültige Intensität ein."
+            errorMessage = String(localized: "Bitte gib eine gültige Intensität ein.")
             return
         }
 
@@ -231,7 +231,7 @@ struct IOSWorkoutSetEditor: View {
         if success {
             dismiss()
         } else {
-            errorMessage = "Der Satz konnte nicht gespeichert werden."
+            errorMessage = String(localized: "Der Satz konnte nicht gespeichert werden.")
         }
     }
 

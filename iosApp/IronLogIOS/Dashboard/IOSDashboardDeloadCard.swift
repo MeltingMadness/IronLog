@@ -20,7 +20,7 @@ struct IOSDashboardDeloadCard: View {
 
     var body: some View {
         IronLogCard(
-            title: isActive ? "Deload-Woche aktiv" : "Deload aus dem Trainingstrend",
+            title: isActive ? String(localized: "Deload-Woche aktiv") : String(localized: "Deload aus dem Trainingstrend"),
             subtitle: subtitle,
             tone: .muted
         ) {
@@ -106,18 +106,18 @@ struct IOSDashboardDeloadCard: View {
     }
 
     private var subtitle: String? {
-        if isActive { return "Anzeige angepasst" }
-        return trend.deloadSuggested ? "Wiederholte Verschlechterung erkannt" : "Kein Deload nötig"
+        if isActive { return String(localized: "Anzeige angepasst") }
+        return trend.deloadSuggested ? String(localized: "Wiederholte Verschlechterung erkannt") : String(localized: "Kein Deload nötig")
     }
 
     private var activeModeText: String {
         switch activeMode.uppercased() {
         case "HALVE_SET_VOLUME":
-            return "Deine Trainingsziele zeigen die halbe Satzzahl."
+            return String(localized: "Deine Trainingsziele zeigen die halbe Satzzahl.")
         case "REDUCE_INTENSITY_BY_15_PERCENT":
-            return "Deine Trainingsziele zeigen 15 % weniger Gewicht."
+            return String(localized: "Deine Trainingsziele zeigen 15 % weniger Gewicht.")
         default:
-            return "Der Deload-Modus passt die angezeigten Trainingsziele an."
+            return String(localized: "Der Deload-Modus passt die angezeigten Trainingsziele an.")
         }
     }
 

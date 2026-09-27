@@ -228,11 +228,11 @@ struct IOSDashboardScreen: View {
             }
 
             IronLogWeeklyMuscleVolumeCard(
-                title: "Wochenvolumen",
+                title: String(localized: "Wochenvolumen"),
                 subtitle: weekly.map { $0.weekStart == $0.currentWeekStart
-                    ? "MEV · MAV · MRV für die aktuelle Woche"
-                    : "MEV · MAV · MRV für die ausgewählte Woche"
-                } ?? "MEV · MAV · MRV für die aktuelle Woche",
+                    ? String(localized: "MEV · MAV · MRV für die aktuelle Woche")
+                    : String(localized: "MEV · MAV · MRV für die ausgewählte Woche")
+                } ?? String(localized: "MEV · MAV · MRV für die aktuelle Woche"),
                 rows: (weekly?.volumes ?? analytics.muscleVolumes).map { volume in
                     IronLogWeeklyMuscleVolume(
                         id: volume.id,
@@ -244,7 +244,7 @@ struct IOSDashboardScreen: View {
                     )
                 },
                 initiallyExpanded: false,
-                emptyMessage: "Noch keine Muskelvolumenwerte verfügbar",
+                emptyMessage: String(localized: "Noch keine Muskelvolumenwerte verfügbar"),
                 weekStart: weekly?.weekStart ?? analytics.currentWeekStart,
                 currentWeekStart: weekly?.currentWeekStart ?? analytics.currentWeekStart,
                 completedWorkoutCount: weekly?.completedWorkoutCount ?? analytics.workoutsThisWeek,
@@ -279,7 +279,7 @@ struct IOSDashboardScreen: View {
             )
 
             if let lastSessionDate = ilAnalyticsDateText(analytics.lastSessionDate) {
-                IronLogCard(title: "Letztes Training", tone: .elevated) {
+                IronLogCard(title: String(localized: "Letztes Training"), tone: .elevated) {
                     Label(lastSessionDate, systemImage: "calendar")
                         .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -358,7 +358,7 @@ struct IOSDashboardScreen: View {
         )
         selectedMuscleVolumeWeek = result
         if result == nil {
-            muscleVolumeError = store.weeklyMuscleVolumeError ?? "Wochenvolumen konnte nicht geladen werden."
+            muscleVolumeError = store.weeklyMuscleVolumeError ?? String(localized: "Wochenvolumen konnte nicht geladen werden.")
         }
         isMuscleVolumeLoading = false
     }
@@ -376,9 +376,9 @@ struct IOSDashboardScreen: View {
 
     private var greetingTitle: String {
         switch Calendar.current.component(.hour, from: Date()) {
-        case 5..<12: return "Guten Morgen"
-        case 12..<18: return "Guten Tag"
-        default: return "Guten Abend"
+        case 5..<12: return String(localized: "Guten Morgen")
+        case 12..<18: return String(localized: "Guten Tag")
+        default: return String(localized: "Guten Abend")
         }
     }
 
@@ -386,7 +386,7 @@ struct IOSDashboardScreen: View {
         ContentUnavailableView {
             Label("Auswertung nicht verfügbar", systemImage: "chart.bar.xaxis")
         } description: {
-            Text(store.errorMessage ?? "Die Trainingsdaten werden noch ausgewertet.")
+            Text(store.errorMessage ?? String(localized: "Die Trainingsdaten werden noch ausgewertet."))
         } actions: {
             ProgressView()
                 .controlSize(.small)
@@ -409,12 +409,12 @@ private struct IOSDashboardCommandCenter: View {
     let onChooseTraining: () -> Void
 
     var body: some View {
-        IronLogCard(title: "Nächster Schritt", subtitle: subtitle, tone: .elevated) {
+        IronLogCard(title: String(localized: "Nächster Schritt"), subtitle: subtitle, tone: .elevated) {
             VStack(alignment: .leading, spacing: 12) {
                 if let activeSession {
                     Button(action: onResume) {
                         Label(
-                            activeSession.name.isEmpty ? "Training fortsetzen" : activeSession.name,
+                            activeSession.name.isEmpty ? String(localized: "Training fortsetzen") : activeSession.name,
                             systemImage: "play.fill"
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -483,10 +483,10 @@ private struct IOSDashboardCommandCenter: View {
     }
 
     private var subtitle: String {
-        if activeSession != nil { return "Ein begonnenes Training wartet auf dich." }
-        if let suggestion { return "Nächster Vorschlag aus \(suggestion.metaPlanName)." }
-        if fallbackPlan != nil { return "Dein erster gespeicherter Plan ist bereit." }
-        return "Starte eine freie Einheit und halte sie sauber fest."
+        if activeSession != nil { return String(localized: "Ein begonnenes Training wartet auf dich.") }
+        if let suggestion { return String(localized: "Nächster Vorschlag aus \(suggestion.metaPlanName).") }
+        if fallbackPlan != nil { return String(localized: "Dein erster gespeicherter Plan ist bereit.") }
+        return String(localized: "Starte eine freie Einheit und halte sie sauber fest.")
     }
 }
 
@@ -504,17 +504,17 @@ private struct IOSDashboardTrainingTrendCard: View {
     @State private var showsDetails = false
 
     var body: some View {
-        IronLogCard(title: "Trainingstrend") {
+        IronLogCard(title: String(localized: "Trainingstrend")) {
             if let trend {
                 layout {
                     IronLogMetricRing(
-                        title: "Trainingstrend",
+                        title: String(localized: "Trainingstrend"),
                         value: trend.trainingIndex.map(String.init),
                         progress: trend.trainingIndex.map { Double($0) / 100.0 },
                         unit: trend.trainingIndex == nil ? nil : "%",
                         detail: nil,
                         accent: accent(trend),
-                        unknownLabel: "Nicht genug Daten"
+                        unknownLabel: String(localized: "Nicht genug Daten")
                     )
 
                     VStack(alignment: .leading, spacing: 7) {
@@ -561,7 +561,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     /// The single evidence line kept outside the disclosure: how many exercises the core
     /// could actually evaluate, and how many comparable units carry that statement.
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
-        Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, "Übung", "Übungen")) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, "vergleichbare Einheit", "vergleichbare Einheiten"))")
+        Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, String(localized: "Übung"), String(localized: "Übungen"))) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, String(localized: "vergleichbare Einheit"), String(localized: "vergleichbare Einheiten")))")
             .font(.geist(.subheadline))
             .ironLogSecondaryText()
             .fixedSize(horizontal: false, vertical: true)
@@ -593,7 +593,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
-                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, "Einheit", "Einheiten")))")
+                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))))")
                             .font(.geist(.caption))
                             .ironLogSecondaryText()
                             .fixedSize(horizontal: false, vertical: true)
@@ -651,7 +651,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(exercise.exerciseName) · \(ilExerciseTrendStatusText(exercise.status))")
                             .font(.geist(.caption))
-                        Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, "Einheit", "Einheiten")) · \(ilConfidenceText(exercise.confidence))")
+                        Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))) · \(ilConfidenceText(exercise.confidence))")
                             .font(.geist(.caption))
                             .ironLogSecondaryText()
                     }
@@ -685,7 +685,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     }
 
     private func changeText(_ value: Double?) -> String {
-        guard let value, value.isFinite else { return "keine Vergleichszahl" }
+        guard let value, value.isFinite else { return String(localized: "keine Vergleichszahl") }
         let sign = value > 0 ? "+" : ""
         return "\(sign)\(value.formatted(.number.precision(.fractionLength(1)))) %"
     }
@@ -703,7 +703,7 @@ private struct IOSDashboardTodayCheckInCard: View {
     let onEdit: () -> Void
 
     var body: some View {
-        IronLogCard(title: "Tagesform", subtitle: "Heute · \(ilCheckInDateText(localDate))") {
+        IronLogCard(title: String(localized: "Tagesform"), subtitle: String(localized: "Heute · \(ilCheckInDateText(localDate))")) {
             VStack(alignment: .leading, spacing: 10) {
                 if let checkIn, checkIn.hasAnyAnswer {
                     answerList(checkIn)
@@ -742,13 +742,13 @@ private struct IOSDashboardTodayCheckInCard: View {
     private func answerRows(_ checkIn: ILReadinessCheckIn) -> [(label: String, value: String)] {
         var rows: [(label: String, value: String)] = []
         if let sleep = checkIn.sleepQuality {
-            rows.append((label: "Schlafqualität", value: ilCheckInScaleText(sleep, dimension: .sleepQuality)))
+            rows.append((label: String(localized: "Schlafqualität"), value: ilCheckInScaleText(sleep, dimension: .sleepQuality)))
         }
         if let energy = checkIn.energy {
-            rows.append((label: "Energie", value: ilCheckInScaleText(energy, dimension: .energy)))
+            rows.append((label: String(localized: "Energie"), value: ilCheckInScaleText(energy, dimension: .energy)))
         }
         if let stress = checkIn.stress {
-            rows.append((label: "Stress", value: ilCheckInScaleText(stress, dimension: .stress)))
+            rows.append((label: String(localized: "Stress"), value: ilCheckInScaleText(stress, dimension: .stress)))
         }
         let soreness = checkIn.muscleSoreness
             .filter { (1...5).contains($0.value) }
@@ -757,7 +757,7 @@ private struct IOSDashboardTodayCheckInCard: View {
             let text = soreness
                 .map { "\(ilMuscleDisplayName($0.key)) \($0.value)/5" }
                 .joined(separator: ", ")
-            rows.append((label: "Muskelkater", value: text))
+            rows.append((label: String(localized: "Muskelkater"), value: text))
         }
         return rows
     }
@@ -797,7 +797,7 @@ private struct IOSDashboardTodayMuscleCard: View {
     }
 
     var body: some View {
-        IronLogCard(title: "Heutiges Training", subtitle: subtitle) {
+        IronLogCard(title: String(localized: "Heutiges Training"), subtitle: subtitle) {
             if muscleGroups.isEmpty {
                 Text("Kein Tagesbezug: Es ist keine Einheit geplant und keine Muskelgruppe gemeldet.")
                     .font(.geist(.body))
@@ -805,13 +805,13 @@ private struct IOSDashboardTodayMuscleCard: View {
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     if !plannedMuscles.isEmpty {
-                        sectionHeader("Heute geplant")
+                        sectionHeader(String(localized: "Heute geplant"))
                         ForEach(plannedMuscles, id: \.muscleGroup) { muscle in
                             row(muscle, isPlanned: true)
                         }
                     }
                     if !otherMuscles.isEmpty {
-                        sectionHeader(plannedMuscles.isEmpty ? "Erfasste Muskeln" : "Weitere erfasste Muskeln")
+                        sectionHeader(plannedMuscles.isEmpty ? String(localized: "Erfasste Muskeln") : String(localized: "Weitere erfasste Muskeln"))
                         ForEach(otherMuscles, id: \.muscleGroup) { muscle in
                             row(muscle, isPlanned: false)
                         }
@@ -834,8 +834,8 @@ private struct IOSDashboardTodayMuscleCard: View {
     private var subtitle: String? {
         guard !muscleGroups.isEmpty else { return nil }
         return plannedMuscles.isEmpty
-            ? "Erfasste Muskelgruppen"
-            : "Heute geplant: \(plannedMuscles.count)"
+            ? String(localized: "Erfasste Muskelgruppen")
+            : String(localized: "Heute geplant: \(plannedMuscles.count)")
     }
 
     @ViewBuilder
@@ -916,9 +916,9 @@ private struct IOSDashboardCheckInSheet: View {
             Form {
                 Group {
                     Section {
-                        ILCheckInScaleRow(title: "Schlafqualität", dimension: .sleepQuality, value: $sleepQuality)
-                        ILCheckInScaleRow(title: "Energie", dimension: .energy, value: $energy)
-                        ILCheckInScaleRow(title: "Stress", dimension: .stress, value: $stress)
+                        ILCheckInScaleRow(title: String(localized: "Schlafqualität"), dimension: .sleepQuality, value: $sleepQuality)
+                        ILCheckInScaleRow(title: String(localized: "Energie"), dimension: .energy, value: $energy)
+                        ILCheckInScaleRow(title: String(localized: "Stress"), dimension: .stress, value: $stress)
                     } header: {
                         Text("Tagesform · \(ilCheckInDateText(localDate))")
                     } footer: {
@@ -941,7 +941,7 @@ private struct IOSDashboardCheckInSheet: View {
 
                     if saveFailed {
                         Section {
-                            Text(store.errorMessage ?? "Speichern fehlgeschlagen. Bitte erneut versuchen.")
+                            Text(store.errorMessage ?? String(localized: "Speichern fehlgeschlagen. Bitte erneut versuchen."))
                                 .font(.geist(.footnote))
                                 .foregroundStyle(.orange)
                         }
@@ -1056,7 +1056,7 @@ private struct ILCheckInScaleRow: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(title)
                 Spacer(minLength: 8)
-                Text(value.map { ilCheckInScaleText($0, dimension: dimension) } ?? "offen")
+                Text(value.map { ilCheckInScaleText($0, dimension: dimension) } ?? String(localized: "offen"))
                     .font(.geist(.caption))
                     .ironLogSecondaryText()
             }
@@ -1088,11 +1088,11 @@ private struct IOSDashboardWorkoutCounts: View {
     let lastSessionDate: String?
 
     var body: some View {
-        IronLogCard(title: "Trainingsrhythmus", tone: .muted) {
+        IronLogCard(title: String(localized: "Trainingsrhythmus"), tone: .muted) {
             HStack(spacing: 0) {
-                metric(title: "Diese Woche", value: week)
+                metric(title: String(localized: "Diese Woche"), value: week)
                 Divider().frame(height: 42)
-                metric(title: "Dieser Monat", value: month)
+                metric(title: String(localized: "Dieser Monat"), value: month)
             }
             if let lastSessionDate = ilAnalyticsDateText(lastSessionDate) {
                 Text("Zuletzt am \(lastSessionDate)")
@@ -1159,7 +1159,7 @@ private struct IOSDashboardRecentRecords: View {
     let unitSystem: String
 
     var body: some View {
-        IronLogCard(title: "Neue Rekorde", subtitle: records.isEmpty ? nil : "Zuletzt erfasst") {
+        IronLogCard(title: String(localized: "Neue Rekorde"), subtitle: records.isEmpty ? nil : String(localized: "Zuletzt erfasst")) {
             if records.isEmpty {
                 Text("Noch keine persönlichen Rekorde gespeichert.")
                     .font(.geist(.body))
@@ -1169,7 +1169,7 @@ private struct IOSDashboardRecentRecords: View {
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(records) { record in
                             VStack(alignment: .leading, spacing: 7) {
-                                Text(record.exerciseName ?? "Übung \(record.exerciseId)")
+                                Text(record.exerciseName ?? String(localized: "Übung \(record.exerciseId)"))
                                     .font(.geist(.headline))
                                     .lineLimit(2)
                                 Text(ilRecordTypeText(record.type))

@@ -85,7 +85,7 @@ struct RootView: View {
             ContentUnavailableView {
                 Label("Trainingsdaten nicht verfügbar", systemImage: "externaldrive.badge.exclamationmark")
             } description: {
-                Text(training.errorMessage ?? "Die Trainingsdaten werden geladen.")
+                Text(training.errorMessage ?? String(localized: "Die Trainingsdaten werden geladen."))
             } actions: {
                 Button("Erneut versuchen") { Task { await training.reload() } }
                 Button("Backup in Einstellungen wiederherstellen") { training.selectedTab = 4 }

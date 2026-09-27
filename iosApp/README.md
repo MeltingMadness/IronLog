@@ -20,6 +20,12 @@ dependency-freie Generierung spiegelt daraus die aktuellen Optionen
 `IronLogIOS.xcodeproj/project.pbxproj`. Sie erzeugt keine Abhängigkeiten und
 führt keinen Build aus. Nach neuen Swift-Dateien genügt ein erneuter Aufruf.
 
+Sichtbare UI-Texte stehen im String-Katalog `IronLogIOS/Localizable.xcstrings`.
+Quellsprache und Entwicklungssprache sind Deutsch (`de`); als Schlüssel dient
+der bestehende UI-Text. SwiftUI-Literale nutzen die automatische Lokalisierung,
+String-basierte Beschriftungen und Meldungen verwenden `String(localized:)`.
+Der Generator nimmt den Katalog als Resource in das App-Target auf.
+
 Das KMP-Framework wird über die Build-Phase `Build Shared Framework` erzeugt.
 `iosApp/scripts/build-shared.sh` sucht zuerst ein gültiges `JAVA_HOME` für JDK
 17, danach `/usr/libexec/java_home -v 17` und vorhandene Homebrew-JDK-17-Pfade.

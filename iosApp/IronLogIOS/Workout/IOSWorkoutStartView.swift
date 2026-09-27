@@ -18,7 +18,7 @@ struct IOSWorkoutStartView: View {
                         .ironLogSecondaryText()
                 }
 
-                IronLogCard(title: "Freies Training", subtitle: "Übungen fügst du während des Trainings hinzu.") {
+                IronLogCard(title: String(localized: "Freies Training"), subtitle: String(localized: "Übungen fügst du während des Trainings hinzu.")) {
                     TextField("Name (optional)", text: $freeWorkoutName)
                         .textInputAutocapitalization(.sentences)
                         .accessibilityLabel("Name des freien Trainings")
@@ -33,7 +33,7 @@ struct IOSWorkoutStartView: View {
                     .buttonStyle(.borderedProminent).ironLogButtonText()
                 }
 
-                IronLogCard(title: "Trainingspläne", subtitle: plans.isEmpty ? "Noch kein Plan angelegt." : "Wähle einen Plan für diese Session.") {
+                IronLogCard(title: String(localized: "Trainingspläne"), subtitle: plans.isEmpty ? String(localized: "Noch kein Plan angelegt.") : String(localized: "Wähle einen Plan für diese Session.")) {
                     if plans.isEmpty {
                         Label("Lege zuerst unter Pläne einen Trainingsplan an.", systemImage: "list.bullet.rectangle")
                             .ironLogSecondaryText()

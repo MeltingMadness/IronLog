@@ -25,7 +25,7 @@ struct IOSStatisticsScreen: View {
                     ContentUnavailableView {
                         Label("Statistiken nicht verfügbar", systemImage: "chart.xyaxis.line")
                     } description: {
-                        Text(store.errorMessage ?? "Die Trainingsdaten werden noch ausgewertet.")
+                        Text(store.errorMessage ?? String(localized: "Die Trainingsdaten werden noch ausgewertet."))
                     }
                     .frame(maxWidth: .infinity, minHeight: 420)
                     .padding(20)
@@ -96,11 +96,11 @@ struct IOSStatisticsScreen: View {
             )
 
             IronLogWeeklyMuscleVolumeCard(
-                title: "Muskelvolumen",
+                title: String(localized: "Muskelvolumen"),
                 subtitle: weekly.map { $0.weekStart == $0.currentWeekStart
-                    ? "Vollständige aktuelle Woche · MEV · MAV · MRV"
-                    : "Vollständige ausgewählte Woche · MEV · MAV · MRV"
-                } ?? "Vollständige aktuelle Woche · MEV · MAV · MRV",
+                    ? String(localized: "Vollständige aktuelle Woche · MEV · MAV · MRV")
+                    : String(localized: "Vollständige ausgewählte Woche · MEV · MAV · MRV")
+                } ?? String(localized: "Vollständige aktuelle Woche · MEV · MAV · MRV"),
                 rows: (weekly?.volumes ?? analytics.muscleVolumes).map { volume in
                     IronLogWeeklyMuscleVolume(
                         id: volume.id,
@@ -112,7 +112,7 @@ struct IOSStatisticsScreen: View {
                     )
                 },
                 initiallyExpanded: true,
-                emptyMessage: "Noch keine Muskelvolumenwerte verfügbar",
+                emptyMessage: String(localized: "Noch keine Muskelvolumenwerte verfügbar"),
                 weekStart: weekly?.weekStart ?? analytics.currentWeekStart,
                 currentWeekStart: weekly?.currentWeekStart ?? analytics.currentWeekStart,
                 completedWorkoutCount: weekly?.completedWorkoutCount ?? analytics.workoutsThisWeek,
@@ -177,7 +177,7 @@ struct IOSStatisticsScreen: View {
         )
         selectedMuscleVolumeWeek = result
         if result == nil {
-            muscleVolumeError = store.weeklyMuscleVolumeError ?? "Wochenvolumen konnte nicht geladen werden."
+            muscleVolumeError = store.weeklyMuscleVolumeError ?? String(localized: "Wochenvolumen konnte nicht geladen werden.")
         }
         isMuscleVolumeLoading = false
     }
@@ -197,7 +197,7 @@ struct IOSStatisticsScreen: View {
     }
 
     private func exerciseName(for exerciseId: Int64) -> String {
-        store.data?.exercises.first(where: { $0.id == exerciseId })?.name ?? "Übung \(exerciseId)"
+        store.data?.exercises.first(where: { $0.id == exerciseId })?.name ?? String(localized: "Übung \(exerciseId)")
     }
 
     private var filterMenu: some View {
@@ -235,24 +235,24 @@ private struct IOSStatisticsSummary: View {
 
     var body: some View {
         IronLogCard(
-            title: "Überblick",
-            subtitle: "Trainingstrend: \(ilTrendStatusText(trend?.status ?? .insufficientData))"
+            title: String(localized: "Überblick"),
+            subtitle: String(localized: "Trainingstrend: \(ilTrendStatusText(trend?.status ?? .insufficientData))")
         ) {
             HStack(alignment: .center, spacing: 16) {
                 IronLogMetricRing(
-                    title: "Trainingstrend",
+                    title: String(localized: "Trainingstrend"),
                     value: ringValue,
                     progress: ringScore.map { Double($0) / 100.0 },
                     unit: ringScore == nil ? nil : "/100",
                     accent: readinessAccent,
-                    unknownLabel: "Nicht genug Daten"
+                    unknownLabel: String(localized: "Nicht genug Daten")
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
-                    summaryMetric("Woche", ilCount(analytics.workoutsThisWeek, "Training", "Trainings"))
-                    summaryMetric("Monat", ilCount(analytics.workoutsThisMonth, "Training", "Trainings"))
+                    summaryMetric(String(localized: "Woche"), ilCount(analytics.workoutsThisWeek, String(localized: "Training"), String(localized: "Trainings")))
+                    summaryMetric(String(localized: "Monat"), ilCount(analytics.workoutsThisMonth, String(localized: "Training"), String(localized: "Trainings")))
                     if let last = ilAnalyticsDateText(analytics.lastSessionDate) {
-                        summaryMetric("Letztes Training", last)
+                        summaryMetric(String(localized: "Letztes Training"), last)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -294,10 +294,10 @@ private struct IOSExerciseStatisticsRow: View {
         IronLogCard(tone: .standard) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(exercise.exerciseName ?? "Übung \(exercise.exerciseId)")
+                    Text(exercise.exerciseName ?? String(localized: "Übung \(exercise.exerciseId)"))
                         .font(.geist(.headline))
                         .foregroundStyle(.primary)
-                    Text([muscleName, ilCount(exercise.sessions.count, "Einheit", "Einheiten")].filter { !$0.isEmpty }.joined(separator: " · "))
+                    Text([muscleName, ilCount(exercise.sessions.count, String(localized: "Einheit"), String(localized: "Einheiten"))].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.geist(.caption))
                         .ironLogSecondaryText()
                 }

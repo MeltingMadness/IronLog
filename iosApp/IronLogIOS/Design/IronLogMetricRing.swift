@@ -26,7 +26,7 @@ struct IronLogMetricRing: View {
         unit: String? = nil,
         detail: String? = nil,
         accent: IronLogTheme.Accent = .primary,
-        unknownLabel: String = "Nicht verfügbar"
+        unknownLabel: String = String(localized: "Nicht verfügbar")
     ) {
         self.title = title
         self.value = value

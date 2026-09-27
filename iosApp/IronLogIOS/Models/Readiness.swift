@@ -394,89 +394,89 @@ let ilReadinessMuscleGroups: [String] = [
 
 func ilTrendStatusText(_ status: ILTrainingTrendStatus) -> String {
     switch status {
-    case .insufficientData: return "Noch nicht genug vergleichbare Einheiten"
-    case .noNotableStrain: return "Keine wiederholte Verschlechterung erkannt"
-    case .singleExerciseDecline: return "Eine Übung verschlechtert sich wiederholt"
-    case .multipleExerciseDecline: return "Mehrere Übungen verschlechtern sich wiederholt"
-    case .unknown: return "Unbekannter Status"
+    case .insufficientData: return String(localized: "Noch nicht genug vergleichbare Einheiten")
+    case .noNotableStrain: return String(localized: "Keine wiederholte Verschlechterung erkannt")
+    case .singleExerciseDecline: return String(localized: "Eine Übung verschlechtert sich wiederholt")
+    case .multipleExerciseDecline: return String(localized: "Mehrere Übungen verschlechtern sich wiederholt")
+    case .unknown: return String(localized: "Unbekannter Status")
     }
 }
 
 func ilConfidenceText(_ confidence: ILEvidenceConfidence) -> String {
     switch confidence {
-    case .none: return "Keine Evidenz"
-    case .low: return "Geringe Evidenz"
-    case .moderate: return "Mittlere Evidenz"
-    case .high: return "Hohe Evidenz"
-    case .unknown: return "Unbekannte Evidenz"
+    case .none: return String(localized: "Keine Evidenz")
+    case .low: return String(localized: "Geringe Evidenz")
+    case .moderate: return String(localized: "Mittlere Evidenz")
+    case .high: return String(localized: "Hohe Evidenz")
+    case .unknown: return String(localized: "Unbekannte Evidenz")
     }
 }
 
 func ilExerciseTrendStatusText(_ status: ILExerciseTrendStatus) -> String {
     switch status {
-    case .improving: return "Verbessert"
-    case .stable: return "Stabil"
-    case .declining: return "Verschlechtert"
-    case .insufficientData: return "Zu wenig Historie"
-    case .excluded: return "Ausgeschlossen"
-    case .unknown: return "Unbekannt"
+    case .improving: return String(localized: "Verbessert")
+    case .stable: return String(localized: "Stabil")
+    case .declining: return String(localized: "Verschlechtert")
+    case .insufficientData: return String(localized: "Zu wenig Historie")
+    case .excluded: return String(localized: "Ausgeschlossen")
+    case .unknown: return String(localized: "Unbekannt")
     }
 }
 
 func ilDailyFormDimensionText(_ dimension: ILDailyFormDimension) -> String {
     switch dimension {
-    case .sleepQuality: return "Schlaf"
-    case .energy: return "Energie"
-    case .stress: return "Stress"
-    case .soreness: return "Muskelkater"
-    case .unknown: return "Unbekannt"
+    case .sleepQuality: return String(localized: "Schlaf")
+    case .energy: return String(localized: "Energie")
+    case .stress: return String(localized: "Stress")
+    case .soreness: return String(localized: "Muskelkater")
+    case .unknown: return String(localized: "Unbekannt")
     }
 }
 
 func ilDailyFormStateText(_ state: ILDailyFormState) -> String {
     switch state {
-    case .good: return "gut"
-    case .neutral: return "neutral"
-    case .concern: return "auffällig"
-    case .unknown: return "nicht bewertet"
+    case .good: return String(localized: "gut")
+    case .neutral: return String(localized: "neutral")
+    case .concern: return String(localized: "auffällig")
+    case .unknown: return String(localized: "nicht bewertet")
     }
 }
 
 func ilMuscleFlagText(_ flag: ILMuscleGroupFlag) -> String {
     switch flag {
-    case .trainedToday: return "heute trainiert"
-    case .highSoreness: return "hoher Muskelkater"
-    case .highRecentVolume: return "viel Volumen"
-    case .lowRecentVolume: return "wenig Volumen"
-    case .noRecentLoad: return "keine aktuelle Belastung"
-    case .unknown: return "unbekannt"
+    case .trainedToday: return String(localized: "heute trainiert")
+    case .highSoreness: return String(localized: "hoher Muskelkater")
+    case .highRecentVolume: return String(localized: "viel Volumen")
+    case .lowRecentVolume: return String(localized: "wenig Volumen")
+    case .noRecentLoad: return String(localized: "keine aktuelle Belastung")
+    case .unknown: return String(localized: "unbekannt")
     }
 }
 
 func ilDataQualityNoteText(_ note: ILReadinessDataQualityNote) -> String {
     switch note {
-    case .missingRpeTreatedNeutral: return "Fehlende RPE neutral behandelt"
-    case .unknownSetIntention: return "Satzabsicht unbekannt"
-    case .unknownSetType: return "Satztyp unbekannt"
-    case .mixedEquipmentHistory: return "Gerätewechsel in der Historie"
-    case .exerciseSlotChanged: return "Übungsplatz geändert"
-    case .goalResetDetected: return "Ziel zurückgesetzt"
-    case .weightStepUnknown: return "Gewichtsschritt unbekannt"
-    case .deloadUnitsExcluded: return "Deload-Einheiten ausgeschlossen"
-    case .insufficientHistory: return "Zu wenig Vergleichshistorie"
-    case .noValidWorkSets: return "Keine verwertbaren Arbeitssätze"
-    case .comparabilityBreak: return "Vergleichbarkeit unterbrochen"
-    case .multipleSlotsInSession: return "Mehrere Übungsplätze in einer Einheit"
-    case .repTargetChanged: return "Wiederholungsziel geändert"
-    case .unknown: return "Unbekannter Datenhinweis"
+    case .missingRpeTreatedNeutral: return String(localized: "Fehlende RPE neutral behandelt")
+    case .unknownSetIntention: return String(localized: "Satzabsicht unbekannt")
+    case .unknownSetType: return String(localized: "Satztyp unbekannt")
+    case .mixedEquipmentHistory: return String(localized: "Gerätewechsel in der Historie")
+    case .exerciseSlotChanged: return String(localized: "Übungsplatz geändert")
+    case .goalResetDetected: return String(localized: "Ziel zurückgesetzt")
+    case .weightStepUnknown: return String(localized: "Gewichtsschritt unbekannt")
+    case .deloadUnitsExcluded: return String(localized: "Deload-Einheiten ausgeschlossen")
+    case .insufficientHistory: return String(localized: "Zu wenig Vergleichshistorie")
+    case .noValidWorkSets: return String(localized: "Keine verwertbaren Arbeitssätze")
+    case .comparabilityBreak: return String(localized: "Vergleichbarkeit unterbrochen")
+    case .multipleSlotsInSession: return String(localized: "Mehrere Übungsplätze in einer Einheit")
+    case .repTargetChanged: return String(localized: "Wiederholungsziel geändert")
+    case .unknown: return String(localized: "Unbekannter Datenhinweis")
     }
 }
 
 func ilSetIntentionText(_ intention: ILSetIntention) -> String {
     switch intention {
-    case .plannedFailure: return "Geplantes Versagen"
-    case .unexpectedTargetMiss: return "Ziel unerwartet verfehlt"
-    case .unknown: return "Nicht angegeben"
+    case .plannedFailure: return String(localized: "Geplantes Versagen")
+    case .unexpectedTargetMiss: return String(localized: "Ziel unerwartet verfehlt")
+    case .unknown: return String(localized: "Nicht angegeben")
     }
 }
 
@@ -484,56 +484,56 @@ func ilSetIntentionText(_ intention: ILSetIntention) -> String {
 /// prose; a code this build does not know yet stays visible as "unbekannt".
 func ilReadinessReasonText(_ reason: ILReadinessReason) -> String {
     switch reason.code {
-    case .insufficientHistory: return "Zu wenig Vergleichsdaten"
-    case .noNotableStrain: return "Keine wiederholte Verschlechterung"
-    case .singleExerciseDecline: return "Eine Übung fällt wiederholt ab"
-    case .multipleExerciseDeclines: return "Mehrere Übungen fallen wiederholt ab"
-    case .deloadInProgress: return "Deload aktiv"
-    case .deloadSuggested: return "Deload vorgeschlagen"
-    case .targetRpeApplied: return "Ziel-RPE berücksichtigt"
-    case .stagnationNeutral: return "Stagnation allein gilt nicht als Ermüdung"
-    case .plannedFailureNeutral: return "Geplantes Versagen zählt nicht als Ermüdung"
-    case .plannedFailureUnitNeutral: return "Einheit mit geplantem Versagen neutral behandelt"
-    case .deloadContextNeutral: return "Deload-Kontext ausgeschlossen"
-    case .missingRpeNeutral: return "Fehlende RPE verändert den Trend nicht"
-    case .unknownIntentionPresent: return "Unbekannte Satzabsicht vorhanden"
-    case .unexpectedTargetMissPresent: return "Ziel wurde unerwartet verfehlt"
-    case .comparableUnitsBelowMinimum: return "Zu wenige vergleichbare Einheiten"
-    case .noValidWorkSets: return "Keine gültigen Arbeitssätze"
-    case .deloadUnitsExcluded: return "Deload-Einheiten ausgeschlossen"
-    case .linearLoadScheme: return "Lineare Laststeigerung"
-    case .doubleProgressionScheme: return "Doppelte Progression"
-    case .totalRepsScheme: return "Gesamtwiederholungen"
-    case .equipmentChangedReset: return "Gerätewechsel: neue Vergleichsreihe"
-    case .slotChangedReset: return "Übungsplatz geändert: neue Reihe"
-    case .goalChangedReset: return "Ziel geändert: neue Reihe"
-    case .longGapReset: return "Lange Pause: neue Reihe"
-    case .metricKindChangedReset: return "Vergleichsmaßstab geändert: neue Reihe"
-    case .repBandChangedReset: return "Wiederholungsband geändert: neue Reihe"
-    case .repTargetChangedReset: return "Wiederholungsziel geändert: neue Reihe"
-    case .setCountChangedReset: return "Arbeitssatzanzahl geändert: neue Reihe"
-    case .multipleSlotsInSessionMerged: return "Mehrere Übungsplätze je Einheit zusammengeführt"
-    case .repeatedNotableDecline: return "Wiederholter Rückgang"
-    case .singleNotableDecline: return "Einmaliger Rückgang"
-    case .withinTrendBand: return "Im neutralen Trendband"
-    case .improvingTrend: return "Aufwärtstrend"
-    case .missingRpeReducesConfidence: return "Fehlende RPE senkt die Aussagekraft"
-    case .unknownIntentionReducesConfidence: return "Unbekannte Absicht senkt die Aussagekraft"
-    case .plannedFailureSetsPresent: return "Geplante Versagessätze vorhanden"
-    case .unexpectedTargetMissSetsPresent: return "Sätze mit verfehltem Ziel vorhanden"
-    case .noCheckIn: return "Kein Check-in"
-    case .partialCheckIn: return "Teilweiser Check-in"
-    case .checkInAllNeutral: return "Check-in durchweg neutral"
-    case .sleepBelowThreshold: return "Schlaf unter dem Schwellenwert"
-    case .energyBelowThreshold: return "Energie unter dem Schwellenwert"
-    case .stressAboveThreshold: return "Stress über dem Schwellenwert"
-    case .sorenessAboveThreshold: return "Muskelkater über dem Schwellenwert"
-    case .muscleTrainedToday: return "Heute trainiert"
-    case .muscleHighSoreness: return "Hoher Muskelkater"
-    case .muscleHighRecentVolume: return "Viel Volumen im Fenster"
-    case .muscleLowRecentVolume: return "Wenig Volumen im Fenster"
-    case .muscleNoRecentLoad: return "Keine aktuelle Belastung"
-    case .unknown: return "Unbekannter Grund"
+    case .insufficientHistory: return String(localized: "Zu wenig Vergleichsdaten")
+    case .noNotableStrain: return String(localized: "Keine wiederholte Verschlechterung")
+    case .singleExerciseDecline: return String(localized: "Eine Übung fällt wiederholt ab")
+    case .multipleExerciseDeclines: return String(localized: "Mehrere Übungen fallen wiederholt ab")
+    case .deloadInProgress: return String(localized: "Deload aktiv")
+    case .deloadSuggested: return String(localized: "Deload vorgeschlagen")
+    case .targetRpeApplied: return String(localized: "Ziel-RPE berücksichtigt")
+    case .stagnationNeutral: return String(localized: "Stagnation allein gilt nicht als Ermüdung")
+    case .plannedFailureNeutral: return String(localized: "Geplantes Versagen zählt nicht als Ermüdung")
+    case .plannedFailureUnitNeutral: return String(localized: "Einheit mit geplantem Versagen neutral behandelt")
+    case .deloadContextNeutral: return String(localized: "Deload-Kontext ausgeschlossen")
+    case .missingRpeNeutral: return String(localized: "Fehlende RPE verändert den Trend nicht")
+    case .unknownIntentionPresent: return String(localized: "Unbekannte Satzabsicht vorhanden")
+    case .unexpectedTargetMissPresent: return String(localized: "Ziel wurde unerwartet verfehlt")
+    case .comparableUnitsBelowMinimum: return String(localized: "Zu wenige vergleichbare Einheiten")
+    case .noValidWorkSets: return String(localized: "Keine gültigen Arbeitssätze")
+    case .deloadUnitsExcluded: return String(localized: "Deload-Einheiten ausgeschlossen")
+    case .linearLoadScheme: return String(localized: "Lineare Laststeigerung")
+    case .doubleProgressionScheme: return String(localized: "Doppelte Progression")
+    case .totalRepsScheme: return String(localized: "Gesamtwiederholungen")
+    case .equipmentChangedReset: return String(localized: "Gerätewechsel: neue Vergleichsreihe")
+    case .slotChangedReset: return String(localized: "Übungsplatz geändert: neue Reihe")
+    case .goalChangedReset: return String(localized: "Ziel geändert: neue Reihe")
+    case .longGapReset: return String(localized: "Lange Pause: neue Reihe")
+    case .metricKindChangedReset: return String(localized: "Vergleichsmaßstab geändert: neue Reihe")
+    case .repBandChangedReset: return String(localized: "Wiederholungsband geändert: neue Reihe")
+    case .repTargetChangedReset: return String(localized: "Wiederholungsziel geändert: neue Reihe")
+    case .setCountChangedReset: return String(localized: "Arbeitssatzanzahl geändert: neue Reihe")
+    case .multipleSlotsInSessionMerged: return String(localized: "Mehrere Übungsplätze je Einheit zusammengeführt")
+    case .repeatedNotableDecline: return String(localized: "Wiederholter Rückgang")
+    case .singleNotableDecline: return String(localized: "Einmaliger Rückgang")
+    case .withinTrendBand: return String(localized: "Im neutralen Trendband")
+    case .improvingTrend: return String(localized: "Aufwärtstrend")
+    case .missingRpeReducesConfidence: return String(localized: "Fehlende RPE senkt die Aussagekraft")
+    case .unknownIntentionReducesConfidence: return String(localized: "Unbekannte Absicht senkt die Aussagekraft")
+    case .plannedFailureSetsPresent: return String(localized: "Geplante Versagessätze vorhanden")
+    case .unexpectedTargetMissSetsPresent: return String(localized: "Sätze mit verfehltem Ziel vorhanden")
+    case .noCheckIn: return String(localized: "Kein Check-in")
+    case .partialCheckIn: return String(localized: "Teilweiser Check-in")
+    case .checkInAllNeutral: return String(localized: "Check-in durchweg neutral")
+    case .sleepBelowThreshold: return String(localized: "Schlaf unter dem Schwellenwert")
+    case .energyBelowThreshold: return String(localized: "Energie unter dem Schwellenwert")
+    case .stressAboveThreshold: return String(localized: "Stress über dem Schwellenwert")
+    case .sorenessAboveThreshold: return String(localized: "Muskelkater über dem Schwellenwert")
+    case .muscleTrainedToday: return String(localized: "Heute trainiert")
+    case .muscleHighSoreness: return String(localized: "Hoher Muskelkater")
+    case .muscleHighRecentVolume: return String(localized: "Viel Volumen im Fenster")
+    case .muscleLowRecentVolume: return String(localized: "Wenig Volumen im Fenster")
+    case .muscleNoRecentLoad: return String(localized: "Keine aktuelle Belastung")
+    case .unknown: return String(localized: "Unbekannter Grund")
     }
 }
 
@@ -591,27 +591,27 @@ func ilCheckInScaleText(_ value: Int, dimension: ILDailyFormDimension) -> String
     switch dimension {
     case .sleepQuality:
         switch value {
-        case 1: return "1 · sehr schlecht"
-        case 2: return "2 · schlecht"
-        case 3: return "3 · mittel"
-        case 4: return "4 · gut"
-        default: return "5 · sehr gut"
+        case 1: return String(localized: "1 · sehr schlecht")
+        case 2: return String(localized: "2 · schlecht")
+        case 3: return String(localized: "3 · mittel")
+        case 4: return String(localized: "4 · gut")
+        default: return String(localized: "5 · sehr gut")
         }
     case .energy:
         switch value {
-        case 1: return "1 · sehr niedrig"
-        case 2: return "2 · niedrig"
-        case 3: return "3 · mittel"
-        case 4: return "4 · hoch"
-        default: return "5 · sehr hoch"
+        case 1: return String(localized: "1 · sehr niedrig")
+        case 2: return String(localized: "2 · niedrig")
+        case 3: return String(localized: "3 · mittel")
+        case 4: return String(localized: "4 · hoch")
+        default: return String(localized: "5 · sehr hoch")
         }
     case .stress, .soreness:
         switch value {
-        case 1: return "1 · sehr niedrig"
-        case 2: return "2 · niedrig"
-        case 3: return "3 · mittel"
-        case 4: return "4 · hoch"
-        default: return "5 · sehr hoch"
+        case 1: return String(localized: "1 · sehr niedrig")
+        case 2: return String(localized: "2 · niedrig")
+        case 3: return String(localized: "3 · mittel")
+        case 4: return String(localized: "4 · hoch")
+        default: return String(localized: "5 · sehr hoch")
         }
     case .unknown:
         return "\(value)/5"

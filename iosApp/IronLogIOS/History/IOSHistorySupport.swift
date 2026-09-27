@@ -12,12 +12,12 @@ enum IOSWeightFormatter {
         guard kilograms.isFinite else { return "—" }
         let isImperial = unitSystem.uppercased() == "IMPERIAL"
         let value = isImperial ? kilograms * poundsPerKilogram : kilograms
-        let unit = isImperial ? "lb" : "kg"
+        let unit = isImperial ? String(localized: "lb") : String(localized: "kg")
         return "\(number(value)) \(unit)"
     }
 
     static func unitLabel(for unitSystem: String) -> String {
-        unitSystem.uppercased() == "IMPERIAL" ? "lb" : "kg"
+        unitSystem.uppercased() == "IMPERIAL" ? String(localized: "lb") : String(localized: "kg")
     }
 
     static func kilograms(fromDisplayedValue value: Double, unitSystem: String) -> Double {
@@ -44,10 +44,10 @@ enum IOSHistoryDateFilter: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "Alle"
-        case .last7: return "7 Tage"
-        case .last30: return "30 Tage"
-        case .last90: return "90 Tage"
+        case .all: return String(localized: "Alle")
+        case .last7: return String(localized: "7 Tage")
+        case .last30: return String(localized: "30 Tage")
+        case .last90: return String(localized: "90 Tage")
         }
     }
 
@@ -84,8 +84,8 @@ enum IOSHistoryFormatting {
         let clamped = max(0, seconds)
         let hours = clamped / 3_600
         let minutes = (clamped % 3_600) / 60
-        if hours > 0 { return "\(hours) h \(minutes) min" }
-        return "\(minutes) min"
+        if hours > 0 { return String(localized: "\(hours) h \(minutes) min") }
+        return String(localized: "\(minutes) min")
     }
 
     static func number(_ value: Double, maximumFractionDigits: Int = 1) -> String {
@@ -110,10 +110,10 @@ extension ILWorkoutSet {
 
     var iosSetTypeDisplayName: String {
         switch iosResolvedSetType {
-        case "NORMAL": return "Arbeitssatz"
-        case "WARMUP": return "Aufwärmsatz"
-        case "DROP_SET": return "Dropsatz"
-        case "FAILURE": return "Versagen"
+        case "NORMAL": return String(localized: "Arbeitssatz")
+        case "WARMUP": return String(localized: "Aufwärmsatz")
+        case "DROP_SET": return String(localized: "Dropsatz")
+        case "FAILURE": return String(localized: "Versagen")
         default: return iosResolvedSetType
         }
     }
