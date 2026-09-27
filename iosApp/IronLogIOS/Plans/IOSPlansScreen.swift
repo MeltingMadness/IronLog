@@ -249,7 +249,7 @@ private struct IOSPlanListRow: View {
                         .foregroundStyle(.primary)
                     Text(exerciseCount == 1 ? "1 Übung" : "\(exerciseCount) Übungen")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
 
                 Spacer(minLength: 8)
@@ -260,7 +260,7 @@ private struct IOSPlanListRow: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 .accessibilityLabel("Aktionen für \(plan.name)")
             }
@@ -296,7 +296,7 @@ private struct IOSMetaPlanListRow: View {
                         .foregroundStyle(.primary)
                     Text(itemCount == 1 ? "1 Teilplan" : "\(itemCount) Teilpläne")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
 
                 Spacer(minLength: 8)
@@ -307,7 +307,7 @@ private struct IOSMetaPlanListRow: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 .accessibilityLabel("Aktionen für \(plan.name)")
             }

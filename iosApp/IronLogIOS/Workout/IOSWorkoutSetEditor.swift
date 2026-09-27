@@ -89,7 +89,7 @@ struct IOSWorkoutSetEditor: View {
                             if let target = context.row.displayTarget {
                                 Text("Ziel \(target.reps) Wdh.")
                                     .font(.geist(.caption))
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                             }
                         }
                     }
@@ -113,7 +113,7 @@ struct IOSWorkoutSetEditor: View {
                                 .textContentType(.none)
                                 .accessibilityLabel("Gewicht")
                             Text(unitSystem == "IMPERIAL" ? "lb" : "kg")
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
 
                         if settings.state.plateCalculatorEnabled,
@@ -135,13 +135,13 @@ struct IOSWorkoutSetEditor: View {
                                     .textContentType(.none)
                                     .accessibilityLabel(Text(intensitySystem == "RIR" ? "Reps in Reserve" : "Rate of Perceived Exertion"))
                                 Text(intensitySystem == "RIR" ? "0–9" : "1–10")
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                             }
                             Text(intensitySystem == "RIR"
                                  ? "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht."
                                  : "RPE 10 entspricht maximaler Anstrengung.")
                                 .font(.geist(.caption))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
                     }
 
@@ -153,7 +153,7 @@ struct IOSWorkoutSetEditor: View {
                         }
                         Text("Optional. Beschreibt, warum der Satz so endete, und bleibt ohne Auswahl nicht angegeben.")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
 
                     if let errorMessage {

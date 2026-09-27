@@ -221,12 +221,12 @@ private struct IOSExerciseListRow: View {
                     }
                     Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Spacer(minLength: 6)
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
         .buttonStyle(.plain)
@@ -308,10 +308,16 @@ private struct IOSExerciseEditorScreen: View {
                             Button {
                                 toggleSecondaryMuscle(muscle)
                             } label: {
-                                Label(
-                                    muscleDisplayName(muscle),
-                                    systemImage: isSelected ? "checkmark.circle.fill" : "circle"
-                                )
+                                Label {
+                                    if isSelected {
+                                        Text(muscleDisplayName(muscle)).ironLogAccentText()
+                                    } else {
+                                        Text(muscleDisplayName(muscle)).ironLogSecondaryText()
+                                    }
+                                } icon: {
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(.tint)
+                                }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .buttonStyle(.bordered)
@@ -321,7 +327,7 @@ private struct IOSExerciseEditorScreen: View {
                     }
                     Text("Wähle bis zu 3 weitere Muskelgruppen. Die primäre Muskelgruppe ist hier ausgeschlossen.")
                         .font(.geist(.footnote))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
 
                 Section("Notizen") {

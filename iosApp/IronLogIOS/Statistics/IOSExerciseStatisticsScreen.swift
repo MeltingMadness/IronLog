@@ -131,7 +131,7 @@ struct IOSExerciseStatisticsScreen: View {
                 if sessions.count < 2 {
                     Text("Mindestens zwei abgeschlossene Einheiten sind für einen Verlauf nötig.")
                         .font(.geist(.body))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                         .padding(.vertical, 12)
                 } else {
                     Chart {
@@ -229,7 +229,7 @@ struct IOSExerciseStatisticsScreen: View {
                         .joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                         .lineLimit(1)
                 }
             }
@@ -262,11 +262,11 @@ struct IOSExerciseStatisticsScreen: View {
                 if let exercise {
                     Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName].joined(separator: " · "))
                         .font(.geist(.subheadline))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Text("\(analyticsExercise?.sessions.count ?? 0) abgeschlossene Einheiten")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }
@@ -322,7 +322,7 @@ private struct IOSExerciseRecordsCard: View {
             if records.isEmpty {
                 Text("Für diesen Filter gibt es noch keinen Rekord.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 ForEach(records) { record in
                     HStack(alignment: .firstTextBaseline) {
@@ -331,7 +331,7 @@ private struct IOSExerciseRecordsCard: View {
                                 .font(.geist(.body, weight: .semibold))
                             Text(record.achievedDate.formatted(date: .abbreviated, time: .omitted))
                                 .font(.geist(.caption))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
                         Spacer(minLength: 12)
                         Text(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))
@@ -374,7 +374,7 @@ private struct IOSExerciseE1rmProgressionCard: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             Text(value)
                 .font(.geist(.body, weight: .semibold))
                 .monospacedDigit()
@@ -433,7 +433,7 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(label) · \(ilAnalyticsDateTimeText(epochMillis: date))")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                 Text(value)
                     .font(.geist(.body, weight: emphasized ? .semibold : .regular))
             }
@@ -479,7 +479,7 @@ private struct IOSExerciseSessionHistoryCard: View {
             if sessions.isEmpty {
                 Text("Noch keine Einheiten verfügbar.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 ForEach(sessions.reversed()) { session in
                     VStack(alignment: .leading, spacing: 5) {
@@ -492,7 +492,7 @@ private struct IOSExerciseSessionHistoryCard: View {
                         }
                         Text("\(ilWeightText(session.maxWeightKg, unitSystem: unitSystem)) · \(session.maxReps) Wdh. · \(ilWeightText(session.maxE1rmKg, unitSystem: unitSystem)) e1RM · \(ilVolumeText(session.volumeKg, unitSystem: unitSystem))")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                     .padding(.vertical, 5)
                     if session.id != sessions.first?.id {
@@ -523,7 +523,7 @@ private struct IOSExerciseRecentSetsCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(ilAnalyticsDateTimeText(epochMillis: set.completedAtEpochMillis))
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text("\(setTypeText(set.setType)) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")

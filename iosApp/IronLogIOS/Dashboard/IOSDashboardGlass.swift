@@ -47,7 +47,7 @@ struct IOSDashboardGlassHeader: View {
                 Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: "de_DE"))).uppercased())
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                 Text(greeting)
                     .font(.geist(.largeTitle, weight: .heavy))
             }
@@ -124,7 +124,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     .minimumScaleFactor(0.7)
                 Text(subtitle)
                     .font(.geist(.subheadline))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             if activeSession == nil, !exercises.isEmpty {
@@ -139,7 +139,7 @@ struct IOSDashboardGlassCommandCenter: View {
                             Text(target(exercise))
                                 .font(.geist(.subheadline))
                                 .monospacedDigit()
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
                         .padding(.vertical, 9)
                         .accessibilityElement(children: .combine)
@@ -148,7 +148,7 @@ struct IOSDashboardGlassCommandCenter: View {
                         let more = exercises.count - 3
                         Text("+ \(ilCount(more, "weitere Übung", "weitere Übungen"))")
                             .font(.geist(.footnote, weight: .bold))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                             .padding(.top, 8)
                     }
                 }
@@ -185,7 +185,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     }
                 }
                 .font(.geist(.subheadline, weight: .bold))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
                 .buttonStyle(.plain)
                 .disabled(isBusy)
                 .frame(maxWidth: .infinity)
@@ -282,7 +282,7 @@ struct IOSDashboardGlassWeekStrip: View {
                 Text("DIESE WOCHE")
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                 Spacer()
                 Text("\(ilCount(workoutsThisWeek, "Training", "Trainings")) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
                     .font(.geist(.subheadline, weight: .bold))
@@ -293,7 +293,7 @@ struct IOSDashboardGlassWeekStrip: View {
                     VStack(spacing: 6) {
                         Text(day.date.formatted(.dateTime.weekday(.abbreviated).locale(Locale(identifier: "de_DE"))).replacingOccurrences(of: ".", with: ""))
                             .font(.geist(size: 12, weight: .bold))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                         ZStack {
                             if day.trained {
                                 Circle().fill(ink)

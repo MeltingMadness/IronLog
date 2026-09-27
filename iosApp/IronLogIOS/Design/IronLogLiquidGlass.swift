@@ -125,6 +125,14 @@ private struct IronLogLiquidGlassModifier<S: InsettableShape>: ViewModifier {
                     shape.fill(accent.opacity(dark ? 0.30 : 0.22))
                 }
             }
+            // The saturated backdrop can otherwise bleed through so strongly that
+            // secondary and accent text fall below WCAG AA. Keep the color visible
+            // around the surface while giving text a stable neutral glass layer.
+            if dark {
+                shape.fill(Color.black.opacity(0.84))
+            } else if level == .tint {
+                shape.fill(Color.white.opacity(0.50))
+            }
             shape.fill(
                 LinearGradient(colors: sheen(dark: dark), startPoint: .topLeading, endPoint: .bottomTrailing)
             )
@@ -233,4 +241,3 @@ extension View {
         modifier(IronLogListRowsModifier())
     }
 }
-

@@ -15,16 +15,16 @@ struct IOSWorkoutFinishSheet: View {
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
-                        HStack { Text(row.exercise.name); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").foregroundStyle(.secondary) }
+                        HStack { Text(row.exercise.name); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").ironLogSecondaryText() }
                     }
                 }
             }.frame(maxHeight: 170)
             if let error { Text(error).font(.geist(.footnote)).foregroundStyle(.red) }
             Button(action: onContinue) { Text("Weitertrainieren").frame(maxWidth: .infinity).padding(.vertical, 7) }
-                .buttonStyle(.borderedProminent).disabled(busy)
+                .buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy)
             Button(action: onFinish) { Text(busy ? "Speichert …" : remaining > 0 ? "Trotzdem beenden" : "Training beenden").frame(maxWidth: .infinity).padding(.vertical, 7) }
                 .buttonStyle(.bordered).disabled(busy)
-            Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.geist(.caption)).foregroundStyle(.secondary)
+            Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.geist(.caption)).ironLogSecondaryText()
         }.padding(24).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
     }
 }
@@ -84,7 +84,7 @@ struct IOSWorkoutCompletionScreen: View {
                         .compactMap { $0 }.joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                         .multilineTextAlignment(.center)
                     Text(remaining > 0 ? "Teiltraining gespeichert" : "Geschafft.")
                         .font(.geist(size: remaining > 0 ? 34 : 54, weight: .bold))
@@ -93,7 +93,7 @@ struct IOSWorkoutCompletionScreen: View {
                         .accessibilityAddTraits(.isHeader)
                     if remaining > 0 {
                         Text("Vorzeitig beendet · \(ilCount(sets.count, "bestätigter Satz", "bestätigte Sätze"))")
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -136,7 +136,7 @@ struct IOSWorkoutCompletionScreen: View {
                             Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
                                 .font(.geist(.subheadline))
                                 .monospacedDigit()
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
                     }
                     .padding(16)
@@ -191,7 +191,7 @@ struct IOSWorkoutCompletionScreen: View {
                             .minimumScaleFactor(0.6)
                         Text(unit)
                             .font(.geist(.caption, weight: .bold))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                             .lineLimit(1)
                     }
                     .padding(8)
@@ -200,7 +200,7 @@ struct IOSWorkoutCompletionScreen: View {
             Text(label.uppercased())
                 .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
@@ -214,7 +214,7 @@ struct IOSWorkoutCompletionScreen: View {
                     .foregroundStyle(.green).padding().frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
                 Text(remaining > 0 ? "Teiltraining gespeichert" : "Training geschafft").font(.geist(.title, weight: .bold))
-                Text(session.name).foregroundStyle(.secondary)
+                Text(session.name).ironLogSecondaryText()
                 HStack(spacing: 12) {
                     metric("Dauer", "\(session.durationSeconds / 60) min")
                     metric("Sätze", "\(sets.count)")
@@ -240,7 +240,7 @@ struct IOSWorkoutCompletionScreen: View {
         .safeAreaInset(edge: .bottom) {
             NavigationLink { IOSWorkoutDetailScreen(sessionID: session.id) } label: {
                 Text("Trainingsdetails öffnen").frame(maxWidth: .infinity).padding(.vertical, 7)
-            }.buttonStyle(.borderedProminent).padding().background(.bar)
+            }.buttonStyle(.borderedProminent).ironLogButtonText().padding().background(.bar)
         }
         .sheet(isPresented: $showPlanChanges) {
             IOSWorkoutPlanChangesSheet(sessionID: session.id, rows: rows, unitSystem: unitSystem,
@@ -252,7 +252,7 @@ struct IOSWorkoutCompletionScreen: View {
     }
     private func metric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
+            Text(title).font(.geist(.caption)).ironLogSecondaryText()
             Text(value).font(.geist(.title2, weight: .bold).monospacedDigit())
         }.padding().frame(maxWidth: .infinity, alignment: .leading)
             .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))
@@ -277,7 +277,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Wähle bewusst").font(.geist(.title, weight: .bold))
-                    Text("Das Training ist gespeichert. Was soll für das nächste Training gelten?").foregroundStyle(.secondary)
+                    Text("Das Training ist gespeichert. Was soll für das nächste Training gelten?").ironLogSecondaryText()
                     ForEach(rows.filter { $0.target != nil }) { row in
                         let target = row.target!
                         let slots = target.setTargets.isEmpty ? Array(repeating: ILPlannedSet(reps: target.target.reps, weightKg: target.target.weightKg), count: min(100, max(0, target.target.sets))) : target.setTargets
@@ -288,7 +288,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("\(row.exercise.name) · Satz \(index + 1)").font(.geist(.headline))
                                         Text("Plan   \(iosWorkoutDisplayWeight(kilograms: slots[index].weightKg, unitSystem: unitSystem)) × \(slots[index].reps)")
-                                        Text("Heute  \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").foregroundStyle(.tint)
+                                        Text("Heute  \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").ironLogAccentText()
                                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
                                         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                                 }
@@ -301,7 +301,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                 Image(systemName: choice == index ? "largecircle.fill.circle" : "circle").font(.title2)
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(titles[index]).font(.geist(.headline)).foregroundStyle(.primary)
-                                    Text(subtitles[index]).font(.geist(.caption)).foregroundStyle(.secondary)
+                                    Text(subtitles[index]).font(.geist(.caption)).ironLogSecondaryText()
                                 }
                                 Spacer(minLength: 0)
                             }.padding().frame(maxWidth: .infinity, alignment: .leading)
@@ -329,7 +329,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                     }
                 } label: {
                     Text(busy ? "Speichert …" : ["Plan unverändert lassen", "Satzwerte übernehmen", "Planeditor öffnen"][choice]).frame(maxWidth: .infinity).padding(.vertical, 7)
-                }.buttonStyle(.borderedProminent).disabled(busy).padding().background(.bar)
+                }.buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy).padding().background(.bar)
             }
             .interactiveDismissDisabled(busy)
         }

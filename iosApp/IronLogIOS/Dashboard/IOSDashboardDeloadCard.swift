@@ -42,11 +42,11 @@ struct IOSDashboardDeloadCard: View {
         if trend.deloadSuggested {
             Text("Mehrere Übungen verschlechtern sich wiederholt. Das ist eine Trainingsheuristik aus deinen protokollierten Sätzen, keine medizinische Einschätzung.")
                 .font(.geist(.body))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         } else {
             Text("Der Trend zeigt aktuell keine wiederholte Verschlechterung über mehrere Übungen. Du kannst eine Deload-Anzeige trotzdem bewusst starten.")
                 .font(.geist(.body))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         }
 
         if let decline = trend.strongestDecline, let change = decline.changePercent {
@@ -63,7 +63,7 @@ struct IOSDashboardDeloadCard: View {
                 ForEach(evidence, id: \.self) { text in
                     Label(text, systemImage: "circle.fill")
                         .font(.geist(.subheadline))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -73,7 +73,7 @@ struct IOSDashboardDeloadCard: View {
     private var activeBody: some View {
         Text(activeModeText)
             .font(.geist(.body))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
     }
 
     private var actionRow: some View {
@@ -92,7 +92,7 @@ struct IOSDashboardDeloadCard: View {
                 Button("Volumen halbieren") {
                     onActivate("HALVE_SET_VOLUME")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).ironLogButtonText()
                 .accessibilityHint("Zeigt im Training die halbe Satzzahl")
 
                 Button("Intensität −15 %") {

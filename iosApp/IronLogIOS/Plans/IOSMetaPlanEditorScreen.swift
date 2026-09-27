@@ -63,7 +63,7 @@ struct IOSMetaPlanEditorScreen: View {
                         Text("Rotation")
                         Spacer()
                         Text("\(items.count)")
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 } footer: {
                     Text("Teilpläne dürfen wiederholt werden. Beim Start wird der nächste gültige Eintrag aus der Rotation gewählt.")
@@ -228,14 +228,14 @@ private struct IOSMetaPlanItemRow: View {
         HStack(spacing: 12) {
             Text("\(index + 1)")
                 .font(.geist(.headline).monospacedDigit())
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
                 Text(planName)
                     .font(.geist(.body, weight: .semibold))
                 Text("Teilplan")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             Spacer()
             Menu {

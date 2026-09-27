@@ -24,7 +24,7 @@ struct IOSExerciseGlassHero: View {
                     Text(metric == .e1rm ? "GESCHÄTZTES 1RM" : metric.title.uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     let parts = split(points.last.map { text($0.value) } ?? "–")
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text(parts.number)
@@ -80,10 +80,10 @@ struct IOSExerciseGlassHero: View {
                 }
                 .font(.geist(.caption))
                 .monospacedDigit()
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             } else {
                 Text("Mindestens zwei abgeschlossene Einheiten sind für einen Verlauf nötig.")
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             IOSWorkoutGlassIntensityBar(
@@ -169,7 +169,7 @@ struct IOSExerciseGlassRecordTiles: View {
                     Text(label)
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     Text(value)
                         .font(.geist(size: 24, weight: .bold))
                         .monospacedDigit()

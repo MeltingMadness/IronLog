@@ -117,7 +117,7 @@ struct SettingsScreen: View {
                                 : "Deaktiviert: Nach dem Satz läuft die Zeit aufwärts."
                         )
                         .font(.geist(.footnote))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     }
 
                     Section("Hantel und Platten") {
@@ -201,7 +201,7 @@ struct SettingsScreen: View {
                             if let summary = viewModel.recoverySummary {
                                 Text(summary)
                                     .font(.geist(.footnote))
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                             }
 
                             Button("Vorherige Trainingsdaten wiederherstellen") {
@@ -210,17 +210,17 @@ struct SettingsScreen: View {
                         } else {
                             Text("Kein Wiederherstellungspunkt verfügbar")
                                 .font(.geist(.footnote))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
 
                         if let date = viewModel.lastSuccessfulExportDate {
                             Text("Letzter erfolgreicher Export: \(date.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.geist(.footnote))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         } else {
                             Text("Noch kein erfolgreicher Export")
                                 .font(.geist(.footnote))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
 
                         Toggle("An Backup erinnern", isOn: Binding(
@@ -247,7 +247,7 @@ struct SettingsScreen: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Details")
                                 .font(.geist(.footnote, weight: .semibold))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
 
                             TextEditor(text: $viewModel.incidentDetails)
                                 .frame(minHeight: 120)

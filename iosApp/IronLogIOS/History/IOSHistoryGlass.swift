@@ -84,12 +84,12 @@ struct IOSHistoryGlassWeekHeader: View {
                 Text(weekName.uppercased())
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                 Text(ilCount(week.workoutCount, "Training", "Trainings"))
                     .font(.geist(.title2, weight: .heavy))
                 Text("\(range) · \(historyGlassMinutes(week.totalMinutes))")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             IOSHistoryGlassMiniBars(minutesPerDay: week.minutesPerDay, weekStart: week.weekStart, now: now)
@@ -103,6 +103,9 @@ struct IOSHistoryGlassWeekHeader: View {
 }
 
 private struct IOSHistoryGlassMiniBars: View {
+    @Environment(\.ironLogTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
     let minutesPerDay: [Int]
     let weekStart: Date
     let now: Date
@@ -128,7 +131,7 @@ private struct IOSHistoryGlassMiniBars: View {
                     .frame(width: 8, height: 40)
                     Text(Self.dayLetters[index])
                         .font(.geist(size: 12, weight: isToday ? .heavy : .semibold))
-                        .foregroundStyle(isToday ? .primary : .secondary)
+                        .foregroundStyle(isToday ? theme.palette(for: colorScheme).textPrimary : theme.palette(for: colorScheme).textSecondary)
                 }
             }
         }
@@ -166,7 +169,7 @@ struct IOSHistoryGlassRow: View {
                     .font(.geist(size: 18, weight: .heavy).monospacedDigit())
                 Text(session.startDate.formatted(.dateTime.weekday(.abbreviated).locale(historyGerman)).replacingOccurrences(of: ".", with: "").uppercased())
                     .font(.geist(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             .frame(width: 50, height: 50)
             .liquidGlass(in: Circle())
@@ -176,13 +179,13 @@ struct IOSHistoryGlassRow: View {
                     .lineLimit(1)
                 Text(figures)
                     .font(.geist(.subheadline))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
