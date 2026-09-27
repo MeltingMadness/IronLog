@@ -10,7 +10,7 @@ struct IOSWorkoutFinishSheet: View {
     private var planned: Int { rows.reduce(0) { $0 + $1.loggingSlots.count } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Training beenden?").font(.title2.bold())
+            Text("Training beenden?").font(.geist(.title2, weight: .bold))
             Text(remaining > 0 ? "Noch \(remaining) \(remaining == 1 ? "geplanter Satz" : "geplante Sätze") offen. \(planned - remaining) von \(planned) absolviert." : "Deine bestätigten Sätze werden gespeichert.")
             ScrollView {
                 VStack(spacing: 12) {
@@ -19,12 +19,12 @@ struct IOSWorkoutFinishSheet: View {
                     }
                 }
             }.frame(maxHeight: 170)
-            if let error { Text(error).font(.footnote).foregroundStyle(.red) }
+            if let error { Text(error).font(.geist(.footnote)).foregroundStyle(.red) }
             Button(action: onContinue) { Text("Weitertrainieren").frame(maxWidth: .infinity).padding(.vertical, 7) }
                 .buttonStyle(.borderedProminent).disabled(busy)
             Button(action: onFinish) { Text(busy ? "Speichert …" : remaining > 0 ? "Trotzdem beenden" : "Training beenden").frame(maxWidth: .infinity).padding(.vertical, 7) }
                 .buttonStyle(.bordered).disabled(busy)
-            Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.caption).foregroundStyle(.secondary)
+            Text("Nur absolvierte Sätze zählen zum Ergebnis.").font(.geist(.caption)).foregroundStyle(.secondary)
         }.padding(24).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
     }
 }
@@ -82,12 +82,12 @@ struct IOSWorkoutCompletionScreen: View {
                 VStack(spacing: 6) {
                     Text([session.startDate.formatted(.dateTime.weekday(.wide).day().month(.twoDigits).locale(Locale(identifier: "de_DE"))), session.name.isEmpty ? nil : session.name]
                         .compactMap { $0 }.joined(separator: " · ").uppercased())
-                        .font(.caption.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     Text(remaining > 0 ? "Teiltraining gespeichert" : "Geschafft.")
-                        .font(.system(size: remaining > 0 ? 34 : 54, weight: .bold))
+                        .font(.geist(size: remaining > 0 ? 34 : 54, weight: .bold))
                         .tracking(-1.5)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
@@ -115,11 +115,11 @@ struct IOSWorkoutCompletionScreen: View {
                             .background(dark ? Color.white : Color(red: 11 / 255, green: 13 / 255, blue: 18 / 255), in: Circle())
                         VStack(alignment: .leading, spacing: 2) {
                             Text(records.count == 1 ? "NEUER REKORD" : "NEUE REKORDE")
-                                .font(.caption2.weight(.bold))
+                                .font(.geist(.caption, weight: .bold))
                                 .tracking(0.8)
                             ForEach(records, id: \.exercise) { record in
                                 Text("\(record.exercise): \(record.types.map(ilRecordTypeText).joined(separator: ", "))")
-                                    .font(.body.weight(.heavy))
+                                    .font(.geist(.body, weight: .heavy))
                             }
                         }
                         Spacer(minLength: 0)
@@ -131,10 +131,10 @@ struct IOSWorkoutCompletionScreen: View {
 
                 ForEach(trained) { row in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(row.exercise.name).font(.headline.weight(.heavy))
+                        Text(row.exercise.name).font(.geist(.headline, weight: .heavy))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
                             Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
-                                .font(.subheadline)
+                                .font(.geist(.subheadline))
                                 .monospacedDigit()
                                 .foregroundStyle(.secondary)
                         }
@@ -157,7 +157,7 @@ struct IOSWorkoutCompletionScreen: View {
             VStack(spacing: 10) {
                 NavigationLink { IOSWorkoutDetailScreen(sessionID: session.id) } label: {
                     Text("Trainingsdetails öffnen")
-                        .font(.body.weight(.heavy))
+                        .font(.geist(.body, weight: .heavy))
                         .frame(maxWidth: .infinity, minHeight: 54)
                         .liquidGlass(in: Capsule())
                 }
@@ -185,12 +185,12 @@ struct IOSWorkoutCompletionScreen: View {
                 .overlay {
                     VStack(spacing: 0) {
                         Text(value)
-                            .font(.system(size: value.count > 5 ? 22 : 28, weight: .bold))
+                            .font(.geist(size: value.count > 5 ? 22 : 28, weight: .bold))
                             .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                         Text(unit)
-                            .font(.caption2.weight(.bold))
+                            .font(.geist(.caption, weight: .bold))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -198,7 +198,7 @@ struct IOSWorkoutCompletionScreen: View {
                 }
                 .liquidGlass(in: Circle())
             Text(label.uppercased())
-                .font(.caption2.weight(.bold))
+                .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(.secondary)
         }
@@ -213,7 +213,7 @@ struct IOSWorkoutCompletionScreen: View {
                 Label(remaining > 0 ? "Vorzeitig beendet · \(sets.count) bestätigte Sätze" : "Training gespeichert", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green).padding().frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
-                Text(remaining > 0 ? "Teiltraining gespeichert" : "Training geschafft").font(.title.bold())
+                Text(remaining > 0 ? "Teiltraining gespeichert" : "Training geschafft").font(.geist(.title, weight: .bold))
                 Text(session.name).foregroundStyle(.secondary)
                 HStack(spacing: 12) {
                     metric("Dauer", "\(session.durationSeconds / 60) min")
@@ -222,9 +222,9 @@ struct IOSWorkoutCompletionScreen: View {
                 metric("Volumen", iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
                 ForEach(rows.filter { !$0.sets.isEmpty }) { row in
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(row.exercise.name).font(.headline)
+                        Text(row.exercise.name).font(.geist(.headline))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
-                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))").font(.subheadline).monospacedDigit()
+                            Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))").font(.geist(.subheadline)).monospacedDigit()
                         }
                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
                         .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))
@@ -252,8 +252,8 @@ struct IOSWorkoutCompletionScreen: View {
     }
     private func metric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.title2.monospacedDigit().bold())
+            Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
+            Text(value).font(.geist(.title2, weight: .bold).monospacedDigit())
         }.padding().frame(maxWidth: .infinity, alignment: .leading)
             .background(theme.palette(for: colorScheme).surface, in: RoundedRectangle(cornerRadius: 14))
     }
@@ -276,7 +276,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Wähle bewusst").font(.title.bold())
+                    Text("Wähle bewusst").font(.geist(.title, weight: .bold))
                     Text("Das Training ist gespeichert. Was soll für das nächste Training gelten?").foregroundStyle(.secondary)
                     ForEach(rows.filter { $0.target != nil }) { row in
                         let target = row.target!
@@ -286,7 +286,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                 let set = row.sets[match]
                                 if set.reps != slots[index].reps || set.weightKg != slots[index].weightKg {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("\(row.exercise.name) · Satz \(index + 1)").font(.headline)
+                                        Text("\(row.exercise.name) · Satz \(index + 1)").font(.geist(.headline))
                                         Text("Plan   \(iosWorkoutDisplayWeight(kilograms: slots[index].weightKg, unitSystem: unitSystem)) × \(slots[index].reps)")
                                         Text("Heute  \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").foregroundStyle(.tint)
                                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
@@ -300,8 +300,8 @@ private struct IOSWorkoutPlanChangesSheet: View {
                             HStack(alignment: .top, spacing: 12) {
                                 Image(systemName: choice == index ? "largecircle.fill.circle" : "circle").font(.title2)
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text(titles[index]).font(.headline).foregroundStyle(.primary)
-                                    Text(subtitles[index]).font(.caption).foregroundStyle(.secondary)
+                                    Text(titles[index]).font(.geist(.headline)).foregroundStyle(.primary)
+                                    Text(subtitles[index]).font(.geist(.caption)).foregroundStyle(.secondary)
                                 }
                                 Spacer(minLength: 0)
                             }.padding().frame(maxWidth: .infinity, alignment: .leading)
@@ -309,7 +309,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                 .overlay { RoundedRectangle(cornerRadius: 14).stroke(choice == index ? Color.accentColor : .secondary.opacity(0.3)) }
                         }.buttonStyle(.plain).disabled(busy).accessibilityValue(choice == index ? "Ausgewählt" : "Nicht ausgewählt")
                     }
-                    Text("Offene Übungen und Sätze bleiben im Plan.").font(.caption)
+                    Text("Offene Übungen und Sätze bleiben im Plan.").font(.geist(.caption))
                     if let error { Text(error).foregroundStyle(.red) }
                 }.padding(20)
             }

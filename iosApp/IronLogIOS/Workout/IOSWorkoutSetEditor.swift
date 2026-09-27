@@ -84,11 +84,11 @@ struct IOSWorkoutSetEditor: View {
                     Section {
                         HStack {
                             Text(context.row.exercise.name)
-                                .font(.headline)
+                                .font(.geist(.headline))
                             Spacer()
                             if let target = context.row.displayTarget {
                                 Text("Ziel \(target.reps) Wdh.")
-                                    .font(.caption)
+                                    .font(.geist(.caption))
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -140,7 +140,7 @@ struct IOSWorkoutSetEditor: View {
                             Text(intensitySystem == "RIR"
                                  ? "0 bedeutet bis zum Versagen; 10 bedeutet sehr leicht."
                                  : "RPE 10 entspricht maximaler Anstrengung.")
-                                .font(.caption)
+                                .font(.geist(.caption))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -152,7 +152,7 @@ struct IOSWorkoutSetEditor: View {
                             }
                         }
                         Text("Optional. Beschreibt, warum der Satz so endete, und bleibt ohne Auswahl nicht angegeben.")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
 

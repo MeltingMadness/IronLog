@@ -43,13 +43,13 @@ struct IronLogCard<Content: View>: View {
                 VStack(alignment: .leading, spacing: theme.metrics.compactSpacing) {
                     if let title {
                         Text(title)
-                            .font(.headline.weight(.semibold))
+                            .font(.geist(.headline, weight: .semibold))
                             .foregroundStyle(palette.textPrimary)
                     }
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(.subheadline)
+                            .font(.geist(.subheadline))
                             .foregroundStyle(palette.textSecondary)
                     }
                 }

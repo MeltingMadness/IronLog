@@ -29,7 +29,7 @@ struct IOSWeeklyVolumeTrendCard: View {
         ) {
             if points.isEmpty {
                 Text("Noch keine Wochenwerte verfügbar")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(palette.textSecondary)
             } else {
                 Chart {
@@ -90,7 +90,7 @@ struct IOSWeeklyVolumeTrendCard: View {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .foregroundStyle(palette.secondary)
                     Text("Die Linie zeigt das gesamte Gewicht × Wiederholungen der gültigen Arbeitssätze.")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(palette.textSecondary)
                 }
             }

@@ -45,11 +45,11 @@ struct IOSDashboardGlassHeader: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: "de_DE"))).uppercased())
-                    .font(.caption.weight(.bold))
+                    .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
                 Text(greeting)
-                    .font(.largeTitle.weight(.heavy))
+                    .font(.geist(.largeTitle, weight: .heavy))
             }
             .accessibilityElement(children: .combine)
             Spacer()
@@ -110,7 +110,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     .frame(width: 8, height: 8)
                     .shadow(color: accent, radius: 5)
                 Text(tag.uppercased())
-                    .font(.caption.weight(.bold))
+                    .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .lineLimit(1)
                     .opacity(0.9)
@@ -118,12 +118,12 @@ struct IOSDashboardGlassCommandCenter: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 44, weight: .bold))
+                    .font(.geist(size: 44, weight: .bold))
                     .tracking(-1.5)
                     .lineLimit(2)
                     .minimumScaleFactor(0.7)
                 Text(subtitle)
-                    .font(.subheadline)
+                    .font(.geist(.subheadline))
                     .foregroundStyle(.secondary)
             }
 
@@ -133,11 +133,11 @@ struct IOSDashboardGlassCommandCenter: View {
                         Divider().overlay(Color.primary.opacity(0.10))
                         HStack(alignment: .firstTextBaseline) {
                             Text(exerciseName(exercise))
-                                .font(.body.weight(.bold))
+                                .font(.geist(.body, weight: .bold))
                                 .lineLimit(1)
                             Spacer(minLength: 12)
                             Text(target(exercise))
-                                .font(.subheadline)
+                                .font(.geist(.subheadline))
                                 .monospacedDigit()
                                 .foregroundStyle(.secondary)
                         }
@@ -147,7 +147,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     if exercises.count > 3 {
                         let more = exercises.count - 3
                         Text("+ \(ilCount(more, "weitere Übung", "weitere Übungen"))")
-                            .font(.footnote.weight(.bold))
+                            .font(.geist(.footnote, weight: .bold))
                             .foregroundStyle(.secondary)
                             .padding(.top, 8)
                     }
@@ -162,7 +162,7 @@ struct IOSDashboardGlassCommandCenter: View {
                         .frame(width: 44, height: 44)
                         .background(accent, in: Circle())
                     Text(primaryTitle)
-                        .font(.system(size: 17, weight: .heavy))
+                        .font(.geist(size: 17, weight: .heavy))
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }
@@ -184,7 +184,7 @@ struct IOSDashboardGlassCommandCenter: View {
                         Button("Freies Training", action: onStartFree)
                     }
                 }
-                .font(.subheadline.weight(.bold))
+                .font(.geist(.subheadline, weight: .bold))
                 .foregroundStyle(.secondary)
                 .buttonStyle(.plain)
                 .disabled(isBusy)
@@ -280,19 +280,19 @@ struct IOSDashboardGlassWeekStrip: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("DIESE WOCHE")
-                    .font(.caption.weight(.bold))
+                    .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(ilCount(workoutsThisWeek, "Training", "Trainings")) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
-                    .font(.subheadline.weight(.bold))
+                    .font(.geist(.subheadline, weight: .bold))
                     .monospacedDigit()
             }
             HStack(spacing: 0) {
                 ForEach(days) { day in
                     VStack(spacing: 6) {
                         Text(day.date.formatted(.dateTime.weekday(.abbreviated).locale(Locale(identifier: "de_DE"))).replacingOccurrences(of: ".", with: ""))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.geist(size: 12, weight: .bold))
                             .foregroundStyle(.secondary)
                         ZStack {
                             if day.trained {

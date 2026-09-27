@@ -85,7 +85,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
                 Text(deltaText.isEmpty ? "Nächster Satz: \(weight)" : "Nächster Satz: \(weight) (\(deltaText))")
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                     .foregroundStyle(recommendationColor)
                     .lineLimit(2)
 
@@ -94,7 +94,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
                 Button("Übernehmen") {
                     onApplyWeight(recommendation.recommendedWeightKg)
                 }
-                .font(.caption.weight(.semibold))
+                .font(.geist(.caption, weight: .semibold))
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .tint(recommendationColor)
@@ -125,7 +125,7 @@ struct IOSWorkoutNextSetRecommendationView: View {
                     Button("Backoff übernehmen") {
                         onApplyBackoff(backoff)
                     }
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .tint(palette.danger)
@@ -158,7 +158,7 @@ private struct IOSWorkoutCoachPill: View {
 
     var body: some View {
         Text(text)
-            .font(.caption2.weight(.semibold))
+            .font(.geist(.caption, weight: .semibold))
             .foregroundStyle(color)
             .padding(.horizontal, 7)
             .padding(.vertical, 4)

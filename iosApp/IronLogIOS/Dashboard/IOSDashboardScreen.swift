@@ -279,7 +279,7 @@ struct IOSDashboardScreen: View {
             if let lastSessionDate = ilAnalyticsDateText(analytics.lastSessionDate) {
                 IronLogCard(title: "Letztes Training", tone: .elevated) {
                     Label(lastSessionDate, systemImage: "calendar")
-                        .font(.body.weight(.semibold))
+                        .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
                 }
             }
@@ -364,9 +364,9 @@ struct IOSDashboardScreen: View {
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(greetingTitle)
-                .font(.title2.weight(.bold))
+                .font(.geist(.title2, weight: .bold))
             Text("Dein Training, klar und nachvollziehbar.")
-                .font(.subheadline)
+                .font(.geist(.subheadline))
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -424,9 +424,9 @@ private struct IOSDashboardCommandCenter: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 3) {
                             Label("Rotation starten", systemImage: "arrow.triangle.2.circlepath")
-                                .font(.headline)
+                                .font(.geist(.headline))
                             Text("\(suggestion.metaPlanName) · \(suggestion.nextTrainingPlanName)")
-                                .font(.subheadline)
+                                .font(.geist(.subheadline))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -517,7 +517,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                 }
             } else {
                 Text("Der Trainingstrend konnte nicht gelesen werden.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
             }
         }
@@ -534,17 +534,17 @@ private struct IOSDashboardTrainingTrendCard: View {
     @ViewBuilder
     private func statusLine(_ trend: ILTrainingTrendAssessment) -> some View {
         Text(ilTrendStatusText(trend.status))
-            .font(.subheadline.weight(.semibold))
+            .font(.geist(.subheadline, weight: .semibold))
             .fixedSize(horizontal: false, vertical: true)
 
         if trend.deloadSuggested {
             Label("Deload vorgeschlagen", systemImage: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.geist(.subheadline, weight: .semibold))
                 .foregroundStyle(.orange)
         }
         if trend.deloadActive {
             Label("Deload aktiv", systemImage: "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
+                .font(.geist(.subheadline, weight: .semibold))
                 .foregroundStyle(.green)
         }
     }
@@ -553,7 +553,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     /// could actually evaluate, and how many comparable units carry that statement.
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
         Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, "Übung", "Übungen")) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, "vergleichbare Einheit", "vergleichbare Einheiten"))")
-            .font(.subheadline)
+            .font(.geist(.subheadline))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -568,24 +568,24 @@ private struct IOSDashboardTrainingTrendCard: View {
                 VStack(alignment: .leading, spacing: 10) {
                     if trend.status == .insufficientData {
                         Text("Es fehlen vergleichbare Einheiten für einen belastbaren Trend.")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Text("Evidenz: \(ilConfidenceText(trend.confidence))")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
 
                     if trend.repeatedDeclineExerciseCount > 0 {
                         Text("\(trend.repeatedDeclineExerciseCount) Übung\(trend.repeatedDeclineExerciseCount == 1 ? "" : "en") mit wiederholtem Rückgang")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
                         Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, "Einheit", "Einheiten")))")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -598,7 +598,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
                 Text("Details")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
             }
         }
     }
@@ -615,7 +615,7 @@ private struct IOSDashboardTrainingTrendCard: View {
 
     private func reasonLine(_ text: String) -> some View {
         Text("· \(text)")
-            .font(.caption)
+            .font(.geist(.caption))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -626,7 +626,7 @@ private struct IOSDashboardTrainingTrendCard: View {
         if !texts.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Alle Gründe")
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                 ForEach(texts, id: \.self) { reasonLine($0) }
             }
         }
@@ -637,13 +637,13 @@ private struct IOSDashboardTrainingTrendCard: View {
         if !trend.exercises.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Übungen (\(trend.exercises.count))")
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                 ForEach(trend.exercises, id: \.exerciseId) { exercise in
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(exercise.exerciseName) · \(ilExerciseTrendStatusText(exercise.status))")
-                            .font(.caption)
+                            .font(.geist(.caption))
                         Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, "Einheit", "Einheiten")) · \(ilConfidenceText(exercise.confidence))")
-                            .font(.caption2)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -656,10 +656,10 @@ private struct IOSDashboardTrainingTrendCard: View {
         if !trend.dataQuality.notes.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Datenqualität")
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                 ForEach(Array(trend.dataQuality.notes.enumerated()), id: \.offset) { _, note in
                     Text("· \(ilDataQualityNoteText(note))")
-                        .font(.caption2)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -706,7 +706,7 @@ private struct IOSDashboardTodayCheckInCard: View {
                         .accessibilityHint("Öffnet den heutigen Check-in zum Ändern oder Löschen")
                 } else {
                     Text("Freiwillige Selbsteinschätzung. Ohne Angabe bleibt alles offen; es wird kein Wert vorausgefüllt.")
-                        .font(.body)
+                        .font(.geist(.body))
                         .foregroundStyle(.secondary)
                     Button("Check-in für heute", action: onEdit)
                         .buttonStyle(.borderedProminent)
@@ -721,10 +721,10 @@ private struct IOSDashboardTodayCheckInCard: View {
         ForEach(rows, id: \.label) { row in
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(row.label)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                 Spacer(minLength: 8)
                 Text(row.value)
-                    .font(.subheadline)
+                    .font(.geist(.subheadline))
                     .foregroundStyle(.secondary)
             }
         }
@@ -758,12 +758,12 @@ private struct IOSDashboardTodayCheckInCard: View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(Array(dailyForm.signals.enumerated()), id: \.offset) { _, signal in
                 Text("\(ilDailyFormDimensionText(signal.dimension)): \(ilDailyFormStateText(signal.state)) (\(signal.value)/5)")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(signal.state == .concern ? Color.orange : Color.secondary)
             }
         }
         Text("Aussagekraft: \(ilConfidenceText(dailyForm.confidence)). Der Trainingstrend bleibt davon unabhängig.")
-            .font(.caption)
+            .font(.geist(.caption))
             .foregroundStyle(.secondary)
     }
 }
@@ -791,7 +791,7 @@ private struct IOSDashboardTodayMuscleCard: View {
         IronLogCard(title: "Heutiges Training", subtitle: subtitle) {
             if muscleGroups.isEmpty {
                 Text("Kein Tagesbezug: Es ist keine Einheit geplant und keine Muskelgruppe gemeldet.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
@@ -808,7 +808,7 @@ private struct IOSDashboardTodayMuscleCard: View {
                         }
                     }
                     Text("Fakten aus deiner Historie: letzte Belastung und Arbeitssätze der letzten 7 Tage. Keine Erholungsprognose.")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -817,7 +817,7 @@ private struct IOSDashboardTodayMuscleCard: View {
 
     private func sectionHeader(_ text: String) -> some View {
         Text(text)
-            .font(.caption.weight(.semibold))
+            .font(.geist(.caption, weight: .semibold))
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
     }
@@ -834,34 +834,34 @@ private struct IOSDashboardTodayMuscleCard: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(ilMuscleDisplayName(muscle.muscleGroup))
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                 if isPlanned {
                     Text("geplant")
-                        .font(.caption2.weight(.semibold))
+                        .font(.geist(.caption, weight: .semibold))
                         .foregroundStyle(.tint)
                 }
                 Spacer(minLength: 8)
                 if let soreness = muscle.soreness {
                     Text("Muskelkater \(soreness)/5")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(soreness >= 4 ? Color.orange : Color.secondary)
                 }
             }
 
             Text("\(ilPastDayText(muscle.lastTrainedEpochMillis)) · \(ilSetCountText(muscle.setsInWindow)) in den letzten 7 Tagen")
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
 
             if muscle.setsToday > 0 {
                 Text("Heute bereits \(ilSetCountText(muscle.setsToday))")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
 
             let flags = muscle.flags.filter { $0 != .unknown }
             if !flags.isEmpty {
                 Text(flags.map(ilMuscleFlagText).joined(separator: " · "))
-                    .font(.caption2)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
         }
@@ -933,7 +933,7 @@ private struct IOSDashboardCheckInSheet: View {
                     if saveFailed {
                         Section {
                             Text(store.errorMessage ?? "Speichern fehlgeschlagen. Bitte erneut versuchen.")
-                                .font(.footnote)
+                                .font(.geist(.footnote))
                                 .foregroundStyle(.orange)
                         }
                     }
@@ -1048,7 +1048,7 @@ private struct ILCheckInScaleRow: View {
                 Text(title)
                 Spacer(minLength: 8)
                 Text(value.map { ilCheckInScaleText($0, dimension: dimension) } ?? "offen")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -1058,7 +1058,7 @@ private struct ILCheckInScaleRow: View {
                         value = value == step ? nil : step
                     } label: {
                         Text("\(step)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.geist(.subheadline, weight: .semibold))
                             .frame(minWidth: 32, minHeight: 32)
                     }
                     .buttonStyle(.bordered)
@@ -1086,7 +1086,7 @@ private struct IOSDashboardWorkoutCounts: View {
             }
             if let lastSessionDate = ilAnalyticsDateText(lastSessionDate) {
                 Text("Zuletzt am \(lastSessionDate)")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
         }
@@ -1095,10 +1095,10 @@ private struct IOSDashboardWorkoutCounts: View {
     private func metric(title: String, value: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text("\(value)")
-                .font(.title2.weight(.bold))
+                .font(.geist(.title2, weight: .bold))
                 .monospacedDigit()
             Text(title)
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1117,9 +1117,9 @@ private struct IOSDashboardPendingProgressions: View {
                     .foregroundStyle(.orange)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Progression prüfen")
-                        .font(.headline)
+                        .font(.geist(.headline))
                     Text("\(count) Vorschlag\(count == 1 ? "" : "e") wartet auf deine Entscheidung.")
-                        .font(.subheadline)
+                        .font(.geist(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
@@ -1138,7 +1138,7 @@ private struct IOSDashboardPendingProgressions: View {
 private struct IOSDashboardVolumeExplanation: View {
     var body: some View {
         Text("MEV ist das minimale wirksame Volumen, MAV der typische Zielbereich und MRV die obere Regenerationsgrenze. Der Trend stammt aus den gültigen Arbeitssätzen dieser Woche.")
-            .font(.caption)
+            .font(.geist(.caption))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 4)
     }
@@ -1152,7 +1152,7 @@ private struct IOSDashboardRecentRecords: View {
         IronLogCard(title: "Neue Rekorde", subtitle: records.isEmpty ? nil : "Zuletzt erfasst") {
             if records.isEmpty {
                 Text("Noch keine persönlichen Rekorde gespeichert.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -1160,16 +1160,16 @@ private struct IOSDashboardRecentRecords: View {
                         ForEach(records) { record in
                             VStack(alignment: .leading, spacing: 7) {
                                 Text(record.exerciseName ?? "Übung \(record.exerciseId)")
-                                    .font(.headline)
+                                    .font(.geist(.headline))
                                     .lineLimit(2)
                                 Text(ilRecordTypeText(record.type))
-                                    .font(.caption)
+                                    .font(.geist(.caption))
                                     .foregroundStyle(.secondary)
                                 Text(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))
-                                    .font(.title3.weight(.bold))
+                                    .font(.geist(.title3, weight: .bold))
                                     .foregroundStyle(.orange)
                                 Text(ilAnalyticsDateText(record.achievedAt) ?? record.achievedAt)
-                                    .font(.caption2)
+                                    .font(.geist(.caption))
                                     .foregroundStyle(.secondary)
                             }
                             .frame(width: 150, alignment: .leading)

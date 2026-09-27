@@ -82,13 +82,13 @@ struct IOSHistoryGlassWeekHeader: View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(weekName.uppercased())
-                    .font(.caption.weight(.bold))
+                    .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
                 Text(ilCount(week.workoutCount, "Training", "Trainings"))
-                    .font(.title2.weight(.heavy))
+                    .font(.geist(.title2, weight: .heavy))
                 Text("\(range) · \(historyGlassMinutes(week.totalMinutes))")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -127,7 +127,7 @@ private struct IOSHistoryGlassMiniBars: View {
                     }
                     .frame(width: 8, height: 40)
                     Text(Self.dayLetters[index])
-                        .font(.system(size: 10, weight: isToday ? .heavy : .semibold))
+                        .font(.geist(size: 12, weight: isToday ? .heavy : .semibold))
                         .foregroundStyle(isToday ? .primary : .secondary)
                 }
             }
@@ -163,19 +163,19 @@ struct IOSHistoryGlassRow: View {
         HStack(spacing: 14) {
             VStack(spacing: 0) {
                 Text("\(IOSHistoryWeek.calendar.component(.day, from: session.startDate))")
-                    .font(.system(size: 18, weight: .heavy).monospacedDigit())
+                    .font(.geist(size: 18, weight: .heavy).monospacedDigit())
                 Text(session.startDate.formatted(.dateTime.weekday(.abbreviated).locale(historyGerman)).replacingOccurrences(of: ".", with: "").uppercased())
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.geist(size: 12, weight: .bold))
                     .foregroundStyle(.secondary)
             }
             .frame(width: 50, height: 50)
             .liquidGlass(in: Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(session.displayName(planName: planName))
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.geist(size: 16, weight: .heavy))
                     .lineLimit(1)
                 Text(figures)
-                    .font(.subheadline)
+                    .font(.geist(.subheadline))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }

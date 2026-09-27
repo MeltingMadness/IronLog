@@ -303,8 +303,8 @@ private struct IOSHistoryMetric: View {
     var body: some View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
-                Text(value).font(.headline.monospacedDigit())
-                Text(title).font(.caption).foregroundStyle(.secondary)
+                Text(value).font(.geist(.headline).monospacedDigit())
+                Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
             }
         } icon: {
             Image(systemName: systemImage).foregroundStyle(.tint)
@@ -335,11 +335,11 @@ private struct IOSHistorySessionRow: View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline) {
                 Text(session.displayName(planName: planName))
-                    .font(.headline)
+                    .font(.geist(.headline))
                     .lineLimit(2)
                 Spacer(minLength: 8)
                 Text(IOSHistoryFormatting.date(session.startDate))
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.trailing)
             }
@@ -350,11 +350,11 @@ private struct IOSHistorySessionRow: View {
                     Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
                 }
             }
-            .font(.caption)
+            .font(.geist(.caption))
             .foregroundStyle(.secondary)
             if !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(session.notes)
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -617,7 +617,7 @@ private struct IOSHistoryDetailHeader: View {
                 VStack(alignment: .leading, spacing: 8) { metrics }
             }
             if !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(session.notes).font(.body)
+                Text(session.notes).font(.geist(.body))
             }
             Button(action: onEditNotes) {
                 Label("Notiz bearbeiten", systemImage: "square.and.pencil")
@@ -653,10 +653,10 @@ private struct IOSHistoryExerciseSection: View {
             if !records.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     Label("Persönliche Bestleistungen", systemImage: "rosette")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.geist(.subheadline, weight: .semibold))
                     ForEach(records) { record in
                         Text("\(ilRecordTypeText(record.type)): \(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -679,18 +679,18 @@ private struct IOSHistorySetRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text("Satz \(set.setNumber)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                     .frame(width: 58, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
-                    .font(.body.monospacedDigit())
+                    .font(.geist(.body).monospacedDigit())
                 HStack(spacing: 8) {
                     Text(set.iosSetTypeDisplayName)
                     if let rpe = set.rpe, rpe.isFinite {
                         Text("RPE \(IOSHistoryFormatting.number(rpe))")
                     }
                 }
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
             }
             Spacer(minLength: 4)
@@ -739,19 +739,19 @@ private struct IOSHistorySetEditor: View {
                     Section("Satz \(set.setNumber)") {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(.geist(.caption)).foregroundStyle(.secondary)
                             TextField("Gewicht", text: $weightText)
                                 .keyboardType(.decimalPad)
                                 .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
                         }
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Wiederholungen").font(.caption).foregroundStyle(.secondary)
+                            Text("Wiederholungen").font(.geist(.caption)).foregroundStyle(.secondary)
                             TextField("Wiederholungen", text: $repsText)
                                 .keyboardType(.numberPad)
                                 .accessibilityLabel("Wiederholungen")
                         }
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("RPE (optional)").font(.caption).foregroundStyle(.secondary)
+                            Text("RPE (optional)").font(.geist(.caption)).foregroundStyle(.secondary)
                             TextField("RPE", text: $rpeText)
                                 .keyboardType(.decimalPad)
                                 .accessibilityLabel("RPE, optional")
@@ -762,7 +762,7 @@ private struct IOSHistorySetEditor: View {
                             }
                         }
                         if let errorMessage {
-                            Text(errorMessage).foregroundStyle(.red).font(.footnote)
+                            Text(errorMessage).foregroundStyle(.red).font(.geist(.footnote))
                         }
                     }
                 }

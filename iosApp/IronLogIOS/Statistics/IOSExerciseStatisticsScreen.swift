@@ -130,7 +130,7 @@ struct IOSExerciseStatisticsScreen: View {
 
                 if sessions.count < 2 {
                     Text("Mindestens zwei abgeschlossene Einheiten sind für einen Verlauf nötig.")
-                        .font(.body)
+                        .font(.geist(.body))
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 12)
                 } else {
@@ -227,14 +227,14 @@ struct IOSExerciseStatisticsScreen: View {
                 if let exercise {
                     Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilCount(analyticsExercise.sessions.count, "Einheit", "Einheiten")]
                         .joined(separator: " · ").uppercased())
-                        .font(.caption.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
             Text(exerciseName)
-                .font(.system(size: 40, weight: .bold))
+                .font(.geist(size: 40, weight: .bold))
                 .tracking(-1.4)
                 .accessibilityAddTraits(.isHeader)
             IOSExerciseGlassHero(sessions: analyticsExercise.sessions, metric: $selectedMetric, unitSystem: unitSystem)
@@ -258,14 +258,14 @@ struct IOSExerciseStatisticsScreen: View {
         IronLogCard(tone: .elevated) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(exerciseName)
-                    .font(.title2.weight(.bold))
+                    .font(.geist(.title2, weight: .bold))
                 if let exercise {
                     Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName].joined(separator: " · "))
-                        .font(.subheadline)
+                        .font(.geist(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 Text("\(analyticsExercise?.sessions.count ?? 0) abgeschlossene Einheiten")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
         }
@@ -321,21 +321,21 @@ private struct IOSExerciseRecordsCard: View {
 
             if records.isEmpty {
                 Text("Für diesen Filter gibt es noch keinen Rekord.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(records) { record in
                     HStack(alignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(ilRecordTypeText(record.type))
-                                .font(.body.weight(.semibold))
+                                .font(.geist(.body, weight: .semibold))
                             Text(record.achievedDate.formatted(date: .abbreviated, time: .omitted))
-                                .font(.caption)
+                                .font(.geist(.caption))
                                 .foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 12)
                         Text(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))
-                            .font(.body.weight(.semibold))
+                            .font(.geist(.body, weight: .semibold))
                     }
                     .padding(.vertical, 3)
                 }
@@ -373,10 +373,10 @@ private struct IOSExerciseE1rmProgressionCard: View {
     private func metric(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.body.weight(.semibold))
+                .font(.geist(.body, weight: .semibold))
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -417,7 +417,7 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
                     emphasized: true
                 )
                 Text("Veränderung: \(metricDeltaText)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                     .foregroundStyle(deltaIsPositive ? .green : .red)
             }
         }
@@ -432,10 +432,10 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(label) · \(ilAnalyticsDateTimeText(epochMillis: date))")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
                 Text(value)
-                    .font(.body.weight(emphasized ? .semibold : .regular))
+                    .font(.geist(.body, weight: emphasized ? .semibold : .regular))
             }
             Spacer(minLength: 8)
         }
@@ -478,20 +478,20 @@ private struct IOSExerciseSessionHistoryCard: View {
         IronLogCard(title: "Einheiten", subtitle: "Quellwerte pro abgeschlossener Einheit") {
             if sessions.isEmpty {
                 Text("Noch keine Einheiten verfügbar.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(sessions.reversed()) { session in
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
                             Text(ilAnalyticsDateText(session.date) ?? session.date)
-                                .font(.body.weight(.semibold))
+                                .font(.geist(.body, weight: .semibold))
                             Spacer()
                             Text(metricText(session))
-                                .font(.body.weight(.semibold))
+                                .font(.geist(.body, weight: .semibold))
                         }
                         Text("\(ilWeightText(session.maxWeightKg, unitSystem: unitSystem)) · \(session.maxReps) Wdh. · \(ilWeightText(session.maxE1rmKg, unitSystem: unitSystem)) e1RM · \(ilVolumeText(session.volumeKg, unitSystem: unitSystem))")
-                            .font(.caption)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 5)
@@ -522,12 +522,12 @@ private struct IOSExerciseRecentSetsCard: View {
             ForEach(sets.prefix(12)) { set in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(ilAnalyticsDateTimeText(epochMillis: set.completedAtEpochMillis))
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text("\(setTypeText(set.setType)) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
-                        .font(.body.weight(.medium))
+                        .font(.geist(.body, weight: .medium))
                         .multilineTextAlignment(.trailing)
                 }
                 .padding(.vertical, 3)

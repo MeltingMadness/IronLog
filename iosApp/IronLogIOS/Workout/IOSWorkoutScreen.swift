@@ -283,7 +283,7 @@ struct IOSWorkoutScreen: View {
 
                 if let message = store.errorMessage ?? localErrorMessage {
                     Label(message, systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote)
+                        .font(.geist(.footnote))
                         .foregroundStyle(.red)
                         .padding(.horizontal)
                 }
@@ -500,9 +500,9 @@ struct IOSWorkoutScreen: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(session.name.isEmpty ? "Freies Workout" : session.name)
-                        .font(.title2.weight(.bold))
+                        .font(.geist(.title2, weight: .bold))
                     Text(session.planId == nil ? "Freie Session" : "Plan-Session")
-                        .font(.subheadline)
+                        .font(.geist(.subheadline))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -511,7 +511,7 @@ struct IOSWorkoutScreen: View {
 
             HStack(spacing: 10) {
                 Label("Seit \(session.startDate.formatted(date: .omitted, time: .shortened))", systemImage: "clock")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
 
                 Spacer()
@@ -1004,9 +1004,9 @@ private struct IOSWorkoutElapsedView: View {
         TimelineView(.periodic(from: Date(), by: 1)) { context in
             VStack(alignment: .trailing, spacing: 2) {
                 Text(iosWorkoutFormatDuration(max(0, Int(context.date.timeIntervalSince(startDate)))))
-                    .font(.title3.monospacedDigit().weight(.semibold))
+                    .font(.geist(.title3, weight: .semibold).monospacedDigit())
                 Text("Workout-Zeit")
-                    .font(.caption2)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
@@ -1032,7 +1032,7 @@ private struct IOSWorkoutNotesSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Notizen zum laufenden Workout")
-                    .font(.headline)
+                    .font(.geist(.headline))
                 TextEditor(text: $notes)
                     .frame(minHeight: 180)
                     .padding(8)

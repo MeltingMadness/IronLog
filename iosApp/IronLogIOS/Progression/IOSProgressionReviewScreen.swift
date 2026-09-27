@@ -119,9 +119,9 @@ struct IOSProgressionReviewScreen: View {
                 if pendingCount > 0 {
                     IronLogCard(tone: .muted) {
                         Label("\(pendingCount) Entscheidung(en) ausstehend", systemImage: "checkmark.circle")
-                            .font(.headline)
+                            .font(.geist(.headline))
                         Text("Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert.")
-                            .font(.subheadline)
+                            .font(.geist(.subheadline))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -141,10 +141,10 @@ struct IOSProgressionReviewScreen: View {
                     if !safePendingSuggestions.isEmpty {
                         IronLogCard(tone: .muted) {
                             Text("Sichere Vorschläge gesammelt übernehmen")
-                                .font(.headline)
+                                .font(.geist(.headline))
                             if editingSuggestion != nil {
                                 Text("Schließe die Bearbeitung zuerst ab.")
-                                    .font(.subheadline)
+                                    .font(.geist(.subheadline))
                                     .foregroundStyle(.secondary)
                             }
                             Button {
@@ -296,24 +296,24 @@ private struct IOSProgressionSuggestionCard: View {
         IronLogCard(tone: isPending ? .elevated : .muted) {
             HStack(alignment: .firstTextBaseline) {
                 Text(exerciseName ?? "Übung \(suggestion.exerciseId)")
-                    .font(.headline)
+                    .font(.geist(.headline))
                 Spacer(minLength: 8)
                 IOSProgressionStatusBadge(status: suggestion.status)
             }
             Text("Schema: \(suggestion.sourceProgression.schemeDisplayName)")
-                .font(.subheadline)
+                .font(.geist(.subheadline))
                 .foregroundStyle(.tint)
             if let planName {
                 Text("Plan: \(planName)")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
             Text("Bewertung: \(IOSProgressionFormatting.date(suggestion.createdAt))")
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
             if let decidedAt = suggestion.decidedAt {
                 Text("Entschieden: \(IOSProgressionFormatting.date(decidedAt))")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -331,13 +331,13 @@ private struct IOSProgressionSuggestionCard: View {
             )
 
             Text(IOSProgressionReasonText.text(for: suggestion, unitSystem: unitSystem))
-                .font(.body)
+                .font(.geist(.body))
 
             if let suggestedTarget = suggestion.suggestedTarget {
                 IOSProgressionTargetBlock(title: "Vorgeschlagen", target: suggestedTarget, unitSystem: unitSystem, tone: .primary)
             } else {
                 Text("Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ.")
-                    .font(.subheadline)
+                    .font(.geist(.subheadline))
                     .foregroundStyle(.secondary)
             }
 
@@ -369,7 +369,7 @@ private struct IOSProgressionStatusBadge: View {
 
     var body: some View {
         Text(IOSProgressionFormatting.status(status))
-            .font(.caption.weight(.semibold))
+            .font(.geist(.caption, weight: .semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(background, in: Capsule())
@@ -394,9 +394,9 @@ private struct IOSProgressionTargetBlock: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.subheadline.weight(.semibold))
+            Text(title).font(.geist(.subheadline, weight: .semibold))
             Text("\(ilCount(target.sets, "Satz", "Sätze")) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
-                .font(.body.monospacedDigit())
+                .font(.geist(.body).monospacedDigit())
                 .foregroundStyle(tone.color)
         }
         .accessibilityElement(children: .combine)
@@ -425,10 +425,10 @@ private struct IOSProgressionEvidenceBlock: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Tatsächliche Evidenz").font(.subheadline.weight(.semibold))
+            Text("Tatsächliche Evidenz").font(.geist(.subheadline, weight: .semibold))
             if sets.isEmpty {
                 Text(idsWerePresent ? "Die gespeicherte Evidenz ist nicht verfügbar." : "Keine verwertbaren Arbeitssätze gespeichert.")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(sets) { set in
@@ -439,7 +439,7 @@ private struct IOSProgressionEvidenceBlock: View {
                             Text("· RPE \(IOSProgressionFormatting.number(rpe))")
                         }
                     }
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
                 }
             }
@@ -481,12 +481,12 @@ private struct IOSProgressionEditSheet: View {
                         TextField("Wiederholungen", text: $repsText).keyboardType(.numberPad)
                         TextField("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))", text: $weightText).keyboardType(.decimalPad)
                         if let errorMessage {
-                            Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                            Text(errorMessage).font(.geist(.footnote)).foregroundStyle(.red)
                         }
                     }
                     Section {
                         Text("Die Quelle und ihre Evidenz bleiben unverändert. Deine Eingabe wird als finales Ziel gespeichert.")
-                            .font(.footnote)
+                            .font(.geist(.footnote))
                             .foregroundStyle(.secondary)
                     }
                 }

@@ -18,6 +18,7 @@ struct RootView: View {
             SettingsScreen()
                 .tabItem { Label("Einstellungen", systemImage: "gearshape") }.tag(4)
         }
+        .font(.geist(.body))
         .environment(training)
         .environmentObject(settings)
         .task {
@@ -60,7 +61,7 @@ struct RootView: View {
             if let error = training.errorMessage, training.data != nil {
                 HStack(alignment: .top, spacing: 12) {
                     Label(error, systemImage: "exclamationmark.triangle")
-                        .font(.callout)
+                        .font(.geist(.callout))
                     Spacer(minLength: 0)
                     Button { training.errorMessage = nil } label: {
                         Image(systemName: "xmark.circle.fill")

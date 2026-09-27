@@ -28,7 +28,7 @@ struct IOSWorkoutExercisePicker: View {
                     Text("\(selected.count) ausgewählt").foregroundStyle(.tint).bold()
                     Spacer()
                     Button("Auswahl leeren") { selected = [] }
-                }.font(.subheadline).padding(.horizontal)
+                }.font(.geist(.subheadline)).padding(.horizontal)
                 List(filtered) { exercise in
                     Group {
                         Button {
@@ -37,8 +37,8 @@ struct IOSWorkoutExercisePicker: View {
                         } label: {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text(exercise.name).font(.headline).foregroundStyle(.primary)
-                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.caption).foregroundStyle(.secondary)
+                                    Text(exercise.name).font(.geist(.headline)).foregroundStyle(.primary)
+                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")

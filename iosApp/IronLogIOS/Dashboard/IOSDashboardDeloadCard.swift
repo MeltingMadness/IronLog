@@ -41,17 +41,17 @@ struct IOSDashboardDeloadCard: View {
     private var recommendationBody: some View {
         if trend.deloadSuggested {
             Text("Mehrere Übungen verschlechtern sich wiederholt. Das ist eine Trainingsheuristik aus deinen protokollierten Sätzen, keine medizinische Einschätzung.")
-                .font(.body)
+                .font(.geist(.body))
                 .foregroundStyle(.secondary)
         } else {
             Text("Der Trend zeigt aktuell keine wiederholte Verschlechterung über mehrere Übungen. Du kannst eine Deload-Anzeige trotzdem bewusst starten.")
-                .font(.body)
+                .font(.geist(.body))
                 .foregroundStyle(.secondary)
         }
 
         if let decline = trend.strongestDecline, let change = decline.changePercent {
             Text("Stärkster Rückgang: \(decline.exerciseName) (\(percentText(change)) über \(decline.comparableUnitCount) vergleichbare Einheiten)")
-                .font(.subheadline.weight(.semibold))
+                .font(.geist(.subheadline, weight: .semibold))
         }
 
         // A deload decision is only as trustworthy as its evidence, so this focused card
@@ -62,7 +62,7 @@ struct IOSDashboardDeloadCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(evidence, id: \.self) { text in
                     Label(text, systemImage: "circle.fill")
-                        .font(.subheadline)
+                        .font(.geist(.subheadline))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -72,7 +72,7 @@ struct IOSDashboardDeloadCard: View {
 
     private var activeBody: some View {
         Text(activeModeText)
-            .font(.body)
+            .font(.geist(.body))
             .foregroundStyle(.secondary)
     }
 
@@ -80,7 +80,7 @@ struct IOSDashboardDeloadCard: View {
         HStack(alignment: .center, spacing: 10) {
             if isActive {
                 Label("Deload aktiv", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                     .foregroundStyle(.green)
 
                 Spacer(minLength: 8)

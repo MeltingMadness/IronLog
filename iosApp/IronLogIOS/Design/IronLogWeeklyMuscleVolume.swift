@@ -131,12 +131,12 @@ struct IronLogWeeklyMuscleVolumeCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: theme.metrics.compactSpacing) {
                     VStack(alignment: .leading, spacing: theme.metrics.compactSpacing) {
                         Text(title)
-                            .font(.headline.weight(.semibold))
+                            .font(.geist(.headline, weight: .semibold))
                             .foregroundStyle(palette.textPrimary)
 
                         if let subtitle {
                             Text(subtitle)
-                                .font(.subheadline)
+                                .font(.geist(.subheadline))
                                 .foregroundStyle(palette.textSecondary)
                         }
                     }
@@ -167,7 +167,7 @@ struct IronLogWeeklyMuscleVolumeCard: View {
 
             if !isLoading, errorMessage == nil, let completedWorkoutCount {
                 Text("\(completedWorkoutCount) abgeschlossene Trainings")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
             }
 
@@ -179,7 +179,7 @@ struct IronLogWeeklyMuscleVolumeCard: View {
                 } else if let errorMessage {
                     VStack(alignment: .leading, spacing: theme.metrics.compactSpacing) {
                         Text(errorMessage)
-                            .font(.body)
+                            .font(.geist(.body))
                             .foregroundStyle(palette.textSecondary)
 
                         if let onRetry {
@@ -191,7 +191,7 @@ struct IronLogWeeklyMuscleVolumeCard: View {
                     .padding(.vertical, rowPadding)
                 } else if rows.isEmpty {
                     Text(emptyMessage)
-                        .font(.body)
+                        .font(.geist(.body))
                         .foregroundStyle(palette.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, rowPadding)
@@ -243,16 +243,16 @@ private struct IronLogWeeklyMuscleVolumeWeekHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 if let weekLabel {
                     Text(weekLabel)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.geist(.subheadline, weight: .semibold))
                         .foregroundStyle(palette.textPrimary)
                 } else if let weekStart {
                     Text(weekStart)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.geist(.subheadline, weight: .semibold))
                         .foregroundStyle(palette.textPrimary)
                 }
 
                 Text(isCurrentWeek ? "Aktuelle Woche" : "Abgeschlossene Woche")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
             }
 
@@ -323,14 +323,14 @@ struct IronLogWeeklyMuscleVolumeRow: View {
         VStack(alignment: .leading, spacing: theme.metrics.compactSpacing) {
             HStack(alignment: .firstTextBaseline, spacing: theme.metrics.compactSpacing) {
                 Text(volume.title)
-                    .font(.body.weight(.semibold))
+                    .font(.geist(.body, weight: .semibold))
                     .foregroundStyle(palette.textPrimary)
                     .lineLimit(2)
 
                 Spacer(minLength: theme.metrics.compactSpacing)
 
                 Text(ironLogSetsDescription)
-                    .font(.callout.weight(.semibold))
+                    .font(.geist(.callout, weight: .semibold))
                     .foregroundStyle(palette.textSecondary)
                     .multilineTextAlignment(.trailing)
                     .layoutPriority(1)
@@ -344,7 +344,7 @@ struct IronLogWeeklyMuscleVolumeRow: View {
 
             if let thresholdDescription = ironLogThresholdDescription {
                 Text(thresholdDescription)
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
                     .lineLimit(2)
             }

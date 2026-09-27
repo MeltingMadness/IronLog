@@ -287,7 +287,7 @@ private struct IOSPlanExerciseRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(index + 1). \(exerciseName)")
-                    .font(.headline)
+                    .font(.geist(.headline))
                     .lineLimit(2)
                 Spacer(minLength: 4)
                 Menu {
@@ -309,16 +309,16 @@ private struct IOSPlanExerciseRow: View {
                     Text("Superset \(group)")
                     Spacer()
                     Button("Aufheben", action: onUngroup)
-                        .font(.caption)
+                        .font(.geist(.caption))
                 }
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.tint)
             } else if !isFirst {
                 Button {
                     onGroupWithPrevious()
                 } label: {
                     Label("Mit vorheriger Übung gruppieren", systemImage: "link.badge.plus")
-                        .font(.caption)
+                        .font(.geist(.caption))
                 }
             }
 
@@ -343,10 +343,10 @@ private struct IOSPlanExerciseRow: View {
                         Text("\(index + 1) · \(target.kind == "WARMUP" ? "Aufwärmen" : target.kind == "BACKOFF" ? "Backoff" : "Arbeitssatz")")
                         Spacer()
                         Text("\(IOSNumber.format(IOSWeight.display(kg: target.weightKg, unit: unitSystem))) × \(target.reps)").monospacedDigit()
-                    }.font(.subheadline).padding(.vertical, 6)
+                    }.font(.geist(.subheadline)).padding(.vertical, 6)
                 }
                 Button("Satzvorgaben bearbeiten") { showingSetTargets = true }
-                Text("Einzelne Satzvorgaben werden manuell gesteigert.").font(.caption).foregroundStyle(.secondary)
+                Text("Einzelne Satzvorgaben werden manuell gesteigert.").font(.geist(.caption)).foregroundStyle(.secondary)
             }
             Button(action: onProgression) {
                 HStack {
@@ -378,7 +378,7 @@ private struct IOSCompactField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
             TextField(title, text: $text)
                 .keyboardType(keyboard)
@@ -442,7 +442,7 @@ private struct IOSProgressionEditorSheet: View {
 
                     if draft.scheme == .manual {
                         Text("Manuelle Ziele werden ohne automatische Änderung fortgeführt.")
-                            .font(.footnote)
+                            .font(.geist(.footnote))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -487,7 +487,7 @@ private struct IOSProgressionEditorSheet: View {
                         Text(IOSWeight.isImperial(unitSystem)
                             ? "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb."
                             : "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg.")
-                            .font(.footnote)
+                            .font(.geist(.footnote))
                             .foregroundStyle(.secondary)
                     }
                 }

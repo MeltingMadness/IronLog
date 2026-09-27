@@ -12,9 +12,9 @@ struct IOSWorkoutStartView: View {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Bereit für dein Training?")
-                        .font(.largeTitle.bold())
+                        .font(.geist(.largeTitle, weight: .bold))
                     Text("Starte eine freie Session oder wähle einen gespeicherten Plan. Die Planziele werden beim Start für diese Session übernommen.")
-                        .font(.body)
+                        .font(.geist(.body))
                         .foregroundStyle(.secondary)
                 }
 
@@ -47,10 +47,10 @@ struct IOSWorkoutStartView: View {
                                         .foregroundStyle(.tint)
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(plan.name)
-                                            .font(.body.weight(.semibold))
+                                            .font(.geist(.body, weight: .semibold))
                                             .foregroundStyle(.primary)
                                         Text("Plan starten")
-                                            .font(.caption)
+                                            .font(.geist(.caption))
                                             .foregroundStyle(.secondary)
                                     }
                                     Spacer()

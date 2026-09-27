@@ -122,7 +122,7 @@ struct IOSPlansScreen: View {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
-                        .font(.footnote)
+                        .font(.geist(.footnote))
                 }
             }
 
@@ -245,10 +245,10 @@ private struct IOSPlanListRow: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.name)
-                        .font(.body.weight(.semibold))
+                        .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text(exerciseCount == 1 ? "1 Übung" : "\(exerciseCount) Übungen")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
 
@@ -292,10 +292,10 @@ private struct IOSMetaPlanListRow: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.name)
-                        .font(.body.weight(.semibold))
+                        .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text(itemCount == 1 ? "1 Teilplan" : "\(itemCount) Teilpläne")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
 
