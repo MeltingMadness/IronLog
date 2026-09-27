@@ -1,6 +1,6 @@
-# Design-System („Ember“)
+# Design-System
 
-Stand des Codes in `core/designsystem`. Das Ember-Redesign ist umgesetzt. Es hat das frühere kühl-blaue Glassmorphism-Design abgelöst. Die späteren Designkonzepte Forge, Raster, Tide und Pulse sind als zusätzliche Farbschemata eingeflossen. Diese Datei beschreibt, was **jetzt** gilt, nicht den Weg dorthin.
+Stand des Codes in `core/designsystem` (Android) und `iosApp/IronLogIOS/Design` (iOS). Es gibt zwei Darstellungen, wählbar unter Einstellungen → Darstellung: **Liquid Glass** (Standard) und **Ember**. Beide nutzen dieselben Farbschemata, Typografie und Tokens; Liquid Glass legt darüber einen farbigen Hintergrund und Glasflächen. Die Designkonzepte Forge, Raster, Tide und Pulse sind als zusätzliche Farbschemata eingeflossen. Diese Datei beschreibt, was **jetzt** gilt, nicht den Weg dorthin.
 
 ## Farbschemata
 
@@ -50,9 +50,9 @@ Neue Abstände und Größen gehören in die Tokens, nicht als feste `dp`-Werte i
 - `StatCard` mit den Varianten `PRIMARY`, `SECONDARY`, `TERTIARY`. Kacheln einer Gruppe nutzen dieselbe Variante und gleiche Höhe (Übungsstatistik: Standardvariante in `IntrinsicSize.Min`-Zeilen).
 - `IronLogScreenScaffold`: gemeinsames Gerüst für alle Screens
 
-## Liquid Glass (im Aufbau)
+## Liquid Glass
 
-Zweite Darstellung neben Ember, wählbar unter Einstellungen → Darstellung. Standard bleibt Ember, bis alle Screens umgestellt sind (Plan: [`plans/2026-09-26-liquid-glass.md`](plans/2026-09-26-liquid-glass.md)).
+Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `IronLogAppearance.liquidGlass`). Wer Ember ausdrücklich gewählt hat, behält es; Ember-Screens bleiben unverändert erhalten. Die Umschaltung liegt je Screen in einer eigenen Glas-Variante (`*Glass.kt` bzw. `*Glass.swift`), Logik und gespeicherte Daten sind in beiden Darstellungen gleich.
 
 - Glasstufen: `GlassLevel.STANDARD`, `STRONG`, `TINT` (Android, `theme/LiquidGlass.kt`, `Modifier.liquidGlass`) bzw. `IronLogGlassLevel` (iOS, `Design/IronLogLiquidGlass.swift`, `.liquidGlass(_:in:)`).
 - Nur `STRONG` weichzeichnet den Hintergrund: Android über Haze ab Android 12, iOS über `.ultraThinMaterial`. Darunter, bei reduzierten Animationen und bei „Transparenz reduzieren“ (iOS) gibt es eine fast deckende Tönung.

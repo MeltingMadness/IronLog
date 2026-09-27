@@ -43,19 +43,19 @@ class SettingsPreferencesControllerTest {
     }
 
     @Test
-    fun updateAppearanceStyle_persistsLiquidGlassAndDefaultsToEmber() = runTest {
+    fun updateAppearanceStyle_persistsEmberAndDefaultsToLiquidGlass() = runTest {
         val repository = FakeSharedAppPreferencesRepository()
         val controller = SettingsPreferencesController(
             scope = CoroutineScope(StandardTestDispatcher(testScheduler)),
             appPreferencesRepository = repository,
             reminderScheduler = FakeSharedReminderScheduler()
         )
-        assertEquals(AppearanceStyle.EMBER, repository.current.appearanceStyle)
+        assertEquals(AppearanceStyle.LIQUID_GLASS, repository.current.appearanceStyle)
 
-        controller.updateAppearanceStyle(AppearanceStyle.LIQUID_GLASS)
+        controller.updateAppearanceStyle(AppearanceStyle.EMBER)
         advanceUntilIdle()
 
-        assertEquals(AppearanceStyle.LIQUID_GLASS, repository.current.appearanceStyle)
+        assertEquals(AppearanceStyle.EMBER, repository.current.appearanceStyle)
     }
 
     @Test

@@ -528,7 +528,7 @@ struct SettingsFormState {
         weekStart: String,
         themeMode: String,
         themeScheme: String,
-        appearanceStyle: String = "EMBER",
+        appearanceStyle: String = "LIQUID_GLASS",
         useDynamicColor: Bool,
         reducedMotion: Bool,
         defaultWarmupFlag: Bool,

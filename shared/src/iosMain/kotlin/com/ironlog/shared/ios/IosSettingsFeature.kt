@@ -128,7 +128,7 @@ class IosSettingsFeature {
     }
 
     fun updateAppearanceStyle(value: String) {
-        controller.updateAppearanceStyle(AppearanceStyle.entries.firstOrNull { it.name == value } ?: AppearanceStyle.EMBER)
+        controller.updateAppearanceStyle(AppearanceStyle.entries.firstOrNull { it.name == value } ?: AppearanceStyle.LIQUID_GLASS)
     }
 
     fun updateIntensitySystem(value: String) {

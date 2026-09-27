@@ -50,7 +50,7 @@ data class AppPreferences(
     val weekStart: WeekStart = WeekStart.MONDAY,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val themeScheme: ThemeScheme = ThemeScheme.AMBER,
-    val appearanceStyle: AppearanceStyle = AppearanceStyle.EMBER,
+    val appearanceStyle: AppearanceStyle = AppearanceStyle.LIQUID_GLASS,
     val useDynamicColor: Boolean = false,
     val reducedMotion: Boolean = false,
     val defaultWarmupFlag: Boolean = false,

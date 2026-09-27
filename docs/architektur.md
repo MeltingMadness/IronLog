@@ -69,7 +69,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Einstellungen
 
-`AppPreferences` (in `core:model`) wird per DataStore gespeichert. Standardwerte: metrisch, Wochenstart Montag, dunkles Design, Farbschema Amber, RPE als Intensitätssystem, getrennte Gewichtshistorie zwischen Einzel- und Meta-Plänen, automatischer Pausen-Timer aus (Standarddauer 120 s), Scheibenrechner an (Scheiben 25 bis 1,25 kg, Stange 20 kg), kein Deload-Modus, Backup-Erinnerung aus.
+`AppPreferences` (in `core:model`) wird per DataStore gespeichert. Standardwerte: metrisch, Wochenstart Montag, dunkles Design in der Darstellung Liquid Glass, Farbschema Amber, RPE als Intensitätssystem, getrennte Gewichtshistorie zwischen Einzel- und Meta-Plänen, automatischer Pausen-Timer aus (Standarddauer 120 s), Scheibenrechner an (Scheiben 25 bis 1,25 kg, Stange 20 kg), kein Deload-Modus, Backup-Erinnerung aus.
 
 ## Kotlin Multiplatform (`:shared`)
 
