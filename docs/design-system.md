@@ -29,7 +29,7 @@ Beispiel **RPE-Badge** im aktiven Workout: bis 7 grün, bis 8 amber, bis 9 rose,
 
 ## Typografie
 
-Eine Schriftfamilie: **Figtree** (`res/font/figtree.ttf` und `figtree_italic.ttf`), definiert in `theme/Type.kt`. Die Dateien sind variable Schriften; `figtreeFont` setzt die Gewichtsachse je `FontWeight` ausdrücklich, sonst erscheint jeder Schnitt im Standardgewicht.
+Eine Schriftfamilie auf beiden Plattformen: **Geist** von Vercel (SIL Open Font License, Lizenztext in `docs/licenses/Geist-OFL.txt`) in sieben statischen Schnitten von Regular bis Black plus Italic. Android bindet sie in `theme/Type.kt` ein (`res/font/geist_*.ttf`). Die Skala folgt dem Material-Standard: Fließtext 14 bis 16 sp, Labels mindestens 11 sp, alle Stile mit Tabellenziffern (`tnum`). iOS registriert dieselben Dateien über `UIAppFonts` in `Info.plist`; `Design/IronLogFont.swift` liefert `Font.geist(_:weight:)` für die Textstile und `Font.geist(size:weight:relativeTo:)` für feste Größen, beide skalieren mit Dynamic Type. Lesetext ist mindestens 12 pt groß. SF Symbols behalten die Systemschrift.
 
 Für Kennzahlen gibt es zusätzlich `AthleticHero`, `AthleticNumber` (beide mit Tabellenziffern `tnum`) und `AthleticLabel`, genutzt auf dem Dashboard und im aktiven Workout.
 
