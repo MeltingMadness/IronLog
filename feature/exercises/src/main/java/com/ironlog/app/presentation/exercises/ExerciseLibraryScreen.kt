@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.exercises
 
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.presentation.common.GlassSearchField
@@ -67,6 +68,7 @@ import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.core.designsystem.R
 import org.koin.androidx.compose.koinViewModel
 
@@ -146,13 +148,15 @@ fun ExerciseLibraryScreen(
                 FilterChip(
                     selected = state.selectedMuscleGroup == null,
                     onClick = { viewModel.onMuscleGroupSelected(null) },
-                    label = { Text(stringResource(id = R.string.common_all)) }
+                    label = { Text(stringResource(id = R.string.common_all)) },
+                    colors = IronLogInteractiveColors.filterChip()
                 )
                 MuscleGroup.entries.forEach { group ->
                     FilterChip(
                         selected = state.selectedMuscleGroup == group,
                         onClick = { viewModel.onMuscleGroupSelected(group) },
-                        label = { Text(group.displayName) }
+                        label = { Text(group.displayName) },
+                        colors = IronLogInteractiveColors.filterChip()
                     )
                 }
             }
@@ -219,15 +223,17 @@ fun ExerciseLibraryScreen(
                             TextButton(onClick = {
                                 viewModel.deleteCustomExercise(id)
                                 deleteExerciseId = null
-                            }) {
+                            },
+                                colors = IronLogInteractiveColors.textButton()
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.common_delete),
-                                    color = MaterialTheme.colorScheme.error
+                                    color = MaterialTheme.semanticText.danger
                                 )
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { deleteExerciseId = null }) {
+                            TextButton(onClick = { deleteExerciseId = null }, colors = IronLogInteractiveColors.textButton()) {
                                 Text(stringResource(id = R.string.common_cancel))
                             }
                         }
@@ -307,7 +313,7 @@ private fun SwipeToDeleteExerciseItem(
                     Text(
                         text = stringResource(id = R.string.exercises_custom_badge),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.semantic.violet
+                        color = MaterialTheme.semanticText.violet
                     )
                     IconButton(onClick = onEdit) {
                         Icon(
@@ -424,7 +430,8 @@ internal fun CustomExerciseDialog(
                                             else -> selectedSecondary
                                         }
                                     },
-                                    label = { Text(group.displayName) }
+                                    label = { Text(group.displayName) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                     }
@@ -488,7 +495,8 @@ internal fun CustomExerciseDialog(
                         notes.trim()
                     )
                 },
-                enabled = name.isNotBlank()
+                enabled = name.isNotBlank(),
+                colors = IronLogInteractiveColors.textButton()
             ) {
                 Text(
                     if (initial.isEditMode) {
@@ -500,7 +508,7 @@ internal fun CustomExerciseDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(id = R.string.common_cancel))
             }
         }

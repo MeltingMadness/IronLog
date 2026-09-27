@@ -21,6 +21,45 @@ val MaterialTheme.semantic: EmberSemanticColors
     @ReadOnlyComposable
     get() = LocalEmberSemanticColors.current
 
+data class SemanticTextColors(
+    val success: Color,
+    val danger: Color,
+    val warning: Color,
+    val rose: Color,
+    val sky: Color,
+    val violet: Color,
+    val teal: Color
+)
+
+internal val LocalSemanticText = staticCompositionLocalOf { semanticTextFor(dark = true) }
+
+val MaterialTheme.semanticText: SemanticTextColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalSemanticText.current
+
+internal fun semanticTextFor(dark: Boolean): SemanticTextColors = if (dark) {
+    SemanticTextColors(
+        success = SemanticDarkSuccessText,
+        danger = SemanticDarkDangerText,
+        warning = SemanticDarkWarningText,
+        rose = SemanticDarkRoseText,
+        sky = SemanticDarkSkyText,
+        violet = SemanticDarkVioletText,
+        teal = SemanticDarkTealText
+    )
+} else {
+    SemanticTextColors(
+        success = SemanticLightSuccessText,
+        danger = SemanticLightDangerText,
+        warning = SemanticLightWarningText,
+        rose = SemanticLightRoseText,
+        sky = SemanticLightSkyText,
+        violet = SemanticLightVioletText,
+        teal = SemanticLightTealText
+    )
+}
+
 internal val LocalAccentText = staticCompositionLocalOf { AmberDarkAccentText }
 
 val MaterialTheme.accentText: Color

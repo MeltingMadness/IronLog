@@ -37,7 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ironlog.app.domain.model.MuscleGroup
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.feature.dashboard.R
 import com.ironlog.shared.readiness.ExerciseTrend
 import com.ironlog.shared.readiness.ExerciseTrendStatus
@@ -99,9 +101,9 @@ fun TrainingTrendCard(
                     Text(
                         text = trend.error,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.semantic.warning
+                        color = MaterialTheme.semanticText.warning
                     )
-                    TextButton(onClick = onRetry) {
+                    TextButton(onClick = onRetry, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(R.string.dashboard_trend_retry))
                     }
                 }
@@ -135,7 +137,8 @@ private fun TrainingTrendContent(assessment: ReadinessAssessment) {
         TrainingTrendHeader(trend)
         TextButton(
             onClick = { detailsExpanded = !detailsExpanded },
-            modifier = Modifier.flushStartLink()
+            modifier = Modifier.flushStartLink(),
+            colors = IronLogInteractiveColors.textButton()
         ) {
             Text(
                 text = stringResource(
@@ -158,8 +161,8 @@ private fun TrainingTrendContent(assessment: ReadinessAssessment) {
 private fun TrainingTrendHeader(trend: TrainingTrendAssessment) {
     val statusColor = when (trend.status) {
         TrainingTrendStatus.MULTIPLE_EXERCISE_DECLINE,
-        TrainingTrendStatus.SINGLE_EXERCISE_DECLINE -> MaterialTheme.semantic.warning
-        TrainingTrendStatus.NO_NOTABLE_STRAIN -> MaterialTheme.semantic.teal
+        TrainingTrendStatus.SINGLE_EXERCISE_DECLINE -> MaterialTheme.semanticText.warning
+        TrainingTrendStatus.NO_NOTABLE_STRAIN -> MaterialTheme.semanticText.teal
         TrainingTrendStatus.INSUFFICIENT_DATA -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -235,7 +238,7 @@ private fun TrainingTrendDetails(trend: TrainingTrendAssessment) {
             Text(
                 text = stringResource(R.string.dashboard_trend_deload_suggested),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.semantic.warning
+                color = MaterialTheme.semanticText.warning
             )
         }
         if (trend.deloadActive) {
@@ -338,6 +341,11 @@ private fun ExerciseTrendRow(exercise: ExerciseTrend) {
         ExerciseTrendStatus.IMPROVING -> MaterialTheme.semantic.teal
         else -> MaterialTheme.colorScheme.outline
     }
+    val directionTextColor = when (exercise.status) {
+        ExerciseTrendStatus.DECLINING -> MaterialTheme.semanticText.warning
+        ExerciseTrendStatus.IMPROVING -> MaterialTheme.semanticText.teal
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     val scale = change?.let { (kotlin.math.abs(it) / 20.0).coerceIn(0.05, 1.0).toFloat() } ?: 0f
 
     Row(
@@ -369,7 +377,7 @@ private fun ExerciseTrendRow(exercise: ExerciseTrend) {
             text = change?.let { formatChange(it) }
                 ?: stringResource(DashboardReadinessText.exerciseStatusLabel(exercise.status)),
             style = MaterialTheme.typography.labelSmall,
-            color = directionColor
+            color = directionTextColor
         )
     }
 }
@@ -485,7 +493,7 @@ fun DailyCheckInCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onCancelEdit) {
+                    TextButton(onClick = onCancelEdit, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(R.string.dashboard_checkin_skip))
                     }
                     Button(onClick = onSave, enabled = !checkIn.isSaving) {
@@ -501,7 +509,7 @@ fun DailyCheckInCard(
                     Button(onClick = onStartEdit) {
                         Text(stringResource(R.string.dashboard_checkin_edit))
                     }
-                    TextButton(onClick = onDelete) {
+                    TextButton(onClick = onDelete, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(R.string.dashboard_checkin_delete))
                     }
                 }
@@ -528,11 +536,11 @@ private fun CheckInNoticeRow(notice: DashboardCheckInNotice?, onDismissNotice: (
     }
     val (text, color) = when (notice) {
         DashboardCheckInNotice.SAVED ->
-            stringResource(R.string.dashboard_checkin_saved) to MaterialTheme.semantic.teal
+            stringResource(R.string.dashboard_checkin_saved) to MaterialTheme.semanticText.teal
         DashboardCheckInNotice.DELETED ->
             stringResource(R.string.dashboard_checkin_deleted) to MaterialTheme.colorScheme.onSurfaceVariant
         DashboardCheckInNotice.NEEDS_ANSWER ->
-            stringResource(R.string.dashboard_checkin_answers_required) to MaterialTheme.semantic.warning
+            stringResource(R.string.dashboard_checkin_answers_required) to MaterialTheme.semanticText.warning
     }
     Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
 }
@@ -679,7 +687,8 @@ fun MuscleContextCard(
 
             TextButton(
                 onClick = { detailsExpanded = !detailsExpanded },
-                modifier = Modifier.flushStartLink()
+                modifier = Modifier.flushStartLink(),
+                colors = IronLogInteractiveColors.textButton()
             ) {
                 Text(
                     text = stringResource(
@@ -709,7 +718,7 @@ fun MuscleContextCard(
 @Composable
 private fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) {
     val nameColor = if (context.plannedToday) {
-        MaterialTheme.semantic.teal
+        MaterialTheme.semanticText.teal
     } else {
         MaterialTheme.colorScheme.onSurface
     }
@@ -729,7 +738,7 @@ private fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) 
                 Text(
                     text = stringResource(R.string.dashboard_muscles_planned_marker),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.semantic.teal
+                    color = MaterialTheme.semanticText.teal
                 )
             }
         }

@@ -33,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.theme.AthleticHero
 import com.ironlog.app.presentation.theme.AthleticNumber
@@ -76,6 +77,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.ironLogMotion
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.app.presentation.theme.staggeredEntrance
 import com.ironlog.app.presentation.common.WeeklyMuscleVolumeCard
 import com.ironlog.feature.dashboard.R as DashboardR
@@ -492,7 +494,8 @@ private fun DeloadCard(
                     TextButton(
                         onClick = { onActivate(DeloadMode.REDUCE_INTENSITY_BY_15_PERCENT) },
                         modifier = Modifier.weight(1f),
-                        enabled = !isUpdating
+                        enabled = !isUpdating,
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(stringResource(id = R.string.deload_mode_reduce_intensity))
                     }
@@ -501,9 +504,9 @@ private fun DeloadCard(
                         text = stringResource(id = R.string.deload_mode_active),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.semantic.success
+                        color = MaterialTheme.semanticText.success
                     )
-                    TextButton(onClick = onDeactivate, enabled = !isUpdating) {
+                    TextButton(onClick = onDeactivate, enabled = !isUpdating, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.deload_mode_end))
                     }
                 }
@@ -545,7 +548,7 @@ private fun PendingProgressionCard(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            TextButton(onClick = onOpenProgressionReview) {
+            TextButton(onClick = onOpenProgressionReview, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(R.string.dashboard_review_progressions))
             }
         }
@@ -730,7 +733,8 @@ private fun CommandCenterCard(
             if (!hasActiveSession && recommended != null) {
                 TextButton(
                     onClick = onChoosePlan,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Text(stringResource(id = R.string.dashboard_hero_choose_other))
                 }
@@ -815,7 +819,7 @@ private fun RecordCard(
                     fontFeatureSettings = "tnum"
                 ),
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.semantic.warning,
+                color = MaterialTheme.semanticText.warning,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

@@ -38,6 +38,7 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.TrainingPlan
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,7 +129,8 @@ fun PlanSelectionSheet(
                                             )
                                             TextButton(
                                                 onClick = { onSkipMetaPlan(option.metaPlanId) },
-                                                enabled = option.canSkip && skippingMetaPlanId != option.metaPlanId
+                                                enabled = option.canSkip && skippingMetaPlanId != option.metaPlanId,
+                                                colors = IronLogInteractiveColors.textButton()
                                             ) {
                                                 Text(stringResource(id = R.string.plan_selection_meta_skip))
                                             }

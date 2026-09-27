@@ -31,6 +31,8 @@ import com.ironlog.app.domain.model.WorkoutSet
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.core.designsystem.R
 import com.ironlog.shared.readinessdata.SetIntention
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.semanticText
 
 /** Parsed values of the set editor; weight is already converted to kg. */
 internal data class HistorySetInput(
@@ -123,12 +125,12 @@ internal fun HistorySetEditDialog(
             title = { Text(stringResource(R.string.workout_detail_delete_set_title)) },
             text = { Text(stringResource(R.string.workout_detail_delete_set_text)) },
             confirmButton = {
-                TextButton(onClick = onDelete, enabled = !isSaving) {
-                    Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = onDelete, enabled = !isSaving, colors = IronLogInteractiveColors.textButton()) {
+                    Text(stringResource(R.string.common_delete), color = MaterialTheme.semanticText.danger)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }, enabled = !isSaving) {
+                TextButton(onClick = { confirmDelete = false }, enabled = !isSaving, colors = IronLogInteractiveColors.textButton()) {
                     Text(stringResource(R.string.common_cancel))
                 }
             }
@@ -190,7 +192,8 @@ internal fun HistorySetEditDialog(
                             FilterChip(
                                 selected = selectedIntention == value,
                                 onClick = { selectedIntention = value },
-                                label = { Text(stringResource(historyIntentionLabelRes(value))) }
+                                label = { Text(stringResource(historyIntentionLabelRes(value))) },
+                                colors = IronLogInteractiveColors.filterChip()
                             )
                         }
                     }
@@ -201,7 +204,7 @@ internal fun HistorySetEditDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 (validationError ?: saveError)?.let { message ->
-                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(message, color = MaterialTheme.semanticText.danger, style = MaterialTheme.typography.bodySmall)
                 }
                 TextButton(
                     onClick = { confirmDelete = true },
@@ -209,7 +212,7 @@ internal fun HistorySetEditDialog(
                     // Offset by the button's inner padding so the label lines up with the fields.
                     modifier = Modifier.heightIn(min = 48.dp).offset(x = (-12).dp)
                 ) {
-                    Text(stringResource(R.string.workout_detail_delete_set), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.workout_detail_delete_set), color = MaterialTheme.semanticText.danger)
                 }
             }
         },
@@ -236,13 +239,14 @@ internal fun HistorySetEditDialog(
                         HistorySetInputResult.InvalidReps -> validationError = invalidReps
                         HistorySetInputResult.InvalidIntensity -> validationError = invalidIntensity
                     }
-                }
+                },
+                colors = IronLogInteractiveColors.textButton()
             ) {
                 Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
+            TextButton(onClick = onDismiss, enabled = !isSaving, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(R.string.common_cancel))
             }
         }
@@ -276,16 +280,16 @@ internal fun HistoryNotesDialog(
                     minLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
-                saveError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                saveError?.let { Text(it, color = MaterialTheme.semanticText.danger, style = MaterialTheme.typography.bodySmall) }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(notes) }, enabled = !isSaving) {
+            TextButton(onClick = { onSave(notes) }, enabled = !isSaving, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
+            TextButton(onClick = onDismiss, enabled = !isSaving, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(R.string.common_cancel))
             }
         }

@@ -14,6 +14,7 @@ import com.ironlog.app.domain.model.WorkoutPlanTarget
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.shared.readinessdata.SetIntention
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 
 /**
  * Formats a weight stored in kg as a plain number in the user's preferred unit system,
@@ -86,6 +87,18 @@ internal fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): St
         rpe
     }
     return WeightFormatting.formatNumber(displayValue)
+}
+
+/** RPE labels use opaque ink; [rpeColor] is reserved for fills and borders. */
+@Composable
+internal fun rpeTextColor(rpe: Double?): Color? {
+    if (rpe == null) return null
+    return when {
+        rpe <= 7.0 -> MaterialTheme.semanticText.success
+        rpe <= 8.0 -> MaterialTheme.semanticText.warning
+        rpe <= 9.0 -> MaterialTheme.semanticText.rose
+        else -> MaterialTheme.semanticText.danger
+    }
 }
 
 @Composable

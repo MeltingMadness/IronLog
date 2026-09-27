@@ -18,7 +18,9 @@ In den Einstellungen wählbar (`ThemeScheme`). Dazu kommen Hell, Dunkel oder Sys
 
 Die Farben liegen in `theme/Color.kt`, die Zuordnung zu Material-3-Schemata in `theme/Theme.kt`. Die Systemleisten passen sich dem gewählten Design an.
 
-Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
+Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. Ungefüllte Text- und Outline-Buttons sowie unselektierte FilterChips verwenden sie über `IronLogInteractiveColors`; selektierte, gefüllte Chips verwenden die zum Container gehörige Gegenfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
+
+Statusbeschriftungen verwenden `MaterialTheme.semanticText` (Erfolg, Gefahr, Warnung, Rose, Himmelblau, Violett, Türkis) mit dunkler Tinte in Hell und heller Tinte in Dunkel. Die bisherigen `semantic`-Farben bleiben für Ringe, Balken, Icons, Rahmen und getönte Flächen. `LiquidGlassContrastTest` prüft die Textrollen gegen alle Glasstufen und Farbschemata mit mindestens 4,5:1.
 
 ## Semantische Farben
 

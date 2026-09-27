@@ -48,6 +48,7 @@ import com.ironlog.feature.plans.R as PlansR
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
 import org.koin.androidx.compose.koinViewModel
@@ -247,13 +248,14 @@ fun MetaPlanEditorScreen(
                         onClick = {
                             showDiscardDialog = false
                             onBack()
-                        }
+                        },
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(stringResource(id = PlansR.string.meta_plan_editor_discard_confirm))
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(onClick = { showDiscardDialog = false }) {
+                    androidx.compose.material3.TextButton(onClick = { showDiscardDialog = false }, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = PlansR.string.meta_plan_editor_discard_cancel))
                     }
                 }

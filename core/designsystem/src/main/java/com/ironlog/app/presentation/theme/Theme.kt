@@ -633,6 +633,7 @@ fun IronLogTheme(
         LocalIronLogMotion provides IronLogMotion(reduced = reducedMotion),
         LocalIronLogSurfaceRoles provides surfaceRoles,
         LocalEmberSemanticColors provides semanticColors,
+        LocalSemanticText provides semanticTextFor(isDarkTheme),
         LocalAccentText provides if (isDynamic) colorScheme.onSurface else accentTextFor(themeScheme, isDarkTheme),
         LocalAppearanceStyle provides appearanceStyle
     ) {

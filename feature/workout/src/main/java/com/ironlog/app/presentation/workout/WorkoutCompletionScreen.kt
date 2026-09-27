@@ -13,7 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.*
 import com.ironlog.app.domain.repository.TrainingPlanRepository
@@ -53,9 +55,9 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
                     }
                 }
             }
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            error?.let { Text(it, color = MaterialTheme.semanticText.danger) }
             Button(onClick = onContinue, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.workout_finish_dialog_cancel)) }
-            OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            OutlinedButton(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), colors = IronLogInteractiveColors.outlinedButton()) {
                 Text(
                     stringResource(
                         when {
@@ -83,14 +85,14 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
     // Follow-up actions are the same in both appearances.
     val followUps: @Composable () -> Unit = {
         if (session.planId != null && rows.any { it.planTarget != null }) {
-            OutlinedButton(onClick = { showPlanChanges = true }, enabled = !planApplied, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { showPlanChanges = true }, enabled = !planApplied, modifier = Modifier.fillMaxWidth(), colors = IronLogInteractiveColors.outlinedButton()) {
                 Text(stringResource(if (planApplied) R.string.workout_summary_plan_changes_applied else R.string.workout_summary_review_plan_changes))
             }
         }
         when (finishState) {
-            is WorkoutFinishState.ReviewReady -> if (!planApplied) OutlinedButton(onClick = onProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_review_progression)) }
+            is WorkoutFinishState.ReviewReady -> if (!planApplied) OutlinedButton(onClick = onProgression, modifier = Modifier.fillMaxWidth(), colors = IronLogInteractiveColors.outlinedButton()) { Text(stringResource(R.string.workout_summary_review_progression)) }
             is WorkoutFinishState.Generating -> Text(stringResource(R.string.workout_summary_progression_generating), style = MaterialTheme.typography.bodySmall)
-            is WorkoutFinishState.GenerationFailed -> OutlinedButton(onClick = onRetryProgression, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.workout_summary_progression_retry)) }
+            is WorkoutFinishState.GenerationFailed -> OutlinedButton(onClick = onRetryProgression, modifier = Modifier.fillMaxWidth(), colors = IronLogInteractiveColors.outlinedButton()) { Text(stringResource(R.string.workout_summary_progression_retry)) }
             else -> Unit
         }
     }
@@ -117,7 +119,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                 Button(onClick = onClose, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
                     Text(stringResource(R.string.workout_summary_done))
                 }
-                OutlinedButton(onClick = onDetails, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = onDetails, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), colors = IronLogInteractiveColors.outlinedButton()) {
                     Text(stringResource(R.string.workout_summary_open_details))
                 }
             }
@@ -228,7 +230,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                     }
                 }
                 Text(stringResource(R.string.workout_plan_changes_open_items), style = MaterialTheme.typography.bodySmall)
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                error?.let { Text(it, color = MaterialTheme.semanticText.danger) }
             }
             Button(onClick = {
                 when(choice) {

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.feature.workout.R as WorkoutR
 import androidx.compose.runtime.mutableStateOf
@@ -188,7 +189,7 @@ fun ActiveWorkoutScreen(
                     Text(name)
                 },
                 actions = {
-                    TextButton(onClick = viewModel::showFinishDialog) {
+                    TextButton(onClick = viewModel::showFinishDialog, colors = IronLogInteractiveColors.textButton()) {
                         Text(
                             text = stringResource(id = R.string.workout_finish_action),
                             color = MaterialTheme.accentText,
@@ -320,7 +321,8 @@ fun ActiveWorkoutScreen(
                                 onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
                                 onComplete = { viewModel.dismissRestTimer(exerciseKey) },
                                 titleText = exerciseWithSets?.exercise?.name,
-                                baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset)
+                                baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
+                                textColor = supersetTintTextColor(group?.supersetGroupId, indexInSuperset)
                             )
                         }
                     }
@@ -404,7 +406,8 @@ fun ActiveWorkoutScreen(
                     onClick = viewModel::showExercisePicker,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs)
+                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Text(
@@ -528,12 +531,12 @@ fun ActiveWorkoutScreen(
                     Text(stringResource(id = R.string.progression_review_message_action_failed))
                 },
                 confirmButton = {
-                    TextButton(onClick = viewModel::retryProgressionGeneration) {
+                    TextButton(onClick = viewModel::retryProgressionGeneration, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.common_retry))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = onWorkoutFinished) {
+                    TextButton(onClick = onWorkoutFinished, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.common_later))
                     }
                 }
@@ -570,7 +573,8 @@ private fun MissingSessionContent(
         )
         TextButton(
             onClick = onBack,
-            modifier = Modifier.padding(top = dims.spacingMd)
+            modifier = Modifier.padding(top = dims.spacingMd),
+            colors = IronLogInteractiveColors.textButton()
         ) {
             Text(stringResource(id = R.string.nav_back))
         }

@@ -117,10 +117,19 @@ class LiquidGlassContrastTest {
                 val colors = colorScheme(theme, dark)
                 val primary = colors.primary.asRgb()
                 val backdrop = backdropSamples(primary, dark)
+                val semanticText = semanticTextFor(dark)
+                val rpeCases = rpeTextAndFill(theme, dark, semanticText)
                 val textColors = listOf(
                     "onSurface / Glas [Text 4,5]" to colors.onSurface.asRgb(),
                     "onSurfaceVariant / Glas [Text 4,5]" to colors.onSurfaceVariant.asRgb(),
-                    "accentText / Glas [Text 4,5]" to accentTextFor(theme, dark).asRgb()
+                    "accentText / Glas [Text 4,5]" to accentTextFor(theme, dark).asRgb(),
+                    "successText / Glas [Text 4,5]" to semanticText.success.asRgb(),
+                    "dangerText / Glas [Text 4,5]" to semanticText.danger.asRgb(),
+                    "warningText / Glas [Text 4,5]" to semanticText.warning.asRgb(),
+                    "roseText / Glas [Text 4,5]" to semanticText.rose.asRgb(),
+                    "skyText / Glas [Text 4,5]" to semanticText.sky.asRgb(),
+                    "violetText / Glas [Text 4,5]" to semanticText.violet.asRgb(),
+                    "tealText / Glas [Text 4,5]" to semanticText.teal.asRgb()
                 )
 
                 for (level in GlassLevel.entries) {
@@ -145,6 +154,37 @@ class LiquidGlassContrastTest {
                         add(ContrastCheck(theme, mode, level.name, pair, worstRatio, NORMAL_TEXT,
                             worstAt = worst))
                     }
+                    for ((name, ink, fill) in rpeCases) {
+                        val selectedSurface = compositeOver(
+                            Rgba(fill.asRgb(), fill.alpha.toDouble()), colors.surface.asRgb()
+                        )
+                        val selectedInk = if (relativeLuminance(selectedSurface) > 0.179) {
+                            Color.Black.asRgb()
+                        } else {
+                            Color.White.asRgb()
+                        }
+                        var worstOverlay = Double.POSITIVE_INFINITY
+                        var worstSelected = Double.POSITIVE_INFINITY
+                        for (sample in backdrop) {
+                            val surface = compositeOver(glass, sample.color)
+                            val withSheen = if (dark) {
+                                compositeOver(Rgba(Rgb(1.0, 1.0, 1.0), 0.08), surface)
+                            } else {
+                                surface
+                            }
+                            worstOverlay = minOf(worstOverlay, contrastRatio(
+                                ink.asRgb(), compositeOver(Rgba(fill.asRgb(), 0.15), withSheen)
+                            ))
+                            worstSelected = minOf(worstSelected, contrastRatio(
+                                selectedInk,
+                                compositeOver(Rgba(fill.asRgb(), fill.alpha.toDouble()), withSheen)
+                            ))
+                        }
+                        add(ContrastCheck(theme, mode, level.name, "$name / RPE-Fläche 15 % [Text 4,5]",
+                            worstOverlay, NORMAL_TEXT))
+                        add(ContrastCheck(theme, mode, level.name, "$name / RPE-Auswahl [Text 4,5]",
+                            worstSelected, NORMAL_TEXT))
+                    }
                 }
 
                 val onPrimaryRatio = contrastRatio(colors.onPrimary.asRgb(), primary)
@@ -152,8 +192,38 @@ class LiquidGlassContrastTest {
                     onPrimaryRatio, NORMAL_TEXT))
                 add(ContrastCheck(theme, mode, "–", "onPrimary / primary [groß/Bedienelement 3,0]",
                     onPrimaryRatio, LARGE_TEXT_OR_CONTROL))
+                add(ContrastCheck(theme, mode, "–", "FilterChip selected label / container [Text 4,5]",
+                    contrastRatio(colors.onSecondaryContainer.asRgb(), colors.secondaryContainer.asRgb()),
+                    NORMAL_TEXT))
             }
         }
+    }
+
+    private fun rpeTextAndFill(
+        theme: ThemeScheme,
+        dark: Boolean,
+        ink: SemanticTextColors
+    ): List<Triple<String, Color, Color>> {
+        val success = if (!dark) EmberSuccessDeep else when (theme) {
+            ThemeScheme.FORGE -> ForgeTertiary
+            ThemeScheme.RASTER -> RasterTertiary
+            ThemeScheme.TIDE -> TidePrimary
+            else -> EmberSuccess
+        }
+        val warning = if (dark && theme == ThemeScheme.FORGE) ForgePrimary
+            else if (dark) EmberWarning else EmberWarningDeep
+        val rose = when {
+            dark && theme == ThemeScheme.FORGE -> ForgePrimary
+            dark && theme == ThemeScheme.PULSE -> PulsePrimary
+            else -> EmberRose
+        }
+        val danger = if (dark && theme == ThemeScheme.PULSE) PulsePrimary else EmberDanger
+        return listOf(
+            Triple("RPE 7", ink.success, success),
+            Triple("RPE 8", ink.warning, warning),
+            Triple("RPE 9", ink.rose, rose.copy(alpha = 0.85f)),
+            Triple("RPE 10", ink.danger, danger)
+        )
     }
 
     private fun colorScheme(theme: ThemeScheme, dark: Boolean): ColorScheme {

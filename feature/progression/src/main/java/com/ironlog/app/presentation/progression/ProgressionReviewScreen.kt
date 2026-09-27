@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.progression
 
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.layout.Arrangement
@@ -273,10 +274,10 @@ private fun ProgressionReviewCard(
                     Button(onClick = onAccept, enabled = !isWorking) {
                         Text(stringResource(R.string.progression_review_accept))
                     }
-                    OutlinedButton(onClick = onEdit, enabled = !isWorking) {
+                    OutlinedButton(onClick = onEdit, enabled = !isWorking, colors = IronLogInteractiveColors.outlinedButton()) {
                         Text(stringResource(R.string.progression_review_edit))
                     }
-                    TextButton(onClick = onReject, enabled = !isWorking) {
+                    TextButton(onClick = onReject, enabled = !isWorking, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(R.string.progression_review_reject))
                     }
                 }
@@ -407,7 +408,7 @@ private fun ProgressionEditSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onDismiss, enabled = !isWorking) {
+                TextButton(onClick = onDismiss, enabled = !isWorking, colors = IronLogInteractiveColors.textButton()) {
                     Text(stringResource(R.string.common_cancel))
                 }
                 Button(onClick = onAccept, enabled = !isWorking) {

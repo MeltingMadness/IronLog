@@ -167,6 +167,23 @@ val EmberTealLight = Color(0xFF14B8A6)
 val EmberSuccessDeep = Color(0xFF166534)
 val EmberWarningDeep = Color(0xFF92400E)
 
+// Semantic ink for text on light and dark surfaces. Graphic accents above stay unchanged.
+val SemanticLightSuccessText = Color(0xFF14532D)
+val SemanticLightDangerText = Color(0xFF991B1B)
+val SemanticLightWarningText = Color(0xFF78350F)
+val SemanticLightRoseText = Color(0xFF881337)
+val SemanticLightSkyText = Color(0xFF075985)
+val SemanticLightVioletText = Color(0xFF6D28D9)
+val SemanticLightTealText = Color(0xFF00594F)
+
+val SemanticDarkSuccessText = Color(0xFF86F0C7)
+val SemanticDarkDangerText = Color(0xFFFFC4C4)
+val SemanticDarkWarningText = Color(0xFFFFD166)
+val SemanticDarkRoseText = Color(0xFFFFB4C8)
+val SemanticDarkSkyText = Color(0xFF7DD3FC)
+val SemanticDarkVioletText = Color(0xFFC4B5FD)
+val SemanticDarkTealText = Color(0xFF5EEAD4)
+
 // Forge Theme (High-Contrast Industrial / Molten Orange)
 val ForgePrimary = Color(0xFFFF7A1A)
 val ForgeOnPrimary = Color(0xFF000000)

@@ -30,6 +30,7 @@ import com.ironlog.app.presentation.theme.PlateColors
 import com.ironlog.app.presentation.theme.Radius
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.core.designsystem.R
 
 @Composable
@@ -157,7 +158,7 @@ fun PlateVisualizer(
                 Text(
                     text = stringResource(R.string.workout_plate_calc_no_fit),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.semantic.warning,
+                    color = MaterialTheme.semanticText.warning,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -170,7 +171,7 @@ fun PlateVisualizer(
                         remainderFormatted
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.semantic.warning,
+                    color = MaterialTheme.semanticText.warning,
                     fontWeight = FontWeight.SemiBold
                 )
             }

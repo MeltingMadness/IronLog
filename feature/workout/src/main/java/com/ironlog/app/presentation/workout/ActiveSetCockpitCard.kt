@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.feature.workout.R as WorkoutR
@@ -60,6 +62,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import com.ironlog.app.presentation.theme.AthleticLabel
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semanticText
 
 @Composable
 internal fun ActiveSetCockpitCard(
@@ -219,7 +222,8 @@ internal fun ActiveSetCockpitCard(
                                         haptic.tick()
                                     },
                                     enabled = !locked && activeSubmissionId == null,
-                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                                    colors = IronLogInteractiveColors.textButton()
                                 ) {
                                     Text(
                                         text = stringResource(WorkoutR.string.workout_audit_apply_coach_weight),
@@ -309,7 +313,7 @@ internal fun ActiveSetCockpitCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
                 )
             }
-            TextButton(onClick = { showDetails = !showDetails }) {
+            TextButton(onClick = { showDetails = !showDetails }, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(if (showDetails) R.string.workout_set_details_hide else R.string.workout_set_details_show))
             }
             if (showDetails) {
@@ -368,7 +372,7 @@ internal fun ActiveSetCockpitCard(
                         )
                         if (intensityInput.text.isNotEmpty()) {
                             val rpeVal = intensityInput.text.toDoubleOrNull()
-                            val accent = rpeColor(rpeVal) ?: MaterialTheme.accentText
+                            val accent = rpeTextColor(rpeVal) ?: MaterialTheme.accentText
                             Text(
                                 text = "${intensitySystem.displayName} ${intensityInput.text}",
                                 style = AthleticLabel,
@@ -414,9 +418,10 @@ internal fun ActiveSetCockpitCard(
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isSelected) {
-                                                if (chipColor.luminance() > 0.18f) Color.Black else Color.White
+                                                val filledColor = chipColor.compositeOver(MaterialTheme.colorScheme.surface)
+                                                if (filledColor.luminance() > 0.179f) Color.Black else Color.White
                                             } else {
-                                                rpeColor(rpe) ?: MaterialTheme.accentText
+                                                rpeTextColor(rpe) ?: MaterialTheme.accentText
                                             }
                                         )
                                     }
@@ -549,7 +554,7 @@ internal fun ActiveSetCockpitCard(
                     Text(
                         text = stringResource(R.string.workout_set_intention_load_failed),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.semanticText.danger
                     )
                 }
             }
@@ -634,7 +639,7 @@ internal fun ActiveSetCockpitCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (onDelete != null) {
-                        TextButton(onClick = onDelete, enabled = !locked) {
+                        TextButton(onClick = onDelete, enabled = !locked, colors = IronLogInteractiveColors.textButton()) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = null,
@@ -644,14 +649,14 @@ internal fun ActiveSetCockpitCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = stringResource(id = R.string.workout_delete_set_cd),
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.semanticText.danger
                             )
                         }
                     } else {
                         Spacer(modifier = Modifier.width(1.dp))
                     }
                     if (onCancelEdit != null) {
-                        TextButton(onClick = onCancelEdit) {
+                        TextButton(onClick = onCancelEdit, colors = IronLogInteractiveColors.textButton()) {
                             Text(stringResource(id = R.string.common_cancel))
                         }
                     }
