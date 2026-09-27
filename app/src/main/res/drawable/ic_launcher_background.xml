@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Amber backdrop of the "Level Up" icon, same gradient as iosApp AppIcon.svg. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <gradient
-        android:angle="135"
-        android:startColor="#1A110C"
-        android:centerColor="#2B170D"
-        android:endColor="#3D1A00" />
+        android:angle="270"
+        android:startColor="#FF8A2A"
+        android:endColor="#E85500" />
 </shape>
