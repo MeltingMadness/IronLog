@@ -400,7 +400,8 @@ internal fun GlassWeekStrip(
                         day.isToday -> Box(
                             Modifier
                                 .size(34.dp)
-                                .shadow(8.dp, CircleShape, ambientColor = accent, spotColor = accent)
+                                // A shadow would show through the open center as a blot; a faint fill glows instead.
+                                .background(accent.copy(alpha = 0.16f), CircleShape)
                                 .border(2.dp, accent, CircleShape)
                         )
                         else -> Box(Modifier.size(34.dp).background(open, CircleShape))

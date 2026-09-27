@@ -1,6 +1,7 @@
 package com.ironlog.app.presentation.exercises
 
 import com.ironlog.app.presentation.common.IronLogTopBar
+import com.ironlog.app.presentation.common.GlassSearchField
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,6 +34,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -74,6 +77,7 @@ fun ExerciseLibraryScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val dims = ironLogDimens
+    val glass = isLiquidGlass()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.error) {
@@ -112,16 +116,25 @@ fun ExerciseLibraryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            com.ironlog.app.presentation.common.IronLogTextField(
-                value = state.searchQuery,
-                onValueChange = viewModel::onSearchQueryChange,
-                label = { Text(stringResource(id = R.string.exercises_search_label)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
-                singleLine = true
-            )
+            if (glass) {
+                GlassSearchField(
+                    query = state.searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange,
+                    placeholder = stringResource(id = R.string.exercises_search_placeholder),
+                    clearLabel = stringResource(id = R.string.exercises_search_clear)
+                )
+            } else {
+                com.ironlog.app.presentation.common.IronLogTextField(
+                    value = state.searchQuery,
+                    onValueChange = viewModel::onSearchQueryChange,
+                    label = { Text(stringResource(id = R.string.exercises_search_label)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dims.spacingMd, vertical = dims.spacingXs),
+                    singleLine = true
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -155,7 +168,11 @@ fun ExerciseLibraryScreen(
                 var deleteExerciseId by remember { mutableStateOf<Long?>(null) }
                 var deleteExerciseName by remember { mutableStateOf("") }
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = if (glass) PaddingValues(horizontal = 16.dp, vertical = 8.dp) else PaddingValues(0.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (glass) 8.dp else 0.dp)
+                ) {
                     items(state.exercises, key = { it.id }) { exercise ->
                         val summary = state.trainingSummaries[exercise.id]
                         if (exercise.isCustom) {
@@ -171,11 +188,14 @@ fun ExerciseLibraryScreen(
                             )
                         } else {
                             ListItem(
-                                headlineContent = { Text(exercise.name) },
+                                headlineContent = { ExerciseName(exercise.name) },
                                 supportingContent = { ExerciseSupportingText(exercise, summary) },
-                                modifier = Modifier.combinedClickable(
-                                    onClick = { onExerciseClick(exercise.id) }
-                                )
+                                colors = exerciseRowColors(),
+                                modifier = Modifier
+                                    .exerciseRowSurface()
+                                    .combinedClickable(
+                                        onClick = { onExerciseClick(exercise.id) }
+                                    )
                             )
                         }
                     }
@@ -278,8 +298,9 @@ private fun SwipeToDeleteExerciseItem(
         }
     ) {
         ListItem(
-            headlineContent = { Text(exercise.name) },
+            headlineContent = { ExerciseName(exercise.name) },
             supportingContent = { ExerciseSupportingText(exercise, summary) },
+            colors = exerciseRowColors(),
             trailingContent = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -295,10 +316,12 @@ private fun SwipeToDeleteExerciseItem(
                     }
                 }
             },
-            modifier = Modifier.combinedClickable(
-                onClick = onClick,
-                onLongClick = onDelete
-            )
+            modifier = Modifier
+                .exerciseRowSurface()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onDelete
+                )
         )
     }
 }

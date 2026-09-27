@@ -268,6 +268,8 @@
     <string name="exercises_title">Übungsbibliothek</string>
     <string name="exercises_add_cd">Übung erstellen</string>
     <string name="exercises_search_label">Suche</string>
+    <string name="exercises_search_placeholder">Übung suchen</string>
+    <string name="exercises_search_clear">Suche löschen</string>
     <string name="exercises_empty">Keine Übungen gefunden.</string>
     <string name="exercises_custom_badge">Custom</string>
     <plurals name="exercises_training_summary">
