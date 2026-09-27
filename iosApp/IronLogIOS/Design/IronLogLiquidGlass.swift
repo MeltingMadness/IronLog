@@ -6,12 +6,12 @@ enum IronLogAppearance: String {
     case liquidGlass = "LIQUID_GLASS"
 
     init(rawPreference: String) {
-        self = IronLogAppearance(rawValue: rawPreference) ?? .ember
+        self = IronLogAppearance(rawValue: rawPreference) ?? .liquidGlass
     }
 }
 
 private struct IronLogAppearanceKey: EnvironmentKey {
-    static let defaultValue: IronLogAppearance = .ember
+    static let defaultValue: IronLogAppearance = .liquidGlass
 }
 
 extension EnvironmentValues {

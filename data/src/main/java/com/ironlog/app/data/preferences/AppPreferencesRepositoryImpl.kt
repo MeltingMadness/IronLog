@@ -50,7 +50,7 @@ class AppPreferencesRepositoryImpl(
 
         val appearanceStyle = prefs[AppPreferenceKeys.APPEARANCE_STYLE]
             ?.let { runCatching { com.ironlog.app.domain.model.AppearanceStyle.valueOf(it) }.getOrNull() }
-            ?: com.ironlog.app.domain.model.AppearanceStyle.EMBER
+            ?: com.ironlog.app.domain.model.AppearanceStyle.LIQUID_GLASS
 
         val intensitySystem = prefs[AppPreferenceKeys.INTENSITY_SYSTEM]
             ?.let { runCatching { IntensitySystem.valueOf(it) }.getOrNull() }
