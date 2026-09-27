@@ -54,14 +54,17 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         ),
         label = "shimmerOffset"
     )
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-    val surface = MaterialTheme.colorScheme.surface
+    val glass = LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    // On Liquid Glass the sweep is a faint neutral highlight instead of the Ember surfaces.
+    val surfaceVariant = if (glass) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant
+    val surface = if (glass) onSurface.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface
 
     this.drawWithContent {
         drawContent()
         val shimmerColors = listOf(
             surfaceVariant,
-            surface.copy(alpha = 0.85f),
+            if (glass) surface else surface.copy(alpha = 0.85f),
             surfaceVariant
         )
         val shimmerBrush = Brush.linearGradient(
