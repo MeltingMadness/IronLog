@@ -554,4 +554,8 @@
     <string name="plan_editor_progression_linear_hint">Feste Wiederholungszahl: Sobald alle vorgesehenen Arbeitssätze das Ziel erreichen, wird mehr Gewicht vorgeschlagen.</string>
     <string name="plan_editor_progression_double_hint">Zuerst Wiederholungen steigern. Sobald alle vorgesehenen Arbeitssätze die Obergrenze erreichen, wird mehr Gewicht vorgeschlagen und das Wiederholungsziel auf die Untergrenze gesetzt.</string>
     <string name="settings_msg_progression_recovery_failed">Daten wurden importiert, aber Progressionen konnten noch nicht vollständig nachberechnet werden. Bitte starte die App erneut.</string>
+    <string name="common_action_invalid_input">%1$s fehlgeschlagen: ungültige Eingabe.</string>
+    <string name="common_action_not_found">%1$s fehlgeschlagen: Daten nicht gefunden.</string>
+    <string name="common_action_conflict">%1$s fehlgeschlagen: inkonsistenter Zustand.</string>
+    <string name="common_action_failed">%1$s fehlgeschlagen.</string>
 </resources>

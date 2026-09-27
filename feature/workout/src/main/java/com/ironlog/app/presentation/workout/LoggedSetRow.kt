@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.workout
 
+import com.ironlog.feature.workout.R as UxR
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -168,16 +169,16 @@ internal fun LoggedSetRow(
                     ) {
                         Text(
                             text = if (set.weightKg == 0.0) {
-                                "${stringResource(R.string.weight_bodyweight)} × ${set.reps} ${stringResource(R.string.common_reps_short)}"
+                                stringResource(UxR.string.workout_bodyweight_set_value, stringResource(R.string.weight_bodyweight), set.reps, stringResource(R.string.common_reps_short))
                             } else {
-                                "$weightText ${WeightFormatting.unitLabel(unitSystem)} × ${set.reps} ${stringResource(R.string.common_reps_short)}"
+                                stringResource(UxR.string.workout_weighted_set_value, weightText, WeightFormatting.unitLabel(unitSystem), set.reps, stringResource(R.string.common_reps_short))
                             },
                             style = AthleticNumber,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         if (set.isWarmup) {
                             Text(
-                                text = "(${stringResource(R.string.workout_warmup_chip)})",
+                                text = stringResource(UxR.string.workout_parenthesized_label, stringResource(R.string.workout_warmup_chip)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontStyle = FontStyle.Italic
@@ -216,7 +217,7 @@ internal fun LoggedSetRow(
                         border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
                     ) {
                         Text(
-                            text = "${intensitySystem.displayName} $intensityText",
+                            text = stringResource(UxR.string.workout_intensity_value, intensitySystem.displayName, intensityText),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = rpeTextColor(set.rpe) ?: MaterialTheme.accentText,

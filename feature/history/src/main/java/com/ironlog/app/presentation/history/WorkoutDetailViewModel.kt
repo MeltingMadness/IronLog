@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.history
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.history.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -56,7 +58,8 @@ class WorkoutDetailViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
     private val progressionRepository: ProgressionRepository,
-    private val readinessRepository: ReadinessRepository
+    private val readinessRepository: ReadinessRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
@@ -75,7 +78,7 @@ class WorkoutDetailViewModel(
             readinessRepository.observeSetIntentions()
                 .catch { error ->
                     if (error is CancellationException) throw error
-                    _uiState.update { it.copy(intentionsLoaded = false, intentionError = "Satzabsichten konnten nicht geladen werden.") }
+                    _uiState.update { it.copy(intentionsLoaded = false, intentionError = strings.get(UxR.string.history_intentions_load_failed)) }
                 }
                 .collect { values ->
                     _uiState.update { it.copy(setIntentions = values, intentionsLoaded = true, intentionError = null) }
@@ -98,7 +101,7 @@ class WorkoutDetailViewModel(
         val set = _uiState.value.exercises.asSequence()
             .flatMap { it.sets.asSequence() }
             .firstOrNull { it.id == setId } ?: return
-        runEdit("Satz konnte nicht gespeichert werden", onSaved) {
+        runEdit(strings.get(UxR.string.history_set_save_failed), onSaved) {
             workoutRepository.updateCompletedSet(
                 set.copy(reps = reps, weightKg = weightKg, rpe = rpe),
                 intention
@@ -107,14 +110,14 @@ class WorkoutDetailViewModel(
     }
 
     fun deleteSet(setId: Long, onDeleted: () -> Unit = {}) {
-        runEdit("Satz konnte nicht gelöscht werden", onDeleted) {
+        runEdit(strings.get(UxR.string.history_set_delete_failed), onDeleted) {
             workoutRepository.deleteCompletedSet(setId)
         }
     }
 
     /** Saves the session note; blank text removes it. */
     fun updateNotes(notes: String, onSaved: () -> Unit = {}) {
-        runEdit("Notiz konnte nicht gespeichert werden", onSaved) {
+        runEdit(strings.get(UxR.string.history_note_save_failed), onSaved) {
             workoutRepository.updateSessionNotes(sessionId, notes)
         }
     }
@@ -134,7 +137,7 @@ class WorkoutDetailViewModel(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                _uiState.update { it.copy(editError = "$failureMessage. Bitte prüfe die Werte.") }
+                _uiState.update { it.copy(editError = strings.get(UxR.string.history_edit_failed, failureMessage)) }
             } finally {
                 _uiState.update { it.copy(editSaving = false) }
             }
@@ -195,7 +198,7 @@ class WorkoutDetailViewModel(
                 ExerciseDetail(
                     exercise = exercisesById[exerciseId] ?: Exercise(
                         id = exerciseId,
-                        name = "Unbekannt",
+                        name = strings.get(UxR.string.history_unknown_exercise),
                         primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
                         category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                     ),
@@ -215,7 +218,7 @@ class WorkoutDetailViewModel(
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                error = e.toAppError().toUserMessage("Training-Details laden")
+                error = e.toAppError().toUserMessage(strings.get(UxR.string.history_action_load_detail), strings)
             )
         }
     }

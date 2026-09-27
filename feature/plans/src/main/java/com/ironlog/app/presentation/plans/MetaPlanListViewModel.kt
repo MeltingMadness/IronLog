@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.MetaTrainingPlan
@@ -35,7 +37,8 @@ data class MetaPlanListUiState(
 class MetaPlanListViewModel(
     private val trainingPlanRepository: TrainingPlanRepository,
     private val workoutRepository: WorkoutRepository,
-    private val metaTrainingPlanRepository: MetaTrainingPlanRepository
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MetaPlanListUiState())
@@ -91,7 +94,7 @@ class MetaPlanListViewModel(
                     _uiState.value = MetaPlanListUiState(
                         items = emptyList(),
                         isLoading = false,
-                        error = "Meta-Pläne konnten nicht geladen werden: ${error.message}"
+                        error = strings.get(UxR.string.meta_plans_load_failed, error.message.toString())
                     )
                 }
                 .collect { items ->
@@ -110,7 +113,7 @@ class MetaPlanListViewModel(
                 metaTrainingPlanRepository.deleteMetaPlan(metaPlanId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Meta-Plan konnte nicht gelöscht werden: ${e.message}"
+                    error = strings.get(UxR.string.meta_plan_delete_failed, e.message.toString())
                 )
             }
         }

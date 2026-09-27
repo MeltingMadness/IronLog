@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.statistics
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.statistics.R as UxR
 import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -83,7 +85,8 @@ class ExerciseStatsViewModel(
     savedStateHandle: SavedStateHandle,
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private fun LocalDateTime.toEpochMillis(): Long =
@@ -116,7 +119,7 @@ class ExerciseStatsViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.toAppError().toUserMessage("Statistiken laden")
+                    error = e.toAppError().toUserMessage(strings.get(UxR.string.stats_action_load), strings)
                 )
             }
         }
@@ -176,7 +179,7 @@ class ExerciseStatsViewModel(
                 updateChartData(sets, metric)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.toAppError().toUserMessage("Metrikwechsel")
+                    error = e.toAppError().toUserMessage(strings.get(UxR.string.stats_action_change_metric), strings)
                 )
             }
         }

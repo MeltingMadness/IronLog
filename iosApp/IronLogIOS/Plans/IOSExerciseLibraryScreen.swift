@@ -144,7 +144,7 @@ struct IOSExerciseLibraryScreen: View {
             }
             Button("Abbrechen", role: .cancel) { pendingDelete = nil }
         } message: {
-            Text("Eine Übung kann nur gelöscht werden, wenn sie nicht mehr von Plänen oder Workouts referenziert wird. Archivieren ist jederzeit möglich.")
+            Text("Eine Übung kann nur gelöscht werden, wenn sie nicht mehr von Plänen oder Trainings referenziert wird. Archivieren ist jederzeit möglich.")
         }
     }
 

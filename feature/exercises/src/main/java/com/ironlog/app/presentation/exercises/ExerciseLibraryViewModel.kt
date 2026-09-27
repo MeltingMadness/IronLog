@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.exercises
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.exercises.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.Exercise
@@ -58,7 +60,8 @@ data class ExerciseLibraryUiState(
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExerciseLibraryViewModel(
     private val exerciseRepository: ExerciseRepository,
-    private val statisticsRepository: StatisticsRepository
+    private val statisticsRepository: StatisticsRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
@@ -82,7 +85,7 @@ class ExerciseLibraryViewModel(
         // Logging is best-effort: it must never prevent the error/isLoading state below
         // from being applied (e.g. android.util.Log is unavailable in plain JVM unit tests).
         runCatching { AppLogger.e("ExerciseLibraryVM", "Flow-Fehler: ${e.message}", e) }
-        error.value = "Übungen konnten nicht geladen werden: ${e.message}"
+        error.value = strings.get(UxR.string.exercises_load_failed, e.message.toString())
         emit(emptyList())
     }
 
@@ -161,7 +164,7 @@ class ExerciseLibraryViewModel(
                 }
                 editor.value = null
             } catch (e: Exception) {
-                error.value = "Übung konnte nicht gespeichert werden: ${e.message}"
+                error.value = strings.get(UxR.string.exercises_save_failed, e.message.toString())
             }
         }
     }
@@ -171,7 +174,7 @@ class ExerciseLibraryViewModel(
             try {
                 exerciseRepository.deleteCustomExercise(id)
             } catch (e: Exception) {
-                error.value = "Übung konnte nicht gelöscht werden: ${e.message}"
+                error.value = strings.get(UxR.string.exercises_delete_failed, e.message.toString())
             }
         }
     }

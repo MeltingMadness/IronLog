@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.history
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.history.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -82,7 +84,8 @@ data class WorkoutHistoryUiState(
 
 class WorkoutHistoryViewModel(
     private val workoutRepository: WorkoutRepository,
-    private val trainingPlanRepository: TrainingPlanRepository
+    private val trainingPlanRepository: TrainingPlanRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkoutHistoryUiState())
@@ -147,7 +150,7 @@ class WorkoutHistoryViewModel(
             trainingPlanRepository.getAllPlans()
                 .catch { error ->
                     _uiState.update {
-                        it.copy(error = error.toAppError().toUserMessage("Pläne laden"))
+                        it.copy(error = error.toAppError().toUserMessage(strings.get(UxR.string.history_action_load_plans), strings))
                     }
                 }
                 .collect { plans ->
@@ -176,7 +179,7 @@ class WorkoutHistoryViewModel(
             try {
                 workoutRepository.deleteSession(sessionId)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = e.toAppError().toUserMessage("Training löschen"))
+                _uiState.value = _uiState.value.copy(error = e.toAppError().toUserMessage(strings.get(UxR.string.history_action_delete_workout), strings))
             }
         }
     }

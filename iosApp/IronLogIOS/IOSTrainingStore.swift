@@ -15,6 +15,7 @@ final class IOSTrainingStore {
     private(set) var weeklyMuscleVolume: ILTrainingWeeklyMuscleVolume?
     private(set) var weeklyMuscleVolumeError: String?
     private(set) var isBusy = false
+    private(set) var isLoading = false
     var errorMessage: String?
     var selectedTab: Int = 0
     /// Centrally bound to the settings in `RootView`. The deload mode is authoritative for every
@@ -47,6 +48,20 @@ final class IOSTrainingStore {
         } catch {
             errorMessage = "Trainingsdaten konnten nicht gelesen werden: \(error.localizedDescription)"
             return false
+        }
+    }
+
+    /// Re-read the shared projection without replacing or seeding persisted data.
+    func reload() async {
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        await Task.yield()
+        if let json = feature.currentJson() {
+            _ = receive(json)
+        } else {
+            errorMessage = feature.currentError() ?? "Trainingsdaten konnten nicht geladen werden."
         }
     }
 

@@ -161,7 +161,8 @@ struct IOSDashboardScreen: View {
                     onStartFree: startFreeWorkout,
                     onStartSuggestion: startSuggestion,
                     onRequestSkip: { suggestion in skipSuggestion = suggestion },
-                    onStartPlan: startPlan
+                    onStartPlan: startPlan,
+                    onChooseTraining: { store.selectedTab = 1 }
                 )
 
                 IOSDashboardGlassWeekStrip(
@@ -185,7 +186,8 @@ struct IOSDashboardScreen: View {
                     onStartFree: startFreeWorkout,
                     onStartSuggestion: startSuggestion,
                     onRequestSkip: { suggestion in skipSuggestion = suggestion },
-                    onStartPlan: startPlan
+                    onStartPlan: startPlan,
+                    onChooseTraining: { store.selectedTab = 1 }
                 )
             }
 
@@ -404,6 +406,7 @@ private struct IOSDashboardCommandCenter: View {
     let onStartSuggestion: (ILMetaRotationSuggestion) -> Void
     let onRequestSkip: (ILMetaRotationSuggestion) -> Void
     let onStartPlan: (ILTrainingPlan) -> Void
+    let onChooseTraining: () -> Void
 
     var body: some View {
         IronLogCard(title: "Nächster Schritt", subtitle: subtitle, tone: .elevated) {
@@ -423,7 +426,7 @@ private struct IOSDashboardCommandCenter: View {
                         onStartSuggestion(suggestion)
                     } label: {
                         VStack(alignment: .leading, spacing: 3) {
-                            Label("Rotation starten", systemImage: "arrow.triangle.2.circlepath")
+                            Label("Training starten", systemImage: "arrow.triangle.2.circlepath")
                                 .font(.geist(.headline))
                             Text("\(suggestion.metaPlanName) · \(suggestion.nextTrainingPlanName)")
                                 .font(.geist(.subheadline))
@@ -459,6 +462,12 @@ private struct IOSDashboardCommandCenter: View {
                     }
                     .buttonStyle(.bordered)
                     .disabled(isBusy)
+                }
+
+                if activeSession == nil {
+                    Button("Andere Pläne wählen", action: onChooseTraining)
+                        .buttonStyle(.bordered)
+                        .disabled(isBusy)
                 }
 
                 if activeSession == nil && (suggestion != nil || fallbackPlan != nil) {

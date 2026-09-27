@@ -44,7 +44,7 @@ class MetaPlanEditorViewModelTest {
         val planAId = planRepo.savePlan(TrainingPlan(name = "A"))
         val planBId = planRepo.savePlan(TrainingPlan(name = "B"))
 
-        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         advanceUntilIdle()
 
         vm.togglePlan(planAId)
@@ -72,7 +72,8 @@ class MetaPlanEditorViewModelTest {
 
         val vm = MetaPlanEditorViewModel(
             trainingPlanRepository = failingPlanRepo,
-            metaTrainingPlanRepository = FakeMetaTrainingPlanRepository()
+            metaTrainingPlanRepository = FakeMetaTrainingPlanRepository(),
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         advanceUntilIdle()
@@ -98,7 +99,7 @@ class MetaPlanEditorViewModelTest {
             )
         )
 
-        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         vm.initialize(metaId)
         advanceUntilIdle()
 
@@ -111,7 +112,7 @@ class MetaPlanEditorViewModelTest {
         val metaRepo = FakeMetaTrainingPlanRepository()
         val planAId = planRepo.savePlan(TrainingPlan(name = "A"))
         val planBId = planRepo.savePlan(TrainingPlan(name = "B"))
-        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         advanceUntilIdle()
 
         vm.updateName("Rotation")
@@ -133,7 +134,7 @@ class MetaPlanEditorViewModelTest {
         val planRepo = FakeTrainingPlanRepository()
         val metaRepo = FakeMetaTrainingPlanRepository()
         val planId = planRepo.savePlan(TrainingPlan(name = "Kraft"))
-        val vm = MetaPlanEditorViewModel(planRepo, metaRepo)
+        val vm = MetaPlanEditorViewModel(planRepo, metaRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         advanceUntilIdle()
 
         vm.updateName("Meine Rotation")

@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.error.toAppError
@@ -43,7 +45,8 @@ class TrainingPlanListViewModel(
     private val planRepository: TrainingPlanRepository,
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
-    private val metaTrainingPlanRepository: MetaTrainingPlanRepository
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlanListUiState())
@@ -66,7 +69,7 @@ class TrainingPlanListViewModel(
                 val today = LocalDate.now()
                 val items = plans.map { plan ->
                     val names = plan.exercises.map { exercise ->
-                        exerciseNameById[exercise.exerciseId] ?: "Unbekannt"
+                        exerciseNameById[exercise.exerciseId] ?: strings.get(UxR.string.plan_unknown_exercise)
                     }
                     PlanListItem(
                         plan = plan,
@@ -107,7 +110,7 @@ class TrainingPlanListViewModel(
                 planRepository.deletePlan(planId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.toAppError().toUserMessage("Plan loeschen")
+                    error = e.toAppError().toUserMessage(strings.get(UxR.string.plan_action_delete), strings)
                 )
             }
         }
@@ -122,7 +125,7 @@ class TrainingPlanListViewModel(
                         onSessionCreated(activeSession.id, plan.id)
                     } else {
                         _uiState.value = _uiState.value.copy(
-                            error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst."
+                            error = strings.get(UxR.string.plan_workout_already_active)
                         )
                     }
                     return@launch
@@ -136,7 +139,7 @@ class TrainingPlanListViewModel(
                 onSessionCreated(sessionId, plan.id)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.toAppError().toUserMessage("Training starten")
+                    error = e.toAppError().toUserMessage(strings.get(UxR.string.plan_action_start), strings)
                 )
             }
         }

@@ -89,7 +89,7 @@ class MetaPlanListViewModelTest {
             isActive = false
         )
 
-        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val item = vm.uiState.value.items.firstOrNull { it.metaPlan.id == metaId }
@@ -124,7 +124,7 @@ class MetaPlanListViewModelTest {
             isActive = false
         )
 
-        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val item = vm.uiState.value.items.firstOrNull { it.metaPlan.id == metaId }
@@ -176,7 +176,7 @@ class MetaPlanListViewModelTest {
             isActive = false
         )
 
-        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val item = vm.uiState.value.items.firstOrNull { it.metaPlan.id == metaId }
@@ -345,7 +345,7 @@ class MetaPlanListViewModelTest {
             isActive = false
         )
 
-        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val before = vm.uiState.value.items.first { it.metaPlan.id == metaId }
@@ -375,7 +375,7 @@ class MetaPlanListViewModelTest {
             )
         )
 
-        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo)
+        val vm = MetaPlanListViewModel(planRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(planAId, vm.uiState.value.items.first().nextSubPlan?.id)
 

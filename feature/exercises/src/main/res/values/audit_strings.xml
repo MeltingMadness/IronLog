@@ -1,0 +1,5 @@
+<resources>
+    <string name="exercises_load_failed">Übungen konnten nicht geladen werden: %1$s</string>
+    <string name="exercises_save_failed">Übung konnte nicht gespeichert werden: %1$s</string>
+    <string name="exercises_delete_failed">Übung konnte nicht gelöscht werden: %1$s</string>
+</resources>

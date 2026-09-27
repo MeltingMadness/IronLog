@@ -1,10 +1,15 @@
 package com.ironlog.app.presentation.workout
 
+import com.ironlog.feature.workout.R as UxR
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -12,7 +17,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -178,10 +182,11 @@ internal fun GlassExerciseRail(
             val stateLabel = when (item.status) {
                 RailStatus.DONE -> doneLabel
                 RailStatus.CURRENT -> currentLabel
-                RailStatus.UPCOMING -> null
+                RailStatus.UPCOMING -> stringResource(UxR.string.workout_glass_rail_upcoming)
             }
             val base = Modifier
-                .height(36.dp)
+                .widthIn(min = 48.dp)
+                .heightIn(min = 48.dp)
                 .clip(shape)
                 .semantics {
                     contentDescription = listOfNotNull(item.name, stateLabel).joinToString(", ")
@@ -192,7 +197,7 @@ internal fun GlassExerciseRail(
                 RailStatus.DONE -> Row(
                     modifier = base
                         .background(ink.copy(alpha = 0.10f))
-                        .padding(start = 8.dp, end = 12.dp)
+                        .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
                         .alpha(0.8f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -208,7 +213,7 @@ internal fun GlassExerciseRail(
                 RailStatus.CURRENT -> Box(
                     modifier = base
                         .background(if (dark) Color.White else GlassInk)
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     RailText(item.name, if (dark) GlassInk else Color.White, FontWeight.ExtraBold)
@@ -216,7 +221,7 @@ internal fun GlassExerciseRail(
                 RailStatus.UPCOMING -> Box(
                     modifier = base
                         .border(1.dp, ink.copy(alpha = 0.18f), shape)
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     RailText(item.name, ink.copy(alpha = 0.8f))
@@ -303,7 +308,7 @@ internal fun GlassStepper(
             )
             if (unit != null) {
                 Text(
-                    text = " $unit",
+                    text = stringResource(UxR.string.workout_number_unit_suffix, unit),
                     fontSize = 18.sp,
                     color = ink.copy(alpha = 0.7f),
                     modifier = Modifier.padding(bottom = 6.dp)
@@ -343,34 +348,43 @@ internal fun GlassIntensityBar(
 ) {
     val dark = isDarkGlass()
     val ink = if (dark) Color.White else GlassInk
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(23.dp))
-            .background(Color.Black.copy(alpha = if (dark) 0.18f else 0.05f))
-            .border(1.dp, ink.copy(alpha = 0.08f), RoundedCornerShape(23.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        options.forEach { (value, label) ->
-            val isSelected = value == selected
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-                    .then(if (isSelected) Modifier.shadow(6.dp, RoundedCornerShape(20.dp)) else Modifier)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (isSelected) (if (dark) Color.White else GlassInk) else Color.Transparent)
-                    .semantics { this.selected = isSelected }
-                    .clickable(role = Role.RadioButton) { onSelect(value) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = label,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (isSelected) (if (dark) GlassInk else Color.White) else ink
-                )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        // Keep the evenly spread segments when they fit; scroll instead of shrinking targets.
+        val optionWidth = maxOf(
+            48.dp,
+            (maxWidth - 8.dp - 4.dp * (options.size - 1).coerceAtLeast(0)) / options.size.coerceAtLeast(1)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(23.dp))
+                .background(Color.Black.copy(alpha = if (dark) 0.18f else 0.05f))
+                .border(1.dp, ink.copy(alpha = 0.08f), RoundedCornerShape(23.dp))
+                .horizontalScroll(rememberScrollState())
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            options.forEach { (value, label) ->
+                val isSelected = value == selected
+                Box(
+                    modifier = Modifier
+                        .widthIn(min = optionWidth)
+                        .heightIn(min = 48.dp)
+                        .then(if (isSelected) Modifier.shadow(6.dp, RoundedCornerShape(20.dp)) else Modifier)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isSelected) (if (dark) Color.White else GlassInk) else Color.Transparent)
+                        .semantics { this.selected = isSelected }
+                        .clickable(role = Role.RadioButton) { onSelect(value) }
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isSelected) (if (dark) GlassInk else Color.White) else ink
+                    )
+                }
             }
         }
     }

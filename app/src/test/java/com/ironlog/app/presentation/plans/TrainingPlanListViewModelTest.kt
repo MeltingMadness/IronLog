@@ -73,7 +73,7 @@ class TrainingPlanListViewModelTest {
         planRepo.savePlan(TrainingPlan(name = "Plan A", exercises = sharedExercises))
         planRepo.savePlan(TrainingPlan(name = "Plan B", exercises = sharedExercises))
 
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -83,7 +83,7 @@ class TrainingPlanListViewModelTest {
 
     @Test
     fun `startPlanWorkout startet neue Session wenn keine aktive Session existiert`() = runTest {
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var createdSessionId: Long? = null
@@ -112,7 +112,7 @@ class TrainingPlanListViewModelTest {
             ),
             isActive = true
         )
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
         val plan = TrainingPlan(id = 101L, name = "Push", exercises = emptyList())
         var callbackCalled = false
@@ -150,7 +150,7 @@ class TrainingPlanListViewModelTest {
             )
         )
 
-        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo)
+        val vm = TrainingPlanListViewModel(planRepo, exerciseRepo, workoutRepo, metaPlanRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = vm.uiState.value

@@ -76,7 +76,7 @@ struct IOSWorkoutExerciseCard: View {
             }
 
             if let previousWeight = row.previousWorkWeightKg {
-                Label("Letztes passendes Workout: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
+                Label("Letztes passendes Training: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
                     .font(.geist(.caption))
                     .foregroundStyle(palette.information)
                     .accessibilityLabel("Letztes passendes Gewicht \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))")
@@ -205,7 +205,7 @@ private struct IOSWorkoutSetRow: View {
                 Button("Löschen", systemImage: "trash", role: .destructive) { onDelete() }
             } label: {
                 Image(systemName: "ellipsis")
-                    .frame(width: 28, height: 32)
+                    .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("Satz \(set.setNumber) bearbeiten oder löschen")

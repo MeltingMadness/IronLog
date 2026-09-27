@@ -82,6 +82,7 @@ struct IOSDashboardGlassCommandCenter: View {
     let onStartSuggestion: (ILMetaRotationSuggestion) -> Void
     let onRequestSkip: (ILMetaRotationSuggestion) -> Void
     let onStartPlan: (ILTrainingPlan) -> Void
+    let onChooseTraining: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.ironLogTheme) private var theme
@@ -177,6 +178,7 @@ struct IOSDashboardGlassCommandCenter: View {
 
             if activeSession == nil {
                 HStack(spacing: 18) {
+                    Button("Andere Pläne", action: onChooseTraining)
                     if let suggestion, suggestion.canSkip {
                         Button("Teilplan überspringen") { onRequestSkip(suggestion) }
                     }

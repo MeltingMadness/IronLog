@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.feature.dashboard.R as UxR
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -571,7 +572,7 @@ private fun GreetingHeader() {
     val greetingRes = greetingRes()
     Column(modifier = Modifier.padding(bottom = 4.dp)) {
         Text(
-            text = "WILLKOMMEN ZURÜCK",
+            text = stringResource(UxR.string.dashboard_welcome_back),
             style = AthleticLabel,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

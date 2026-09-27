@@ -78,7 +78,7 @@ struct IOSPlanEditorScreen: View {
                             .ironLogSecondaryText()
                     }
                 } footer: {
-                    Text("Die Reihenfolge wird im Workout übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
+                    Text("Die Reihenfolge wird im Training übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
                 }
 
                 if let errorMessage {
@@ -142,7 +142,7 @@ struct IOSPlanEditorScreen: View {
             }
             Button("Abbrechen", role: .cancel) {}
         } message: {
-            Text("Der Plan und seine Ziele werden entfernt. Bereits aufgezeichnete Workouts bleiben erhalten.")
+            Text("Der Plan und seine Ziele werden entfernt. Bereits aufgezeichnete Trainings bleiben erhalten.")
         }
     }
 

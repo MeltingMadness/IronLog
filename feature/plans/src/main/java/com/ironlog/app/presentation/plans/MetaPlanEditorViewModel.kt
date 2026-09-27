@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ironlog.app.domain.model.MetaTrainingPlan
@@ -27,7 +29,8 @@ data class MetaPlanEditorUiState(
 
 class MetaPlanEditorViewModel(
     private val trainingPlanRepository: TrainingPlanRepository,
-    private val metaTrainingPlanRepository: MetaTrainingPlanRepository
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MetaPlanEditorUiState())
@@ -77,7 +80,7 @@ class MetaPlanEditorViewModel(
                         it.copy(
                             metaPlanId = null,
                             isLoading = false,
-                            error = "Meta-Plan konnte nicht geladen werden."
+                            error = strings.get(UxR.string.meta_plan_load_failed)
                         )
                     }
                     return@launch
@@ -98,7 +101,7 @@ class MetaPlanEditorViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Meta-Plan konnte nicht geladen werden: ${e.message}"
+                        error = strings.get(UxR.string.meta_plan_load_failed_detail, e.message.toString())
                     )
                 }
             }
@@ -112,7 +115,7 @@ class MetaPlanEditorViewModel(
                     _uiState.update { current ->
                         current.copy(
                             isLoading = false,
-                            error = "Unterpläne konnten nicht geladen werden: ${error.message}"
+                            error = strings.get(UxR.string.meta_plan_children_load_failed, error.message.toString())
                         )
                     }
                 }
@@ -233,11 +236,11 @@ class MetaPlanEditorViewModel(
         val selectedPlans = _uiState.value.selectedPlanIds
 
         if (name.isBlank()) {
-            _uiState.update { it.copy(error = "Bitte gib einen Namen ein.") }
+            _uiState.update { it.copy(error = strings.get(UxR.string.meta_plan_name_required)) }
             return
         }
         if (selectedPlans.isEmpty()) {
-            _uiState.update { it.copy(error = "Bitte waehle mindestens einen Unterplan.") }
+            _uiState.update { it.copy(error = strings.get(UxR.string.meta_plan_children_required)) }
             return
         }
 
@@ -266,7 +269,7 @@ class MetaPlanEditorViewModel(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        error = "Meta-Plan konnte nicht gespeichert werden: ${e.message}",
+                        error = strings.get(UxR.string.meta_plan_save_failed, e.message.toString()),
                         isSaving = false
                     )
                 }

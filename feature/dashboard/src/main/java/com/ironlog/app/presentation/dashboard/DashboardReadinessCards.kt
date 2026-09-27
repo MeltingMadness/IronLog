@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.feature.dashboard.R as UxR
 import com.ironlog.app.domain.util.WeightFormatting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -481,7 +482,7 @@ fun DailyCheckInCard(
                             )
                         ) {
                             Text(
-                                text = value?.let { "${muscle.displayName} $it/5" }
+                                text = value?.let { stringResource(UxR.string.dashboard_checkin_scale_value, muscle.displayName, it) }
                                     ?: muscle.displayName,
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -550,19 +551,19 @@ private fun StoredCheckInSummary(stored: DashboardStoredCheckIn) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         stored.sleepQuality?.let {
             Text(
-                text = "${stringResource(R.string.dashboard_checkin_sleep)} $it/5",
+                text = stringResource(UxR.string.dashboard_checkin_scale_value, stringResource(R.string.dashboard_checkin_sleep), it),
                 style = MaterialTheme.typography.bodySmall
             )
         }
         stored.energy?.let {
             Text(
-                text = "${stringResource(R.string.dashboard_checkin_energy)} $it/5",
+                text = stringResource(UxR.string.dashboard_checkin_scale_value, stringResource(R.string.dashboard_checkin_energy), it),
                 style = MaterialTheme.typography.bodySmall
             )
         }
         stored.stress?.let {
             Text(
-                text = "${stringResource(R.string.dashboard_checkin_stress)} $it/5",
+                text = stringResource(UxR.string.dashboard_checkin_scale_value, stringResource(R.string.dashboard_checkin_stress), it),
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -576,7 +577,7 @@ private fun StoredCheckInSummary(stored: DashboardStoredCheckIn) {
                 .sortedBy { it.key.ordinal }
                 .forEach { (muscle, value) ->
                     Text(
-                        text = "${muscle.displayName} $value/5",
+                        text = stringResource(UxR.string.dashboard_checkin_scale_value, muscle.displayName, value),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

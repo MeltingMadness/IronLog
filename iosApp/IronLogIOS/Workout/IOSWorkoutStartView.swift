@@ -18,16 +18,16 @@ struct IOSWorkoutStartView: View {
                         .ironLogSecondaryText()
                 }
 
-                IronLogCard(title: "Freies Workout", subtitle: "Übungen fügst du während des Trainings hinzu.") {
+                IronLogCard(title: "Freies Training", subtitle: "Übungen fügst du während des Trainings hinzu.") {
                     TextField("Name (optional)", text: $freeWorkoutName)
                         .textInputAutocapitalization(.sentences)
-                        .accessibilityLabel("Name des freien Workouts")
+                        .accessibilityLabel("Name des freien Trainings")
 
                     Button {
                         onStartFree(freeWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines))
                         freeWorkoutName = ""
                     } label: {
-                        Label("Freies Workout starten", systemImage: "play.fill")
+                        Label("Freies Training starten", systemImage: "play.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent).ironLogButtonText()

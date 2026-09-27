@@ -74,7 +74,7 @@ struct IOSHistoryScreen: View {
                         systemImage: "clock.arrow.circlepath",
                         description: Text(
                             !hasSearchFilter && dateFilter == .all
-                                ? "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Workout-Bereich."
+                                ? "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Training-Bereich."
                                 : "Passe Suche oder Zeitraum an."
                         )
                     )
@@ -699,7 +699,8 @@ private struct IOSHistorySetRow: View {
                 Button("Löschen", systemImage: "trash", role: .destructive, action: onDelete)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .frame(width: 32, height: 32)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Aktionen für Satz \(set.setNumber)")
         }

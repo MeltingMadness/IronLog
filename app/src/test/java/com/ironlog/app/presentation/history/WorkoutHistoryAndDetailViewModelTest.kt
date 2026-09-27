@@ -81,7 +81,8 @@ class WorkoutHistoryAndDetailViewModelTest {
     }
 
     private fun detailViewModel() = WorkoutDetailViewModel(
-        SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo
+        SavedStateHandle(mapOf("sessionId" to 7L)), workoutRepo, exerciseRepo, statisticsRepo, progressionRepo, readinessRepo,
+        strings = com.ironlog.app.fakes.TestUiStrings
     )
 
     @Test
@@ -210,7 +211,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
             progressionRepository = progressionRepo,
-            readinessRepository = readinessRepo
+            readinessRepository = readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -258,7 +260,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
             progressionRepository = progressionRepo,
-            readinessRepository = readinessRepo
+            readinessRepository = readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -287,7 +290,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
             progressionRepository = progressionRepo,
-            readinessRepository = readinessRepo
+            readinessRepository = readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         testDispatcher.scheduler.advanceUntilIdle()
@@ -304,7 +308,8 @@ class WorkoutHistoryAndDetailViewModelTest {
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
             progressionRepository = progressionRepo,
-            readinessRepository = readinessRepo
+            readinessRepository = readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         testDispatcher.scheduler.advanceUntilIdle()

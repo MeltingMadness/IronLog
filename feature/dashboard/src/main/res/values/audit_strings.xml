@@ -18,4 +18,21 @@
     <string name="dashboard_audit_deload_body">Auffällige Belastungssignale wurden im Analysefenster gefunden. Die Empfehlung ist eine Trainingsheuristik und keine medizinische Einschätzung.</string>
     <string name="dashboard_audit_deload_score">Heuristischer Belastungswert: %1$d/100</string>
     <string name="dashboard_audit_deload_window">Fenster: %1$s – %2$s · %3$d Einheiten</string>
+    <string name="dashboard_welcome_back">WILLKOMMEN ZURÜCK</string>
+    <string name="dashboard_weekly_volume_failed">Die Wochen-Auswertung konnte nicht geladen werden.</string>
+    <string name="dashboard_readiness_failed">Der Trainingstrend konnte nicht berechnet werden.</string>
+    <string name="dashboard_check_in_failed">Die Tagesform konnte nicht gespeichert werden.</string>
+    <string name="dashboard_unknown_exercise">Unbekannt</string>
+    <string name="dashboard_load_failed">Dashboard konnte nicht geladen werden.</string>
+    <string name="dashboard_workout_already_active">Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.</string>
+    <string name="dashboard_plan_changed">Der vorgeschlagene Plan hat sich geändert. Bitte erneut versuchen.</string>
+    <string name="dashboard_skip_failed">Teilplan konnte nicht übersprungen werden: %1$s</string>
+    <string name="dashboard_meta_plan_invalid">Meta-Plan ist unvollständig oder enthält keine gültigen Unterpläne.</string>
+    <string name="dashboard_meta_start_failed">Meta-Plan-Training konnte nicht gestartet werden: %1$s</string>
+    <string name="dashboard_workout_auto_name">Training %1$s</string>
+    <string name="dashboard_start_failed">Training konnte nicht gestartet werden: %1$s</string>
+    <string name="dashboard_plan_start_failed">Training nach Plan konnte nicht gestartet werden: %1$s</string>
+    <string name="dashboard_deload_end_failed">Deload-Modus konnte nicht beendet werden.</string>
+    <string name="dashboard_deload_start_failed">Deload-Modus konnte nicht aktiviert werden.</string>
+    <string name="dashboard_checkin_scale_value">%1$s %2$d/5</string>
 </resources>

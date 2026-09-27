@@ -157,7 +157,7 @@ struct SettingsScreen: View {
                     }
 
                     Section("Reminder") {
-                        Toggle("Workout-Erinnerung", isOn: Binding(
+                        Toggle("Training-Erinnerung", isOn: Binding(
                             get: { viewModel.state.reminderEnabled },
                             set: viewModel.setReminderEnabled
                         ))

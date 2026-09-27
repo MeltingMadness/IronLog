@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.plans.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -105,7 +107,8 @@ class PlanEditorViewModel(
     savedStateHandle: SavedStateHandle,
     private val planRepository: TrainingPlanRepository,
     private val exerciseRepository: ExerciseRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val planId: Long = savedStateHandle["planId"] ?: 0L
@@ -159,7 +162,7 @@ class PlanEditorViewModel(
                         val exercise = exerciseRepository.getExerciseById(pe.exerciseId)
                         val resolvedExercise = exercise ?: Exercise(
                                 id = pe.exerciseId,
-                                name = "Unbekannt",
+                                name = strings.get(UxR.string.plan_unknown_exercise),
                                 primaryMuscleGroup = com.ironlog.app.domain.model.MuscleGroup.BRUST,
                                 category = com.ironlog.app.domain.model.ExerciseCategory.LANGHANTEL
                             )
@@ -190,7 +193,7 @@ class PlanEditorViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Plan konnte nicht geladen werden: ${e.message}"
+                    error = strings.get(UxR.string.plan_load_failed, e.message.toString())
                 )
             }
         }
@@ -457,7 +460,7 @@ class PlanEditorViewModel(
             _uiState.value = _uiState.value.copy(
                 progressionEditor = draft.copy(errors = fieldErrors),
                 error = if (fieldErrors.isEmpty()) {
-                    "Progression für ${item.exercise.name} ist unvollständig"
+                    strings.get(UxR.string.plan_progression_incomplete, item.exercise.name)
                 } else {
                     _uiState.value.error
                 }
@@ -536,14 +539,14 @@ class PlanEditorViewModel(
 
         val name = _uiState.value.planName.trim()
         if (name.isBlank()) {
-            _uiState.value = _uiState.value.copy(error = "Bitte gib einen Namen ein")
+            _uiState.value = _uiState.value.copy(error = strings.get(UxR.string.plan_name_required))
             return
         }
 
         val normalizedExercises = normalizeExercises(_uiState.value.exercises)
         if (normalizedExercises.isEmpty()) {
             _uiState.value = _uiState.value.copy(
-                error = "Bitte füge mindestens eine Übung hinzu."
+                error = strings.get(UxR.string.plan_exercise_required)
             )
             return
         }
@@ -552,7 +555,7 @@ class PlanEditorViewModel(
         if (parsedExercises.errors.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(
                 targetInputErrors = parsedExercises.errors,
-                error = "Bitte korrigiere die markierten Trainingsziele."
+                error = strings.get(UxR.string.plan_targets_fix_required)
             )
             return
         }
@@ -566,7 +569,7 @@ class PlanEditorViewModel(
         }
         if (invalidExercise != null) {
             _uiState.value = _uiState.value.copy(
-                error = "Progression für ${invalidExercise.exercise.name} ist unvollständig"
+                error = strings.get(UxR.string.plan_progression_incomplete, invalidExercise.exercise.name)
             )
             return
         }
@@ -600,7 +603,7 @@ class PlanEditorViewModel(
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = "Plan konnte nicht gespeichert werden: ${e.message}",
+                    error = strings.get(UxR.string.plan_save_failed, e.message.toString()),
                     isSaving = false
                 )
             }

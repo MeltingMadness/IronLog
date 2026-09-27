@@ -72,7 +72,7 @@ struct IOSPlansScreen: View {
             }
             .overlay(alignment: .bottom) {
                 if isStarting {
-                    ProgressView("Workout wird gestartet …")
+                    ProgressView("Training wird gestartet …")
                         .padding(.horizontal, 18)
                         .padding(.vertical, 12)
                         .background(.regularMaterial, in: Capsule())
@@ -254,7 +254,7 @@ private struct IOSPlanListRow: View {
 
                 Spacer(minLength: 8)
                 Menu {
-                    Button("Workout starten", systemImage: "play.fill", action: onStart)
+                    Button("Training starten", systemImage: "play.fill", action: onStart)
                     Button("Bearbeiten", systemImage: "pencil", action: onOpen)
                     Button("Löschen", systemImage: "trash", role: .destructive, action: onDelete)
                 } label: {

@@ -77,7 +77,8 @@ class PlanEditorViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf("planId" to planId)),
             planRepository = fakePlanRepo,
             exerciseRepository = fakeExerciseRepo,
-            appPreferencesRepository = preferencesRepository
+            appPreferencesRepository = preferencesRepository,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
     }
 
