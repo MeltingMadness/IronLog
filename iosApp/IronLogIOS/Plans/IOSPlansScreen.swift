@@ -117,6 +117,7 @@ struct IOSPlansScreen: View {
     @ViewBuilder
     private var planList: some View {
         List {
+            Group {
             if let error = store.errorMessage {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle")
@@ -172,6 +173,8 @@ struct IOSPlansScreen: View {
                     }
                 }
             }
+            }
+            .ironLogListRows()
         }
         .listStyle(.insetGrouped)
         .refreshable { await Task.yield() }

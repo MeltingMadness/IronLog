@@ -159,33 +159,36 @@ struct IOSHistoryScreen: View {
 
     private var historyList: some View {
         List {
-            Section {
-                IOSHistorySummaryCard(summary: summary, unitSystem: settings.state.unitSystem)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-            }
+            Group {
+                Section {
+                    IOSHistorySummaryCard(summary: summary, unitSystem: settings.state.unitSystem)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowBackground(Color.clear)
+                }
 
-            Section("Abgeschlossen") {
-                ForEach(completedSessions) { session in
-                    NavigationLink {
-                        IOSHistoryDetailScreen(sessionID: session.id)
-                    } label: {
-                        IOSHistorySessionRow(
-                            session: session,
-                            data: store.data,
-                            unitSystem: settings.state.unitSystem
-                        )
-                    }
-                    .accessibilityHint("Öffnet die Details dieses Trainings")
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            sessionToDelete = session
+                Section("Abgeschlossen") {
+                    ForEach(completedSessions) { session in
+                        NavigationLink {
+                            IOSHistoryDetailScreen(sessionID: session.id)
                         } label: {
-                            Label("Löschen", systemImage: "trash")
+                            IOSHistorySessionRow(
+                                session: session,
+                                data: store.data,
+                                unitSystem: settings.state.unitSystem
+                            )
+                        }
+                        .accessibilityHint("Öffnet die Details dieses Trainings")
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                sessionToDelete = session
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
+            .ironLogListRows()
         }
         .listStyle(.insetGrouped)
     }
@@ -194,31 +197,34 @@ struct IOSHistoryScreen: View {
     /// below as glass rows. Search, filters and swipe to delete stay the same.
     private var glassHistoryList: some View {
         List {
-            ForEach(IOSHistoryWeek.group(visible: completedSessions, all: store.data?.workoutSessions ?? [])) { week in
-                IOSHistoryGlassWeekHeader(week: week)
-                    .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                ForEach(week.sessions) { session in
-                    Button {
-                        openedSessionID = session.id
-                    } label: {
-                        IOSHistoryGlassRow(session: session, data: store.data, unitSystem: settings.state.unitSystem)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Öffnet die Details dieses Trainings")
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            sessionToDelete = session
+            Group {
+                ForEach(IOSHistoryWeek.group(visible: completedSessions, all: store.data?.workoutSessions ?? [])) { week in
+                    IOSHistoryGlassWeekHeader(week: week)
+                        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    ForEach(week.sessions) { session in
+                        Button {
+                            openedSessionID = session.id
                         } label: {
-                            Label("Löschen", systemImage: "trash")
+                            IOSHistoryGlassRow(session: session, data: store.data, unitSystem: settings.state.unitSystem)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Öffnet die Details dieses Trainings")
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                sessionToDelete = session
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
+            .ironLogListRows()
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -729,35 +735,38 @@ private struct IOSHistorySetEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Satz \(set.setNumber)") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
-                            .font(.caption).foregroundStyle(.secondary)
-                        TextField("Gewicht", text: $weightText)
-                            .keyboardType(.decimalPad)
-                            .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Wiederholungen").font(.caption).foregroundStyle(.secondary)
-                        TextField("Wiederholungen", text: $repsText)
-                            .keyboardType(.numberPad)
-                            .accessibilityLabel("Wiederholungen")
-                    }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("RPE (optional)").font(.caption).foregroundStyle(.secondary)
-                        TextField("RPE", text: $rpeText)
-                            .keyboardType(.decimalPad)
-                            .accessibilityLabel("RPE, optional")
-                    }
-                    Picker("Absicht (optional)", selection: $intention) {
-                        ForEach(ILSetIntention.allCases, id: \.self) { value in
-                            Text(ilSetIntentionText(value)).tag(value)
+                Group {
+                    Section("Satz \(set.setNumber)") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
+                                .font(.caption).foregroundStyle(.secondary)
+                            TextField("Gewicht", text: $weightText)
+                                .keyboardType(.decimalPad)
+                                .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Wiederholungen").font(.caption).foregroundStyle(.secondary)
+                            TextField("Wiederholungen", text: $repsText)
+                                .keyboardType(.numberPad)
+                                .accessibilityLabel("Wiederholungen")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("RPE (optional)").font(.caption).foregroundStyle(.secondary)
+                            TextField("RPE", text: $rpeText)
+                                .keyboardType(.decimalPad)
+                                .accessibilityLabel("RPE, optional")
+                        }
+                        Picker("Absicht (optional)", selection: $intention) {
+                            ForEach(ILSetIntention.allCases, id: \.self) { value in
+                                Text(ilSetIntentionText(value)).tag(value)
+                            }
+                        }
+                        if let errorMessage {
+                            Text(errorMessage).foregroundStyle(.red).font(.footnote)
                         }
                     }
-                    if let errorMessage {
-                        Text(errorMessage).foregroundStyle(.red).font(.footnote)
-                    }
                 }
+                .ironLogListRows()
             }
             .navigationTitle("Satz bearbeiten")
             .navigationBarTitleDisplayMode(.inline)

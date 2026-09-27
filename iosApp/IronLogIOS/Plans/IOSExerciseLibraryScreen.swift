@@ -50,57 +50,61 @@ struct IOSExerciseLibraryScreen: View {
     var body: some View {
         NavigationStack {
             List {
-                Picker("Filter", selection: $filter) {
-                    ForEach(Filter.allCases) { filter in
-                        Text(filter.title).tag(filter)
+                Group {
+                    Picker("Filter", selection: $filter) {
+                        ForEach(Filter.allCases) { filter in
+                            Text(filter.title).tag(filter)
+                        }
                     }
-                }
-                .pickerStyle(.segmented)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .pickerStyle(.segmented)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
 
-                Menu {
-                    Button("Alle Muskelgruppen") { muscleGroupFilter = nil }
-                    Divider()
-                    ForEach(IOSExerciseLibraryMuscles.all, id: \.self) { muscle in
-                        Button {
-                            muscleGroupFilter = muscle
-                        } label: {
-                            if muscleGroupFilter == muscle {
-                                Label(IOSExerciseLibraryMuscles.displayName(muscle), systemImage: "checkmark")
-                            } else {
-                                Text(IOSExerciseLibraryMuscles.displayName(muscle))
+                    Menu {
+                        Button("Alle Muskelgruppen") { muscleGroupFilter = nil }
+                        Divider()
+                        ForEach(IOSExerciseLibraryMuscles.all, id: \.self) { muscle in
+                            Button {
+                                muscleGroupFilter = muscle
+                            } label: {
+                                if muscleGroupFilter == muscle {
+                                    Label(IOSExerciseLibraryMuscles.displayName(muscle), systemImage: "checkmark")
+                                } else {
+                                    Text(IOSExerciseLibraryMuscles.displayName(muscle))
+                                }
+                            }
+                        }
+                    } label: {
+                        Label(
+                            muscleGroupFilter.map(IOSExerciseLibraryMuscles.displayName) ?? "Alle Muskelgruppen",
+                            systemImage: "line.3.horizontal.decrease.circle"
+                        )
+                    }
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16))
+
+                    if exercises.isEmpty {
+                        ContentUnavailableView(
+                            searchText.isEmpty ? "Keine Übungen" : "Keine Treffer",
+                            systemImage: searchText.isEmpty ? "figure.strengthtraining.traditional" : "magnifyingglass",
+                            description: Text(searchText.isEmpty ? "Erstelle eine eigene Übung oder importiere Trainingsdaten." : "Passe Suche oder Filter an.")
+                        )
+                        .listRowBackground(Color.clear)
+                    } else {
+                        Section("Übungen") {
+                            ForEach(exercises) { exercise in
+                                IOSExerciseListRow(
+                                    exercise: exercise,
+                                    onOpen: { editor = IOSExerciseEditorPresentation(exercise: exercise) },
+                                    onArchive: { Task { await toggleArchive(exercise) } },
+                                    onDelete: { pendingDelete = exercise }
+                                )
                             }
                         }
                     }
-                } label: {
-                    Label(
-                        muscleGroupFilter.map(IOSExerciseLibraryMuscles.displayName) ?? "Alle Muskelgruppen",
-                        systemImage: "line.3.horizontal.decrease.circle"
-                    )
                 }
-                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16))
-
-                if exercises.isEmpty {
-                    ContentUnavailableView(
-                        searchText.isEmpty ? "Keine Übungen" : "Keine Treffer",
-                        systemImage: searchText.isEmpty ? "figure.strengthtraining.traditional" : "magnifyingglass",
-                        description: Text(searchText.isEmpty ? "Erstelle eine eigene Übung oder importiere Trainingsdaten." : "Passe Suche oder Filter an.")
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    Section("Übungen") {
-                        ForEach(exercises) { exercise in
-                            IOSExerciseListRow(
-                                exercise: exercise,
-                                onOpen: { editor = IOSExerciseEditorPresentation(exercise: exercise) },
-                                onArchive: { Task { await toggleArchive(exercise) } },
-                                onDelete: { pendingDelete = exercise }
-                            )
-                        }
-                    }
-                }
+                .ironLogListRows()
             }
             .listStyle(.insetGrouped)
+            .ironLogScreenBackground()
             .navigationTitle("Übungen")
             .searchable(text: $searchText, prompt: "Übungen, Muskelgruppe oder Kategorie")
             .toolbar {
@@ -277,66 +281,70 @@ private struct IOSExerciseEditorScreen: View {
 
     var body: some View {
         Form {
-            Section("Übung") {
-                TextField("Name", text: $name)
-                    .textInputAutocapitalization(.words)
-                Picker("Kategorie", selection: $category) {
-                    ForEach(categories, id: \.self) { category in
-                        Text(categoryDisplayName(category)).tag(category)
-                    }
-                }
-                Picker("Primäre Muskelgruppe", selection: $primaryMuscle) {
-                    ForEach(muscleGroups, id: \.self) { muscle in
-                        Text(muscleDisplayName(muscle)).tag(muscle)
-                    }
-                }
-            }
-
-            Section("Sekundäre Muskelgruppen") {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 118), alignment: .leading)],
-                    alignment: .leading,
-                    spacing: 8
-                ) {
-                    ForEach(muscleGroups.filter { $0 != primaryMuscle }, id: \.self) { muscle in
-                        let isSelected = selectedSecondaryMuscles.contains(muscle)
-                        Button {
-                            toggleSecondaryMuscle(muscle)
-                        } label: {
-                            Label(
-                                muscleDisplayName(muscle),
-                                systemImage: isSelected ? "checkmark.circle.fill" : "circle"
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                Section("Übung") {
+                    TextField("Name", text: $name)
+                        .textInputAutocapitalization(.words)
+                    Picker("Kategorie", selection: $category) {
+                        ForEach(categories, id: \.self) { category in
+                            Text(categoryDisplayName(category)).tag(category)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(isSelected ? Color.accentColor : Color.secondary)
-                        .disabled(!isSelected && selectedSecondaryMuscles.count >= 3)
+                    }
+                    Picker("Primäre Muskelgruppe", selection: $primaryMuscle) {
+                        ForEach(muscleGroups, id: \.self) { muscle in
+                            Text(muscleDisplayName(muscle)).tag(muscle)
+                        }
                     }
                 }
-                Text("Wähle bis zu 3 weitere Muskelgruppen. Die primäre Muskelgruppe ist hier ausgeschlossen.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
 
-            Section("Notizen") {
-                TextEditor(text: $notes)
-                    .frame(minHeight: 90)
-            }
+                Section("Sekundäre Muskelgruppen") {
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 118), alignment: .leading)],
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
+                        ForEach(muscleGroups.filter { $0 != primaryMuscle }, id: \.self) { muscle in
+                            let isSelected = selectedSecondaryMuscles.contains(muscle)
+                            Button {
+                                toggleSecondaryMuscle(muscle)
+                            } label: {
+                                Label(
+                                    muscleDisplayName(muscle),
+                                    systemImage: isSelected ? "checkmark.circle.fill" : "circle"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(isSelected ? Color.accentColor : Color.secondary)
+                            .disabled(!isSelected && selectedSecondaryMuscles.count >= 3)
+                        }
+                    }
+                    Text("Wähle bis zu 3 weitere Muskelgruppen. Die primäre Muskelgruppe ist hier ausgeschlossen.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
 
-            Section {
-                Toggle("Archiviert", isOn: $isArchived)
-            } footer: {
-                Text("Archivierte Übungen bleiben in der Historie erhalten und werden bei der Plan-Auswahl ausgeblendet.")
-            }
+                Section("Notizen") {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 90)
+                }
 
-            if let errorMessage {
                 Section {
-                    Label(errorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                    Toggle("Archiviert", isOn: $isArchived)
+                } footer: {
+                    Text("Archivierte Übungen bleiben in der Historie erhalten und werden bei der Plan-Auswahl ausgeblendet.")
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
+            .ironLogListRows()
         }
+        .ironLogScreenBackground()
         .navigationTitle(exercise == nil ? "Neue Übung" : "Übung bearbeiten")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: primaryMuscle) { _, newPrimary in

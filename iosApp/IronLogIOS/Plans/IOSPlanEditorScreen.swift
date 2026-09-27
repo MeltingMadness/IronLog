@@ -28,65 +28,69 @@ struct IOSPlanEditorScreen: View {
 
     var body: some View {
         Form {
-            Section("Plan") {
-                TextField("Name", text: $name)
-                    .textInputAutocapitalization(.words)
-                    .onChange(of: name) { _, _ in hasEdits = true }
+            Group {
+                Section("Plan") {
+                    TextField("Name", text: $name)
+                        .textInputAutocapitalization(.words)
+                        .onChange(of: name) { _, _ in hasEdits = true }
 
-                if let plan = existingPlan {
-                    LabeledContent("Erstellt", value: plan.createdDate.formatted(date: .abbreviated, time: .omitted))
-                }
-            }
-
-            Section {
-                if rows.isEmpty {
-                    ContentUnavailableView("Keine Übungen", systemImage: "figure.strengthtraining.traditional", description: Text("Füge mindestens eine Übung hinzu oder speichere den Plan zunächst ohne Ziele."))
-                        .listRowBackground(Color.clear)
-                } else {
-                    ForEach($rows) { row in
-                        IOSPlanExerciseRow(
-                            row: row,
-                            exerciseName: exerciseName(for: row.wrappedValue.exerciseID),
-                            unitSystem: unitSystem,
-                            index: rows.firstIndex(where: { $0.id == row.wrappedValue.id }) ?? 0,
-                            isFirst: row.wrappedValue.id == rows.first?.id,
-                            isLast: row.wrappedValue.id == rows.last?.id,
-                            onMoveUp: { move(row.wrappedValue, by: -1) },
-                            onMoveDown: { move(row.wrappedValue, by: 1) },
-                            onRemove: { remove(row.wrappedValue) },
-                            onGroupWithPrevious: { groupWithPrevious(row.wrappedValue) },
-                            onUngroup: { ungroup(row.wrappedValue) },
-                            onProgression: { progressionEditor = IOSProgressionEditorPresentation(rowID: row.wrappedValue.id, draft: row.wrappedValue.progression) }
-                        )
-                        .onChange(of: row.wrappedValue) { _, _ in hasEdits = true }
+                    if let plan = existingPlan {
+                        LabeledContent("Erstellt", value: plan.createdDate.formatted(date: .abbreviated, time: .omitted))
                     }
-                    .onMove(perform: moveRows)
                 }
 
-                Button {
-                    exercisePicker = IOSExercisePickerPresentation()
-                } label: {
-                    Label("Übung hinzufügen", systemImage: "plus.circle.fill")
-                }
-                .disabled(availableExercises.isEmpty)
-            } header: {
-                HStack {
-                    Text("Übungen")
-                    Spacer()
-                    Text("\(rows.count)")
-                        .foregroundStyle(.secondary)
-                }
-            } footer: {
-                Text("Die Reihenfolge wird im Workout übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
-            }
-
-            if let errorMessage {
                 Section {
-                    Label(errorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                    if rows.isEmpty {
+                        ContentUnavailableView("Keine Übungen", systemImage: "figure.strengthtraining.traditional", description: Text("Füge mindestens eine Übung hinzu oder speichere den Plan zunächst ohne Ziele."))
+                            .listRowBackground(Color.clear)
+                    } else {
+                        ForEach($rows) { row in
+                            IOSPlanExerciseRow(
+                                row: row,
+                                exerciseName: exerciseName(for: row.wrappedValue.exerciseID),
+                                unitSystem: unitSystem,
+                                index: rows.firstIndex(where: { $0.id == row.wrappedValue.id }) ?? 0,
+                                isFirst: row.wrappedValue.id == rows.first?.id,
+                                isLast: row.wrappedValue.id == rows.last?.id,
+                                onMoveUp: { move(row.wrappedValue, by: -1) },
+                                onMoveDown: { move(row.wrappedValue, by: 1) },
+                                onRemove: { remove(row.wrappedValue) },
+                                onGroupWithPrevious: { groupWithPrevious(row.wrappedValue) },
+                                onUngroup: { ungroup(row.wrappedValue) },
+                                onProgression: { progressionEditor = IOSProgressionEditorPresentation(rowID: row.wrappedValue.id, draft: row.wrappedValue.progression) }
+                            )
+                            .onChange(of: row.wrappedValue) { _, _ in hasEdits = true }
+                        }
+                        .onMove(perform: moveRows)
+                    }
+
+                    Button {
+                        exercisePicker = IOSExercisePickerPresentation()
+                    } label: {
+                        Label("Übung hinzufügen", systemImage: "plus.circle.fill")
+                    }
+                    .disabled(availableExercises.isEmpty)
+                } header: {
+                    HStack {
+                        Text("Übungen")
+                        Spacer()
+                        Text("\(rows.count)")
+                            .foregroundStyle(.secondary)
+                    }
+                } footer: {
+                    Text("Die Reihenfolge wird im Workout übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
+            .ironLogListRows()
         }
+        .ironLogScreenBackground()
         .navigationTitle(planID == nil ? "Neuer Plan" : "Plan bearbeiten")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -427,73 +431,77 @@ private struct IOSProgressionEditorSheet: View {
 
     var body: some View {
         Form {
-            Section("Schema") {
-                Picker("Regel", selection: $draft.scheme) {
-                    ForEach(IOSProgressionScheme.allCases) { scheme in
-                        Text(scheme.title).tag(scheme)
-                    }
-                }
-                .pickerStyle(.navigationLink)
-
-                if draft.scheme == .manual {
-                    Text("Manuelle Ziele werden ohne automatische Änderung fortgeführt.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if draft.scheme != .manual {
-                Section("Schritt") {
-                    HStack {
-                        TextField("Schritt", text: $draft.stepValue)
-                            .keyboardType(.decimalPad)
-                        Picker("Einheit", selection: $draft.stepUnit) {
-                            Text("kg").tag("KG")
-                            Text("lb").tag("LB")
+            Group {
+                Section("Schema") {
+                    Picker("Regel", selection: $draft.scheme) {
+                        ForEach(IOSProgressionScheme.allCases) { scheme in
+                            Text(scheme.title).tag(scheme)
                         }
-                        .pickerStyle(.segmented)
-                        .frame(maxWidth: 150)
                     }
+                    .pickerStyle(.navigationLink)
 
-                    switch draft.scheme {
-                    case .manual, .linear:
-                        EmptyView()
-                    case .double:
-                        TextField("Min-Reps", text: $draft.minReps)
-                            .keyboardType(.numberPad)
-                        TextField("Max-Reps", text: $draft.maxReps)
-                            .keyboardType(.numberPad)
-                    case .totalReps:
-                        TextField("Ziel-Gesamtwiederholungen", text: $draft.totalReps)
-                            .keyboardType(.numberPad)
-                    case .rpeRir:
-                        TextField("Ziel-RPE", text: $draft.targetRpe)
-                            .keyboardType(.decimalPad)
-                        TextField("RPE-Toleranz", text: $draft.rpeTolerance)
-                            .keyboardType(.decimalPad)
+                    if draft.scheme == .manual {
+                        Text("Manuelle Ziele werden ohne automatische Änderung fortgeführt.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
-                Section("Fehlerbehandlung") {
-                    TextField("Fehlerlimit", text: $draft.stallThreshold)
-                        .keyboardType(.numberPad)
-                    TextField("Backoff in %", text: $draft.backoffPercent)
-                        .keyboardType(.decimalPad)
-                    Text(IOSWeight.isImperial(unitSystem)
-                        ? "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb."
-                        : "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
+                if draft.scheme != .manual {
+                    Section("Schritt") {
+                        HStack {
+                            TextField("Schritt", text: $draft.stepValue)
+                                .keyboardType(.decimalPad)
+                            Picker("Einheit", selection: $draft.stepUnit) {
+                                Text("kg").tag("KG")
+                                Text("lb").tag("LB")
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 150)
+                        }
 
-            if let validationMessage {
-                Section {
-                    Label(validationMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                        switch draft.scheme {
+                        case .manual, .linear:
+                            EmptyView()
+                        case .double:
+                            TextField("Min-Reps", text: $draft.minReps)
+                                .keyboardType(.numberPad)
+                            TextField("Max-Reps", text: $draft.maxReps)
+                                .keyboardType(.numberPad)
+                        case .totalReps:
+                            TextField("Ziel-Gesamtwiederholungen", text: $draft.totalReps)
+                                .keyboardType(.numberPad)
+                        case .rpeRir:
+                            TextField("Ziel-RPE", text: $draft.targetRpe)
+                                .keyboardType(.decimalPad)
+                            TextField("RPE-Toleranz", text: $draft.rpeTolerance)
+                                .keyboardType(.decimalPad)
+                        }
+                    }
+
+                    Section("Fehlerbehandlung") {
+                        TextField("Fehlerlimit", text: $draft.stallThreshold)
+                            .keyboardType(.numberPad)
+                        TextField("Backoff in %", text: $draft.backoffPercent)
+                            .keyboardType(.decimalPad)
+                        Text(IOSWeight.isImperial(unitSystem)
+                            ? "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb."
+                            : "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let validationMessage {
+                    Section {
+                        Label(validationMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
+            .ironLogListRows()
         }
+        .ironLogScreenBackground()
         .navigationTitle("Progression")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -530,26 +538,30 @@ private struct IOSIndividualSetTargetsEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Satz / Typ · Gewicht · Wiederholungen") {
-                    ForEach($drafts) { $draft in
-                        VStack(alignment: .leading) {
-                            Picker("Typ", selection: $draft.kind) {
-                                Text("Aufwärmen").tag("WARMUP")
-                                Text("Arbeitssatz").tag("NORMAL")
-                                Text("Backoff").tag("BACKOFF")
+                Group {
+                    Section("Satz / Typ · Gewicht · Wiederholungen") {
+                        ForEach($drafts) { $draft in
+                            VStack(alignment: .leading) {
+                                Picker("Typ", selection: $draft.kind) {
+                                    Text("Aufwärmen").tag("WARMUP")
+                                    Text("Arbeitssatz").tag("NORMAL")
+                                    Text("Backoff").tag("BACKOFF")
+                                }
+                                HStack {
+                                    IOSCompactField(title: IOSWeight.label(unitSystem), text: $draft.weight, keyboard: .decimalPad)
+                                    IOSCompactField(title: "Wdh.", text: $draft.reps, keyboard: .numberPad)
+                                }
                             }
-                            HStack {
-                                IOSCompactField(title: IOSWeight.label(unitSystem), text: $draft.weight, keyboard: .decimalPad)
-                                IOSCompactField(title: "Wdh.", text: $draft.reps, keyboard: .numberPad)
-                            }
-                        }
-                    }.onDelete { drafts.remove(atOffsets: $0) }
-                    Button("+ Arbeitssatz") { drafts.append(.init(kind: "NORMAL", weight: drafts.last?.weight ?? "0", reps: drafts.last?.reps ?? "10")) }.disabled(drafts.count >= 100)
-                    Button("+ Aufwärmsatz") { drafts.insert(.init(kind: "WARMUP", weight: "0", reps: "10"), at: 0) }.disabled(drafts.count >= 100)
+                        }.onDelete { drafts.remove(atOffsets: $0) }
+                        Button("+ Arbeitssatz") { drafts.append(.init(kind: "NORMAL", weight: drafts.last?.weight ?? "0", reps: drafts.last?.reps ?? "10")) }.disabled(drafts.count >= 100)
+                        Button("+ Aufwärmsatz") { drafts.insert(.init(kind: "WARMUP", weight: "0", reps: "10"), at: 0) }.disabled(drafts.count >= 100)
+                    }
+                    Section { Text("Progression: Manuell · Jede Satzvorgabe bleibt einzeln editierbar.") }
+                    if let error { Text(error).foregroundStyle(.red) }
                 }
-                Section { Text("Progression: Manuell · Jede Satzvorgabe bleibt einzeln editierbar.") }
-                if let error { Text(error).foregroundStyle(.red) }
+                .ironLogListRows()
             }
+            .ironLogScreenBackground()
             .navigationTitle("Satzvorgaben")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() } }

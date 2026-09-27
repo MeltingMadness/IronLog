@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,9 +40,6 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -89,8 +87,7 @@ fun TrainingPlanListScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+            IronLogTopBar(
                 title = { Text(stringResource(id = R.string.plans_title)) },
                 actions = {
                     // Open and past progression outcomes, also when nothing is pending.
@@ -292,6 +289,7 @@ private fun PlanCard(
     onLongClick: () -> Unit
 ) {
     val dims = ironLogDimens
+    val glass = isLiquidGlass()
     val exerciseCount = item.plan.exercises.size
     val lastDone = when (val days = item.lastDoneDaysAgo) {
         null -> stringResource(R.string.dashboard_hero_last_done_never)
@@ -312,12 +310,12 @@ private fun PlanCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dims.spacingMd)
+                .padding(if (glass) dims.spacingLg else dims.spacingMd)
         ) {
             Text(
                 text = item.plan.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = if (glass) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                fontWeight = if (glass) FontWeight.ExtraBold else FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
@@ -341,7 +339,13 @@ private fun PlanCard(
             }
 
             Spacer(modifier = Modifier.height(dims.spacingSm))
-            FilledTonalButton(
+            if (glass) {
+                GlassStartPill(
+                    text = stringResource(id = R.string.dashboard_start_workout),
+                    onClick = onStart,
+                    modifier = Modifier.align(Alignment.End)
+                )
+            } else FilledTonalButton(
                 onClick = onStart,
                 modifier = Modifier.align(Alignment.End)
             ) {

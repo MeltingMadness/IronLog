@@ -905,48 +905,51 @@ private struct IOSDashboardCheckInSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    ILCheckInScaleRow(title: "Schlafqualität", dimension: .sleepQuality, value: $sleepQuality)
-                    ILCheckInScaleRow(title: "Energie", dimension: .energy, value: $energy)
-                    ILCheckInScaleRow(title: "Stress", dimension: .stress, value: $stress)
-                } header: {
-                    Text("Tagesform · \(ilCheckInDateText(localDate))")
-                } footer: {
-                    Text("Alle Angaben sind freiwillig. Eine nicht beantwortete Zeile bleibt offen und wird nicht als Wert gespeichert.")
-                }
-
-                Section {
-                    ForEach(orderedMuscleGroups, id: \.self) { muscle in
-                        ILCheckInScaleRow(
-                            title: ilMuscleDisplayName(muscle),
-                            dimension: .soreness,
-                            value: sorenessBinding(for: muscle)
-                        )
-                    }
-                } header: {
-                    Text("Muskelkater je Muskelgruppe")
-                } footer: {
-                    Text("1 bedeutet kein bis sehr geringer, 5 sehr starker Muskelkater. Nicht gemeldete Muskeln bleiben offen.")
-                }
-
-                if saveFailed {
+                Group {
                     Section {
-                        Text(store.errorMessage ?? "Speichern fehlgeschlagen. Bitte erneut versuchen.")
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
-                    }
-                }
-
-                if existingCheckIn != nil {
-                    Section {
-                        Button("Check-in für heute löschen", role: .destructive) {
-                            Task { await deleteCheckIn() }
-                        }
-                        .disabled(isSaving)
+                        ILCheckInScaleRow(title: "Schlafqualität", dimension: .sleepQuality, value: $sleepQuality)
+                        ILCheckInScaleRow(title: "Energie", dimension: .energy, value: $energy)
+                        ILCheckInScaleRow(title: "Stress", dimension: .stress, value: $stress)
+                    } header: {
+                        Text("Tagesform · \(ilCheckInDateText(localDate))")
                     } footer: {
-                        Text("Löschen entfernt die gespeicherten Antworten dieses Tages. Abbrechen lässt sie unverändert.")
+                        Text("Alle Angaben sind freiwillig. Eine nicht beantwortete Zeile bleibt offen und wird nicht als Wert gespeichert.")
+                    }
+
+                    Section {
+                        ForEach(orderedMuscleGroups, id: \.self) { muscle in
+                            ILCheckInScaleRow(
+                                title: ilMuscleDisplayName(muscle),
+                                dimension: .soreness,
+                                value: sorenessBinding(for: muscle)
+                            )
+                        }
+                    } header: {
+                        Text("Muskelkater je Muskelgruppe")
+                    } footer: {
+                        Text("1 bedeutet kein bis sehr geringer, 5 sehr starker Muskelkater. Nicht gemeldete Muskeln bleiben offen.")
+                    }
+
+                    if saveFailed {
+                        Section {
+                            Text(store.errorMessage ?? "Speichern fehlgeschlagen. Bitte erneut versuchen.")
+                                .font(.footnote)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+
+                    if existingCheckIn != nil {
+                        Section {
+                            Button("Check-in für heute löschen", role: .destructive) {
+                                Task { await deleteCheckIn() }
+                            }
+                            .disabled(isSaving)
+                        } footer: {
+                            Text("Löschen entfernt die gespeicherten Antworten dieses Tages. Abbrechen lässt sie unverändert.")
+                        }
                     }
                 }
+                .ironLogListRows()
             }
             .navigationTitle("Check-in")
             .navigationBarTitleDisplayMode(.inline)

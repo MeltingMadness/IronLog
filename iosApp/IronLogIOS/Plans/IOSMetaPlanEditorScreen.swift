@@ -23,58 +23,62 @@ struct IOSMetaPlanEditorScreen: View {
 
     var body: some View {
         Form {
-            Section("Meta-Plan") {
-                TextField("Name", text: $name)
-                    .textInputAutocapitalization(.words)
-                if let plan = existingPlan {
-                    LabeledContent("Erstellt", value: plan.createdDate.formatted(date: .abbreviated, time: .omitted))
-                }
-            }
-
-            Section {
-                if items.isEmpty {
-                    ContentUnavailableView("Keine Teilpläne", systemImage: "rectangle.stack.badge.plus", description: Text("Füge mindestens einen Trainingsplan hinzu. Die Reihenfolge bestimmt die Rotation."))
-                        .listRowBackground(Color.clear)
-                } else {
-                    ForEach($items) { item in
-                        IOSMetaPlanItemRow(
-                            item: item,
-                            index: items.firstIndex(where: { $0.id == item.wrappedValue.id }) ?? 0,
-                            planName: planName(for: item.wrappedValue.trainingPlanID),
-                            isFirst: item.wrappedValue.id == items.first?.id,
-                            isLast: item.wrappedValue.id == items.last?.id,
-                            onMoveUp: { move(item.wrappedValue, by: -1) },
-                            onMoveDown: { move(item.wrappedValue, by: 1) },
-                            onRemove: { remove(item.wrappedValue) }
-                        )
+            Group {
+                Section("Meta-Plan") {
+                    TextField("Name", text: $name)
+                        .textInputAutocapitalization(.words)
+                    if let plan = existingPlan {
+                        LabeledContent("Erstellt", value: plan.createdDate.formatted(date: .abbreviated, time: .omitted))
                     }
-                    .onMove(perform: moveItems)
                 }
 
-                Button {
-                    planPicker = IOSPlanPickerPresentation()
-                } label: {
-                    Label("Trainingsplan hinzufügen", systemImage: "plus.circle.fill")
-                }
-                .disabled(availablePlans.isEmpty)
-            } header: {
-                HStack {
-                    Text("Rotation")
-                    Spacer()
-                    Text("\(items.count)")
-                        .foregroundStyle(.secondary)
-                }
-            } footer: {
-                Text("Teilpläne dürfen wiederholt werden. Beim Start wird der nächste gültige Eintrag aus der Rotation gewählt.")
-            }
-
-            if let errorMessage {
                 Section {
-                    Label(errorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                    if items.isEmpty {
+                        ContentUnavailableView("Keine Teilpläne", systemImage: "rectangle.stack.badge.plus", description: Text("Füge mindestens einen Trainingsplan hinzu. Die Reihenfolge bestimmt die Rotation."))
+                            .listRowBackground(Color.clear)
+                    } else {
+                        ForEach($items) { item in
+                            IOSMetaPlanItemRow(
+                                item: item,
+                                index: items.firstIndex(where: { $0.id == item.wrappedValue.id }) ?? 0,
+                                planName: planName(for: item.wrappedValue.trainingPlanID),
+                                isFirst: item.wrappedValue.id == items.first?.id,
+                                isLast: item.wrappedValue.id == items.last?.id,
+                                onMoveUp: { move(item.wrappedValue, by: -1) },
+                                onMoveDown: { move(item.wrappedValue, by: 1) },
+                                onRemove: { remove(item.wrappedValue) }
+                            )
+                        }
+                        .onMove(perform: moveItems)
+                    }
+
+                    Button {
+                        planPicker = IOSPlanPickerPresentation()
+                    } label: {
+                        Label("Trainingsplan hinzufügen", systemImage: "plus.circle.fill")
+                    }
+                    .disabled(availablePlans.isEmpty)
+                } header: {
+                    HStack {
+                        Text("Rotation")
+                        Spacer()
+                        Text("\(items.count)")
+                            .foregroundStyle(.secondary)
+                    }
+                } footer: {
+                    Text("Teilpläne dürfen wiederholt werden. Beim Start wird der nächste gültige Eintrag aus der Rotation gewählt.")
+                }
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
+            .ironLogListRows()
         }
+        .ironLogScreenBackground()
         .navigationTitle(metaPlanID == nil ? "Neuer Meta-Plan" : "Meta-Plan bearbeiten")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -267,15 +271,19 @@ private struct IOSPlanPickerSheet: View {
 
     var body: some View {
         List(filtered) { plan in
-            Button {
-                onSelect(plan)
-                dismiss()
-            } label: {
-                Label(plan.name, systemImage: "list.bullet.rectangle")
-                    .foregroundStyle(.primary)
+            Group {
+                Button {
+                    onSelect(plan)
+                    dismiss()
+                } label: {
+                    Label(plan.name, systemImage: "list.bullet.rectangle")
+                        .foregroundStyle(.primary)
+                }
             }
+            .ironLogListRows()
         }
         .listStyle(.insetGrouped)
+        .ironLogScreenBackground()
         .navigationTitle("Plan wählen")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Pläne suchen")
