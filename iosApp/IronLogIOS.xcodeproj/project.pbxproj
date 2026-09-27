@@ -60,8 +60,10 @@
 		D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 175CDFFC00E37243DD0A1389 /* Shared.framework */; };
 		D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */; };
 		DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */; };
+		BF4100BF603520FECCCDC085 /* IOSHistoryGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21F581BE8044707F29888AC9 /* IOSHistoryGlass.swift */; };
 		E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */; };
 		38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */; };
+		ECE5AC667D331AB0E522DB83 /* HistoryWeekTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E5280781B07D34ACD0BE00 /* HistoryWeekTests.swift */; };
 		72C2A93286ED7B7A1082E4A1 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */; };
 		EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */; };
 		F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */; };
@@ -93,6 +95,7 @@
 		6BA7A73483EC073D5422592A /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
 		6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDayGuardTests.swift; sourceTree = "<group>"; };
 		9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWeekStripTests.swift; sourceTree = "<group>"; };
+		C6E5280781B07D34ACD0BE00 /* HistoryWeekTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWeekTests.swift; sourceTree = "<group>"; };
 		153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerAdjustTests.swift; sourceTree = "<group>"; };
 		7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRestTimerPersistenceTests.swift; sourceTree = "<group>"; };
 		7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
@@ -126,6 +129,7 @@
 		F327121E2804F40B69EB2A98 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		F41AAE408BD1E527A254E251 /* BinaryFileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocument.swift; sourceTree = "<group>"; };
 		F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistorySupport.swift; sourceTree = "<group>"; };
+		21F581BE8044707F29888AC9 /* IOSHistoryGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryGlass.swift; sourceTree = "<group>"; };
 		FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
 		E73A7336FCD5D60B215C3374 /* IOSDashboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardGlass.swift; sourceTree = "<group>"; };
 		FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
@@ -273,6 +277,7 @@
 		children = (
 			7A06146910347052BB6D17DA /* IOSHistoryScreen.swift */,
 			F6B030D011616DD3BD3F0625 /* IOSHistorySupport.swift */,
+			21F581BE8044707F29888AC9 /* IOSHistoryGlass.swift */,
 		);
 			path = History;
 			sourceTree = "<group>";
@@ -294,6 +299,7 @@
 			447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */,
 			6C5C9944476F345628A9707D /* LocalDayGuardTests.swift */,
 			9EC150636BB11F0F2B7493A5 /* DashboardWeekStripTests.swift */,
+			C6E5280781B07D34ACD0BE00 /* HistoryWeekTests.swift */,
 			153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */,
 			9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */,
 			E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */,
@@ -429,50 +435,51 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE9AED1EDD8FBD1EE7656AF7 /* AnalyticsPresentation.swift in Sources */, 
-				AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */, 
+				CE9AED1EDD8FBD1EE7656AF7 /* AnalyticsPresentation.swift in Sources */,
+				AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */,
 				92DE893AE6108537DE6C11F9 /* IOSDashboardGlass.swift in Sources */,
-				0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */, 
-				3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */, 
+				0DE4C25514AD9A12AA83E7B7 /* IOSDashboardScreen.swift in Sources */,
+				3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */,
 				0B0DA9EA073BAD6A6C2C3656 /* IronLogCard.swift in Sources */,
-				E9F12934A40CA45C2A5EF014 /* IronLogLiquidGlass.swift in Sources */, 
-				7D7A1A516DA037F63E1C1B80 /* IronLogMetricRing.swift in Sources */, 
-				EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */, 
-				7120AB589A9BCE7CFB3F8271 /* IronLogWeeklyMuscleVolume.swift in Sources */, 
-				B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */, 
-				DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */, 
-				7605FB49D60C915FC699B5D0 /* Readiness.swift in Sources */, 
-				5A79CD007629BC1CDEE1CC98 /* TrainingAnalytics.swift in Sources */, 
-				8C33CF24D58A77AF0585EDE8 /* TrainingData.swift in Sources */, 
-				7F0D96676C8F6A7D23D428CF /* IOSExerciseLibraryScreen.swift in Sources */, 
-				8515BFA3D275E54DC62FD217 /* IOSMetaPlanEditorScreen.swift in Sources */, 
-				68DE2C92172388DCEACC1CE1 /* IOSPlanEditorScreen.swift in Sources */, 
-				28B7D7F901FFDC6C19C0C84E /* IOSPlansScreen.swift in Sources */, 
-				0869BF40E44EDB759F73D93B /* IOSPlansSupport.swift in Sources */, 
-				4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */, 
-				0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */, 
+				E9F12934A40CA45C2A5EF014 /* IronLogLiquidGlass.swift in Sources */,
+				7D7A1A516DA037F63E1C1B80 /* IronLogMetricRing.swift in Sources */,
+				EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */,
+				7120AB589A9BCE7CFB3F8271 /* IronLogWeeklyMuscleVolume.swift in Sources */,
+				B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */,
+				DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */,
+				BF4100BF603520FECCCDC085 /* IOSHistoryGlass.swift in Sources */,
+				7605FB49D60C915FC699B5D0 /* Readiness.swift in Sources */,
+				5A79CD007629BC1CDEE1CC98 /* TrainingAnalytics.swift in Sources */,
+				8C33CF24D58A77AF0585EDE8 /* TrainingData.swift in Sources */,
+				7F0D96676C8F6A7D23D428CF /* IOSExerciseLibraryScreen.swift in Sources */,
+				8515BFA3D275E54DC62FD217 /* IOSMetaPlanEditorScreen.swift in Sources */,
+				68DE2C92172388DCEACC1CE1 /* IOSPlanEditorScreen.swift in Sources */,
+				28B7D7F901FFDC6C19C0C84E /* IOSPlansScreen.swift in Sources */,
+				0869BF40E44EDB759F73D93B /* IOSPlansSupport.swift in Sources */,
+				4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */,
+				0CF3AA0EFBCB704B7D5A75BC /* IOSExerciseStatisticsScreen.swift in Sources */,
 				8BFF3495A6F50528ECEF4165 /* IOSExerciseStatisticsGlass.swift in Sources */,
-				77CC7D8970E0E1232B428883 /* IOSStatisticsScreen.swift in Sources */, 
-				393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */, 
-				5B7F20D9057C5D94EA50B119 /* IOSWorkoutExerciseCard.swift in Sources */, 
+				77CC7D8970E0E1232B428883 /* IOSStatisticsScreen.swift in Sources */,
+				393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */,
+				5B7F20D9057C5D94EA50B119 /* IOSWorkoutExerciseCard.swift in Sources */,
 				16540ECD3A3390192F85B26E /* IOSWorkoutGlass.swift in Sources */,
-				25D89AB3FD5B8889379974B0 /* IOSWorkoutExercisePicker.swift in Sources */, 
-				314114849498ECCE06C4721B /* IOSWorkoutFormatting.swift in Sources */, 
-				796C7FAB5CF102777663E278 /* IOSWorkoutNextSetCoach.swift in Sources */, 
-				2C33532E3C06D96BCF27C579 /* IOSWorkoutPlateVisualizer.swift in Sources */, 
-				19021D29F385C24A553C5FF7 /* IOSWorkoutRestTimer.swift in Sources */, 
-				C389079B8F1449C74D5761CE /* IOSWorkoutScreen.swift in Sources */, 
-				F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */, 
-				22B55B66B9719E8E01B6D560 /* IOSWorkoutStartView.swift in Sources */, 
-				594DC0F64CF92E60EECB63D3 /* IOSWorkoutSuperset.swift in Sources */, 
-				D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */, 
-				94500958EAE26793CA518347 /* IOSSettingsViewModel.swift in Sources */, 
-				4DE13CA063E485D3BC27F865 /* IOSTrainingStore.swift in Sources */, 
-				7C2B5C1CFE54DBEA87A0C13D /* IronLogApp.swift in Sources */, 
-				912FD5E42DCB9F9E324D33C7 /* RootView.swift in Sources */, 
-				957F0C8A9B186114C4D54A21 /* SettingsScreen.swift in Sources */, 
-				5BF7C753C0E21D29A735A1AE /* SharedBootstrap.swift in Sources */, 
-				9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */, 
+				25D89AB3FD5B8889379974B0 /* IOSWorkoutExercisePicker.swift in Sources */,
+				314114849498ECCE06C4721B /* IOSWorkoutFormatting.swift in Sources */,
+				796C7FAB5CF102777663E278 /* IOSWorkoutNextSetCoach.swift in Sources */,
+				2C33532E3C06D96BCF27C579 /* IOSWorkoutPlateVisualizer.swift in Sources */,
+				19021D29F385C24A553C5FF7 /* IOSWorkoutRestTimer.swift in Sources */,
+				C389079B8F1449C74D5761CE /* IOSWorkoutScreen.swift in Sources */,
+				F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */,
+				22B55B66B9719E8E01B6D560 /* IOSWorkoutStartView.swift in Sources */,
+				594DC0F64CF92E60EECB63D3 /* IOSWorkoutSuperset.swift in Sources */,
+				D95DBCFF3E1DCB94E756D28C /* BinaryFileDocument.swift in Sources */,
+				94500958EAE26793CA518347 /* IOSSettingsViewModel.swift in Sources */,
+				4DE13CA063E485D3BC27F865 /* IOSTrainingStore.swift in Sources */,
+				7C2B5C1CFE54DBEA87A0C13D /* IronLogApp.swift in Sources */,
+				912FD5E42DCB9F9E324D33C7 /* RootView.swift in Sources */,
+				957F0C8A9B186114C4D54A21 /* SettingsScreen.swift in Sources */,
+				5BF7C753C0E21D29A735A1AE /* SharedBootstrap.swift in Sources */,
+				9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -480,17 +487,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */, 
-				355BDEBEEAD9DD0AC9E05662 /* BinaryFileDocumentTests.swift in Sources */, 
-				7EE2761C3A64467F5AB8D14A /* IndividualSetTargetsTests.swift in Sources */, 
-				4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */, 
-				E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */, 
+				9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */,
+				355BDEBEEAD9DD0AC9E05662 /* BinaryFileDocumentTests.swift in Sources */,
+				7EE2761C3A64467F5AB8D14A /* IndividualSetTargetsTests.swift in Sources */,
+				4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */,
+				E50949EAABD572FE11698E97 /* LocalDayGuardTests.swift in Sources */,
 				38AF74CD792488F25D8F215C /* DashboardWeekStripTests.swift in Sources */,
+				ECE5AC667D331AB0E522DB83 /* HistoryWeekTests.swift in Sources */,
 				72C2A93286ED7B7A1082E4A1 /* RestTimerAdjustTests.swift in Sources */,
-				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
-				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
-				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 
-				BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */, 
+				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */,
+				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */,
+				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */,
+				BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

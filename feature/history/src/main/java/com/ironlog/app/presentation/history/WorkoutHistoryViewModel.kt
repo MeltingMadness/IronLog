@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.ironlog.app.domain.error.toAppError
 import com.ironlog.app.domain.model.WorkoutSession
@@ -12,6 +13,7 @@ import com.ironlog.app.domain.repository.WorkoutRepository
 import com.ironlog.app.domain.repository.TrainingPlanRepository
 import com.ironlog.app.presentation.common.toUserMessage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
@@ -116,6 +119,24 @@ class WorkoutHistoryViewModel(
             }
         }
         .cachedIn(viewModelScope)
+
+    /** Same list with a header in front of each week (Liquid Glass). */
+    val pagedHistoryEntries: Flow<PagingData<HistoryListEntry>> = pagedWorkouts
+        .map { pagingData ->
+            pagingData
+                .map { HistoryListEntry.Workout(it) }
+                .insertSeparators<HistoryListEntry.Workout, HistoryListEntry> { before, after ->
+                    historyWeekSeparator(before?.item, after?.item)
+                }
+        }
+        .cachedIn(viewModelScope)
+
+    /** Minutes per day of every week with trainings, for the mini bars of the week headers. */
+    val weekSummaries: StateFlow<Map<LocalDate, HistoryWeekSummary>> = workoutRepository
+        .getAllCompletedSessions()
+        .map(::summarizeHistoryWeeks)
+        .catch { emit(emptyMap()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     init {
         observePlans()

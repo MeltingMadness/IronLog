@@ -7,8 +7,10 @@ import UIKit
 struct IOSHistoryScreen: View {
     @Environment(IOSTrainingStore.self) private var store
     @EnvironmentObject private var settings: IOSSettingsViewModel
+    @Environment(\.ironLogAppearance) private var appearance
 
     @State private var searchText = ""
+    @State private var openedSessionID: Int64?
     @State private var dateFilter: IOSHistoryDateFilter = .all
     @State private var selectedPlanID: Int64?
     @State private var sessionToDelete: ILWorkoutSession?
@@ -76,6 +78,8 @@ struct IOSHistoryScreen: View {
                                 : "Passe Suche oder Zeitraum an."
                         )
                     )
+                } else if appearance == .liquidGlass {
+                    glassHistoryList
                 } else {
                     historyList
                 }
@@ -122,6 +126,9 @@ struct IOSHistoryScreen: View {
                     .accessibilityLabel("Plan filtern")
                     .accessibilityValue(selectedPlanName ?? "Alle Pläne")
                 }
+            }
+            .navigationDestination(item: $openedSessionID) { sessionID in
+                IOSHistoryDetailScreen(sessionID: sessionID)
             }
             .alert(item: $alert) { item in
                 Alert(
@@ -181,6 +188,40 @@ struct IOSHistoryScreen: View {
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    /// Liquid Glass: one glass header per week with mini bars, the trainings of that week
+    /// below as glass rows. Search, filters and swipe to delete stay the same.
+    private var glassHistoryList: some View {
+        List {
+            ForEach(IOSHistoryWeek.group(visible: completedSessions, all: store.data?.workoutSessions ?? [])) { week in
+                IOSHistoryGlassWeekHeader(week: week)
+                    .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                ForEach(week.sessions) { session in
+                    Button {
+                        openedSessionID = session.id
+                    } label: {
+                        IOSHistoryGlassRow(session: session, data: store.data, unitSystem: settings.state.unitSystem)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Öffnet die Details dieses Trainings")
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            sessionToDelete = session
+                        } label: {
+                            Label("Löschen", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 
     private func delete(_ session: ILWorkoutSession) {
@@ -808,7 +849,7 @@ private struct IOSHistoryAlert: Identifiable {
     let message: String
 }
 
-private extension ILWorkoutSession {
+extension ILWorkoutSession {
     var iosDurationSeconds: Int64 {
         if durationSeconds > 0 { return durationSeconds }
         guard let endTime else { return 0 }

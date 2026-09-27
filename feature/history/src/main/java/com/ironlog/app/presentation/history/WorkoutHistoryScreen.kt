@@ -61,7 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import java.time.LocalDate
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.AppPreferences
 import com.ironlog.app.domain.model.TrainingPlan
@@ -106,7 +108,11 @@ fun WorkoutHistoryScreen(
     onWorkoutClick: (Long) -> Unit,
     viewModel: WorkoutHistoryViewModel = koinViewModel()
 ) {
+    val glass = isLiquidGlass()
     val pagedWorkouts = viewModel.pagedWorkouts.collectAsLazyPagingItems()
+    val pagedEntries = viewModel.pagedHistoryEntries.collectAsLazyPagingItems()
+    val weekSummaries by viewModel.weekSummaries.collectAsStateWithLifecycle()
+    val today = remember { LocalDate.now() }
     var deleteSessionId by remember { mutableStateOf<Long?>(null) }
     val appPreferencesRepository: AppPreferencesRepository = koinInject()
     val preferences by appPreferencesRepository.preferences.collectAsStateWithLifecycle(
@@ -125,7 +131,7 @@ fun WorkoutHistoryScreen(
 
     IronLogScreenScaffold(
         topBar = {
-            TopAppBar(
+            if (!glass) TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = { Text(stringResource(id = R.string.history_title)) })
         },
@@ -136,10 +142,18 @@ fun WorkoutHistoryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            HistorySearchField(
-                query = state.filter.query,
-                onQueryChange = viewModel::setSearchQuery
-            )
+            if (glass) {
+                GlassHistoryHeader()
+                GlassHistorySearchField(
+                    query = state.filter.query,
+                    onQueryChange = viewModel::setSearchQuery
+                )
+            } else {
+                HistorySearchField(
+                    query = state.filter.query,
+                    onQueryChange = viewModel::setSearchQuery
+                )
+            }
             HistoryFilterBar(
                 filter = state.filter,
                 plans = state.plans,
@@ -193,7 +207,45 @@ fun WorkoutHistoryScreen(
                     )
                 }
 
-                HistoryListContentState.Content -> {
+                HistoryListContentState.Content -> if (glass) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = dims.spacingSm),
+                        verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
+                    ) {
+                        items(
+                            count = pagedEntries.itemCount,
+                            key = pagedEntries.itemKey { entry ->
+                                when (entry) {
+                                    is HistoryListEntry.Week -> "week_${entry.weekStart}"
+                                    is HistoryListEntry.Workout -> "workout_${entry.item.session.id}"
+                                }
+                            },
+                            contentType = pagedEntries.itemContentType { it::class.simpleName }
+                        ) { index ->
+                            when (val entry = pagedEntries[index]) {
+                                is HistoryListEntry.Week -> GlassWeekHeader(
+                                    weekStart = entry.weekStart,
+                                    summary = weekSummaries[entry.weekStart],
+                                    today = today
+                                )
+                                is HistoryListEntry.Workout -> SwipeToDeleteCard(
+                                    item = entry.item,
+                                    unitSystem = preferences.unitSystem,
+                                    onClick = { onWorkoutClick(entry.item.session.id) },
+                                    onDelete = { deleteSessionId = entry.item.session.id },
+                                    glass = true
+                                )
+                                null -> Unit
+                            }
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(dims.spacingXl))
+                        }
+                    }
+                } else {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -385,7 +437,8 @@ private fun SwipeToDeleteCard(
     unitSystem: UnitSystem,
     onClick: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    glass: Boolean = false
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
 
@@ -421,7 +474,16 @@ private fun SwipeToDeleteCard(
             }
         }
     ) {
-        WorkoutCard(item = item, unitSystem = unitSystem, onClick = onClick)
+        if (glass) {
+            GlassHistoryRow(
+                item = item,
+                unitSystem = unitSystem,
+                onClick = onClick,
+                modifier = Modifier.ironLogSharedElement("workout_card_${item.session.id}")
+            )
+        } else {
+            WorkoutCard(item = item, unitSystem = unitSystem, onClick = onClick)
+        }
     }
 }
 

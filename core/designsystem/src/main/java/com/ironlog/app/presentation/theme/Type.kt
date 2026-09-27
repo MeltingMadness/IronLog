@@ -1,25 +1,39 @@
 package com.ironlog.app.presentation.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.ironlog.core.designsystem.R
 
+/**
+ * Figtree ships as one variable font. The weight axis is set explicitly so every
+ * [FontWeight] renders in its own cut instead of the file's default weight.
+ */
+@OptIn(ExperimentalTextApi::class)
+private fun figtreeFont(resId: Int, weight: FontWeight, style: FontStyle = FontStyle.Normal) = Font(
+    resId = resId,
+    weight = weight,
+    style = style,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight))
+)
+
 private val FigtreeFamily = FontFamily(
-    Font(R.font.figtree, FontWeight.Normal),
-    Font(R.font.figtree, FontWeight.Medium),
-    Font(R.font.figtree, FontWeight.SemiBold),
-    Font(R.font.figtree, FontWeight.Bold),
-    Font(R.font.figtree, FontWeight.ExtraBold),
-    Font(R.font.figtree, FontWeight.Black),
-    Font(R.font.figtree_italic, FontWeight.Normal, FontStyle.Italic),
-    Font(R.font.figtree_italic, FontWeight.Medium, FontStyle.Italic),
-    Font(R.font.figtree_italic, FontWeight.SemiBold, FontStyle.Italic),
-    Font(R.font.figtree_italic, FontWeight.Bold, FontStyle.Italic),
+    figtreeFont(R.font.figtree, FontWeight.Normal),
+    figtreeFont(R.font.figtree, FontWeight.Medium),
+    figtreeFont(R.font.figtree, FontWeight.SemiBold),
+    figtreeFont(R.font.figtree, FontWeight.Bold),
+    figtreeFont(R.font.figtree, FontWeight.ExtraBold),
+    figtreeFont(R.font.figtree, FontWeight.Black),
+    figtreeFont(R.font.figtree_italic, FontWeight.Normal, FontStyle.Italic),
+    figtreeFont(R.font.figtree_italic, FontWeight.Medium, FontStyle.Italic),
+    figtreeFont(R.font.figtree_italic, FontWeight.SemiBold, FontStyle.Italic),
+    figtreeFont(R.font.figtree_italic, FontWeight.Bold, FontStyle.Italic),
 )
 
 val Typography = Typography(
