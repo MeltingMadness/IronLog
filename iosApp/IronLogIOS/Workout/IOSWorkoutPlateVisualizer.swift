@@ -55,20 +55,20 @@ struct IOSWorkoutPlateVisualizer: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Label("Plattenrechner", systemImage: "circle.grid.2x2")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                 Spacer(minLength: 8)
                 Text(result.isExact ? "Exakt" : "Näherung")
-                    .font(.caption.weight(.semibold))
+                    .font(.geist(.caption, weight: .semibold))
                     .foregroundStyle(result.isExact ? .green : .orange)
             }
 
             if result.platesPerSide.isEmpty {
                 Text("Keine Platte pro Seite erforderlich")
-                    .font(.footnote)
+                    .font(.geist(.footnote))
                     .foregroundStyle(.secondary)
             } else {
                 Text("Pro Seite")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
 
                 LazyVGrid(
@@ -78,7 +78,7 @@ struct IOSWorkoutPlateVisualizer: View {
                 ) {
                     ForEach(groupedPlates(result.platesPerSide), id: \.id) { plate in
                         Text("×\(plate.count) \(iosWorkoutDisplayWeight(kilograms: plate.value, unitSystem: unitSystem))")
-                            .font(.caption.monospacedDigit())
+                            .font(.geist(.caption).monospacedDigit())
                             .padding(.horizontal, 8)
                             .padding(.vertical, 5)
                             .background(.thinMaterial, in: Capsule())
@@ -91,12 +91,12 @@ struct IOSWorkoutPlateVisualizer: View {
                 Text("·")
                 Text("Ziel \(iosWorkoutDisplayWeight(kilograms: result.targetWeightKg, unitSystem: unitSystem))")
             }
-            .font(.caption)
+            .font(.geist(.caption))
             .foregroundStyle(.secondary)
 
             if !result.isExact {
                 Text("Es fehlen \(iosWorkoutDisplayWeight(kilograms: result.remainderKg * 2, unitSystem: unitSystem)) für das Zielgewicht.")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }

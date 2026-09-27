@@ -116,7 +116,7 @@ struct SettingsScreen: View {
                                 ? "Nach passenden Arbeitssätzen läuft ein Countdown."
                                 : "Deaktiviert: Nach dem Satz läuft die Zeit aufwärts."
                         )
-                        .font(.footnote)
+                        .font(.geist(.footnote))
                         .foregroundStyle(.secondary)
                     }
 
@@ -137,7 +137,7 @@ struct SettingsScreen: View {
                             }
 
                             Text("Verfügbare Platten")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.geist(.subheadline, weight: .semibold))
 
                             ForEach([25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25, 0.5], id: \.self) { plate in
                                 Toggle(viewModel.weightLabel(plate), isOn: Binding(
@@ -196,11 +196,11 @@ struct SettingsScreen: View {
 
                         if let date = viewModel.recoveryDate {
                             Text("Wiederherstellungspunkt: \(date.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.footnote.weight(.semibold))
+                                .font(.geist(.footnote, weight: .semibold))
 
                             if let summary = viewModel.recoverySummary {
                                 Text(summary)
-                                    .font(.footnote)
+                                    .font(.geist(.footnote))
                                     .foregroundStyle(.secondary)
                             }
 
@@ -209,17 +209,17 @@ struct SettingsScreen: View {
                             }
                         } else {
                             Text("Kein Wiederherstellungspunkt verfügbar")
-                                .font(.footnote)
+                                .font(.geist(.footnote))
                                 .foregroundStyle(.secondary)
                         }
 
                         if let date = viewModel.lastSuccessfulExportDate {
                             Text("Letzter erfolgreicher Export: \(date.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.footnote)
+                                .font(.geist(.footnote))
                                 .foregroundStyle(.secondary)
                         } else {
                             Text("Noch kein erfolgreicher Export")
-                                .font(.footnote)
+                                .font(.geist(.footnote))
                                 .foregroundStyle(.secondary)
                         }
 
@@ -230,7 +230,7 @@ struct SettingsScreen: View {
 
                         if viewModel.state.backupReminderDue {
                             Text("Ein neuer Export ist fällig.")
-                                .font(.footnote.weight(.semibold))
+                                .font(.geist(.footnote, weight: .semibold))
                                 .foregroundStyle(.orange)
                         }
                     }
@@ -246,7 +246,7 @@ struct SettingsScreen: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Details")
-                                .font(.footnote.weight(.semibold))
+                                .font(.geist(.footnote, weight: .semibold))
                                 .foregroundStyle(.secondary)
 
                             TextEditor(text: $viewModel.incidentDetails)

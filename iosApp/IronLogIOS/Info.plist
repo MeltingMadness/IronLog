@@ -26,6 +26,16 @@
     <true/>
     <key>UILaunchScreen</key>
     <dict/>
+    <key>UIAppFonts</key>
+    <array>
+        <string>Geist-Regular.ttf</string>
+        <string>Geist-Italic.ttf</string>
+        <string>Geist-Medium.ttf</string>
+        <string>Geist-SemiBold.ttf</string>
+        <string>Geist-Bold.ttf</string>
+        <string>Geist-ExtraBold.ttf</string>
+        <string>Geist-Black.ttf</string>
+    </array>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>

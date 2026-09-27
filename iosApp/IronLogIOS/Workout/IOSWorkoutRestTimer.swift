@@ -210,13 +210,13 @@ struct IOSWorkoutRestTimerView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     if let title, !title.isEmpty {
                         Text(title)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.geist(.subheadline, weight: .semibold))
                     } else {
                         Text(timer.isCountdown ? "Pause" : "Pause läuft")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.geist(.subheadline, weight: .semibold))
                     }
                     Text(timer.isCountdown ? "Noch \(formatDuration(seconds))" : formatDuration(seconds))
-                        .font(.headline.monospacedDigit())
+                        .font(.geist(.headline).monospacedDigit())
                 }
 
                 Spacer(minLength: 8)

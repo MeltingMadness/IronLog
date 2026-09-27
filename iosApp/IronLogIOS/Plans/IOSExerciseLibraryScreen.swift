@@ -209,18 +209,18 @@ private struct IOSExerciseListRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 7) {
                         Text(exercise.name)
-                            .font(.body.weight(.semibold))
+                            .font(.geist(.body, weight: .semibold))
                             .foregroundStyle(.primary)
                         if exercise.isArchived {
                             Text("Archiv")
-                                .font(.caption2.weight(.semibold))
+                                .font(.geist(.caption, weight: .semibold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(.secondary.opacity(0.16), in: Capsule())
                         }
                     }
                     Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 6)
@@ -320,7 +320,7 @@ private struct IOSExerciseEditorScreen: View {
                         }
                     }
                     Text("Wähle bis zu 3 weitere Muskelgruppen. Die primäre Muskelgruppe ist hier ausgeschlossen.")
-                        .font(.footnote)
+                        .font(.geist(.footnote))
                         .foregroundStyle(.secondary)
                 }
 

@@ -64,14 +64,14 @@ struct IronLogMetricRing: View {
 
             VStack(spacing: 2) {
                 Text(value ?? "—")
-                    .font(.title2.weight(.bold))
+                    .font(.geist(.title2, weight: .bold))
                     .foregroundStyle(palette.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.75)
 
                 if let unit, !unit.isEmpty {
                     Text(unit)
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(palette.textSecondary)
                         .lineLimit(1)
                 }

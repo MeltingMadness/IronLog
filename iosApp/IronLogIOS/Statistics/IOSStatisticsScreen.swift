@@ -138,13 +138,13 @@ struct IOSStatisticsScreen: View {
             )
 
             Text("Übungen")
-                .font(.title2.weight(.bold))
+                .font(.geist(.title2, weight: .bold))
                 .padding(.top, 4)
 
             let exercises = filteredExercises(analytics)
             if exercises.isEmpty {
                 Text("Keine Übung mit dieser Auswahl gefunden.")
-                    .font(.body)
+                    .font(.geist(.body))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 16)
@@ -275,10 +275,10 @@ private struct IOSStatisticsSummary: View {
     private func summaryMetric(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.body.weight(.semibold))
+                .font(.geist(.body, weight: .semibold))
         }
     }
 }
@@ -295,19 +295,19 @@ private struct IOSExerciseStatisticsRow: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(exercise.exerciseName ?? "Übung \(exercise.exerciseId)")
-                        .font(.headline)
+                        .font(.geist(.headline))
                         .foregroundStyle(.primary)
                     Text([muscleName, ilCount(exercise.sessions.count, "Einheit", "Einheiten")].filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
                 if let latest {
                     VStack(alignment: .trailing, spacing: 4) {
                         Text(ilWeightText(latest.maxE1rmKg, unitSystem: unitSystem))
-                            .font(.body.weight(.semibold))
+                            .font(.geist(.body, weight: .semibold))
                         Text("e1RM zuletzt")
-                            .font(.caption2)
+                            .font(.geist(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }

@@ -31,7 +31,7 @@ struct IOSWorkoutGlassHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
-                .font(.caption.weight(.bold))
+                .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -39,11 +39,11 @@ struct IOSWorkoutGlassHeader: View {
             VStack(alignment: .leading, spacing: 0) {
                 TimelineView(.periodic(from: startDate, by: 1)) { context in
                     Text(elapsedText(at: context.date))
-                        .font(.system(size: 30, weight: .bold))
+                        .font(.geist(size: 30, weight: .bold))
                         .monospacedDigit()
                 }
                 Text(progressText)
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -62,7 +62,7 @@ struct IOSWorkoutGlassHeader: View {
             .accessibilityLabel("Weitere Aktionen")
             Button(action: onFinish) {
                 Text("Beenden")
-                    .font(.subheadline.weight(.heavy))
+                    .font(.geist(.subheadline, weight: .heavy))
                     .padding(.horizontal, 18)
                     .frame(minHeight: 44)
                     .liquidGlass(in: Capsule())
@@ -115,7 +115,7 @@ struct IOSWorkoutGlassRail: View {
                             .opacity(0.8)
                         case .current:
                             Text(item.name)
-                                .fontWeight(.heavy)
+                                .font(.geist(.footnote, weight: .heavy))
                                 .foregroundStyle(dark ? glassInk : .white)
                                 .padding(.horizontal, 14)
                                 .frame(height: 36)
@@ -129,7 +129,7 @@ struct IOSWorkoutGlassRail: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .font(.footnote.weight(.bold))
+                    .font(.geist(.footnote, weight: .bold))
                     .lineLimit(1)
                     .accessibilityLabel(item.name)
                     .accessibilityValue(accessibilityValue(item.status))
@@ -166,21 +166,21 @@ struct IOSWorkoutGlassStepper: View {
         let ink = colorScheme == .dark ? Color.white : glassInk
         VStack(spacing: 8) {
             Text(label.uppercased())
-                .font(.caption2.weight(.bold))
+                .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 TextField("–", text: $text)
                     .keyboardType(keyboard)
-                    .font(.system(size: 46, weight: .bold))
+                    .font(.geist(size: 46, weight: .bold))
                     .monospacedDigit()
                     .multilineTextAlignment(.center)
                     .fixedSize()
                     .accessibilityLabel(label)
                 if let unit {
                     Text(unit)
-                        .font(.system(size: 18))
+                        .font(.geist(size: 18))
                         .foregroundStyle(ink.opacity(0.7))
                 }
             }
@@ -228,7 +228,7 @@ struct IOSWorkoutGlassIntensityBar: View {
                     selection = selected ? "" : option
                 } label: {
                     Text(option)
-                        .font(.subheadline.weight(.heavy))
+                        .font(.geist(.subheadline, weight: .heavy))
                         .foregroundStyle(selected ? (dark ? glassInk : .white) : ink)
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background {
@@ -258,7 +258,7 @@ struct IOSWorkoutGlassPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let dark = colorScheme == .dark
         configuration.label
-            .font(.system(size: 17, weight: .heavy))
+            .font(.geist(size: 17, weight: .heavy))
             .foregroundStyle(dark ? glassInk : .white)
             .frame(maxWidth: .infinity, minHeight: 60)
             .background((dark ? Color.white : glassInk).opacity(isEnabled ? 1 : 0.35), in: Capsule())
@@ -337,17 +337,17 @@ struct IOSWorkoutGlassRestDock: View {
                                 .stroke(glassTeal, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                                 .rotationEffect(.degrees(-90))
                             Text(pauseClock(seconds))
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.geist(size: 15, weight: .bold))
                                 .monospacedDigit()
                         }
                         .frame(width: 56, height: 56)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("PAUSE")
-                                .font(.caption2.weight(.bold))
+                                .font(.geist(.caption, weight: .bold))
                                 .tracking(0.8)
                                 .foregroundStyle(.secondary)
                             Text(exerciseName)
-                                .font(.subheadline.weight(.heavy))
+                                .font(.geist(.subheadline, weight: .heavy))
                                 .lineLimit(1)
                         }
                         Spacer(minLength: 0)
@@ -359,7 +359,7 @@ struct IOSWorkoutGlassRestDock: View {
                 .accessibilityValue(timer.isCountdown ? "Noch \(pauseClock(seconds))" : pauseClock(seconds))
                 Button(action: onSkip) {
                     Text("Überspringen")
-                        .font(.subheadline.weight(.heavy))
+                        .font(.geist(.subheadline, weight: .heavy))
                         .foregroundStyle(dark ? glassInk : .white)
                         .padding(.horizontal, 18)
                         .frame(minHeight: 48)
@@ -405,12 +405,12 @@ struct IOSWorkoutGlassPauseScreen: View {
             VStack(spacing: 20) {
                 HStack {
                     Text(progressText.uppercased())
-                        .font(.caption.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("Zum Training", action: onClose)
-                        .font(.subheadline.weight(.heavy))
+                        .font(.geist(.subheadline, weight: .heavy))
                         .foregroundStyle(ink)
                         .padding(.horizontal, 16)
                         .frame(minHeight: 44)
@@ -440,17 +440,17 @@ struct IOSWorkoutGlassPauseScreen: View {
                     .clipShape(Circle())
                     VStack(spacing: 2) {
                         Text("PAUSE")
-                            .font(.caption.weight(.bold))
+                            .font(.geist(.caption, weight: .bold))
                             .tracking(0.8)
                             .foregroundStyle(.secondary)
                         Text(pauseClock(seconds))
-                            .font(.system(size: 88, weight: .bold))
+                            .font(.geist(size: 88, weight: .bold))
                             .monospacedDigit()
                             .tracking(-3)
                             .minimumScaleFactor(0.6)
                         if timer.isCountdown {
                             Text("von \(pauseClock(timer.durationSeconds))")
-                                .font(.subheadline)
+                                .font(.geist(.subheadline))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -471,11 +471,11 @@ struct IOSWorkoutGlassPauseScreen: View {
                 Spacer(minLength: 0)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("ALS NÄCHSTES")
-                        .font(.caption2.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     Text("\(exerciseName) · Satz \(nextSetNumber)")
-                        .font(.title3.weight(.heavy))
+                        .font(.geist(.title3, weight: .heavy))
                         .lineLimit(2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -496,7 +496,7 @@ struct IOSWorkoutGlassPauseScreen: View {
     private func pauseButton(_ text: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(text)
-                .font(.body.weight(.heavy))
+                .font(.geist(.footnote, weight: .heavy))
                 .frame(width: 104, height: 52)
                 .liquidGlass(in: Capsule())
         }

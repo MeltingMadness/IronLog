@@ -67,6 +67,14 @@
 		72C2A93286ED7B7A1082E4A1 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153E312259C6408D049E3896 /* RestTimerAdjustTests.swift */; };
 		EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD291E497F2EB12D5D7DA1E1 /* IronLogTheme.swift */; };
 		F7F6FC44E57FED644177197D /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57018C24A8A3EB312365013 /* IOSWorkoutSetEditor.swift */; };
+		ABA4A35392D27EF5F3B4EC2E /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A020D4AE791E9C5D1BF1903 /* Geist-Regular.ttf */; };
+		97F5DADF15562F1CFB210131 /* Geist-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8012BE93F986267CD2AC4202 /* Geist-Italic.ttf */; };
+		632243D273B14CA2F3446806 /* Geist-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 952A08F92FDC52F269F2037F /* Geist-Medium.ttf */; };
+		62518DBD2CD7BB0ED410E17D /* Geist-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 85FB34FDC7802818D39FB88E /* Geist-SemiBold.ttf */; };
+		00450BD07435353E0A7D9519 /* Geist-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ABB8BFA7690A1C4044D756C2 /* Geist-Bold.ttf */; };
+		408D0EEA3A959B905C0F86A2 /* Geist-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 38C3D7CF48D6884616FACD20 /* Geist-ExtraBold.ttf */; };
+		4788BAB0CD09950E01DC7E61 /* Geist-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E4DBC3AB864AFB378687D75 /* Geist-Black.ttf */; };
+		05A77F97915AA3FAD719FD9D /* IronLogFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = B617F7928C06AAA48ED3051E /* IronLogFont.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -133,6 +141,14 @@
 		FA9044558C95E0A0DC01EC41 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
 		E73A7336FCD5D60B215C3374 /* IOSDashboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardGlass.swift; sourceTree = "<group>"; };
 		FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
+		8A020D4AE791E9C5D1BF1903 /* Geist-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Regular.ttf; sourceTree = "<group>"; };
+		8012BE93F986267CD2AC4202 /* Geist-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Italic.ttf; sourceTree = "<group>"; };
+		952A08F92FDC52F269F2037F /* Geist-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Medium.ttf; sourceTree = "<group>"; };
+		85FB34FDC7802818D39FB88E /* Geist-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-SemiBold.ttf; sourceTree = "<group>"; };
+		ABB8BFA7690A1C4044D756C2 /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Bold.ttf; sourceTree = "<group>"; };
+		38C3D7CF48D6884616FACD20 /* Geist-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-ExtraBold.ttf; sourceTree = "<group>"; };
+		6E4DBC3AB864AFB378687D75 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
+		B617F7928C06AAA48ED3051E /* IronLogFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogFont.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -208,6 +224,8 @@
 		A39F31827FA20B6CC5BA6ACB /* Design */ = {
 			isa = PBXGroup;
 		children = (
+			79D244A1C9B425727E4C3DE7 /* Fonts */,
+			B617F7928C06AAA48ED3051E /* IronLogFont.swift */,
 			685AE05FC125A077D0129530 /* IronLogCard.swift */,
 			344853CE770AC1EFB6C76754 /* IronLogLiquidGlass.swift */,
 			178C511FBA3065902E1A5824 /* IronLogMetricRing.swift */,
@@ -319,6 +337,20 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		79D244A1C9B425727E4C3DE7 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				8A020D4AE791E9C5D1BF1903 /* Geist-Regular.ttf */,
+				8012BE93F986267CD2AC4202 /* Geist-Italic.ttf */,
+				952A08F92FDC52F269F2037F /* Geist-Medium.ttf */,
+				85FB34FDC7802818D39FB88E /* Geist-SemiBold.ttf */,
+				ABB8BFA7690A1C4044D756C2 /* Geist-Bold.ttf */,
+				38C3D7CF48D6884616FACD20 /* Geist-ExtraBold.ttf */,
+				6E4DBC3AB864AFB378687D75 /* Geist-Black.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -396,6 +428,13 @@
 			files = (
 				74E621E79975027907297F0A /* Assets.xcassets in Resources */, 
 				846137AA294ED448ADEF1100 /* PrivacyInfo.xcprivacy in Resources */, 
+				ABA4A35392D27EF5F3B4EC2E /* Geist-Regular.ttf in Resources */,
+				97F5DADF15562F1CFB210131 /* Geist-Italic.ttf in Resources */,
+				632243D273B14CA2F3446806 /* Geist-Medium.ttf in Resources */,
+				62518DBD2CD7BB0ED410E17D /* Geist-SemiBold.ttf in Resources */,
+				00450BD07435353E0A7D9519 /* Geist-Bold.ttf in Resources */,
+				408D0EEA3A959B905C0F86A2 /* Geist-ExtraBold.ttf in Resources */,
+				4788BAB0CD09950E01DC7E61 /* Geist-Black.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -444,6 +483,7 @@
 				E9F12934A40CA45C2A5EF014 /* IronLogLiquidGlass.swift in Sources */,
 				7D7A1A516DA037F63E1C1B80 /* IronLogMetricRing.swift in Sources */,
 				EF41C9D2305D3F8B635BDB9C /* IronLogTheme.swift in Sources */,
+				05A77F97915AA3FAD719FD9D /* IronLogFont.swift in Sources */,
 				7120AB589A9BCE7CFB3F8271 /* IronLogWeeklyMuscleVolume.swift in Sources */,
 				B964495C687CBF05555DE873 /* IOSHistoryScreen.swift in Sources */,
 				DB124E6BD62BA847DBA6C796 /* IOSHistorySupport.swift in Sources */,

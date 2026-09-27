@@ -22,26 +22,26 @@ struct IOSExerciseGlassHero: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(metric == .e1rm ? "GESCHÄTZTES 1RM" : metric.title.uppercased())
-                        .font(.caption.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     let parts = split(points.last.map { text($0.value) } ?? "–")
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text(parts.number)
-                            .font(.system(size: 52, weight: .bold))
+                            .font(.geist(size: 52, weight: .bold))
                             .tracking(-2)
                             .monospacedDigit()
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
                         Text(parts.unit)
-                            .font(.system(size: 20))
+                            .font(.geist(size: 20))
                             .foregroundStyle(ink.opacity(0.7))
                     }
                 }
                 Spacer(minLength: 8)
                 if let first = points.first, let last = points.last, points.count >= 2 {
                     Text(deltaText(from: first.value, to: last.value))
-                        .font(.footnote.weight(.heavy))
+                        .font(.geist(.footnote, weight: .heavy))
                         .monospacedDigit()
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -78,7 +78,7 @@ struct IOSExerciseGlassHero: View {
                     Spacer()
                     Text("\(last.date.formatted(.dateTime.day().month(.twoDigits))) · \(text(last.value))")
                 }
-                .font(.caption)
+                .font(.geist(.caption))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
             } else {
@@ -167,11 +167,11 @@ struct IOSExerciseGlassRecordTiles: View {
             ForEach(tiles, id: \.0) { label, value in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(label)
-                        .font(.caption2.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     Text(value)
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.geist(size: 24, weight: .bold))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)

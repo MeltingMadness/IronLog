@@ -33,18 +33,18 @@ struct IOSWorkoutSupersetHeader: View {
                     .foregroundStyle(.purple)
 
                 Text("Superset #\(groupID)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.geist(.subheadline, weight: .semibold))
                     .foregroundStyle(.purple)
 
                 Spacer(minLength: 8)
 
                 Text("\(exerciseCount) \(countLabel)")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
             }
 
             Text(exerciseNames)
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(palette.textSecondary)
                 .lineLimit(2)
                 .truncationMode(.tail)

@@ -227,14 +227,14 @@ private struct IOSMetaPlanItemRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("\(index + 1)")
-                .font(.headline.monospacedDigit())
+                .font(.geist(.headline).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
                 Text(planName)
-                    .font(.body.weight(.semibold))
+                    .font(.geist(.body, weight: .semibold))
                 Text("Teilplan")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(.secondary)
             }
             Spacer()

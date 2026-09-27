@@ -28,17 +28,17 @@ struct IOSWorkoutExerciseCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         Text(row.exercise.name)
-                            .font(.headline.weight(.semibold))
+                            .font(.geist(.headline, weight: .semibold))
                         if row.target != nil {
                             Text("Plan")
-                                .font(.caption2.weight(.bold))
+                                .font(.geist(.caption, weight: .bold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
                                 .background(palette.primary.opacity(0.12), in: Capsule())
                                 .foregroundStyle(palette.primary)
                         } else {
                             Text("Ad-hoc")
-                                .font(.caption2.weight(.bold))
+                                .font(.geist(.caption, weight: .bold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
                                 .background(palette.secondary.opacity(0.12), in: Capsule())
@@ -46,7 +46,7 @@ struct IOSWorkoutExerciseCard: View {
                         }
                     }
                     Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
@@ -65,10 +65,10 @@ struct IOSWorkoutExerciseCard: View {
                     Text("@ \(iosWorkoutDisplayWeight(kilograms: displayTarget.weightKg, unitSystem: unitSystem))")
                     Spacer()
                     Text("\(row.completedNormalSets)/\(displayTarget.sets)")
-                        .font(.subheadline.monospacedDigit().weight(.semibold))
+                        .font(.geist(.subheadline, weight: .semibold).monospacedDigit())
                         .foregroundStyle(row.isComplete ? palette.success : palette.textSecondary)
                 }
-                .font(.caption)
+                .font(.geist(.caption))
                 .foregroundStyle(.secondary)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Ziel und Fortschritt")
@@ -77,7 +77,7 @@ struct IOSWorkoutExerciseCard: View {
 
             if let previousWeight = row.previousWorkWeightKg {
                 Label("Letztes passendes Workout: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
-                    .font(.caption)
+                    .font(.geist(.caption))
                     .foregroundStyle(palette.information)
                     .accessibilityLabel("Letztes passendes Gewicht \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))")
             }
@@ -93,7 +93,7 @@ struct IOSWorkoutExerciseCard: View {
 
             if row.sets.isEmpty {
                 Text("Noch kein Satz geloggt.")
-                    .font(.subheadline)
+                    .font(.geist(.subheadline))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 4)
             } else {
@@ -123,9 +123,9 @@ struct IOSWorkoutExerciseCard: View {
                     .id("\(row.id)-\(row.nextSetNumber)-\(unitSystem)")
             } else {
                 Label("Alle geplanten Sätze bestätigt", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(palette.success).font(.subheadline)
+                    .foregroundStyle(palette.success).font(.geist(.subheadline))
             }
-            Button("Zusätzlichen Satz hinzufügen", action: onAddSet).font(.subheadline)
+            Button("Zusätzlichen Satz hinzufügen", action: onAddSet).font(.geist(.subheadline))
 
         }
         .padding(16)
@@ -179,21 +179,21 @@ private struct IOSWorkoutSetRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Text("\(set.setNumber)")
-                .font(.subheadline.monospacedDigit().weight(.semibold))
+                .font(.geist(.subheadline, weight: .semibold).monospacedDigit())
                 .frame(width: 24, alignment: .leading)
                 .foregroundStyle(.secondary)
 
             Text(resolvedIOSWorkoutSetType(set).shortName)
-                .font(.caption.weight(.semibold))
+                .font(.geist(.caption, weight: .semibold))
                 .foregroundStyle(setTypeColor)
                 .frame(width: 58, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))
-                    .font(.body.weight(.medium))
+                    .font(.geist(.body, weight: .medium))
                 if let intensity = iosWorkoutFormatIntensity(storedRPE: set.rpe, intensitySystem: intensitySystem) {
                     Text("\(intensitySystem.uppercased()) \(intensity)")
-                        .font(.caption)
+                        .font(.geist(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -288,9 +288,9 @@ private struct IOSWorkoutInlineSetEntry: View {
     private var glassBody: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Satz \(row.nextSetNumber)").font(.headline)
+                Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
                 Spacer()
-                Text(source).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(source).font(.geist(.caption)).foregroundStyle(.secondary).lineLimit(1)
             }
             HStack(spacing: 10) {
                 let stepText = IOSNumber.format(weightStep)
@@ -318,7 +318,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             if intensityScale != "OFF" {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ANSTRENGUNG · \(intensityScale)")
-                        .font(.caption2.weight(.bold))
+                        .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     IOSWorkoutGlassIntensityBar(
@@ -343,8 +343,8 @@ private struct IOSWorkoutInlineSetEntry: View {
                         IOSWorkoutPlateVisualizer(targetWeightKg: IOSWeight.kilograms(value: value, unit: unitSystem), barbellWeightKg: settings.state.barbellWeightKg, availablePlates: settings.state.availablePlates, unitSystem: unitSystem)
                     }
                 }.padding(.top, 8)
-            }.font(.subheadline)
-            if let error { Text(error).font(.caption).foregroundStyle(.red) }
+            }.font(.geist(.subheadline))
+            if let error { Text(error).font(.geist(.caption)).foregroundStyle(.red) }
             Button { Task { await save() } } label: {
                 Text(busy ? "Speichert …" : "Satz \(row.nextSetNumber) loggen")
             }
@@ -352,15 +352,15 @@ private struct IOSWorkoutInlineSetEntry: View {
             .disabled(busy)
             if row.loggingSlots.count > 0 {
                 let open = max(0, (row.remainingPlannedSets ?? 0) - 1)
-                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.caption).foregroundStyle(.secondary) }
+                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).foregroundStyle(.secondary) }
             }
         }
     }
 
     private var emberBody: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Satz \(row.nextSetNumber)").font(.headline)
-            Text(source).font(.caption).foregroundStyle(.tint)
+            Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
+            Text(source).font(.geist(.caption)).foregroundStyle(.tint)
             HStack(spacing: 12) {
                 field("Gewicht (\(IOSWeight.label(unitSystem)))", text: $weight, keyboard: .decimalPad)
                 field("Wiederholungen", text: $reps, keyboard: .numberPad)
@@ -381,15 +381,15 @@ private struct IOSWorkoutInlineSetEntry: View {
                         IOSWorkoutPlateVisualizer(targetWeightKg: IOSWeight.kilograms(value: value, unit: unitSystem), barbellWeightKg: settings.state.barbellWeightKg, availablePlates: settings.state.availablePlates, unitSystem: unitSystem)
                     }
                 }.padding(.top, 8)
-            }.font(.subheadline)
-            if let error { Text(error).font(.caption).foregroundStyle(.red) }
+            }.font(.geist(.subheadline))
+            if let error { Text(error).font(.geist(.caption)).foregroundStyle(.red) }
             Button { Task { await save() } } label: {
                 Label(busy ? "Speichert …" : "Satz \(row.nextSetNumber) bestätigen", systemImage: "checkmark")
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
             }.buttonStyle(.borderedProminent).disabled(busy)
             if row.loggingSlots.count > 0 {
                 let open = max(0, (row.remainingPlannedSets ?? 0) - 1)
-                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.caption).foregroundStyle(.secondary) }
+                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).foregroundStyle(.secondary) }
             }
         }.padding(14)
         .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
@@ -397,9 +397,9 @@ private struct IOSWorkoutInlineSetEntry: View {
     }
     private func field(_ title: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
             TextField(title, text: text).keyboardType(keyboard).textFieldStyle(.roundedBorder)
-                .font(.title3.monospacedDigit()).frame(minHeight: 44).accessibilityLabel(title)
+                .font(.geist(.title3).monospacedDigit()).frame(minHeight: 44).accessibilityLabel(title)
         }
     }
     private func save() async {
