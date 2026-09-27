@@ -13,4 +13,18 @@
     <string name="history_search_clear">Suche löschen</string>
     <string name="history_set_drop">Dropsatz %1$d</string>
     <string name="history_set_failure">Failure-Satz %1$d</string>
+    <string name="history_glass_week_current">Diese Woche</string>
+    <string name="history_glass_week_last">Letzte Woche</string>
+    <string name="history_glass_week_number">KW %1$d</string>
+    <string name="history_glass_minutes">%1$d min</string>
+    <string name="history_glass_under_minute">&lt; 1 min</string>
+    <string name="history_glass_hours_minutes">%1$d h %2$d min</string>
+    <plurals name="history_glass_week_workouts">
+        <item quantity="one">%d Training</item>
+        <item quantity="other">%d Trainings</item>
+    </plurals>
+    <plurals name="history_glass_exercises">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
 </resources>
