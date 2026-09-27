@@ -304,7 +304,7 @@ private struct IOSHistoryMetric: View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
                 Text(value).font(.geist(.headline).monospacedDigit())
-                Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
+                Text(title).font(.geist(.caption)).ironLogSecondaryText()
             }
         } icon: {
             Image(systemName: systemImage).foregroundStyle(.tint)
@@ -340,7 +340,7 @@ private struct IOSHistorySessionRow: View {
                 Spacer(minLength: 8)
                 Text(IOSHistoryFormatting.date(session.startDate))
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .multilineTextAlignment(.trailing)
             }
             HStack(spacing: 14) {
@@ -351,11 +351,11 @@ private struct IOSHistorySessionRow: View {
                 }
             }
             .font(.geist(.caption))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
             if !session.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(session.notes)
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .lineLimit(2)
             }
         }
@@ -657,7 +657,7 @@ private struct IOSHistoryExerciseSection: View {
                     ForEach(records) { record in
                         Text("\(ilRecordTypeText(record.type)): \(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
             }
@@ -691,7 +691,7 @@ private struct IOSHistorySetRow: View {
                     }
                 }
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             }
             Spacer(minLength: 4)
             Menu {
@@ -739,19 +739,19 @@ private struct IOSHistorySetEditor: View {
                     Section("Satz \(set.setNumber)") {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Gewicht (\(IOSWeightFormatter.unitLabel(for: unitSystem)))")
-                                .font(.geist(.caption)).foregroundStyle(.secondary)
+                                .font(.geist(.caption)).ironLogSecondaryText()
                             TextField("Gewicht", text: $weightText)
                                 .keyboardType(.decimalPad)
                                 .accessibilityLabel("Gewicht in \(IOSWeightFormatter.unitLabel(for: unitSystem))")
                         }
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Wiederholungen").font(.geist(.caption)).foregroundStyle(.secondary)
+                            Text("Wiederholungen").font(.geist(.caption)).ironLogSecondaryText()
                             TextField("Wiederholungen", text: $repsText)
                                 .keyboardType(.numberPad)
                                 .accessibilityLabel("Wiederholungen")
                         }
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("RPE (optional)").font(.geist(.caption)).foregroundStyle(.secondary)
+                            Text("RPE (optional)").font(.geist(.caption)).ironLogSecondaryText()
                             TextField("RPE", text: $rpeText)
                                 .keyboardType(.decimalPad)
                                 .accessibilityLabel("RPE, optional")

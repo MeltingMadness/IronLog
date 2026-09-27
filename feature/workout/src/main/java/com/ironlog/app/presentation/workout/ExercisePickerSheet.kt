@@ -45,6 +45,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
@@ -153,7 +155,8 @@ fun ExercisePickerSheet(
                         createState = ExerciseCreateState()
                         showCreateDialog = true
                     },
-                    modifier = Modifier.padding(horizontal = dims.spacingMd)
+                    modifier = Modifier.padding(horizontal = dims.spacingMd),
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Icon(
                         Icons.Default.Add,
@@ -175,20 +178,22 @@ fun ExercisePickerSheet(
                 FilterChip(
                     selected = selectedGroup == null,
                     onClick = { selectedGroup = null },
-                    label = { Text(stringResource(id = R.string.common_all)) }
+                    label = { Text(stringResource(id = R.string.common_all)) },
+                    colors = IronLogInteractiveColors.filterChip()
                 )
                 MuscleGroup.entries.forEach { group ->
                     FilterChip(
                         selected = selectedGroup == group,
                         onClick = { selectedGroup = group },
-                        label = { Text(group.displayName) }
+                        label = { Text(group.displayName) },
+                        colors = IronLogInteractiveColors.filterChip()
                     )
                 }
             }
 
             Row(Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.colorScheme.primary)
-                TextButton(onClick = { selectedExercises = emptyList() }) { Text("Auswahl leeren") }
+                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.accentText)
+                TextButton(onClick = { selectedExercises = emptyList() }, colors = IronLogInteractiveColors.textButton()) { Text("Auswahl leeren") }
             }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
@@ -352,7 +357,8 @@ private fun CreateExerciseDialog(
                                         }
                                         onStateChange(state.copy(secondaryMuscleGroups = next))
                                     },
-                                    label = { Text(group.displayName) }
+                                    label = { Text(group.displayName) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                     }
@@ -408,13 +414,14 @@ private fun CreateExerciseDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                enabled = state.name.isNotBlank()
+                enabled = state.name.isNotBlank(),
+                colors = IronLogInteractiveColors.textButton()
             ) {
                 Text(stringResource(id = R.string.common_create))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, colors = IronLogInteractiveColors.textButton()) {
                 Text(stringResource(id = R.string.common_cancel))
             }
         }

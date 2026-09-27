@@ -44,4 +44,6 @@ dependencies {
 
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.core.ktx)
+
+    testImplementation(libs.junit)
 }

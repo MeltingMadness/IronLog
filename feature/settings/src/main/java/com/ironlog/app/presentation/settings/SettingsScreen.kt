@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.settings
 
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.domain.util.WeightFormatting
 import android.Manifest
@@ -76,6 +78,7 @@ import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
 import androidx.compose.foundation.layout.FlowRow
 import com.ironlog.app.presentation.theme.PlateColors
+import com.ironlog.app.presentation.theme.semanticText
 import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
@@ -196,12 +199,14 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.appearanceStyle == AppearanceStyle.EMBER,
                             onClick = { viewModel.updateAppearanceStyle(AppearanceStyle.EMBER) },
-                            label = { Text(stringResource(id = R.string.settings_appearance_ember)) }
+                            label = { Text(stringResource(id = R.string.settings_appearance_ember)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.appearanceStyle == AppearanceStyle.LIQUID_GLASS,
                             onClick = { viewModel.updateAppearanceStyle(AppearanceStyle.LIQUID_GLASS) },
-                            label = { Text(stringResource(id = R.string.settings_appearance_liquid_glass)) }
+                            label = { Text(stringResource(id = R.string.settings_appearance_liquid_glass)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                     }
 
@@ -219,17 +224,20 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.themeMode == ThemeMode.SYSTEM,
                             onClick = { viewModel.updateThemeMode(ThemeMode.SYSTEM) },
-                            label = { Text(stringResource(id = R.string.settings_theme_system)) }
+                            label = { Text(stringResource(id = R.string.settings_theme_system)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeMode == ThemeMode.LIGHT,
                             onClick = { viewModel.updateThemeMode(ThemeMode.LIGHT) },
-                            label = { Text(stringResource(id = R.string.settings_theme_light)) }
+                            label = { Text(stringResource(id = R.string.settings_theme_light)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeMode == ThemeMode.DARK,
                             onClick = { viewModel.updateThemeMode(ThemeMode.DARK) },
-                            label = { Text(stringResource(id = R.string.settings_theme_dark)) }
+                            label = { Text(stringResource(id = R.string.settings_theme_dark)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                     }
 
@@ -249,43 +257,50 @@ fun SettingsScreen(
                             selected = state.preferences.themeScheme == ThemeScheme.AMBER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.AMBER) },
                             leadingIcon = { SchemeColorDot(color = DarkPrimary) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_amber)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_amber)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.DEEP_CYAN,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.DEEP_CYAN) },
                             leadingIcon = { SchemeColorDot(color = DarkCyanPrimary) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_deep_cyan)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_deep_cyan)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.NEON_RED,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.NEON_RED) },
                             leadingIcon = { SchemeColorDot(color = DarkRedPrimary) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_neon_red)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.FORGE,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.FORGE) },
                             leadingIcon = { SchemeColorDot(color = Color(0xFFFF7A1A)) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_forge)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_forge)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.RASTER,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.RASTER) },
                             leadingIcon = { SchemeColorDot(color = Color(0xFF3B82F6)) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_raster)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_raster)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.TIDE,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.TIDE) },
                             leadingIcon = { SchemeColorDot(color = Color(0xFF00F5A0)) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_tide)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_tide)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.themeScheme == ThemeScheme.PULSE,
                             onClick = { viewModel.updateThemeScheme(ThemeScheme.PULSE) },
                             leadingIcon = { SchemeColorDot(color = Color(0xFFFF3366)) },
-                            label = { Text(stringResource(id = R.string.settings_scheme_pulse)) }
+                            label = { Text(stringResource(id = R.string.settings_scheme_pulse)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                     }
 
@@ -333,12 +348,14 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.weekStart == WeekStart.MONDAY,
                             onClick = { viewModel.updateWeekStart(WeekStart.MONDAY) },
-                            label = { Text(stringResource(id = R.string.settings_week_start_monday)) }
+                            label = { Text(stringResource(id = R.string.settings_week_start_monday)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.weekStart == WeekStart.SUNDAY,
                             onClick = { viewModel.updateWeekStart(WeekStart.SUNDAY) },
-                            label = { Text(stringResource(id = R.string.settings_week_start_sunday)) }
+                            label = { Text(stringResource(id = R.string.settings_week_start_sunday)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                     }
 
@@ -383,17 +400,20 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.OFF,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.OFF) },
-                            label = { Text(stringResource(id = R.string.settings_intensity_off)) }
+                            label = { Text(stringResource(id = R.string.settings_intensity_off)) },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.RPE,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RPE) },
-                            label = { Text("RPE") }
+                            label = { Text("RPE") },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.RIR,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RIR) },
-                            label = { Text("RIR") }
+                            label = { Text("RIR") },
+                            colors = IronLogInteractiveColors.filterChip()
                         )
                     }
                 }
@@ -425,7 +445,8 @@ fun SettingsScreen(
                                 FilterChip(
                                     selected = state.preferences.barbellWeightKg == barWeight,
                                     onClick = { viewModel.updateBarbellWeightKg(barWeight) },
-                                    label = { Text(label) }
+                                    label = { Text(label) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                         }
@@ -468,7 +489,8 @@ fun SettingsScreen(
                                     leadingIcon = {
                                         SchemeColorDot(color = PlateColors.forWeight(plate))
                                     },
-                                    label = { Text(plateLabel) }
+                                    label = { Text(plateLabel) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                         }
@@ -501,7 +523,8 @@ fun SettingsScreen(
                                 FilterChip(
                                     selected = state.preferences.defaultRestTimeSeconds == option,
                                     onClick = { viewModel.updateDefaultRestTimeSeconds(option) },
-                                    label = { Text(formatRestTimeOption(option)) }
+                                    label = { Text(formatRestTimeOption(option)) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                         }
@@ -560,7 +583,8 @@ fun SettingsScreen(
                                     reminder.minute,
                                     true
                                 ).show()
-                            }
+                            },
+                            colors = IronLogInteractiveColors.textButton()
                         ) {
                             Text(DateFormatting.formatClock(reminder.hour, reminder.minute))
                         }
@@ -585,7 +609,8 @@ fun SettingsScreen(
                                     }
                                     viewModel.updateReminderConfig(reminder.copy(daysOfWeek = updated))
                                 },
-                                label = { Text(DateFormatting.dayShort(day)) }
+                                label = { Text(DateFormatting.dayShort(day)) },
+                                colors = IronLogInteractiveColors.filterChip()
                             )
                         }
                     }
@@ -642,7 +667,7 @@ fun SettingsScreen(
                                     text = stringResource(id = SettingsR.string.settings_backup_reminder_due_title),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.accentText
                                 )
                                 Text(
                                     text = stringResource(id = SettingsR.string.settings_backup_reminder_due_message),
@@ -668,7 +693,8 @@ fun SettingsScreen(
                         )
                         TextButton(
                             onClick = viewModel::showRecoveryRestoreDialog,
-                            enabled = !state.isBusy
+                            enabled = !state.isBusy,
+                            colors = IronLogInteractiveColors.textButton()
                         ) {
                             Text(stringResource(id = R.string.settings_backup_recovery_restore))
                         }
@@ -679,7 +705,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    TextButton(onClick = viewModel::showResetDialog) {
+                    TextButton(onClick = viewModel::showResetDialog, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.settings_data_reset))
                     }
                     Text(
@@ -763,13 +789,13 @@ fun SettingsScreen(
                                 text = stringResource(id = R.string.settings_import_dialog_invalid_header),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.error
+                                color = MaterialTheme.semanticText.danger
                             )
                             importPreview.validationErrors.forEach { error ->
                                 Text(
                                     text = error,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error
+                                    color = MaterialTheme.semanticText.danger
                                 )
                             }
                         }
@@ -778,13 +804,14 @@ fun SettingsScreen(
                 confirmButton = {
                     TextButton(
                         onClick = viewModel::confirmImport,
-                        enabled = importPreview.isValid && !state.isBusy
+                        enabled = importPreview.isValid && !state.isBusy,
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(stringResource(id = R.string.settings_import_dialog_confirm))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = viewModel::cancelImport) {
+                    TextButton(onClick = viewModel::cancelImport, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.settings_import_dialog_cancel))
                     }
                 }
@@ -807,13 +834,14 @@ fun SettingsScreen(
                 confirmButton = {
                     TextButton(
                         onClick = viewModel::restoreLatestRecovery,
-                        enabled = !state.isBusy
+                        enabled = !state.isBusy,
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(stringResource(id = R.string.settings_recovery_dialog_confirm))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = viewModel::dismissRecoveryRestoreDialog) {
+                    TextButton(onClick = viewModel::dismissRecoveryRestoreDialog, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.settings_recovery_dialog_cancel))
                     }
                 }
@@ -827,12 +855,12 @@ fun SettingsScreen(
                 title = { Text(stringResource(id = R.string.settings_reset_dialog_title)) },
                 text = { Text(stringResource(id = R.string.settings_reset_dialog_text)) },
                 confirmButton = {
-                    TextButton(onClick = viewModel::resetUserData) {
+                    TextButton(onClick = viewModel::resetUserData, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.settings_reset_dialog_confirm))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = viewModel::dismissResetDialog) {
+                    TextButton(onClick = viewModel::dismissResetDialog, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.settings_reset_dialog_cancel))
                     }
                 }
@@ -873,7 +901,7 @@ private fun PreferenceCard(
         Text(
             text = title.uppercase(java.util.Locale.getDefault()),
             style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.accentText,
             modifier = Modifier.padding(start = dims.spacingMd, end = dims.spacingMd, bottom = dims.spacingXs)
         )
         IronLogSurfaceCard(

@@ -33,7 +33,7 @@ struct IOSWorkoutGlassHeader: View {
             Text(label.uppercased())
                 .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
                 .lineLimit(1)
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 0) {
@@ -45,7 +45,7 @@ struct IOSWorkoutGlassHeader: View {
                 Text(progressText)
                     .font(.geist(.caption))
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -168,7 +168,7 @@ struct IOSWorkoutGlassStepper: View {
             Text(label.uppercased())
                 .font(.geist(.caption, weight: .bold))
                 .tracking(0.8)
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
                 .lineLimit(1)
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 TextField("–", text: $text)
@@ -345,7 +345,7 @@ struct IOSWorkoutGlassRestDock: View {
                             Text("PAUSE")
                                 .font(.geist(.caption, weight: .bold))
                                 .tracking(0.8)
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                             Text(exerciseName)
                                 .font(.geist(.subheadline, weight: .heavy))
                                 .lineLimit(1)
@@ -407,7 +407,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                     Text(progressText.uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     Spacer()
                     Button("Zum Training", action: onClose)
                         .font(.geist(.subheadline, weight: .heavy))
@@ -442,7 +442,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                         Text("PAUSE")
                             .font(.geist(.caption, weight: .bold))
                             .tracking(0.8)
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                         Text(pauseClock(seconds))
                             .font(.geist(size: 88, weight: .bold))
                             .monospacedDigit()
@@ -451,7 +451,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                         if timer.isCountdown {
                             Text("von \(pauseClock(timer.durationSeconds))")
                                 .font(.geist(.subheadline))
-                                .foregroundStyle(.secondary)
+                                .ironLogSecondaryText()
                         }
                     }
                 }
@@ -473,7 +473,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                     Text("ALS NÄCHSTES")
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     Text("\(exerciseName) · Satz \(nextSetNumber)")
                         .font(.geist(.title3, weight: .heavy))
                         .lineLimit(2)

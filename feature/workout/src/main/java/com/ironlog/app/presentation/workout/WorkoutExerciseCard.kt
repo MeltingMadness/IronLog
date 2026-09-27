@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.feature.workout.R as WorkoutR
 import com.ironlog.app.domain.model.IntensitySystem
@@ -69,6 +71,7 @@ import com.ironlog.app.presentation.theme.IconSize
 import com.ironlog.app.presentation.theme.Radius
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 
 @Composable
 internal fun ExerciseCard(
@@ -165,7 +168,7 @@ internal fun ExerciseCard(
                     Text(
                         text = it,
                         style = AthleticLabel,
-                        color = if (isDone) MaterialTheme.semantic.success else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isDone) MaterialTheme.semanticText.success else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = dims.spacingXs)
                     )
                 }
@@ -220,7 +223,7 @@ internal fun ExerciseCard(
                         targetText
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isDone) MaterialTheme.semantic.success else tintColor ?: MaterialTheme.colorScheme.primary
+                    color = if (isDone) MaterialTheme.semanticText.success else MaterialTheme.accentText
                 )
                 if (expanded) Text(
                     text = stringResource(
@@ -235,7 +238,7 @@ internal fun ExerciseCard(
                         text = stringResource(id = R.string.workout_previous_last_set_target_reached),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.semantic.success
+                        color = MaterialTheme.semanticText.success
                     )
                 }
                 if (expanded && completedWorkSets >= planTarget.target.sets) {
@@ -243,7 +246,7 @@ internal fun ExerciseCard(
                         text = stringResource(id = R.string.workout_target_completed),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.semantic.success
+                        color = MaterialTheme.semanticText.success
                     )
                 }
             }
@@ -373,7 +376,7 @@ internal fun ExerciseCard(
                         )
                     }
                     if (!showExtraInput) {
-                        TextButton(onClick = { showExtraInput = true }) {
+                        TextButton(onClick = { showExtraInput = true }, colors = IronLogInteractiveColors.textButton()) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(stringResource(id = R.string.workout_add_extra_set))
@@ -556,7 +559,7 @@ internal fun PreviousSessionSetRow(
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1f).alpha(0.7f),
                 overrideContainerColor = accentColor?.copy(alpha = 0.15f),
-                overrideContentColor = accentColor
+                overrideContentColor = rpeTextColor(set.rpe)
             )
         }
 
@@ -639,6 +642,11 @@ internal fun NextSetRecommendationChips(
     } else {
         MaterialTheme.semantic.sky
     }
+    val accentText = if (recommendation.isOvershoot) {
+        MaterialTheme.semanticText.danger
+    } else {
+        MaterialTheme.semanticText.sky
+    }
 
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -648,7 +656,8 @@ internal fun NextSetRecommendationChips(
         recommendation.targetRpe?.let { target ->
             RecommendationPill(
                 text = stringResource(id = R.string.workout_autoregulation_target_rpe, formatRpeValue(target)),
-                color = MaterialTheme.semantic.sky
+                color = MaterialTheme.semantic.sky,
+                textColor = MaterialTheme.semanticText.sky
             )
         }
         if (recommendation.isOvershoot) {
@@ -657,12 +666,14 @@ internal fun NextSetRecommendationChips(
                     id = R.string.workout_autoregulation_overshoot,
                     formatRpeValue(recommendation.lastRpe)
                 ),
-                color = MaterialTheme.semantic.danger
+                color = MaterialTheme.semantic.danger,
+                textColor = MaterialTheme.semanticText.danger
             )
         }
         RecommendationPill(
             text = stringResource(WorkoutR.string.workout_audit_coach_suggestion, loadText),
-            color = accent
+            color = accent,
+            textColor = accentText
         )
         recommendation.backoffWeightKg?.let { backoff ->
             RecommendationPill(
@@ -670,14 +681,20 @@ internal fun NextSetRecommendationChips(
                     id = R.string.workout_autoregulation_backoff_set,
                     formatWeightValue(backoff, unitSystem)
                 ),
-                color = MaterialTheme.semantic.danger
+                color = MaterialTheme.semantic.danger,
+                textColor = MaterialTheme.semanticText.danger
             )
         }
     }
 }
 
 @Composable
-internal fun RecommendationPill(text: String, color: Color, modifier: Modifier = Modifier) {
+internal fun RecommendationPill(
+    text: String,
+    color: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
@@ -687,7 +704,7 @@ internal fun RecommendationPill(text: String, color: Color, modifier: Modifier =
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = color,
+            color = textColor,
             fontWeight = FontWeight.SemiBold
         )
     }

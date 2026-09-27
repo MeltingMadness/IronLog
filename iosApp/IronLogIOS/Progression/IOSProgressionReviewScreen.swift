@@ -122,7 +122,7 @@ struct IOSProgressionReviewScreen: View {
                             .font(.geist(.headline))
                         Text("Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert.")
                             .font(.geist(.subheadline))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
 
@@ -145,7 +145,7 @@ struct IOSProgressionReviewScreen: View {
                             if editingSuggestion != nil {
                                 Text("Schließe die Bearbeitung zuerst ab.")
                                     .font(.geist(.subheadline))
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                             }
                             Button {
                                 acceptAllSafe()
@@ -155,7 +155,7 @@ struct IOSProgressionReviewScreen: View {
                                     systemImage: "checkmark.circle"
                                 )
                             }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.borderedProminent).ironLogButtonText()
                             .disabled(store.isBusy || editingSuggestion != nil)
                             .accessibilityHint("Übernimmt je Position nur den neuesten ausstehenden Vorschlag")
                         }
@@ -302,19 +302,19 @@ private struct IOSProgressionSuggestionCard: View {
             }
             Text("Schema: \(suggestion.sourceProgression.schemeDisplayName)")
                 .font(.geist(.subheadline))
-                .foregroundStyle(.tint)
+                .ironLogAccentText()
             if let planName {
                 Text("Plan: \(planName)")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             Text("Bewertung: \(IOSProgressionFormatting.date(suggestion.createdAt))")
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             if let decidedAt = suggestion.decidedAt {
                 Text("Entschieden: \(IOSProgressionFormatting.date(decidedAt))")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             IOSProgressionTargetBlock(
@@ -338,7 +338,7 @@ private struct IOSProgressionSuggestionCard: View {
             } else {
                 Text("Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ.")
                     .font(.geist(.subheadline))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             if let finalTarget = suggestion.finalTarget {
@@ -348,7 +348,7 @@ private struct IOSProgressionSuggestionCard: View {
             if isPending, suggestion.suggestedTarget != nil {
                 HStack(spacing: 8) {
                     Button("Übernehmen", action: onAccept)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).ironLogButtonText()
                         .disabled(isWorking)
                     Button("Bearbeiten", action: onEdit)
                         .buttonStyle(.bordered)
@@ -387,6 +387,9 @@ private struct IOSProgressionStatusBadge: View {
 }
 
 private struct IOSProgressionTargetBlock: View {
+    @Environment(\.ironLogTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
     let title: String
     let target: ILProgressionTarget
     let unitSystem: String
@@ -397,7 +400,7 @@ private struct IOSProgressionTargetBlock: View {
             Text(title).font(.geist(.subheadline, weight: .semibold))
             Text("\(ilCount(target.sets, "Satz", "Sätze")) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
                 .font(.geist(.body).monospacedDigit())
-                .foregroundStyle(tone.color)
+                .foregroundStyle(tone.color(for: theme.palette(for: colorScheme)))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(ilCount(target.sets, "Satz", "Sätze")), \(ilCount(target.reps, "Wiederholung", "Wiederholungen")), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
@@ -409,11 +412,11 @@ private enum IOSProgressionTargetTone {
     case secondary
     case success
 
-    var color: Color {
+    func color(for palette: IronLogTheme.Palette) -> Color {
         switch self {
-        case .primary: return .accentColor
-        case .secondary: return .primary
-        case .success: return .green
+        case .primary: return palette.accentText
+        case .secondary: return palette.textPrimary
+        case .success: return palette.success
         }
     }
 }
@@ -429,7 +432,7 @@ private struct IOSProgressionEvidenceBlock: View {
             if sets.isEmpty {
                 Text(idsWerePresent ? "Die gespeicherte Evidenz ist nicht verfügbar." : "Keine verwertbaren Arbeitssätze gespeichert.")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 ForEach(sets) { set in
                     HStack(spacing: 6) {
@@ -440,7 +443,7 @@ private struct IOSProgressionEvidenceBlock: View {
                         }
                     }
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                 }
             }
         }
@@ -487,7 +490,7 @@ private struct IOSProgressionEditSheet: View {
                     Section {
                         Text("Die Quelle und ihre Evidenz bleiben unverändert. Deine Eingabe wird als finales Ziel gespeichert.")
                             .font(.geist(.footnote))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
                 .ironLogListRows()

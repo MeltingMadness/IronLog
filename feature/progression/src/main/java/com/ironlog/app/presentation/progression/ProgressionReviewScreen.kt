@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.progression
 
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -218,7 +220,7 @@ private fun ProgressionReviewCard(
                     progressionSchemeText(item.scheme)
                 ),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.accentText
             )
             val evidenceDate = item.countedSets.maxOfOrNull { it.completedAt }
             val date = evidenceDate ?: item.createdAtEpochMillis.takeIf { it > 0 }?.let {
@@ -272,10 +274,10 @@ private fun ProgressionReviewCard(
                     Button(onClick = onAccept, enabled = !isWorking) {
                         Text(stringResource(R.string.progression_review_accept))
                     }
-                    OutlinedButton(onClick = onEdit, enabled = !isWorking) {
+                    OutlinedButton(onClick = onEdit, enabled = !isWorking, colors = IronLogInteractiveColors.outlinedButton()) {
                         Text(stringResource(R.string.progression_review_edit))
                     }
-                    TextButton(onClick = onReject, enabled = !isWorking) {
+                    TextButton(onClick = onReject, enabled = !isWorking, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(R.string.progression_review_reject))
                     }
                 }
@@ -406,7 +408,7 @@ private fun ProgressionEditSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onDismiss, enabled = !isWorking) {
+                TextButton(onClick = onDismiss, enabled = !isWorking, colors = IronLogInteractiveColors.textButton()) {
                     Text(stringResource(R.string.common_cancel))
                 }
                 Button(onClick = onAccept, enabled = !isWorking) {

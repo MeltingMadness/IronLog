@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.history
 
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,6 +63,7 @@ import com.ironlog.app.presentation.progression.ProgressionReasonText
 import com.ironlog.app.presentation.progression.ProgressionReviewItemUi
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.feature.history.R as HistoryR
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -137,13 +140,14 @@ fun WorkoutDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = { viewModel.updateNotes("") { confirmNotesDelete = false } },
-                    enabled = !state.editSaving
+                    enabled = !state.editSaving,
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
-                    Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.common_delete), color = MaterialTheme.semanticText.danger)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmNotesDelete = false }, enabled = !state.editSaving) {
+                TextButton(onClick = { confirmNotesDelete = false }, enabled = !state.editSaving, colors = IronLogInteractiveColors.textButton()) {
                     Text(stringResource(R.string.common_cancel))
                 }
             }
@@ -175,7 +179,7 @@ fun WorkoutDetailScreen(
                     .fillMaxSize()
                     .padding(padding),
                 action = {
-                    TextButton(onClick = onBack) {
+                    TextButton(onClick = onBack, colors = IronLogInteractiveColors.textButton()) {
                         Text(text = stringResource(id = R.string.nav_back))
                     }
                 }
@@ -189,7 +193,7 @@ fun WorkoutDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(dims.spacingSm)
             ) {
                 state.intentionError?.let { message ->
-                    item { Text(message, color = MaterialTheme.colorScheme.error) }
+                    item { Text(message, color = MaterialTheme.semanticText.danger) }
                 }
                 item {
                     state.session?.let { session ->
@@ -207,7 +211,7 @@ fun WorkoutDetailScreen(
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.accentText
                             )
                             Text(
                                 text = session.startTime.format(DateFormatting.DATE_FULL),
@@ -232,7 +236,7 @@ fun WorkoutDetailScreen(
                                 )
                             }
                             Row(modifier = Modifier.offset(x = (-12).dp)) {
-                                TextButton(onClick = { showNotesDialog = true }, enabled = !state.editSaving) {
+                                TextButton(onClick = { showNotesDialog = true }, enabled = !state.editSaving, colors = IronLogInteractiveColors.textButton()) {
                                     Text(
                                         stringResource(
                                             if (session.notes.isBlank()) {
@@ -244,10 +248,10 @@ fun WorkoutDetailScreen(
                                     )
                                 }
                                 if (session.notes.isNotBlank()) {
-                                    TextButton(onClick = { confirmNotesDelete = true }, enabled = !state.editSaving) {
+                                    TextButton(onClick = { confirmNotesDelete = true }, enabled = !state.editSaving, colors = IronLogInteractiveColors.textButton()) {
                                         Text(
                                             stringResource(R.string.workout_detail_notes_delete),
-                                            color = MaterialTheme.colorScheme.error
+                                            color = MaterialTheme.semanticText.danger
                                         )
                                     }
                                 }
@@ -295,7 +299,7 @@ fun WorkoutDetailScreen(
                                             Text(
                                                 text = stringResource(id = R.string.workout_detail_pr_badge),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.semantic.violet,
+                                                color = MaterialTheme.semanticText.violet,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -358,7 +362,7 @@ fun WorkoutDetailScreen(
                                             stringResource(historyIntentionLabelRes(intention))
                                         ),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.accentText
                                     )
                                 }
                             }
@@ -442,7 +446,7 @@ private fun ProgressionOutcomeCard(
                     progressionSchemeText(outcome.scheme)
                 ),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.accentText
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -521,9 +525,9 @@ private fun progressionStatusText(status: ProgressionSuggestionStatus): String =
 
 @Composable
 private fun progressionStatusColor(status: ProgressionSuggestionStatus): Color = when (status) {
-    ProgressionSuggestionStatus.PENDING -> MaterialTheme.colorScheme.primary
-    ProgressionSuggestionStatus.ACCEPTED -> MaterialTheme.semantic.success
-    ProgressionSuggestionStatus.REJECTED -> MaterialTheme.semantic.danger
+    ProgressionSuggestionStatus.PENDING -> MaterialTheme.accentText
+    ProgressionSuggestionStatus.ACCEPTED -> MaterialTheme.semanticText.success
+    ProgressionSuggestionStatus.REJECTED -> MaterialTheme.semanticText.danger
     ProgressionSuggestionStatus.INFORMATIONAL,
     ProgressionSuggestionStatus.STALE -> MaterialTheme.colorScheme.onSurfaceVariant
 }

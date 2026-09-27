@@ -35,6 +35,8 @@ struct IronLogTheme {
         let separator: Color
         let progressTrack: Color
         let primary: Color
+        let accentText: Color
+        let buttonText: Color
         let secondary: Color
         let success: Color
         let warning: Color
@@ -115,8 +117,9 @@ struct IronLogTheme {
                     elevated: 0xFFFCF7,
                     muted: 0xFFF3E5,
                     text: 0x1A0F00,
-                    secondaryText: 0x6B4A2A,
                     primary: 0xFF6B00,
+                    accentText: 0xA83F00,
+                    buttonText: 0x121212,
                     secondary: 0x0D9488,
                     success: 0x166534,
                     warning: 0x92400E,
@@ -130,8 +133,9 @@ struct IronLogTheme {
                     elevated: 0x2C323E,
                     muted: 0x202631,
                     text: 0xF5F4EF,
-                    secondaryText: 0xADB4C1,
                     primary: 0xF58B20,
+                    accentText: 0xFFC98A,
+                    buttonText: 0x121212,
                     secondary: 0x14B8A6,
                     success: 0x34D399,
                     warning: 0xFBBF24,
@@ -149,8 +153,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0x00838F,
+                    accentText: 0x00636D,
+                    buttonText: 0x000000,
                     secondary: 0x455A64,
                     success: 0x2E7D32,
                     warning: 0xEF6C00,
@@ -164,8 +169,9 @@ struct IronLogTheme {
                     elevated: 0x1A202A,
                     muted: 0x161B24,
                     text: 0xE5E8EF,
-                    secondaryText: 0xE2E8F0,
                     primary: 0x4DD0E1,
+                    accentText: 0xA0F4FF,
+                    buttonText: 0x121212,
                     secondary: 0xB0BEC5,
                     success: 0x81C784,
                     warning: 0xFFB74D,
@@ -183,8 +189,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0xD50000,
+                    accentText: 0xA80000,
+                    buttonText: 0xFFFFFF,
                     secondary: 0x212121,
                     success: 0x2E7D32,
                     warning: 0xEF6C00,
@@ -198,8 +205,9 @@ struct IronLogTheme {
                     elevated: 0x1A202A,
                     muted: 0x161B24,
                     text: 0xE5E8EF,
-                    secondaryText: 0xE2E8F0,
                     primary: 0xFF5252,
+                    accentText: 0xFFB0B0,
+                    buttonText: 0x121212,
                     secondary: 0x9E9E9E,
                     success: 0x81C784,
                     warning: 0xFFB74D,
@@ -217,8 +225,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0xFF7A1A,
+                    accentText: 0xA34400,
+                    buttonText: 0x121212,
                     secondary: 0x2E2E34,
                     success: 0x3DFF88,
                     warning: 0xFF7A1A,
@@ -232,8 +241,9 @@ struct IronLogTheme {
                     elevated: 0x1C1C20,
                     muted: 0x161618,
                     text: 0xF4F4F5,
-                    secondaryText: 0xA1A1AA,
                     primary: 0xFF7A1A,
+                    accentText: 0xFFB37A,
+                    buttonText: 0x121212,
                     secondary: 0x2E2E34,
                     success: 0x3DFF88,
                     warning: 0xFF7A1A,
@@ -251,8 +261,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0x3B82F6,
+                    accentText: 0x1D4ED8,
+                    buttonText: 0x121212,
                     secondary: 0x64748B,
                     success: 0x10B981,
                     warning: 0x3B82F6,
@@ -266,8 +277,9 @@ struct IronLogTheme {
                     elevated: 0x1A1C22,
                     muted: 0x15171C,
                     text: 0xF1F5F9,
-                    secondaryText: 0x94A3B8,
                     primary: 0x3B82F6,
+                    accentText: 0x9EC5FF,
+                    buttonText: 0x121212,
                     secondary: 0x64748B,
                     success: 0x10B981,
                     warning: 0x3B82F6,
@@ -285,8 +297,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0x00F5A0,
+                    accentText: 0x007A50,
+                    buttonText: 0x121212,
                     secondary: 0x06B6D4,
                     success: 0x2E7D32,
                     warning: 0x00F5A0,
@@ -300,8 +313,9 @@ struct IronLogTheme {
                     elevated: 0x102420,
                     muted: 0x0C1B18,
                     text: 0xECFDF5,
-                    secondaryText: 0x6EE7B7,
                     primary: 0x00F5A0,
+                    accentText: 0xA4FFD7,
+                    buttonText: 0x121212,
                     secondary: 0x06B6D4,
                     success: 0x00F5A0,
                     warning: 0x06B6D4,
@@ -319,8 +333,9 @@ struct IronLogTheme {
                     elevated: 0xFCFDFF,
                     muted: 0xECF1F8,
                     text: 0x17181C,
-                    secondaryText: 0x404754,
                     primary: 0xFF3366,
+                    accentText: 0xB00036,
+                    buttonText: 0x121212,
                     secondary: 0xA855F7,
                     success: 0x2E7D32,
                     warning: 0xFF3366,
@@ -334,8 +349,9 @@ struct IronLogTheme {
                     elevated: 0x221A26,
                     muted: 0x1B151E,
                     text: 0xFDF2F8,
-                    secondaryText: 0xF472B6,
                     primary: 0xFF3366,
+                    accentText: 0xFFB4D0,
+                    buttonText: 0x121212,
                     secondary: 0xA855F7,
                     success: 0x34D399,
                     warning: 0xFBBF24,
@@ -353,8 +369,9 @@ struct IronLogTheme {
         elevated: UInt32,
         muted: UInt32,
         text: UInt32,
-        secondaryText: UInt32,
         primary: UInt32,
+        accentText: UInt32,
+        buttonText: UInt32,
         secondary: UInt32,
         success: UInt32,
         warning: UInt32,
@@ -369,10 +386,12 @@ struct IronLogTheme {
             surfaceElevated: Color.ironLogHex(elevated),
             surfaceMuted: Color.ironLogHex(muted),
             textPrimary: textColor,
-            textSecondary: Color.ironLogHex(secondaryText),
+            textSecondary: Color.ironLogHex(dark ? 0xB7BBC4 : 0x454B54),
             separator: textColor.opacity(dark ? 0.16 : 0.14),
             progressTrack: textColor.opacity(dark ? 0.14 : 0.12),
             primary: Color.ironLogHex(primary),
+            accentText: Color.ironLogHex(accentText),
+            buttonText: Color.ironLogHex(buttonText),
             secondary: Color.ironLogHex(secondary),
             success: Color.ironLogHex(success),
             warning: Color.ironLogHex(warning),
@@ -409,6 +428,39 @@ private struct IronLogThemeModifier: ViewModifier {
             .environment(\.ironLogTheme, theme)
             .tint(theme.palette(for: colorScheme).primary)
     }
+}
+
+private struct IronLogAccentTextModifier: ViewModifier {
+    @Environment(\.ironLogTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(theme.palette(for: colorScheme).accentText)
+    }
+}
+
+private struct IronLogSecondaryTextModifier: ViewModifier {
+    @Environment(\.ironLogTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(theme.palette(for: colorScheme).textSecondary)
+    }
+}
+
+private struct IronLogButtonTextModifier: ViewModifier {
+    @Environment(\.ironLogTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(theme.palette(for: colorScheme).buttonText)
+    }
+}
+
+extension View {
+    func ironLogAccentText() -> some View { modifier(IronLogAccentTextModifier()) }
+    func ironLogSecondaryText() -> some View { modifier(IronLogSecondaryTextModifier()) }
+    func ironLogButtonText() -> some View { modifier(IronLogButtonTextModifier()) }
 }
 
 private extension Color {

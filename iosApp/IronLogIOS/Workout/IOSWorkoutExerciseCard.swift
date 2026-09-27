@@ -35,19 +35,19 @@ struct IOSWorkoutExerciseCard: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
                                 .background(palette.primary.opacity(0.12), in: Capsule())
-                                .foregroundStyle(palette.primary)
+                                .ironLogAccentText()
                         } else {
                             Text("Ad-hoc")
                                 .font(.geist(.caption, weight: .bold))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
                                 .background(palette.secondary.opacity(0.12), in: Capsule())
-                                .foregroundStyle(palette.secondary)
+                                .ironLogAccentText()
                         }
                     }
                     Text("\(row.exercise.primaryMuscleGroupDisplayName) · \(row.exercise.categoryDisplayName)")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Spacer(minLength: 8)
                 Menu {
@@ -69,7 +69,7 @@ struct IOSWorkoutExerciseCard: View {
                         .foregroundStyle(row.isComplete ? palette.success : palette.textSecondary)
                 }
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Ziel und Fortschritt")
                 .accessibilityValue("\(row.completedNormalSets) von \(displayTarget.sets) Arbeitssätzen")
@@ -94,7 +94,7 @@ struct IOSWorkoutExerciseCard: View {
             if row.sets.isEmpty {
                 Text("Noch kein Satz geloggt.")
                     .font(.geist(.subheadline))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .padding(.vertical, 4)
             } else {
                 VStack(spacing: 0) {
@@ -181,7 +181,7 @@ private struct IOSWorkoutSetRow: View {
             Text("\(set.setNumber)")
                 .font(.geist(.subheadline, weight: .semibold).monospacedDigit())
                 .frame(width: 24, alignment: .leading)
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
 
             Text(resolvedIOSWorkoutSetType(set).shortName)
                 .font(.geist(.caption, weight: .semibold))
@@ -194,7 +194,7 @@ private struct IOSWorkoutSetRow: View {
                 if let intensity = iosWorkoutFormatIntensity(storedRPE: set.rpe, intensitySystem: intensitySystem) {
                     Text("\(intensitySystem.uppercased()) \(intensity)")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
             }
 
@@ -290,7 +290,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
                 Spacer()
-                Text(source).font(.geist(.caption)).foregroundStyle(.secondary).lineLimit(1)
+                Text(source).font(.geist(.caption)).ironLogSecondaryText().lineLimit(1)
             }
             HStack(spacing: 10) {
                 let stepText = IOSNumber.format(weightStep)
@@ -320,7 +320,7 @@ private struct IOSWorkoutInlineSetEntry: View {
                     Text("ANSTRENGUNG · \(intensityScale)")
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     IOSWorkoutGlassIntensityBar(
                         options: intensityScale == "RIR"
                             ? ["0", "1", "2", "3", "4"]
@@ -352,7 +352,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             .disabled(busy)
             if row.loggingSlots.count > 0 {
                 let open = max(0, (row.remainingPlannedSets ?? 0) - 1)
-                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).foregroundStyle(.secondary) }
+                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).ironLogSecondaryText() }
             }
         }
     }
@@ -360,7 +360,7 @@ private struct IOSWorkoutInlineSetEntry: View {
     private var emberBody: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
-            Text(source).font(.geist(.caption)).foregroundStyle(.tint)
+            Text(source).font(.geist(.caption)).ironLogAccentText()
             HStack(spacing: 12) {
                 field("Gewicht (\(IOSWeight.label(unitSystem)))", text: $weight, keyboard: .decimalPad)
                 field("Wiederholungen", text: $reps, keyboard: .numberPad)
@@ -386,10 +386,10 @@ private struct IOSWorkoutInlineSetEntry: View {
             Button { Task { await save() } } label: {
                 Label(busy ? "Speichert …" : "Satz \(row.nextSetNumber) bestätigen", systemImage: "checkmark")
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
-            }.buttonStyle(.borderedProminent).disabled(busy)
+            }.buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy)
             if row.loggingSlots.count > 0 {
                 let open = max(0, (row.remainingPlannedSets ?? 0) - 1)
-                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).foregroundStyle(.secondary) }
+                if open > 0 { Text("\(open) weitere geplante Sätze offen").font(.geist(.caption)).ironLogSecondaryText() }
             }
         }.padding(14)
         .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
@@ -397,7 +397,7 @@ private struct IOSWorkoutInlineSetEntry: View {
     }
     private func field(_ title: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title).font(.geist(.caption)).foregroundStyle(.secondary)
+            Text(title).font(.geist(.caption)).ironLogSecondaryText()
             TextField(title, text: text).keyboardType(keyboard).textFieldStyle(.roundedBorder)
                 .font(.geist(.title3).monospacedDigit()).frame(minHeight: 44).accessibilityLabel(title)
         }

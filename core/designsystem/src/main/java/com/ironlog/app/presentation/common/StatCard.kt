@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.ironlog.app.presentation.theme.glow
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 
 enum class StatCardVariant {
     PRIMARY,
@@ -34,6 +35,11 @@ fun StatCard(
         StatCardVariant.PRIMARY -> MaterialTheme.semantic.teal
         StatCardVariant.SECONDARY -> MaterialTheme.semantic.violet
         StatCardVariant.TERTIARY -> MaterialTheme.semantic.sky
+    }
+    val statTextColor = when (variant) {
+        StatCardVariant.PRIMARY -> MaterialTheme.semanticText.teal
+        StatCardVariant.SECONDARY -> MaterialTheme.semanticText.violet
+        StatCardVariant.TERTIARY -> MaterialTheme.semanticText.sky
     }
     val (alpha, verticalPadding) = when (variant) {
         StatCardVariant.PRIMARY -> 0.78f to 20.dp
@@ -63,7 +69,7 @@ fun StatCard(
                             text = value,
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
-                            color = statColor,
+                            color = statTextColor,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -74,7 +80,7 @@ fun StatCard(
                         text = value,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = statColor,
+                        color = statTextColor,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -84,7 +90,7 @@ fun StatCard(
                         text = value,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = statColor,
+                        color = statTextColor,
                         textAlign = TextAlign.Center
                     )
                 }

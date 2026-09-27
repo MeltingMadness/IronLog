@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import com.ironlog.shared.plans.PlannedSet
 import com.ironlog.shared.plans.PlannedSets
 import com.ironlog.app.domain.util.WeightFormatting
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.semanticText
 
 internal fun plannedSetLabel(kind: String) = when(kind) { "WARMUP" -> "Aufwärmen"; "BACKOFF" -> "Backoff"; else -> "Arbeitssatz" }
 private data class SetDraft(val kind: String, val weight: String, val reps: String)
@@ -42,7 +44,7 @@ internal fun IndividualSetTargetsSheet(item: PlanExerciseUi, onDismiss: () -> Un
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         var expanded by remember { mutableStateOf(false) }
                         Box(Modifier.weight(1.3f)) {
-                            TextButton(onClick = { expanded = true }) { Text("${index + 1} · ${plannedSetLabel(row.kind)}") }
+                            TextButton(onClick = { expanded = true }, colors = IronLogInteractiveColors.textButton()) { Text("${index + 1} · ${plannedSetLabel(row.kind)}") }
                             DropdownMenu(expanded, { expanded = false }) {
                                 listOf("NORMAL", "WARMUP", "BACKOFF").forEach { kind ->
                                     DropdownMenuItem(text = { Text(plannedSetLabel(kind)) }, onClick = { rows = rows.toMutableList().also { it[index] = row.copy(kind = kind) }; expanded = false })
@@ -55,11 +57,11 @@ internal fun IndividualSetTargetsSheet(item: PlanExerciseUi, onDismiss: () -> Un
                     }
                 }
                 Row {
-                    TextButton(onClick = { rows = rows + SetDraft("NORMAL", rows.lastOrNull()?.weight ?: "0", rows.lastOrNull()?.reps ?: "10") }, enabled = rows.size < 100) { Text("+ Arbeitssatz") }
-                    TextButton(onClick = { rows = listOf(SetDraft("WARMUP", "0", "10")) + rows }, enabled = rows.size < 100) { Text("+ Aufwärmsatz") }
+                    TextButton(onClick = { rows = rows + SetDraft("NORMAL", rows.lastOrNull()?.weight ?: "0", rows.lastOrNull()?.reps ?: "10") }, enabled = rows.size < 100, colors = IronLogInteractiveColors.textButton()) { Text("+ Arbeitssatz") }
+                    TextButton(onClick = { rows = listOf(SetDraft("WARMUP", "0", "10")) + rows }, enabled = rows.size < 100, colors = IronLogInteractiveColors.textButton()) { Text("+ Aufwärmsatz") }
                 }
                 Text("Progression: Manuell · Jede Zeile bleibt einzeln editierbar.", style = MaterialTheme.typography.bodySmall)
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                error?.let { Text(it, color = MaterialTheme.semanticText.danger) }
             }
             Button(onClick = {
                 val parsed = rows.mapNotNull { row ->

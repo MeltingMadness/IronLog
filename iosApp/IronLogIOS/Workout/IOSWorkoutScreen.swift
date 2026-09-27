@@ -295,7 +295,7 @@ struct IOSWorkoutScreen: View {
                         Text("Füge eine Übung hinzu, um den ersten Satz zu loggen.")
                     } actions: {
                         Button("Übung hinzufügen") { showingExercisePicker = true }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.borderedProminent).ironLogButtonText()
                     }
                     .padding(.vertical, 30)
                 } else {
@@ -348,7 +348,7 @@ struct IOSWorkoutScreen: View {
                     Label("Beenden", systemImage: "checkmark.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).ironLogButtonText()
             }
             .padding(.horizontal)
             .padding(.vertical, 10)
@@ -503,7 +503,7 @@ struct IOSWorkoutScreen: View {
                         .font(.geist(.title2, weight: .bold))
                     Text(session.planId == nil ? "Freie Session" : "Plan-Session")
                         .font(.geist(.subheadline))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Spacer()
                 IOSWorkoutElapsedView(startDate: session.startDate)
@@ -512,7 +512,7 @@ struct IOSWorkoutScreen: View {
             HStack(spacing: 10) {
                 Label("Seit \(session.startDate.formatted(date: .omitted, time: .shortened))", systemImage: "clock")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
 
                 Spacer()
 
@@ -1007,7 +1007,7 @@ private struct IOSWorkoutElapsedView: View {
                     .font(.geist(.title3, weight: .semibold).monospacedDigit())
                 Text("Workout-Zeit")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Workout-Zeit")

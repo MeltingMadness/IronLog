@@ -367,7 +367,7 @@ struct IOSDashboardScreen: View {
                 .font(.geist(.title2, weight: .bold))
             Text("Dein Training, klar und nachvollziehbar.")
                 .font(.geist(.subheadline))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         }
         .accessibilityElement(children: .combine)
     }
@@ -416,7 +416,7 @@ private struct IOSDashboardCommandCenter: View {
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).ironLogButtonText()
                     .disabled(isBusy)
                 } else if let suggestion {
                     Button {
@@ -430,7 +430,7 @@ private struct IOSDashboardCommandCenter: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).ironLogButtonText()
                     .disabled(isBusy)
                 } else if let fallbackPlan {
                     Button {
@@ -439,14 +439,14 @@ private struct IOSDashboardCommandCenter: View {
                         Label("\(fallbackPlan.name) starten", systemImage: "play.fill")
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).ironLogButtonText()
                     .disabled(isBusy)
                 } else {
                     Button(action: onStartFree) {
                         Label("Freies Training starten", systemImage: "play.fill")
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).ironLogButtonText()
                     .disabled(isBusy)
                 }
 
@@ -518,7 +518,7 @@ private struct IOSDashboardTrainingTrendCard: View {
             } else {
                 Text("Der Trainingstrend konnte nicht gelesen werden.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }
@@ -554,7 +554,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
         Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, "Übung", "Übungen")) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, "vergleichbare Einheit", "vergleichbare Einheiten"))")
             .font(.geist(.subheadline))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -569,24 +569,24 @@ private struct IOSDashboardTrainingTrendCard: View {
                     if trend.status == .insufficientData {
                         Text("Es fehlen vergleichbare Einheiten für einen belastbaren Trend.")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Text("Evidenz: \(ilConfidenceText(trend.confidence))")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
 
                     if trend.repeatedDeclineExerciseCount > 0 {
                         Text("\(trend.repeatedDeclineExerciseCount) Übung\(trend.repeatedDeclineExerciseCount == 1 ? "" : "en") mit wiederholtem Rückgang")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
                         Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, "Einheit", "Einheiten")))")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
@@ -616,7 +616,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     private func reasonLine(_ text: String) -> some View {
         Text("· \(text)")
             .font(.geist(.caption))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -644,7 +644,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                             .font(.geist(.caption))
                         Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, "Einheit", "Einheiten")) · \(ilConfidenceText(exercise.confidence))")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
             }
@@ -660,7 +660,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                 ForEach(Array(trend.dataQuality.notes.enumerated()), id: \.offset) { _, note in
                     Text("· \(ilDataQualityNoteText(note))")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
             }
         }
@@ -707,9 +707,9 @@ private struct IOSDashboardTodayCheckInCard: View {
                 } else {
                     Text("Freiwillige Selbsteinschätzung. Ohne Angabe bleibt alles offen; es wird kein Wert vorausgefüllt.")
                         .font(.geist(.body))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     Button("Check-in für heute", action: onEdit)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).ironLogButtonText()
                 }
             }
         }
@@ -725,7 +725,7 @@ private struct IOSDashboardTodayCheckInCard: View {
                 Spacer(minLength: 8)
                 Text(row.value)
                     .font(.geist(.subheadline))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }
@@ -764,7 +764,7 @@ private struct IOSDashboardTodayCheckInCard: View {
         }
         Text("Aussagekraft: \(ilConfidenceText(dailyForm.confidence)). Der Trainingstrend bleibt davon unabhängig.")
             .font(.geist(.caption))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
     }
 }
 
@@ -792,7 +792,7 @@ private struct IOSDashboardTodayMuscleCard: View {
             if muscleGroups.isEmpty {
                 Text("Kein Tagesbezug: Es ist keine Einheit geplant und keine Muskelgruppe gemeldet.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     if !plannedMuscles.isEmpty {
@@ -809,7 +809,7 @@ private struct IOSDashboardTodayMuscleCard: View {
                     }
                     Text("Fakten aus deiner Historie: letzte Belastung und Arbeitssätze der letzten 7 Tage. Keine Erholungsprognose.")
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
             }
         }
@@ -818,7 +818,7 @@ private struct IOSDashboardTodayMuscleCard: View {
     private func sectionHeader(_ text: String) -> some View {
         Text(text)
             .font(.geist(.caption, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
             .textCase(.uppercase)
     }
 
@@ -838,7 +838,7 @@ private struct IOSDashboardTodayMuscleCard: View {
                 if isPlanned {
                     Text("geplant")
                         .font(.geist(.caption, weight: .semibold))
-                        .foregroundStyle(.tint)
+                        .ironLogAccentText()
                 }
                 Spacer(minLength: 8)
                 if let soreness = muscle.soreness {
@@ -850,19 +850,19 @@ private struct IOSDashboardTodayMuscleCard: View {
 
             Text("\(ilPastDayText(muscle.lastTrainedEpochMillis)) · \(ilSetCountText(muscle.setsInWindow)) in den letzten 7 Tagen")
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
 
             if muscle.setsToday > 0 {
                 Text("Heute bereits \(ilSetCountText(muscle.setsToday))")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             let flags = muscle.flags.filter { $0 != .unknown }
             if !flags.isEmpty {
                 Text(flags.map(ilMuscleFlagText).joined(separator: " · "))
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }
@@ -1049,7 +1049,7 @@ private struct ILCheckInScaleRow: View {
                 Spacer(minLength: 8)
                 Text(value.map { ilCheckInScaleText($0, dimension: dimension) } ?? "offen")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
 
             HStack(spacing: 8) {
@@ -1063,6 +1063,7 @@ private struct ILCheckInScaleRow: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(value == step ? Color.accentColor : Color.secondary)
+                    .ironLogAccentText()
                     .accessibilityLabel("\(title): \(step) von 5")
                     .accessibilityAddTraits(value == step ? [.isSelected] : [])
                 }
@@ -1087,7 +1088,7 @@ private struct IOSDashboardWorkoutCounts: View {
             if let lastSessionDate = ilAnalyticsDateText(lastSessionDate) {
                 Text("Zuletzt am \(lastSessionDate)")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }
@@ -1099,7 +1100,7 @@ private struct IOSDashboardWorkoutCounts: View {
                 .monospacedDigit()
             Text(title)
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1120,11 +1121,11 @@ private struct IOSDashboardPendingProgressions: View {
                         .font(.geist(.headline))
                     Text("\(count) Vorschlag\(count == 1 ? "" : "e") wartet auf deine Entscheidung.")
                         .font(.geist(.subheadline))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
             .contentShape(Rectangle())
         }
@@ -1139,7 +1140,7 @@ private struct IOSDashboardVolumeExplanation: View {
     var body: some View {
         Text("MEV ist das minimale wirksame Volumen, MAV der typische Zielbereich und MRV die obere Regenerationsgrenze. Der Trend stammt aus den gültigen Arbeitssätzen dieser Woche.")
             .font(.geist(.caption))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
             .padding(.horizontal, 4)
     }
 }
@@ -1153,7 +1154,7 @@ private struct IOSDashboardRecentRecords: View {
             if records.isEmpty {
                 Text("Noch keine persönlichen Rekorde gespeichert.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 12) {
@@ -1164,13 +1165,13 @@ private struct IOSDashboardRecentRecords: View {
                                     .lineLimit(2)
                                 Text(ilRecordTypeText(record.type))
                                     .font(.geist(.caption))
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                                 Text(ilRecordValueText(type: record.type, value: record.value, unitSystem: unitSystem))
                                     .font(.geist(.title3, weight: .bold))
                                     .foregroundStyle(.orange)
                                 Text(ilAnalyticsDateText(record.achievedAt) ?? record.achievedAt)
                                     .font(.geist(.caption))
-                                    .foregroundStyle(.secondary)
+                                    .ironLogSecondaryText()
                             }
                             .frame(width: 150, alignment: .leading)
                             .padding(12)

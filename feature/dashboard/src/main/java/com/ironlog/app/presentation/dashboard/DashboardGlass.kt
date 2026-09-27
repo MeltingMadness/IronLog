@@ -49,6 +49,7 @@ import com.ironlog.app.domain.model.UnitSystem
 import com.ironlog.app.domain.util.WeightFormatting
 import com.ironlog.app.presentation.theme.AthleticLabel
 import com.ironlog.app.presentation.theme.GlassLevel
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.LocalAppearanceStyle
 import com.ironlog.app.presentation.theme.liquidGlass
 import com.ironlog.core.designsystem.R
@@ -269,7 +270,7 @@ internal fun GlassCommandCenterCard(
         )
 
         if (!hasActiveSession && recommended != null) {
-            TextButton(onClick = onChoosePlan, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            TextButton(onClick = onChoosePlan, modifier = Modifier.align(Alignment.CenterHorizontally), colors = IronLogInteractiveColors.textButton()) {
                 Text(
                     text = stringResource(R.string.dashboard_hero_choose_other),
                     fontWeight = FontWeight.Bold,
@@ -386,7 +387,7 @@ internal fun GlassWeekStrip(
                 ) {
                     Text(
                         text = short,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

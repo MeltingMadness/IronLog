@@ -30,6 +30,7 @@ import com.ironlog.app.presentation.theme.PlateColors
 import com.ironlog.app.presentation.theme.Radius
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.core.designsystem.R
 
 @Composable
@@ -157,7 +158,7 @@ fun PlateVisualizer(
                 Text(
                     text = stringResource(R.string.workout_plate_calc_no_fit),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.semantic.warning,
+                    color = MaterialTheme.semanticText.warning,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -170,7 +171,7 @@ fun PlateVisualizer(
                         remainderFormatted
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.semantic.warning,
+                    color = MaterialTheme.semanticText.warning,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -213,11 +214,12 @@ private fun PlateBlock(weightKg: Double) {
             .border(width = 0.5.dp, color = Color.Black.copy(alpha = 0.35f), shape = RoundedCornerShape(2.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (weightKg >= 4.9) {
+        // Only draw a 9 sp label where the plate can hold its one or two digits.
+        if (weightKg >= 4.9 && (labelText.length == 1 || (labelText.length == 2 && widthDp >= 12.dp))) {
             Text(
                 text = labelText,
                 color = textColor,
-                fontSize = 7.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
             )

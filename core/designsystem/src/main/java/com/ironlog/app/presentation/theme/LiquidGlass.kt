@@ -47,9 +47,21 @@ private val GlassTeal = Color(0xFF2EC4B6)
 private val GlassViolet = Color(0xFF6D5BFF)
 private val GlassDarkBase = Color(0xFF07080C)
 private val GlassLightBase = Color(0xFFEEF0F6)
+private val GlassDarkTintBase = Color(0xFF0E1017)
 
 @Composable
 private fun isDarkGlass(): Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+/** Shared by the renderer and the contrast test, including the tinted glass level. */
+internal fun glassSurfaceTint(level: GlassLevel, dark: Boolean, accent: Color): Color = when (level) {
+    GlassLevel.STANDARD -> if (dark) Color(0xD110121A) else Color(0xC2FFFFFF)
+    GlassLevel.STRONG -> if (dark) Color(0xD110121A) else Color(0xD9FFFFFF)
+    GlassLevel.TINT -> if (dark) {
+        accent.copy(alpha = 0.10f).compositeOverOpaque(GlassDarkTintBase).copy(alpha = 0.86f)
+    } else {
+        accent.copy(alpha = 0.07f).compositeOverOpaque(Color.White).copy(alpha = 0.82f)
+    }
+}
 
 /**
  * Hosts the Liquid Glass backdrop: draws [LiquidBackground] once behind [content] and exposes it
@@ -125,19 +137,16 @@ fun Modifier.liquidGlass(
     val dark = isDarkGlass()
     val hazeState = LocalGlassHazeState.current
     val tintColor = tint ?: MaterialTheme.colorScheme.primary
-    val translucent = when (level) {
-        GlassLevel.STANDARD -> if (dark) Color(0x4710121A) else Color(0x59FFFFFF)
-        GlassLevel.STRONG -> if (dark) Color(0x2E10121A) else Color(0x80FFFFFF)
-        GlassLevel.TINT -> tintColor.copy(alpha = if (dark) 0.30f else 0.22f)
-    }
+    val translucent = glassSurfaceTint(level, dark, tintColor)
     val opaque = when (level) {
         GlassLevel.STANDARD -> if (dark) Color(0xF01A1C26) else Color(0xEBFFFFFF)
         GlassLevel.STRONG -> if (dark) Color(0xF5222430) else Color(0xF5FFFFFF)
-        GlassLevel.TINT -> tintColor.copy(alpha = if (dark) 0.45f else 0.30f)
-            .compositeOverOpaque(if (dark) Color(0xFF1A1C26) else Color.White)
+        GlassLevel.TINT -> if (dark) tintColor.copy(alpha = 0.10f)
+            .compositeOverOpaque(GlassDarkTintBase) else tintColor.copy(alpha = 0.07f)
+            .compositeOverOpaque(Color.White)
     }
     val sheen = if (dark) {
-        listOf(Color.White.copy(alpha = 0.20f), Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.03f))
+        listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.04f), Color.White.copy(alpha = 0.02f))
     } else {
         listOf(Color.White.copy(alpha = 0.70f), Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.20f))
     }

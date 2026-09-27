@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.FitnessCenter
 
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.HistorySkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -77,6 +79,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.ironLogSharedElement
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.app.presentation.theme.staggeredEntrance
 import com.ironlog.feature.history.R as HistoryR
 import org.koin.androidx.compose.koinViewModel
@@ -200,7 +203,7 @@ fun WorkoutHistoryScreen(
                             .fillMaxWidth()
                             .weight(1f),
                         action = {
-                            TextButton(onClick = { pagedWorkouts.retry() }) {
+                            TextButton(onClick = { pagedWorkouts.retry() }, colors = IronLogInteractiveColors.textButton()) {
                                 Text(text = stringResource(id = R.string.common_retry))
                             }
                         }
@@ -287,15 +290,17 @@ fun WorkoutHistoryScreen(
                     TextButton(onClick = {
                         viewModel.deleteSession(id)
                         deleteSessionId = null
-                    }) {
+                    },
+                        colors = IronLogInteractiveColors.textButton()
+                    ) {
                         Text(
                             text = stringResource(id = R.string.common_delete),
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.semanticText.danger
                         )
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { deleteSessionId = null }) {
+                    TextButton(onClick = { deleteSessionId = null }, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.common_cancel))
                     }
                 }
@@ -411,7 +416,8 @@ private fun FilterRow(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
+                },
+                colors = IronLogInteractiveColors.filterChip()
             )
         }
     }
@@ -521,7 +527,7 @@ private fun WorkoutCard(
                 Text(
                     text = item.session.startTime.format(DateFormatting.DATE_FULL),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.accentText,
                     fontWeight = FontWeight.SemiBold
                 )
 

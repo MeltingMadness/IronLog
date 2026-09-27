@@ -145,7 +145,7 @@ struct IOSStatisticsScreen: View {
             if exercises.isEmpty {
                 Text("Keine Übung mit dieser Auswahl gefunden.")
                     .font(.geist(.body))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 16)
             } else {
@@ -276,7 +276,7 @@ private struct IOSStatisticsSummary: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             Text(value)
                 .font(.geist(.body, weight: .semibold))
         }
@@ -299,7 +299,7 @@ private struct IOSExerciseStatisticsRow: View {
                         .foregroundStyle(.primary)
                     Text([muscleName, ilCount(exercise.sessions.count, "Einheit", "Einheiten")].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.geist(.caption))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 Spacer(minLength: 8)
                 if let latest {
@@ -308,12 +308,12 @@ private struct IOSExerciseStatisticsRow: View {
                             .font(.geist(.body, weight: .semibold))
                         Text("e1RM zuletzt")
                             .font(.geist(.caption))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             }
         }
     }

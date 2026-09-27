@@ -65,11 +65,11 @@ struct IOSWorkoutPlateVisualizer: View {
             if result.platesPerSide.isEmpty {
                 Text("Keine Platte pro Seite erforderlich")
                     .font(.geist(.footnote))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
             } else {
                 Text("Pro Seite")
                     .font(.geist(.caption))
-                    .foregroundStyle(.secondary)
+                    .ironLogSecondaryText()
 
                 LazyVGrid(
                     columns: [GridItem(.adaptive(minimum: 78), alignment: .leading)],
@@ -92,7 +92,7 @@ struct IOSWorkoutPlateVisualizer: View {
                 Text("Ziel \(iosWorkoutDisplayWeight(kilograms: result.targetWeightKg, unitSystem: unitSystem))")
             }
             .font(.geist(.caption))
-            .foregroundStyle(.secondary)
+            .ironLogSecondaryText()
 
             if !result.isExact {
                 Text("Es fehlen \(iosWorkoutDisplayWeight(kilograms: result.remainderKg * 2, unitSystem: unitSystem)) für das Zielgewicht.")

@@ -67,7 +67,9 @@ import com.ironlog.app.presentation.common.EmptyStateScreen
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.app.presentation.workout.ExercisePickerSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -156,7 +158,7 @@ fun PlanEditorScreen(
                     .fillMaxSize()
                     .padding(padding),
                 action = {
-                    TextButton(onClick = onBack) {
+                    TextButton(onClick = onBack, colors = IronLogInteractiveColors.textButton()) {
                         Text(text = stringResource(id = R.string.nav_back))
                     }
                 }
@@ -185,7 +187,8 @@ fun PlanEditorScreen(
             item {
                 TextButton(
                     onClick = viewModel::showExercisePicker,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Text(stringResource(id = R.string.plan_editor_add_exercise))
@@ -249,13 +252,14 @@ fun PlanEditorScreen(
                         onClick = {
                             showDiscardDialog = false
                             onBack()
-                        }
+                        },
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(stringResource(id = PlansR.string.plan_editor_discard_confirm))
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDiscardDialog = false }) {
+                    TextButton(onClick = { showDiscardDialog = false }, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = PlansR.string.plan_editor_discard_cancel))
                     }
                 }
@@ -364,7 +368,8 @@ private fun PlanExerciseCard(
             ) {
                 TextButton(
                     onClick = onGroupWithPrevious,
-                    enabled = !isFirst
+                    enabled = !isFirst,
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(dims.spacing2))
@@ -374,7 +379,7 @@ private fun PlanExerciseCard(
                     TextButton(
                         onClick = onUngroup,
                         colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = MaterialTheme.semanticText.danger
                         )
                     ) {
                         Icon(
@@ -388,8 +393,8 @@ private fun PlanExerciseCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = item.planExercise.setTargets.isEmpty(), onClick = { onSetTargetsChange(emptyList()) }, label = { Text("Einfach") })
-                FilterChip(selected = item.planExercise.setTargets.isNotEmpty(), onClick = { showSetTargets = true }, label = { Text("Einzelne Sätze") })
+                FilterChip(selected = item.planExercise.setTargets.isEmpty(), onClick = { onSetTargetsChange(emptyList()) }, label = { Text("Einfach") }, colors = IronLogInteractiveColors.filterChip())
+                FilterChip(selected = item.planExercise.setTargets.isNotEmpty(), onClick = { showSetTargets = true }, label = { Text("Einzelne Sätze") }, colors = IronLogInteractiveColors.filterChip())
             }
             if (item.planExercise.setTargets.isEmpty()) {
             Row(
@@ -443,14 +448,15 @@ private fun PlanExerciseCard(
                 item.planExercise.setTargets.forEachIndexed { i, target ->
                     Text("${i + 1} · ${plannedSetLabel(target.kind)} · ${WeightFormatting.convertToDisplay(target.weightKg, item.targetWeightInputUnit)} · ${target.reps} Wdh.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
                 }
-                TextButton(onClick = { showSetTargets = true }) { Text("Satzvorgaben bearbeiten") }
+                TextButton(onClick = { showSetTargets = true }, colors = IronLogInteractiveColors.textButton()) { Text("Satzvorgaben bearbeiten") }
                 Text("Einzelne Satzvorgaben werden manuell gesteigert.", style = MaterialTheme.typography.bodySmall)
             }
 
             TextButton(
                 onClick = onOpenProgression,
                 enabled = item.planExercise.setTargets.isEmpty(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = IronLogInteractiveColors.textButton()
             ) {
                 Text(progressionSummary(item.planExercise.progressionConfig))
             }
@@ -495,7 +501,7 @@ private fun TargetNumericInput(
             Text(
                 text = errorText,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.semanticText.danger
             )
         }
     }
@@ -659,12 +665,12 @@ private fun ProgressionEditorSheet(
                     Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                    TextButton(onClick = onDismiss, colors = IronLogInteractiveColors.textButton()) { Text(stringResource(R.string.common_cancel)) }
                     Spacer(modifier = Modifier.width(dims.spacingXs))
                     Button(onClick = onApply) { Text(stringResource(R.string.plan_editor_progression_apply)) }
                 }
             } else if (draft.scheme != ProgressionScheme.MANUAL) {
-                TextButton(onClick = { showDetails = true }, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = { showDetails = true }, modifier = Modifier.fillMaxWidth(), colors = IronLogInteractiveColors.textButton()) {
                     Text(stringResource(PlansR.string.plan_editor_progression_details))
                 }
             }
@@ -697,7 +703,7 @@ private fun ProgressionInput(
             Text(
                 text = progressionError(field),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.semanticText.danger
             )
         }
     }

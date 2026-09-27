@@ -259,7 +259,7 @@ private fun CompletionLens(value: String, unit: String, label: String, modifier:
                 style = TextStyle(fontFeatureSettings = "tnum"),
                 maxLines = 1
             )
-            Text(unit, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(unit, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
         Text(label.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

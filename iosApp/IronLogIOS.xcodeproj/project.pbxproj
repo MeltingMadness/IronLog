@@ -55,6 +55,7 @@
 		912FD5E42DCB9F9E324D33C7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEC65BD5A1141010BA49E120 /* RootView.swift */; };
 		94500958EAE26793CA518347 /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E993C0D9701F14D3277ACF36 /* IOSSettingsViewModel.swift */; };
 		957F0C8A9B186114C4D54A21 /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA545153E6BF364D3143762 /* SettingsScreen.swift */; };
+		959A497FD64D3DE0178F51D7 /* ThemeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B931282A0C3D9D78B9C9359E /* ThemeContrastTests.swift */; };
 		9B054EA8418E2FE17D6C8EA8 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3370C75E31978BA1D7708CF4 /* ShareSheet.swift */; };
 		9E813739BB516801B632AA7A /* BackupBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */; };
 		AC8E0B24828FFD26BFE67402 /* IOSDashboardDeloadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6DAA000D6BD7FC2A774946 /* IOSDashboardDeloadCard.swift */; };
@@ -122,6 +123,7 @@
 		AF050746B4409F9D15BA3894 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
 		AFE1513E0826AD96BD4FA1EA /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
 		B16E76A0CCA913ADC440E678 /* IOSPlansSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlansSupport.swift; sourceTree = "<group>"; };
+		B931282A0C3D9D78B9C9359E /* ThemeContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeContrastTests.swift; sourceTree = "<group>"; };
 		BC40F8E313FAE1B098EB015A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BEC65BD5A1141010BA49E120 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		C407024B1AB7721782D0C615 /* IOSDashboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardGlass.swift; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 			9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */,
 			E7082A888FBFD79B34CE3184 /* RecoveryBridgeTests.swift */,
 			F376B9A2DF45F70CE69E5138 /* RestTimerAdjustTests.swift */,
+			B931282A0C3D9D78B9C9359E /* ThemeContrastTests.swift */,
 			90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */,
 			7806D28A8BA5E5A1E45EB225 /* WorkoutRestTimerPersistenceTests.swift */,
 		);
@@ -537,6 +540,7 @@
 				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
 				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
 				63DB69889606D38B4932752A /* RestTimerAdjustTests.swift in Sources */, 
+				959A497FD64D3DE0178F51D7 /* ThemeContrastTests.swift in Sources */,
 				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 
 				BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */, 
 			);

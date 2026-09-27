@@ -22,6 +22,7 @@ import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 
 internal data class ExerciseRenderGroup(
     val key: String,
@@ -93,6 +94,16 @@ internal fun supersetTintColor(supersetGroupId: Int?, indexInSuperset: Int): Col
 }
 
 @Composable
+internal fun supersetTintTextColor(supersetGroupId: Int?, indexInSuperset: Int): Color? {
+    if (supersetGroupId == null || indexInSuperset < 0) return null
+    return when (indexInSuperset % 3) {
+        0 -> MaterialTheme.semanticText.violet
+        1 -> MaterialTheme.semanticText.sky
+        else -> MaterialTheme.semanticText.rose
+    }
+}
+
+@Composable
 internal fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: String) {
     val dims = ironLogDimens
     IronLogSurfaceCard(
@@ -115,7 +126,7 @@ internal fun SupersetHeader(groupId: Int, exerciseCount: Int, exerciseNames: Str
                 ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.semantic.violet
+                color = MaterialTheme.semanticText.violet
             )
             Text(
                 text = exerciseNames,

@@ -15,7 +15,7 @@ struct IOSWorkoutStartView: View {
                         .font(.geist(.largeTitle, weight: .bold))
                     Text("Starte eine freie Session oder wähle einen gespeicherten Plan. Die Planziele werden beim Start für diese Session übernommen.")
                         .font(.geist(.body))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
 
                 IronLogCard(title: "Freies Workout", subtitle: "Übungen fügst du während des Trainings hinzu.") {
@@ -30,13 +30,13 @@ struct IOSWorkoutStartView: View {
                         Label("Freies Workout starten", systemImage: "play.fill")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).ironLogButtonText()
                 }
 
                 IronLogCard(title: "Trainingspläne", subtitle: plans.isEmpty ? "Noch kein Plan angelegt." : "Wähle einen Plan für diese Session.") {
                     if plans.isEmpty {
                         Label("Lege zuerst unter Pläne einen Trainingsplan an.", systemImage: "list.bullet.rectangle")
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     } else {
                         ForEach(plans) { plan in
                             Button {
@@ -51,12 +51,12 @@ struct IOSWorkoutStartView: View {
                                             .foregroundStyle(.primary)
                                         Text("Plan starten")
                                             .font(.geist(.caption))
-                                            .foregroundStyle(.secondary)
+                                            .ironLogSecondaryText()
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right")
                                         .font(.caption.weight(.bold))
-                                        .foregroundStyle(.secondary)
+                                        .ironLogSecondaryText()
                                 }
                                 .contentShape(Rectangle())
                             }

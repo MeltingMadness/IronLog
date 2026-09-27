@@ -47,8 +47,10 @@ import com.ironlog.app.presentation.common.IronLogSurfaceTone
 import com.ironlog.app.presentation.common.LoadingScreen
 import com.ironlog.app.presentation.common.StatCard
 import com.ironlog.app.presentation.common.WeeklyMuscleVolumeCard
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.feature.statistics.R as StatisticsR
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
@@ -360,7 +362,8 @@ fun ExerciseStatsScreen(
                                 FilterChip(
                                     selected = state.selectedMetric == metric,
                                     onClick = { viewModel.onMetricSelected(metric) },
-                                    label = { Text(stringResource(id = metric.labelRes)) }
+                                    label = { Text(stringResource(id = metric.labelRes)) },
+                                    colors = IronLogInteractiveColors.filterChip()
                                 )
                             }
                         }
@@ -492,9 +495,9 @@ private fun LastWorkoutComparisonCard(
                 ),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (comparison.delta >= 0f) {
-                    MaterialTheme.semantic.success
+                    MaterialTheme.semanticText.success
                 } else {
-                    MaterialTheme.semantic.danger
+                    MaterialTheme.semanticText.danger
                 }
             )
         }

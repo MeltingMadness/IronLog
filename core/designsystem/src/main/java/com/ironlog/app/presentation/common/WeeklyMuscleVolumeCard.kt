@@ -43,8 +43,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ironlog.app.domain.util.MuscleVolume
 import com.ironlog.app.domain.util.VolumeStatus
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import com.ironlog.core.designsystem.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -144,7 +146,8 @@ fun WeeklyMuscleVolumeCard(
                         .semantics {
                             role = Role.Button
                             stateDescription = expandedState
-                        }
+                        },
+                    colors = IronLogInteractiveColors.textButton()
                 ) {
                     Icon(
                         imageVector = if (isExpanded) {
@@ -189,7 +192,7 @@ fun WeeklyMuscleVolumeCard(
                             textAlign = TextAlign.Center
                         )
                         onRetry?.let { retry ->
-                            TextButton(onClick = retry) {
+                            TextButton(onClick = retry, colors = IronLogInteractiveColors.textButton()) {
                                 Text(stringResource(id = R.string.stats_weekly_volume_retry))
                             }
                         }
@@ -358,7 +361,7 @@ private fun MuscleVolumeRow(volume: MuscleVolume) {
             ),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = statusColor
+            color = if (hasSets) status.statusTextColor() else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = stringResource(
@@ -432,6 +435,13 @@ private fun VolumeStatus.statusColor(): Color = when (this) {
     VolumeStatus.LOW -> MaterialTheme.semantic.warning
     VolumeStatus.OPTIMAL -> MaterialTheme.semantic.success
     VolumeStatus.HIGH -> MaterialTheme.semantic.danger
+}
+
+@Composable
+private fun VolumeStatus.statusTextColor(): Color = when (this) {
+    VolumeStatus.LOW -> MaterialTheme.semanticText.warning
+    VolumeStatus.OPTIMAL -> MaterialTheme.semanticText.success
+    VolumeStatus.HIGH -> MaterialTheme.semanticText.danger
 }
 
 private fun VolumeStatus.orientingStatusLabelRes(): Int = when (this) {

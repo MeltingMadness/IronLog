@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.UnitSystem
@@ -48,6 +49,7 @@ import com.ironlog.app.presentation.theme.ButtonSize
 import com.ironlog.app.presentation.theme.IconSize
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 
 @Composable
 internal fun LoggedSetRow(
@@ -154,7 +156,7 @@ internal fun LoggedSetRow(
                         text = setTypeLabel(displayNumber, set.setType),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.semantic.success
+                        color = MaterialTheme.semanticText.success
                     )
                 }
 
@@ -194,7 +196,7 @@ internal fun LoggedSetRow(
                         Text(
                             text = intentionLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.accentText,
                             fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -217,7 +219,7 @@ internal fun LoggedSetRow(
                             text = "${intensitySystem.displayName} $intensityText",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = accentColor,
+                            color = rpeTextColor(set.rpe) ?: MaterialTheme.accentText,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }

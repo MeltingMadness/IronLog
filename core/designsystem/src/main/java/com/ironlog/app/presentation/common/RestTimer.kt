@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.theme.glassmorphism
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
+import com.ironlog.app.presentation.theme.semanticText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.time.Duration
@@ -52,6 +54,7 @@ fun RestTimer(
     modifier: Modifier = Modifier,
     titleText: String? = null,
     baseColor: Color? = null,
+    textColor: Color? = null,
     durationSeconds: Long = 0L,
     onComplete: () -> Unit = {}
 ) {
@@ -154,7 +157,7 @@ fun RestTimer(
                         fontFeatureSettings = "tnum"
                     )
                 ),
-                color = activeColor,
+                color = textColor ?: MaterialTheme.semanticText.sky,
                 fontWeight = FontWeight.Bold
             )
         }

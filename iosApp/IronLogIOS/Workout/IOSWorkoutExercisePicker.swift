@@ -25,7 +25,7 @@ struct IOSWorkoutExercisePicker: View {
                     }.padding(.horizontal)
                 }
                 HStack {
-                    Text("\(selected.count) ausgewählt").foregroundStyle(.tint).bold()
+                    Text("\(selected.count) ausgewählt").ironLogAccentText().bold()
                     Spacer()
                     Button("Auswahl leeren") { selected = [] }
                 }.font(.geist(.subheadline)).padding(.horizontal)
@@ -38,7 +38,7 @@ struct IOSWorkoutExercisePicker: View {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text(exercise.name).font(.geist(.headline)).foregroundStyle(.primary)
-                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).foregroundStyle(.secondary)
+                                    Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).ironLogSecondaryText()
                                 }
                                 Spacer()
                                 Image(systemName: selected.contains(exercise.id) || excludedIDs.contains(exercise.id) ? "checkmark.square.fill" : "square")
@@ -62,11 +62,14 @@ struct IOSWorkoutExercisePicker: View {
                     selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
                     dismiss()
                 } label: { Text("\(ilCount(selected.count, "Übung", "Übungen")) hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
-                .buttonStyle(.borderedProminent).disabled(selected.isEmpty).padding().background(.bar)
+                .buttonStyle(.borderedProminent).ironLogButtonText().disabled(selected.isEmpty).padding().background(.bar)
             }
         }
     }
     private func filter(_ name: String, value: String?) -> some View {
-        Button(name) { group = value }.buttonStyle(.bordered).tint(group == value ? .accentColor : .secondary)
+        Button(name) { group = value }
+            .buttonStyle(.bordered)
+            .tint(group == value ? .accentColor : .secondary)
+            .ironLogAccentText()
     }
 }

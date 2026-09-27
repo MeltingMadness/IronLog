@@ -48,8 +48,10 @@ import com.ironlog.feature.plans.R as PlansR
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
 import com.ironlog.app.presentation.theme.semantic
+import com.ironlog.app.presentation.theme.semanticText
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -162,16 +164,17 @@ fun MetaPlanListScreen(
                         onClick = {
                             viewModel.deleteMetaPlan(item.metaPlan.id)
                             deleteTarget = null
-                        }
+                        },
+                        colors = IronLogInteractiveColors.textButton()
                     ) {
                         Text(
                             text = stringResource(id = R.string.common_delete),
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.semanticText.danger
                         )
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { deleteTarget = null }) {
+                    TextButton(onClick = { deleteTarget = null }, colors = IronLogInteractiveColors.textButton()) {
                         Text(text = stringResource(id = R.string.common_cancel))
                     }
                 }
@@ -243,7 +246,7 @@ private fun MetaPlanListCard(
                 Text(
                     text = stringResource(id = R.string.plan_selection_meta_continue_with, nextPlan.name),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.semantic.violet
+                    color = MaterialTheme.semanticText.violet
                 )
             }
 

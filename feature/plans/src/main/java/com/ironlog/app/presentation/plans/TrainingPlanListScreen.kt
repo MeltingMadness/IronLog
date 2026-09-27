@@ -59,7 +59,9 @@ import com.ironlog.core.designsystem.R
 import com.ironlog.app.presentation.common.IronLogScreenScaffold
 import com.ironlog.app.presentation.common.IronLogSurfaceCard
 import com.ironlog.app.presentation.common.IronLogSurfaceTone
+import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.ironLogDimens
+import com.ironlog.app.presentation.theme.semanticText
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -218,15 +220,17 @@ fun TrainingPlanListScreen(
                     TextButton(onClick = {
                         viewModel.deletePlan(id)
                         deletePlanId = null
-                    }) {
+                    },
+                        colors = IronLogInteractiveColors.textButton()
+                    ) {
                         Text(
                             text = stringResource(id = R.string.common_delete),
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.semanticText.danger
                         )
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { deletePlanId = null }) {
+                    TextButton(onClick = { deletePlanId = null }, colors = IronLogInteractiveColors.textButton()) {
                         Text(stringResource(id = R.string.common_cancel))
                     }
                 }
@@ -381,7 +385,7 @@ private fun SectionHeader(
             modifier = Modifier.weight(1f)
         )
         if (actionLabel != null) {
-            TextButton(onClick = onAction) {
+            TextButton(onClick = onAction, colors = IronLogInteractiveColors.textButton()) {
                 Text(actionLabel)
             }
         }

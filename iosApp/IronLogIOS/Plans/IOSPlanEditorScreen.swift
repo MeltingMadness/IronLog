@@ -75,7 +75,7 @@ struct IOSPlanEditorScreen: View {
                         Text("Übungen")
                         Spacer()
                         Text("\(rows.count)")
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 } footer: {
                     Text("Die Reihenfolge wird im Workout übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
@@ -312,7 +312,7 @@ private struct IOSPlanExerciseRow: View {
                         .font(.geist(.caption))
                 }
                 .font(.geist(.caption))
-                .foregroundStyle(.tint)
+                .ironLogAccentText()
             } else if !isFirst {
                 Button {
                     onGroupWithPrevious()
@@ -326,9 +326,11 @@ private struct IOSPlanExerciseRow: View {
                 Button("Einfach: \(row.targetSets) × \(row.targetReps)") { row.setTargets = [] }
                     .buttonStyle(.bordered)
                     .tint(row.setTargets.isEmpty ? .accentColor : .secondary)
+                    .ironLogAccentText()
                 Button("Einzelne Sätze") { showingSetTargets = true }
                     .buttonStyle(.bordered)
                     .tint(row.setTargets.isEmpty ? .secondary : .accentColor)
+                    .ironLogAccentText()
             }
             if row.setTargets.isEmpty {
             HStack(spacing: 8) {
@@ -346,17 +348,17 @@ private struct IOSPlanExerciseRow: View {
                     }.font(.geist(.subheadline)).padding(.vertical, 6)
                 }
                 Button("Satzvorgaben bearbeiten") { showingSetTargets = true }
-                Text("Einzelne Satzvorgaben werden manuell gesteigert.").font(.geist(.caption)).foregroundStyle(.secondary)
+                Text("Einzelne Satzvorgaben werden manuell gesteigert.").font(.geist(.caption)).ironLogSecondaryText()
             }
             Button(action: onProgression) {
                 HStack {
                     Label("Progression", systemImage: row.progression.scheme == .manual ? "minus.circle" : "chart.line.uptrend.xyaxis")
                     Spacer()
                     Text(row.progression.scheme.title)
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                     Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .ironLogSecondaryText()
                 }
                 .contentShape(Rectangle())
             }
@@ -379,7 +381,7 @@ private struct IOSCompactField: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.geist(.caption))
-                .foregroundStyle(.secondary)
+                .ironLogSecondaryText()
             TextField(title, text: $text)
                 .keyboardType(keyboard)
                 .textFieldStyle(.roundedBorder)
@@ -443,7 +445,7 @@ private struct IOSProgressionEditorSheet: View {
                     if draft.scheme == .manual {
                         Text("Manuelle Ziele werden ohne automatische Änderung fortgeführt.")
                             .font(.geist(.footnote))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
 
@@ -488,7 +490,7 @@ private struct IOSProgressionEditorSheet: View {
                             ? "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb."
                             : "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg.")
                             .font(.geist(.footnote))
-                            .foregroundStyle(.secondary)
+                            .ironLogSecondaryText()
                     }
                 }
 
