@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.domain.model.Exercise
 import com.ironlog.app.domain.model.ExerciseCategory
 import com.ironlog.app.domain.model.MuscleGroup
@@ -187,7 +188,7 @@ fun ExercisePickerSheet(
             }
 
             Row(Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.colorScheme.primary)
+                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.accentText)
                 TextButton(onClick = { selectedExercises = emptyList() }) { Text("Auswahl leeren") }
             }
             LazyColumn(

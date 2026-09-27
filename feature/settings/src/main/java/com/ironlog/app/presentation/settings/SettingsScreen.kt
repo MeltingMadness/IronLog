@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.settings
 
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.domain.util.WeightFormatting
 import android.Manifest
@@ -642,7 +643,7 @@ fun SettingsScreen(
                                     text = stringResource(id = SettingsR.string.settings_backup_reminder_due_title),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.accentText
                                 )
                                 Text(
                                     text = stringResource(id = SettingsR.string.settings_backup_reminder_due_message),
@@ -873,7 +874,7 @@ private fun PreferenceCard(
         Text(
             text = title.uppercase(java.util.Locale.getDefault()),
             style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.accentText,
             modifier = Modifier.padding(start = dims.spacingMd, end = dims.spacingMd, bottom = dims.spacingXs)
         )
         IronLogSurfaceCard(

@@ -33,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.theme.AthleticHero
 import com.ironlog.app.presentation.theme.AthleticNumber
 import com.ironlog.app.presentation.theme.AthleticLabel
@@ -631,7 +632,7 @@ private fun CommandCenterCard(
             Text(
                 text = heroTag.uppercase(),
                 style = AthleticLabel,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.accentText,
                 fontWeight = FontWeight.ExtraBold
             )
 

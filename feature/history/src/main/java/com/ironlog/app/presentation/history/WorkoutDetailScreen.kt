@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.history
 
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -207,7 +208,7 @@ fun WorkoutDetailScreen(
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.accentText
                             )
                             Text(
                                 text = session.startTime.format(DateFormatting.DATE_FULL),
@@ -358,7 +359,7 @@ fun WorkoutDetailScreen(
                                             stringResource(historyIntentionLabelRes(intention))
                                         ),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.accentText
                                     )
                                 }
                             }
@@ -442,7 +443,7 @@ private fun ProgressionOutcomeCard(
                     progressionSchemeText(outcome.scheme)
                 ),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.accentText
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -521,7 +522,7 @@ private fun progressionStatusText(status: ProgressionSuggestionStatus): String =
 
 @Composable
 private fun progressionStatusColor(status: ProgressionSuggestionStatus): Color = when (status) {
-    ProgressionSuggestionStatus.PENDING -> MaterialTheme.colorScheme.primary
+    ProgressionSuggestionStatus.PENDING -> MaterialTheme.accentText
     ProgressionSuggestionStatus.ACCEPTED -> MaterialTheme.semantic.success
     ProgressionSuggestionStatus.REJECTED -> MaterialTheme.semantic.danger
     ProgressionSuggestionStatus.INFORMATIONAL,

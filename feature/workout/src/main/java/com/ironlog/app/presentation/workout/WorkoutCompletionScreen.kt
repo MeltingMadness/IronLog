@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.*
 import com.ironlog.app.domain.repository.TrainingPlanRepository
@@ -205,7 +206,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                                 Text(stringResource(R.string.workout_plan_changes_set_title, row.exercise.name, index + 1), style = MaterialTheme.typography.titleSmall)
                                 Text(stringResource(R.string.workout_plan_changes_plan_line, formatTargetWeight(slots[index].weightKg, unitSystem), slots[index].reps))
-                                Text(stringResource(R.string.workout_plan_changes_today_line, formatTargetWeight(today.weightKg, unitSystem), today.reps), color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.workout_plan_changes_today_line, formatTargetWeight(today.weightKg, unitSystem), today.reps), color = MaterialTheme.accentText)
                             } }
                         }
                     }

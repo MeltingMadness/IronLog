@@ -25,6 +25,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.Locale
+import com.ironlog.app.presentation.theme.accentText
 
 private val RING_SIZE = 120.dp
 private val RING_STROKE = 2.dp
@@ -98,7 +99,7 @@ fun WorkoutTimer(
                     fontFeatureSettings = "tnum"
                 )
             ),
-            color = primary
+            color = MaterialTheme.accentText
         )
     }
 }

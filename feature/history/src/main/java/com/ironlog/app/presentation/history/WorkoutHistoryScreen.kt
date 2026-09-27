@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.HistorySkeleton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -521,7 +522,7 @@ private fun WorkoutCard(
                 Text(
                     text = item.session.startTime.format(DateFormatting.DATE_FULL),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.accentText,
                     fontWeight = FontWeight.SemiBold
                 )
 

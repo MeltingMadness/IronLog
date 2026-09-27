@@ -7,7 +7,6 @@ import java.util.Locale
 import kotlin.math.hypot
 import kotlin.math.pow
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 private data class Rgb(val red: Double, val green: Double, val blue: Double)
@@ -65,9 +64,10 @@ class LiquidGlassContrastTest {
          * Danach folgt der vertikale Basisschleier ab 55 % Höhe. Für jede Farbpaarung
          * und Glasstufe zählt die Hintergrundstelle mit dem kleinsten Kontrast.
          *
-         * Gemessen wird die Glastönung bei aktivem LiquidGlassHost: STANDARD mit
-         * #4710121A/#59FFFFFF, TINT mit primary bei 30/22 % Alpha. STRONG-Blur,
-         * undurchsichtiger Fallback ohne Host, Glanzverlauf und Rand sind ausgenommen.
+         * Gemessen wird die Glastönung bei aktivem LiquidGlassHost mit allen drei
+         * Stufen. Bei STRONG wird der unverwischte Hintergrund als konservative
+         * Näherung verwendet. Der hellste Glanzpunkt (8 % Weiß) wird auf dunklem
+         * Glas konservativ an jeder Stelle aufgetragen. Fallback und Rand sind ausgenommen.
          * withLiquidGlassContainers ändert keine der hier gemessenen Farbrollen.
          */
         private const val SAMPLE_STEPS = 100
@@ -98,7 +98,6 @@ class LiquidGlassContrastTest {
         }
     }
 
-    @Ignore("bis Phase 2 umgesetzt")
     @Test
     fun alleKontrasteErfuellenDieWcagSchwellen() {
         checks().forEach { check ->
@@ -121,21 +120,23 @@ class LiquidGlassContrastTest {
                 val textColors = listOf(
                     "onSurface / Glas [Text 4,5]" to colors.onSurface.asRgb(),
                     "onSurfaceVariant / Glas [Text 4,5]" to colors.onSurfaceVariant.asRgb(),
-                    "primary / Glas [Text 4,5]" to primary
+                    "accentText / Glas [Text 4,5]" to accentTextFor(theme, dark).asRgb()
                 )
 
-                for (level in listOf(GlassLevel.STANDARD, GlassLevel.TINT)) {
-                    val tint = when (level) {
-                        GlassLevel.STANDARD -> if (dark) Color(0x4710121A) else Color(0x59FFFFFF)
-                        GlassLevel.TINT -> colors.primary.copy(alpha = if (dark) 0.30f else 0.22f)
-                        GlassLevel.STRONG -> error("STRONG ist weichgezeichnet und nicht Teil dieses Tests")
-                    }
+                for (level in GlassLevel.entries) {
+                    val tint = glassSurfaceTint(level, dark, colors.primary)
                     val glass = Rgba(tint.asRgb(), tint.alpha.toDouble())
                     for ((pair, text) in textColors) {
                         var worst = backdrop.first()
                         var worstRatio = Double.POSITIVE_INFINITY
                         for (sample in backdrop) {
-                            val ratio = contrastRatio(text, compositeOver(glass, sample.color))
+                            val surface = compositeOver(glass, sample.color)
+                            val withSheen = if (dark) {
+                                compositeOver(Rgba(Rgb(1.0, 1.0, 1.0), 0.08), surface)
+                            } else {
+                                surface
+                            }
+                            val ratio = contrastRatio(text, withSheen)
                             if (ratio < worstRatio) {
                                 worst = sample
                                 worstRatio = ratio

@@ -386,7 +386,7 @@ internal fun GlassWeekStrip(
                 ) {
                     Text(
                         text = short,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

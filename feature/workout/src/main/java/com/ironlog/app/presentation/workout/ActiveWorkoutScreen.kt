@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.feature.workout.R as WorkoutR
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
@@ -190,7 +191,7 @@ fun ActiveWorkoutScreen(
                     TextButton(onClick = viewModel::showFinishDialog) {
                         Text(
                             text = stringResource(id = R.string.workout_finish_action),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.accentText,
                             fontWeight = FontWeight.Bold
                         )
                     }

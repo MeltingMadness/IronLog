@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.app.domain.model.IntensitySystem
 import com.ironlog.app.domain.model.UnitSystem
@@ -194,7 +195,7 @@ internal fun LoggedSetRow(
                         Text(
                             text = intentionLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.accentText,
                             fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -217,7 +218,7 @@ internal fun LoggedSetRow(
                             text = "${intensitySystem.displayName} $intensityText",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = accentColor,
+                            color = rpeColor(set.rpe) ?: MaterialTheme.accentText,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }

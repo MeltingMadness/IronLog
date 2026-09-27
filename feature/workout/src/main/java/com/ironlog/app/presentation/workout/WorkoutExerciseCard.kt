@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.feature.workout.R as WorkoutR
 import com.ironlog.app.domain.model.IntensitySystem
@@ -220,7 +221,7 @@ internal fun ExerciseCard(
                         targetText
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isDone) MaterialTheme.semantic.success else tintColor ?: MaterialTheme.colorScheme.primary
+                    color = if (isDone) MaterialTheme.semantic.success else MaterialTheme.accentText
                 )
                 if (expanded) Text(
                     text = stringResource(

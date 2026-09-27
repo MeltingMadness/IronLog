@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.exercises
 
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.presentation.common.GlassSearchField
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -529,7 +530,7 @@ private fun ExerciseSupportingText(exercise: Exercise, summary: ExerciseTraining
                     summary.lastCompletedAt.format(DateFormatting.DATE_SHORT)
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.accentText
             )
         }
     }

@@ -157,7 +157,7 @@ private fun WeekMiniBars(minutesPerDay: List<Int>, today: LocalDate, weekStart: 
                 }
                 Text(
                     day.getDisplayName(TextStyle.NARROW, GERMAN),
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
                     color = if (isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -202,8 +202,8 @@ internal fun GlassHistoryRow(
             Text(start.dayOfMonth.toString(), fontSize = 18.sp, lineHeight = 20.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 start.dayOfWeek.getDisplayName(TextStyle.SHORT, GERMAN).removeSuffix(".").uppercase(GERMAN),
-                fontSize = 10.sp,
-                lineHeight = 12.sp,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

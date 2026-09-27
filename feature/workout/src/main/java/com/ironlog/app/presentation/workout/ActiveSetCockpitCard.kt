@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ironlog.app.presentation.theme.accentText
 import com.ironlog.core.designsystem.R
 import com.ironlog.feature.workout.R as WorkoutR
 import com.ironlog.app.domain.model.IntensitySystem
@@ -177,7 +179,7 @@ internal fun ActiveSetCockpitCard(
                 Text(
                     text = tagText,
                     style = AthleticLabel,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.accentText,
                     fontWeight = FontWeight.ExtraBold
                 )
 
@@ -195,7 +197,7 @@ internal fun ActiveSetCockpitCard(
                                 text = coachHint,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.accentText,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -223,7 +225,7 @@ internal fun ActiveSetCockpitCard(
                                         text = stringResource(WorkoutR.string.workout_audit_apply_coach_weight),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.accentText
                                     )
                                 }
                             }
@@ -232,7 +234,7 @@ internal fun ActiveSetCockpitCard(
                 }
             }
 
-            valueSource?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
+            valueSource?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.accentText) }
             if (liquidGlass) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     GlassStepper(
@@ -366,7 +368,7 @@ internal fun ActiveSetCockpitCard(
                         )
                         if (intensityInput.text.isNotEmpty()) {
                             val rpeVal = intensityInput.text.toDoubleOrNull()
-                            val accent = rpeColor(rpeVal) ?: MaterialTheme.colorScheme.primary
+                            val accent = rpeColor(rpeVal) ?: MaterialTheme.accentText
                             Text(
                                 text = "${intensitySystem.displayName} ${intensityInput.text}",
                                 style = AthleticLabel,
@@ -411,7 +413,11 @@ internal fun ActiveSetCockpitCard(
                                             text = rpeStr.replace('.', ','),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isSelected) Color.White else chipColor
+                                            color = if (isSelected) {
+                                                if (chipColor.luminance() > 0.18f) Color.Black else Color.White
+                                            } else {
+                                                rpeColor(rpe) ?: MaterialTheme.accentText
+                                            }
                                         )
                                     }
                                 }

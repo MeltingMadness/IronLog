@@ -9,7 +9,7 @@ In den Einstellungen wählbar (`ThemeScheme`). Dazu kommen Hell, Dunkel oder Sys
 | Schema | Primär (hell / dunkel) | Sekundär | Tertiär | Flächen |
 |---|---|---|---|---|
 | **Amber** (Standard) | `#FF6B00` / `#F58B20` | Teal `#0D9488` | Violett `#7C3AED` | hell: Creme `#FFF8F0`, dunkel: Blauschwarz `#0E131A` |
-| **Deep Cyan** | `#00838F` / `#4DD0E1` | Blaugrau | Pink | neutral-kühl |
+| **Deep Cyan** | `#007A85` / `#4DD0E1` | Blaugrau | Pink | neutral-kühl |
 | **Neon Red** | `#D50000` / `#FF5252` | Grau | Gelb | neutral-kühl |
 | **Forge** | Molten Orange `#FF7A1A` | Anthrazit `#2E2E34` | Grün `#3DFF88` | Industrial, dunkel fast Schwarz `#060606` |
 | **Raster** | Kobalt `#3B82F6` | Slate `#64748B` | Smaragd `#10B981` | Swiss/Bento, dunkel `#08090A` |
@@ -17,6 +17,8 @@ In den Einstellungen wählbar (`ThemeScheme`). Dazu kommen Hell, Dunkel oder Sys
 | **Pulse** | Rose `#FF3366` | Violett `#A855F7` | Cyan `#06B6D4` | dunkel `#0B080C` |
 
 Die Farben liegen in `theme/Color.kt`, die Zuordnung zu Material-3-Schemata in `theme/Theme.kt`. Die Systemleisten passen sich dem gewählten Design an.
+
+Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
 
 ## Semantische Farben
 
