@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.history
 
 import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
+import com.ironlog.feature.history.R as UxR
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -336,8 +337,8 @@ fun WorkoutDetailScreen(
                                     } else {
                                         when (preferences.intensitySystem) {
                                             IntensitySystem.OFF -> ""
-                                            IntensitySystem.RPE -> " @ RPE ${WeightFormatting.formatNumber(rpe)}"
-                                            IntensitySystem.RIR -> " @ ${WeightFormatting.formatNumber(10.0 - rpe)} RIR"
+                                            IntensitySystem.RPE -> stringResource(UxR.string.history_intensity_rpe, WeightFormatting.formatNumber(rpe))
+                                            IntensitySystem.RIR -> stringResource(UxR.string.history_intensity_rir, WeightFormatting.formatNumber(10.0 - rpe))
                                         }
                                     }
 

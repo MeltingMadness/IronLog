@@ -56,6 +56,12 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val appModule = module {
+    single<com.ironlog.app.presentation.common.UiStrings> {
+        val context = androidContext().applicationContext
+        com.ironlog.app.presentation.common.UiStrings { resourceId, args ->
+            context.getString(resourceId, *args)
+        }
+    }
     single { BuildInfo(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
     single { IronLogDatabase.create(androidContext()) }
     single { get<IronLogDatabase>().exerciseDao() }

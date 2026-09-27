@@ -82,6 +82,7 @@ struct IOSDashboardGlassCommandCenter: View {
     let onStartSuggestion: (ILMetaRotationSuggestion) -> Void
     let onRequestSkip: (ILMetaRotationSuggestion) -> Void
     let onStartPlan: (ILTrainingPlan) -> Void
+    let onChooseTraining: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.ironLogTheme) private var theme
@@ -146,7 +147,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     }
                     if exercises.count > 3 {
                         let more = exercises.count - 3
-                        Text("+ \(ilCount(more, "weitere Übung", "weitere Übungen"))")
+                        Text("+ \(ilCount(more, String(localized: "weitere Übung"), String(localized: "weitere Übungen")))")
                             .font(.geist(.footnote, weight: .bold))
                             .ironLogSecondaryText()
                             .padding(.top, 8)
@@ -177,6 +178,7 @@ struct IOSDashboardGlassCommandCenter: View {
 
             if activeSession == nil {
                 HStack(spacing: 18) {
+                    Button("Andere Pläne", action: onChooseTraining)
                     if let suggestion, suggestion.canSkip {
                         Button("Teilplan überspringen") { onRequestSkip(suggestion) }
                     }
@@ -196,22 +198,22 @@ struct IOSDashboardGlassCommandCenter: View {
     }
 
     private var tag: String {
-        if activeSession != nil { return "Training läuft" }
-        if let suggestion { return "Heute dran · \(suggestion.metaPlanName)" }
-        return "Heute dran"
+        if activeSession != nil { return String(localized: "Training läuft") }
+        if let suggestion { return String(localized: "Heute dran · \(suggestion.metaPlanName)") }
+        return String(localized: "Heute dran")
     }
 
     private var title: String {
-        if let activeSession { return activeSession.name.isEmpty ? "Training läuft" : activeSession.name }
-        return planName ?? "Freies Training"
+        if let activeSession { return activeSession.name.isEmpty ? String(localized: "Training läuft") : activeSession.name }
+        return planName ?? String(localized: "Freies Training")
     }
 
     private var subtitle: String {
-        if activeSession != nil { return "Ein begonnenes Training wartet auf dich." }
+        if activeSession != nil { return String(localized: "Ein begonnenes Training wartet auf dich.") }
         if planName != nil {
-            return [ilCount(exercises.count, "Übung", "Übungen"), lastDoneText].joined(separator: " · ")
+            return [ilCount(exercises.count, String(localized: "Übung"), String(localized: "Übungen")), lastDoneText].joined(separator: " · ")
         }
-        return "Starte eine freie Einheit und halte sie sauber fest."
+        return String(localized: "Starte eine freie Einheit und halte sie sauber fest.")
     }
 
     /// "zuletzt vor 4 Tagen", from the latest completed session of this plan.
@@ -220,7 +222,7 @@ struct IOSDashboardGlassCommandCenter: View {
             .filter { $0.endTime != nil && $0.planId == planId }
             .map(\.startDate)
             .max()
-        guard let last else { return "noch nie trainiert" }
+        guard let last else { return String(localized: "noch nie trainiert") }
         let calendar = Calendar.current
         let days = calendar.dateComponents(
             [.day],
@@ -228,14 +230,14 @@ struct IOSDashboardGlassCommandCenter: View {
             to: calendar.startOfDay(for: Date())
         ).day ?? 0
         switch days {
-        case ..<1: return "zuletzt heute"
-        case 1: return "zuletzt gestern"
-        default: return "zuletzt vor \(days) Tagen"
+        case ..<1: return String(localized: "zuletzt heute")
+        case 1: return String(localized: "zuletzt gestern")
+        default: return String(localized: "zuletzt vor \(days) Tagen")
         }
     }
 
     private var primaryTitle: String {
-        activeSession != nil ? "Training fortsetzen" : "Training starten"
+        activeSession != nil ? String(localized: "Training fortsetzen") : String(localized: "Training starten")
     }
 
     private func primaryAction() {
@@ -251,7 +253,7 @@ struct IOSDashboardGlassCommandCenter: View {
     }
 
     private func exerciseName(_ exercise: ILPlanExercise) -> String {
-        data?.exercises.first { $0.id == exercise.exerciseId }?.name ?? "Übung"
+        data?.exercises.first { $0.id == exercise.exerciseId }?.name ?? String(localized: "Übung")
     }
 
     /// "3 × 8 · 82,5 kg"; without a target weight only sets and reps.
@@ -284,7 +286,7 @@ struct IOSDashboardGlassWeekStrip: View {
                     .tracking(0.8)
                     .ironLogSecondaryText()
                 Spacer()
-                Text("\(ilCount(workoutsThisWeek, "Training", "Trainings")) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
+                Text("\(ilCount(workoutsThisWeek, String(localized: "Training"), String(localized: "Trainings"))) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
                     .font(.geist(.subheadline, weight: .bold))
                     .monospacedDigit()
             }
@@ -323,8 +325,8 @@ struct IOSDashboardGlassWeekStrip: View {
 
     private func accessibilityText(_ day: IOSDashboardWeekDay) -> String {
         let name = day.date.formatted(.dateTime.weekday(.wide).locale(Locale(identifier: "de_DE")))
-        if day.trained { return "\(name), trainiert" }
-        if day.isToday { return "\(name), heute" }
-        return "\(name), offen"
+        if day.trained { return String(localized: "\(name), trainiert") }
+        if day.isToday { return String(localized: "\(name), heute") }
+        return String(localized: "\(name), offen")
     }
 }

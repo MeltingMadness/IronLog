@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.dashboard
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.dashboard.R as UxR
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,9 +50,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val WEEKLY_VOLUME_ERROR = "Die Wochen-Auswertung konnte nicht geladen werden."
-private const val READINESS_ERROR = "Der Trainingstrend konnte nicht berechnet werden."
-private const val CHECK_IN_ERROR = "Die Tagesform konnte nicht gespeichert werden."
 
 data class DashboardMetaPlanOption(
     val metaPlanId: Long,
@@ -184,7 +183,8 @@ class DashboardViewModel(
     private val progressionRepository: ProgressionRepository,
     private val deloadRepository: DeloadRepository,
     private val readinessProjectionSource: ReadinessProjectionSource,
-    private val readinessRepository: ReadinessRepository
+    private val readinessRepository: ReadinessRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -314,7 +314,7 @@ class DashboardViewModel(
                 trainingTrend = DashboardTrendState(
                     assessment = null,
                     isLoading = false,
-                    error = READINESS_ERROR
+                    error = strings.get(UxR.string.dashboard_readiness_failed)
                 )
             )
         }
@@ -526,7 +526,7 @@ class DashboardViewModel(
             } catch (error: Exception) {
                 AppLogger.w("DashboardVM", "Tagesform speichern fehlgeschlagen: ${error.message}", error)
                 _uiState.update {
-                    it.copy(checkIn = it.checkIn.copy(isSaving = false), error = CHECK_IN_ERROR)
+                    it.copy(checkIn = it.checkIn.copy(isSaving = false), error = strings.get(UxR.string.dashboard_check_in_failed))
                 }
             } finally {
                 checkInSaveInFlight = false
@@ -547,7 +547,7 @@ class DashboardViewModel(
                 }
             } catch (error: Exception) {
                 AppLogger.w("DashboardVM", "Tagesform löschen fehlgeschlagen: ${error.message}", error)
-                _uiState.update { it.copy(error = CHECK_IN_ERROR) }
+                _uiState.update { it.copy(error = strings.get(UxR.string.dashboard_check_in_failed)) }
             }
         }
     }
@@ -698,7 +698,7 @@ class DashboardViewModel(
                 val recordExerciseMap = exerciseRepository.getExercisesByIds(records.map { it.exerciseId })
                     .associateBy { it.id }
                 val recordsWithNames = records.map { record ->
-                    Pair(record, recordExerciseMap[record.exerciseId]?.name ?: "Unbekannt")
+                    Pair(record, recordExerciseMap[record.exerciseId]?.name ?: strings.get(UxR.string.dashboard_unknown_exercise))
                 }
 
                 val lastWorkout = workoutRepository.getLastCompletedSessionBefore(nowEpochMillis)
@@ -754,7 +754,7 @@ class DashboardViewModel(
                         DashboardWeeklyMuscleVolumeState(
                             weekStart = selectedWeekStart,
                             currentWeekStart = currentWeekStart,
-                            error = WEEKLY_VOLUME_ERROR,
+                            error = strings.get(UxR.string.dashboard_weekly_volume_failed),
                             isLoading = false
                         )
                     }
@@ -792,7 +792,7 @@ class DashboardViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Dashboard konnte nicht geladen werden.",
+                        error = strings.get(UxR.string.dashboard_load_failed),
                         weeklyMuscleVolume = if (
                             (weeklyRequestId != null &&
                                 weeklyRequestId == weeklyVolumeLoadGeneration) ||
@@ -803,7 +803,7 @@ class DashboardViewModel(
                                 volumes = emptyList(),
                                 completedWorkoutCount = 0,
                                 isLoading = false,
-                                error = WEEKLY_VOLUME_ERROR
+                                error = strings.get(UxR.string.dashboard_weekly_volume_failed)
                             )
                         } else {
                             it.weeklyMuscleVolume
@@ -967,7 +967,7 @@ class DashboardViewModel(
                     DashboardWeeklyMuscleVolumeState(
                         weekStart = weekStart,
                         currentWeekStart = currentWeekStart,
-                        error = WEEKLY_VOLUME_ERROR,
+                        error = strings.get(UxR.string.dashboard_weekly_volume_failed),
                         isLoading = false
                     )
                 }
@@ -981,7 +981,7 @@ class DashboardViewModel(
                             volumes = emptyList(),
                             completedWorkoutCount = 0,
                             isLoading = false,
-                            error = WEEKLY_VOLUME_ERROR
+                            error = strings.get(UxR.string.dashboard_weekly_volume_failed)
                         )
                     )
                 }
@@ -1020,7 +1020,7 @@ class DashboardViewModel(
             if (!option.canSkip) return@launch
             if (workoutRepository.getActiveSession() != null) {
                 _uiState.update {
-                    it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                    it.copy(error = strings.get(UxR.string.dashboard_workout_already_active))
                 }
                 return@launch
             }
@@ -1031,12 +1031,12 @@ class DashboardViewModel(
                 val skipped = metaTrainingPlanRepository.skipCurrentSubPlan(metaPlanId, expectedPlanId)
                 if (!skipped) {
                     _uiState.update {
-                        it.copy(error = "Der vorgeschlagene Plan hat sich geändert. Bitte erneut versuchen.")
+                        it.copy(error = strings.get(UxR.string.dashboard_plan_changed))
                     }
                 }
             } catch (error: Exception) {
                 _uiState.update {
-                    it.copy(error = "Teilplan konnte nicht übersprungen werden: ${error.message}")
+                    it.copy(error = strings.get(UxR.string.dashboard_skip_failed, error.message.toString()))
                 }
             } finally {
                 _uiState.update { it.copy(skippingMetaPlanId = null) }
@@ -1055,7 +1055,7 @@ class DashboardViewModel(
                 val nextPlan = option?.nextPlan
                 if (option == null || nextPlan == null) {
                     _uiState.update {
-                        it.copy(error = "Meta-Plan ist unvollständig oder enthält keine gültigen Unterpläne.")
+                        it.copy(error = strings.get(UxR.string.dashboard_meta_plan_invalid))
                     }
                     return@launch
                 }
@@ -1066,7 +1066,7 @@ class DashboardViewModel(
                         onSessionCreated(activeSession.id, nextPlan.id, option.metaPlanId)
                     } else {
                         _uiState.update {
-                            it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                            it.copy(error = strings.get(UxR.string.dashboard_workout_already_active))
                         }
                     }
                     return@launch
@@ -1080,7 +1080,7 @@ class DashboardViewModel(
                 onSessionCreated(sessionId, nextPlan.id, option.metaPlanId)
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(error = "Meta-Plan-Training konnte nicht gestartet werden: ${e.message}")
+                    it.copy(error = strings.get(UxR.string.dashboard_meta_start_failed, e.message.toString()))
                 }
             }
         }
@@ -1095,7 +1095,7 @@ class DashboardViewModel(
                     return@launch
                 }
 
-                val autoName = "Training ${LocalDate.now().format(DateFormatting.DATE_SHORT)}"
+                val autoName = strings.get(UxR.string.dashboard_workout_auto_name, LocalDate.now().format(DateFormatting.DATE_SHORT))
                 val sessionId = workoutRepository.startWorkout(
                     name = autoName,
                     planId = null,
@@ -1103,7 +1103,7 @@ class DashboardViewModel(
                 )
                 onSessionCreated(sessionId, null)
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Training konnte nicht gestartet werden: ${e.message}") }
+                _uiState.update { it.copy(error = strings.get(UxR.string.dashboard_start_failed, e.message.toString())) }
             }
         }
     }
@@ -1117,7 +1117,7 @@ class DashboardViewModel(
                         onSessionCreated(activeSession.id, plan.id)
                     } else {
                         _uiState.update {
-                            it.copy(error = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.")
+                            it.copy(error = strings.get(UxR.string.dashboard_workout_already_active))
                         }
                     }
                     return@launch
@@ -1131,7 +1131,7 @@ class DashboardViewModel(
                 onSessionCreated(sessionId, plan.id)
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(error = "Training nach Plan konnte nicht gestartet werden: ${e.message}")
+                    it.copy(error = strings.get(UxR.string.dashboard_plan_start_failed, e.message.toString()))
                 }
             }
         }
@@ -1164,9 +1164,9 @@ class DashboardViewModel(
                 _uiState.update { it.copy(deloadMode = mode) }
             } catch (_: Exception) {
                 val message = if (mode == null) {
-                    "Deload-Modus konnte nicht beendet werden."
+                    strings.get(UxR.string.dashboard_deload_end_failed)
                 } else {
-                    "Deload-Modus konnte nicht aktiviert werden."
+                    strings.get(UxR.string.dashboard_deload_start_failed)
                 }
                 _uiState.update {
                     it.copy(error = message)

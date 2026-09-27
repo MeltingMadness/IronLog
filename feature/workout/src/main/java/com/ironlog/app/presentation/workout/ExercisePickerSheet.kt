@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.workout
 
+import androidx.compose.ui.platform.LocalResources
+import com.ironlog.feature.workout.R as UxR
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,6 +85,7 @@ fun ExercisePickerSheet(
     onCreationError: ((String) -> Unit)? = null,
     exerciseRepository: ExerciseRepository = koinInject()
 ) {
+    val resources = LocalResources.current
     val dims = ironLogDimens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -102,7 +105,7 @@ fun ExercisePickerSheet(
         groupFlow.emit(selectedGroup)
     }
 
-    val exercisesFlow = remember(exerciseRepository, queryFlow, groupFlow, onCreationError) {
+    val exercisesFlow = remember(resources, exerciseRepository, queryFlow, groupFlow, onCreationError) {
         combine(queryFlow, groupFlow) { query, group -> query to group }
             .flatMapLatest { (query, group) ->
                 when {
@@ -115,7 +118,7 @@ fun ExercisePickerSheet(
             }.catch { throwable ->
                 if (throwable is CancellationException) throw throwable
                 onCreationError?.invoke(
-                    "Übungen konnten nicht geladen werden: ${throwable.message ?: "Unbekannter Fehler"}"
+                    resources.getString(UxR.string.workout_picker_load_failed, throwable.message ?: resources.getString(UxR.string.workout_picker_unknown_error))
                 )
                 emit(emptyList())
             }
@@ -192,8 +195,8 @@ fun ExercisePickerSheet(
             }
 
             Row(Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${selectedExercises.size} ausgewählt", color = MaterialTheme.accentText)
-                TextButton(onClick = { selectedExercises = emptyList() }, colors = IronLogInteractiveColors.textButton()) { Text("Auswahl leeren") }
+                Text(stringResource(UxR.string.workout_picker_selected_count, selectedExercises.size), color = MaterialTheme.accentText)
+                TextButton(onClick = { selectedExercises = emptyList() }, colors = IronLogInteractiveColors.textButton()) { Text(stringResource(UxR.string.workout_picker_clear_selection)) }
             }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
@@ -216,7 +219,7 @@ fun ExercisePickerSheet(
                             headlineContent = { Text(exercise.name) },
                             trailingContent = { androidx.compose.material3.Checkbox(checked = selectedExercises.any { it.id == exercise.id }, onCheckedChange = null) },
                             supportingContent = {
-                                Text("${exercise.primaryMuscleGroup.displayName} • ${exercise.category.displayName}")
+                                Text(stringResource(UxR.string.workout_picker_exercise_details, exercise.primaryMuscleGroup.displayName, exercise.category.displayName))
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -227,7 +230,7 @@ fun ExercisePickerSheet(
                 onClick = { selectedExercises.forEach(onExerciseSelected); onDismiss() },
                 enabled = selectedExercises.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd)
-            ) { Text("${selectedExercises.size} Übungen hinzufügen") }
+            ) { Text(stringResource(UxR.string.workout_picker_add_selected, selectedExercises.size)) }
         }
     }
 
@@ -263,7 +266,7 @@ fun ExercisePickerSheet(
                         selectedExercises = selectedExercises + exercise
                     }.onFailure { throwable ->
                         onCreationError?.invoke(
-                            throwable.message ?: "Übung konnte nicht erstellt werden"
+                            throwable.message ?: resources.getString(UxR.string.workout_picker_create_failed)
                         )
                     }
                 }

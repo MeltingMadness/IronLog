@@ -375,11 +375,16 @@ class SettingsViewModel(
     }
 
     private suspend fun emitError(error: Throwable) {
+        val detail = error.message
         _events.emit(
-            SettingsEvent.Message(
-                com.ironlog.core.designsystem.R.string.common_error_action_failed,
-                listOf(error.message ?: "unbekannter Fehler")
-            )
+            if (detail == null) {
+                SettingsEvent.Message(com.ironlog.feature.settings.R.string.settings_unknown_error)
+            } else {
+                SettingsEvent.Message(
+                    com.ironlog.core.designsystem.R.string.common_error_action_failed,
+                    listOf(detail)
+                )
+            }
         )
     }
 

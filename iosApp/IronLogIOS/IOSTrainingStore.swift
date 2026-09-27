@@ -15,6 +15,7 @@ final class IOSTrainingStore {
     private(set) var weeklyMuscleVolume: ILTrainingWeeklyMuscleVolume?
     private(set) var weeklyMuscleVolumeError: String?
     private(set) var isBusy = false
+    private(set) var isLoading = false
     var errorMessage: String?
     var selectedTab: Int = 0
     /// Centrally bound to the settings in `RootView`. The deload mode is authoritative for every
@@ -45,8 +46,22 @@ final class IOSTrainingStore {
             refreshAnalytics(timeZoneId: analyticsTimeZone, weekStartsSunday: analyticsSundayStart)
             return true
         } catch {
-            errorMessage = "Trainingsdaten konnten nicht gelesen werden: \(error.localizedDescription)"
+            errorMessage = String(localized: "Trainingsdaten konnten nicht gelesen werden: \(error.localizedDescription)")
             return false
+        }
+    }
+
+    /// Re-read the shared projection without replacing or seeding persisted data.
+    func reload() async {
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        await Task.yield()
+        if let json = feature.currentJson() {
+            _ = receive(json)
+        } else {
+            errorMessage = feature.currentError() ?? String(localized: "Trainingsdaten konnten nicht geladen werden.")
         }
     }
 
@@ -62,7 +77,7 @@ final class IOSTrainingStore {
                 analytics = try JSONDecoder().decode(ILTrainingAnalytics.self, from: Data(json.utf8))
             } catch {
                 analytics = nil
-                errorMessage = "Auswertung konnte nicht gelesen werden: \(error.localizedDescription)"
+                errorMessage = String(localized: "Auswertung konnte nicht gelesen werden: \(error.localizedDescription)")
             }
         } else {
             analytics = nil
@@ -102,7 +117,7 @@ final class IOSTrainingStore {
             readiness = try JSONDecoder().decode(ILReadinessAssessment.self, from: Data(json.utf8))
         } catch {
             readiness = nil
-            errorMessage = "Bereitschaft konnte nicht gelesen werden: \(error.localizedDescription)"
+            errorMessage = String(localized: "Bereitschaft konnte nicht gelesen werden: \(error.localizedDescription)")
         }
     }
 
@@ -124,7 +139,7 @@ final class IOSTrainingStore {
             weekStartsSunday: weekStartsSunday
         ) else {
             weeklyMuscleVolume = nil
-            weeklyMuscleVolumeError = "Wochenvolumen konnte nicht geladen werden."
+            weeklyMuscleVolumeError = String(localized: "Wochenvolumen konnte nicht geladen werden.")
             return nil
         }
 
@@ -138,7 +153,7 @@ final class IOSTrainingStore {
             return result
         } catch {
             weeklyMuscleVolume = nil
-            weeklyMuscleVolumeError = "Wochenvolumen konnte nicht gelesen werden: \(error.localizedDescription)"
+            weeklyMuscleVolumeError = String(localized: "Wochenvolumen konnte nicht gelesen werden: \(error.localizedDescription)")
             return nil
         }
     }
@@ -161,7 +176,7 @@ final class IOSTrainingStore {
             }
             if let error = result.1 { errorMessage = error; return false }
             guard let snapshot = result.0 else {
-                errorMessage = "Die Aktion hat keine bestätigten Trainingsdaten zurückgegeben."
+                errorMessage = String(localized: "Die Aktion hat keine bestätigten Trainingsdaten zurückgegeben.")
                 return false
             }
             errorMessage = nil

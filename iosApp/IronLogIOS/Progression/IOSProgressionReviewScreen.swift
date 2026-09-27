@@ -128,12 +128,12 @@ struct IOSProgressionReviewScreen: View {
 
                 if suggestions.isEmpty {
                     ContentUnavailableView(
-                        sessionId == nil ? "Keine Progressionshinweise" : "Keine Hinweise für dieses Training",
+                        sessionId == nil ? String(localized: "Keine Progressionshinweise") : String(localized: "Keine Hinweise für dieses Training"),
                         systemImage: "chart.line.uptrend.xyaxis",
                         description: Text(
                             sessionId == nil
-                                ? "Nach einem abgeschlossenen Training mit aktivierter Progressionsregel erscheinen neue Hinweise hier."
-                                : "Für dieses Training wurde noch keine auswertbare Progression gespeichert."
+                                ? String(localized: "Nach einem abgeschlossenen Training mit aktivierter Progressionsregel erscheinen neue Hinweise hier.")
+                                : String(localized: "Für dieses Training wurde noch keine auswertbare Progression gespeichert.")
                         )
                     )
                     .padding(.top, 24)
@@ -215,7 +215,7 @@ struct IOSProgressionReviewScreen: View {
             if let sessionId { fields["sessionId"] = sessionId }
             let success = await store.command("progression.generate", fields: fields)
             if !success {
-                alert = IOSProgressionAlert(title: "Auswertung fehlgeschlagen", message: store.errorMessage ?? "Die Progression konnte nicht ausgewertet werden.")
+                alert = IOSProgressionAlert(title: String(localized: "Auswertung fehlgeschlagen"), message: store.errorMessage ?? String(localized: "Die Progression konnte nicht ausgewertet werden."))
             }
         }
     }
@@ -223,7 +223,7 @@ struct IOSProgressionReviewScreen: View {
     private func accept(_ suggestion: ILProgressionSuggestion, target: ILProgressionTarget) {
         guard suggestion.status.uppercased() == "PENDING", suggestion.suggestedTarget != nil else { return }
         guard target.sets > 0, target.reps > 0, target.weightKg.isFinite, target.weightKg >= 0 else {
-            alert = IOSProgressionAlert(title: "Ungültiges Ziel", message: "Sätze und Wiederholungen müssen positiv sein; das Gewicht darf nicht negativ sein.")
+            alert = IOSProgressionAlert(title: String(localized: "Ungültiges Ziel"), message: String(localized: "Sätze und Wiederholungen müssen positiv sein; das Gewicht darf nicht negativ sein."))
             return
         }
         Task { @MainActor in
@@ -237,7 +237,7 @@ struct IOSProgressionReviewScreen: View {
             if success {
                 editingSuggestion = nil
             } else {
-                alert = IOSProgressionAlert(title: "Vorschlag nicht übernommen", message: store.errorMessage ?? "Der Vorschlag ist möglicherweise nicht mehr aktuell.")
+                alert = IOSProgressionAlert(title: String(localized: "Vorschlag nicht übernommen"), message: store.errorMessage ?? String(localized: "Der Vorschlag ist möglicherweise nicht mehr aktuell."))
             }
         }
     }
@@ -260,8 +260,8 @@ struct IOSProgressionReviewScreen: View {
                 editingSuggestion = nil
             } else {
                 alert = IOSProgressionAlert(
-                    title: "Vorschläge nicht übernommen",
-                    message: store.errorMessage ?? "Die Vorschläge sind möglicherweise nicht mehr aktuell."
+                    title: String(localized: "Vorschläge nicht übernommen"),
+                    message: store.errorMessage ?? String(localized: "Die Vorschläge sind möglicherweise nicht mehr aktuell.")
                 )
             }
         }
@@ -272,7 +272,7 @@ struct IOSProgressionReviewScreen: View {
         Task { @MainActor in
             let success = await store.command("progression.reject", fields: ["id": suggestion.id])
             if !success {
-                alert = IOSProgressionAlert(title: "Vorschlag nicht verworfen", message: store.errorMessage ?? "Der Vorschlag ist möglicherweise nicht mehr aktuell.")
+                alert = IOSProgressionAlert(title: String(localized: "Vorschlag nicht verworfen"), message: store.errorMessage ?? String(localized: "Der Vorschlag ist möglicherweise nicht mehr aktuell."))
             }
         }
     }
@@ -295,7 +295,7 @@ private struct IOSProgressionSuggestionCard: View {
     var body: some View {
         IronLogCard(tone: isPending ? .elevated : .muted) {
             HStack(alignment: .firstTextBaseline) {
-                Text(exerciseName ?? "Übung \(suggestion.exerciseId)")
+                Text(exerciseName ?? String(localized: "Übung \(suggestion.exerciseId)"))
                     .font(.geist(.headline))
                 Spacer(minLength: 8)
                 IOSProgressionStatusBadge(status: suggestion.status)
@@ -318,7 +318,7 @@ private struct IOSProgressionSuggestionCard: View {
             }
 
             IOSProgressionTargetBlock(
-                title: "Quelle (unverändert)",
+                title: String(localized: "Quelle (unverändert)"),
                 target: suggestion.sourceTarget,
                 unitSystem: unitSystem,
                 tone: .secondary
@@ -334,7 +334,7 @@ private struct IOSProgressionSuggestionCard: View {
                 .font(.geist(.body))
 
             if let suggestedTarget = suggestion.suggestedTarget {
-                IOSProgressionTargetBlock(title: "Vorgeschlagen", target: suggestedTarget, unitSystem: unitSystem, tone: .primary)
+                IOSProgressionTargetBlock(title: String(localized: "Vorgeschlagen"), target: suggestedTarget, unitSystem: unitSystem, tone: .primary)
             } else {
                 Text("Kein neuer Zielwert vorgeschlagen; dieser Hinweis bleibt informativ.")
                     .font(.geist(.subheadline))
@@ -342,7 +342,7 @@ private struct IOSProgressionSuggestionCard: View {
             }
 
             if let finalTarget = suggestion.finalTarget {
-                IOSProgressionTargetBlock(title: suggestion.wasEdited ? "Final (bearbeitet)" : "Final übernommen", target: finalTarget, unitSystem: unitSystem, tone: .success)
+                IOSProgressionTargetBlock(title: suggestion.wasEdited ? String(localized: "Final (bearbeitet)") : String(localized: "Final übernommen"), target: finalTarget, unitSystem: unitSystem, tone: .success)
             }
 
             if isPending, suggestion.suggestedTarget != nil {
@@ -398,12 +398,12 @@ private struct IOSProgressionTargetBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.geist(.subheadline, weight: .semibold))
-            Text("\(ilCount(target.sets, "Satz", "Sätze")) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+            Text("\(ilCount(target.sets, String(localized: "Satz"), String(localized: "Sätze"))) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
                 .font(.geist(.body).monospacedDigit())
                 .foregroundStyle(tone.color(for: theme.palette(for: colorScheme)))
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(ilCount(target.sets, "Satz", "Sätze")), \(ilCount(target.reps, "Wiederholung", "Wiederholungen")), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+        .accessibilityLabel("\(title): \(ilCount(target.sets, String(localized: "Satz"), String(localized: "Sätze"))), \(ilCount(target.reps, String(localized: "Wiederholung"), String(localized: "Wiederholungen"))), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
     }
 }
 
@@ -430,7 +430,7 @@ private struct IOSProgressionEvidenceBlock: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Tatsächliche Evidenz").font(.geist(.subheadline, weight: .semibold))
             if sets.isEmpty {
-                Text(idsWerePresent ? "Die gespeicherte Evidenz ist nicht verfügbar." : "Keine verwertbaren Arbeitssätze gespeichert.")
+                Text(idsWerePresent ? String(localized: "Die gespeicherte Evidenz ist nicht verfügbar.") : String(localized: "Keine verwertbaren Arbeitssätze gespeichert."))
                     .font(.geist(.caption))
                     .ironLogSecondaryText()
             } else {
@@ -512,15 +512,15 @@ private struct IOSProgressionEditSheet: View {
 
     private func save() {
         guard let sets = Int(setsText), sets > 0 else {
-            errorMessage = "Gib eine positive Satzzahl ein."
+            errorMessage = String(localized: "Gib eine positive Satzzahl ein.")
             return
         }
         guard let reps = Int(repsText), reps > 0 else {
-            errorMessage = "Gib eine positive Wiederholungszahl ein."
+            errorMessage = String(localized: "Gib eine positive Wiederholungszahl ein.")
             return
         }
         guard let displayedWeight = Double(weightText.replacingOccurrences(of: ",", with: ".")), displayedWeight.isFinite, displayedWeight >= 0 else {
-            errorMessage = "Gib ein gültiges Gewicht ein."
+            errorMessage = String(localized: "Gib ein gültiges Gewicht ein.")
             return
         }
         onAccept(
@@ -536,11 +536,11 @@ private struct IOSProgressionEditSheet: View {
 private enum IOSProgressionFormatting {
     static func status(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "PENDING": return "Ausstehend"
-        case "INFORMATIONAL": return "Hinweis"
-        case "ACCEPTED": return "Übernommen"
-        case "REJECTED": return "Verworfen"
-        case "STALE": return "Nicht mehr aktuell"
+        case "PENDING": return String(localized: "Ausstehend")
+        case "INFORMATIONAL": return String(localized: "Hinweis")
+        case "ACCEPTED": return String(localized: "Übernommen")
+        case "REJECTED": return String(localized: "Verworfen")
+        case "STALE": return String(localized: "Nicht mehr aktuell")
         default: return raw
         }
     }
@@ -567,61 +567,61 @@ private enum IOSProgressionReasonText {
         let args = suggestion.reasonArguments
         switch suggestion.reasonCode.uppercased() {
         case "REP_TARGET_ADVANCED":
-            return "Das Wiederholungsziel wurde erreicht und wird erhöht."
+            return String(localized: "Das Wiederholungsziel wurde erreicht und wird erhöht.")
         case "LOAD_ADVANCED":
             guard let step = configuredStep(for: suggestion) else { return unavailable }
-            return "Das Zielgewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit)."
+            return String(localized: "Das Zielgewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit).")
         case "TOTAL_REPS_COMPLETED":
             guard let achieved = whole(args["achievedTotalReps"]), achieved >= 0,
                   let target = whole(args["targetTotalReps"]), target > 0,
                   let step = configuredStep(for: suggestion) else { return unavailable }
-            return "\(achieved) von \(target) Zielwiederholungen wurden erreicht; das Gewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit)."
+            return String(localized: "\(achieved) von \(target) Zielwiederholungen wurden erreicht; das Gewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit).")
         case "RPE_WITHIN_TARGET":
             guard let highest = bounded(args["highestRpe"], 1...10),
                   let target = bounded(args["targetRpe"], 1...10),
                   let tolerance = bounded(args["tolerance"], 0...2),
                   let step = configuredStep(for: suggestion) else { return unavailable }
-            return "Die höchste RPE war \(IOSProgressionFormatting.number(highest)) bei Ziel \(IOSProgressionFormatting.number(target)) ± \(IOSProgressionFormatting.number(tolerance)); das Gewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit)."
+            return String(localized: "Die höchste RPE war \(IOSProgressionFormatting.number(highest)) bei Ziel \(IOSProgressionFormatting.number(target)) ± \(IOSProgressionFormatting.number(tolerance)); das Gewicht steigt um \(IOSProgressionFormatting.number(step.value)) \(step.unit).")
         case "REPEAT_TARGET":
             if let highest = bounded(args["highestRpe"], 1...10) {
-                return "Die höchste RPE war \(IOSProgressionFormatting.number(highest)). Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+                return String(localized: "Die höchste RPE war \(IOSProgressionFormatting.number(highest)). Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.")
             }
             if let target = whole(args["targetReps"]), target > 0,
                let actual = whole(args["actualReps"]), actual >= 0 {
-                return "Mindestens \(target) Wiederholungen waren erwartet, erreicht wurden \(actual). Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+                return String(localized: "Mindestens \(target) Wiederholungen waren erwartet, erreicht wurden \(actual). Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.")
             }
             if let achieved = whole(args["achievedTotalReps"]), achieved >= 0,
                let target = whole(args["targetTotalReps"]), target > 0 {
-                return "\(achieved) von \(target) Zielwiederholungen wurden erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+                return String(localized: "\(achieved) von \(target) Zielwiederholungen wurden erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.")
             }
             return unavailable
         case "STALL_BACKOFF":
             guard let percent = bounded(args["backoffPercent"], 1...30) else { return unavailable }
-            return "Nach wiederholten Fehlversuchen sinkt das Gewicht um \(IOSProgressionFormatting.number(percent)) Prozent."
+            return String(localized: "Nach wiederholten Fehlversuchen sinkt das Gewicht um \(IOSProgressionFormatting.number(percent)) Prozent.")
         case "MANUAL_WEIGHT_DEVIATION":
             guard let expected = finite(args["expectedWeightKg"]), expected >= 0,
                   let actual = finite(args["actualWeightKg"]), actual >= 0 else { return unavailable }
-            return "Die gewerteten Sätze haben unterschiedliche Gewichte (\(IOSWeightFormatter.format(expected, unitSystem: unitSystem)) und \(IOSWeightFormatter.format(actual, unitSystem: unitSystem))); deshalb wird nichts automatisch geändert."
+            return String(localized: "Die gewerteten Sätze haben unterschiedliche Gewichte (\(IOSWeightFormatter.format(expected, unitSystem: unitSystem)) und \(IOSWeightFormatter.format(actual, unitSystem: unitSystem))); deshalb wird nichts automatisch geändert.")
         case "TOO_FEW_WORK_SETS":
             guard let target = whole(args["targetSets"]), target > 0,
                   let actual = whole(args["actualWorkSets"]), actual >= 0 else { return unavailable }
-            return "Für die Auswertung waren \(target) Arbeitssätze nötig, vorhanden waren \(actual)."
-        case "RPE_MISSING": return "Mindestens einem gewerteten Satz fehlt die RPE."
-        case "RPE_INVALID": return "Mindestens eine RPE liegt außerhalb des gültigen Bereichs."
-        case "CONFIG_INVALID": return "Die gespeicherte Progressionskonfiguration ist ungültig."
-        case "RULE_REVISION_UNSUPPORTED": return "Die gespeicherte Progressionsregel wird von dieser App-Version nicht unterstützt."
-        case "MANUAL_SCHEME": return "Für dieses Ziel ist keine automatische Progression aktiv."
-        case "SET_NUMBER_INVALID": return "Die Satznummern lassen keine sichere Auswertung zu."
-        case "SET_VALUE_INVALID": return "Mindestens ein Satz enthält ungültige Werte."
+            return String(localized: "Für die Auswertung waren \(target) Arbeitssätze nötig, vorhanden waren \(actual).")
+        case "RPE_MISSING": return String(localized: "Mindestens einem gewerteten Satz fehlt die RPE.")
+        case "RPE_INVALID": return String(localized: "Mindestens eine RPE liegt außerhalb des gültigen Bereichs.")
+        case "CONFIG_INVALID": return String(localized: "Die gespeicherte Progressionskonfiguration ist ungültig.")
+        case "RULE_REVISION_UNSUPPORTED": return String(localized: "Die gespeicherte Progressionsregel wird von dieser App-Version nicht unterstützt.")
+        case "MANUAL_SCHEME": return String(localized: "Für dieses Ziel ist keine automatische Progression aktiv.")
+        case "SET_NUMBER_INVALID": return String(localized: "Die Satznummern lassen keine sichere Auswertung zu.")
+        case "SET_VALUE_INVALID": return String(localized: "Mindestens ein Satz enthält ungültige Werte.")
         case "BACKOFF_FLOOR_REACHED":
             guard let percent = bounded(args["backoffPercent"], 1...30) else { return unavailable }
-            return "Ein Backoff um \(IOSProgressionFormatting.number(percent)) Prozent würde das Gewicht nicht weiter sicher senken."
+            return String(localized: "Ein Backoff um \(IOSProgressionFormatting.number(percent)) Prozent würde das Gewicht nicht weiter sicher senken.")
         default:
             return unavailable
         }
     }
 
-    private static let unavailable = "Die Begründung kann wegen unvollständiger Auswertungsdaten nicht sicher angezeigt werden."
+    private static let unavailable = String(localized: "Die Begründung kann wegen unvollständiger Auswertungsdaten nicht sicher angezeigt werden.")
 
     private static func finite(_ value: Double?) -> Double? {
         guard let value, value.isFinite else { return nil }
@@ -649,16 +649,16 @@ private enum IOSProgressionReasonText {
         }
         if let configuredKg = suggestion.sourceProgression.incrementKg,
            configuredKg.isFinite, configuredKg > 0, abs(configuredKg - argument) <= 0.000001 {
-            return (argument, "kg")
+            return (argument, String(localized: "kg"))
         }
         return nil
     }
 
     private static func displayUnit(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "METRIC", "KG", "KILOGRAM", "KILOGRAMS": return "kg"
-        case "IMPERIAL", "LB", "LBS", "POUND", "POUNDS": return "lb"
-        case "PERCENT", "%": return "Prozent"
+        case "METRIC", "KG", "KILOGRAM", "KILOGRAMS": return String(localized: "kg")
+        case "IMPERIAL", "LB", "LBS", "POUND", "POUNDS": return String(localized: "lb")
+        case "PERCENT", "%": return String(localized: "Prozent")
         default: return raw
         }
     }

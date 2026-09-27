@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.statistics
 
+import com.ironlog.feature.statistics.R as UxR
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -124,7 +125,7 @@ internal fun GlassStatsHero(
                         letterSpacing = (-2).sp,
                         style = TextStyle(fontFeatureSettings = "tnum")
                     )
-                    Text(" $unit", fontSize = 20.sp, color = ink.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 8.dp))
+                    Text(stringResource(UxR.string.stats_number_unit_suffix, unit), fontSize = 20.sp, color = ink.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 8.dp))
                 }
             }
             if (first != null && latest != null && points.size >= 2) {
@@ -163,14 +164,14 @@ internal fun GlassStatsHero(
             )
             Row(Modifier.fillMaxWidth()) {
                 Text(
-                    "${first.dateLabel} · ${formatValue(first.value, metric, unitSystem)}",
+                    stringResource(UxR.string.stats_dated_value, first.dateLabel, formatValue(first.value, metric, unitSystem)),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = TextStyle(fontFeatureSettings = "tnum"),
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    "${latest.dateLabel} · ${formatValue(latest.value, metric, unitSystem)}",
+                    stringResource(UxR.string.stats_dated_value, latest.dateLabel, formatValue(latest.value, metric, unitSystem)),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = TextStyle(fontFeatureSettings = "tnum")

@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.workout
 
+import com.ironlog.feature.workout.R as UxR
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -238,8 +239,9 @@ internal fun GlassWorkoutCompletion(
 
 @Composable
 private fun CompletionLens(value: String, unit: String, label: String, modifier: Modifier) {
+    val description = stringResource(UxR.string.workout_completion_metric_cd, label, value, unit)
     Column(
-        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = "$label: $value $unit" },
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

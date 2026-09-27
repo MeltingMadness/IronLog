@@ -22,6 +22,7 @@ struct RootView: View {
         .environment(training)
         .environmentObject(settings)
         .task {
+            if training.data == nil { await training.reload() }
             // Central deload wiring for every workout start: the settings mode is authoritative,
             // and the store sends an explicit `false` while no mode is active.
             training.deloadModeActive = settings.state.deloadMode != "NONE"
@@ -78,12 +79,15 @@ struct RootView: View {
     private func trainingContent<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         if training.data != nil {
             content()
+        } else if training.isLoading || training.errorMessage == nil {
+            ProgressView("Trainingsdaten werden geladen …")
         } else {
             ContentUnavailableView {
                 Label("Trainingsdaten nicht verfügbar", systemImage: "externaldrive.badge.exclamationmark")
             } description: {
-                Text(training.errorMessage ?? "Die Trainingsdaten werden geladen.")
+                Text(training.errorMessage ?? String(localized: "Die Trainingsdaten werden geladen."))
             } actions: {
+                Button("Erneut versuchen") { Task { await training.reload() } }
                 Button("Backup in Einstellungen wiederherstellen") { training.selectedTab = 4 }
             }
         }

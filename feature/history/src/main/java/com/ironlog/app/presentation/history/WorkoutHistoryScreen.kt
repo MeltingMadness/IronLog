@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.history
 
+import com.ironlog.feature.history.R as UxR
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -535,8 +536,8 @@ private fun WorkoutCard(
 
                 val durationMin = item.session.durationSeconds / 60
                 val statsList = mutableListOf<String>()
-                statsList.add("$durationMin min")
-                statsList.add("${item.exerciseCount} Übungen")
+                statsList.add(stringResource(UxR.string.history_duration_minutes, durationMin))
+                statsList.add(stringResource(UxR.string.history_exercise_count, item.exerciseCount))
                 if (item.totalVolume > 0) {
                     statsList.add(WeightFormatting.formatVolume(item.totalVolume, unitSystem))
                 }

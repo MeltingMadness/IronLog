@@ -54,7 +54,8 @@ class ExerciseStatsViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf("exerciseId" to exerciseId)),
             exerciseRepository = exerciseRepo,
             statisticsRepository = statisticsRepo,
-            appPreferencesRepository = preferencesRepo
+            appPreferencesRepository = preferencesRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
     @Test

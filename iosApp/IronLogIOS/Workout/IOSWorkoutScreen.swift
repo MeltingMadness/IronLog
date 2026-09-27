@@ -112,6 +112,10 @@ struct IOSWorkoutScreen: View {
     @State private var pauseOpen = false
     @State private var pauseShownForStart: Int64?
     @State private var localErrorMessage: String?
+    @State private var deletedSet: ILWorkoutSet?
+    @State private var deletedIntention: ILSetIntention = .unknown
+    @State private var undoToken: UUID?
+    @State private var isRestoringSet = false
 
     private var data: ILTrainingData? { store.data }
 
@@ -119,6 +123,28 @@ struct IOSWorkoutScreen: View {
 
     var body: some View {
         screenContent
+            .safeAreaInset(edge: .top) {
+                if let deletedSet, deletedSet.sessionId == activeSession?.id {
+                    HStack {
+                        Text("Satz \(deletedSet.setNumber) gelöscht")
+                        Spacer()
+                        Button("Rückgängig", action: undoDeleteSet)
+                            .frame(minHeight: 44)
+                            .disabled(store.isBusy || isRestoringSet)
+                    }
+                    .font(.geist(.callout))
+                    .padding(.horizontal)
+                    .background(.regularMaterial)
+                    .accessibilityElement(children: .contain)
+                }
+            }
+            .task(id: undoToken) {
+                guard let token = undoToken else { return }
+                do { try await Task.sleep(for: .seconds(8)) } catch { return }
+                guard undoToken == token, !isRestoringSet else { return }
+                deletedSet = nil
+                undoToken = nil
+            }
             .ironLogScreenBackground(
                 ember: theme.palette(for: colorScheme).background,
                 emberNavigationBar: theme.palette(for: colorScheme).background
@@ -138,7 +164,7 @@ struct IOSWorkoutScreen: View {
             }
             .alert(item: errorAlertBinding) { alert in
                 Alert(
-                    title: Text("Workout"),
+                    title: Text("Training"),
                     message: Text(alert.message),
                     dismissButton: .default(Text("OK"))
                 )
@@ -151,11 +177,11 @@ struct IOSWorkoutScreen: View {
                 }
             }
             .confirmationDialog(
-                "Workout verwerfen?",
+                "Training verwerfen?",
                 isPresented: $showingCancelConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Workout verwerfen", role: .destructive) { cancelWorkout() }
+                Button("Training verwerfen", role: .destructive) { cancelWorkout() }
                 Button("Weiter trainieren", role: .cancel) { }
             } message: {
                 Text("Die laufende Session und ihre Sätze werden verworfen.")
@@ -169,7 +195,11 @@ struct IOSWorkoutScreen: View {
             }
             .onChange(of: settings.state.timerKeepScreenOn) { _, _ in updateIdleTimer() }
             .onChange(of: settings.state.deloadMode) { _, _ in reconcileRestTimerAfterTargetChange() }
-            .onChange(of: activeSession?.id) { _, _ in updateIdleTimer() }
+            .onChange(of: activeSession?.id) { _, _ in
+                deletedSet = nil
+                undoToken = nil
+                updateIdleTimer()
+            }
             .onChange(of: scenePhase) { _, _ in updateIdleTimer() }
     }
 
@@ -247,14 +277,14 @@ struct IOSWorkoutScreen: View {
         ContentUnavailableView {
             Label("Trainingsdaten nicht verfügbar", systemImage: "externaldrive.badge.questionmark")
         } description: {
-            Text(store.errorMessage ?? "Die lokale Trainingsdatei konnte nicht geladen werden.")
+            Text(store.errorMessage ?? String(localized: "Die lokale Trainingsdatei konnte nicht geladen werden."))
         }
         .padding()
     }
 
     private var screenTitle: String {
-        guard let activeSession else { return "Workout" }
-        return activeSession.name.isEmpty ? "Workout" : activeSession.name
+        guard let activeSession else { return String(localized: "Training") }
+        return activeSession.name.isEmpty ? String(localized: "Training") : activeSession.name
     }
 
     @ViewBuilder
@@ -326,7 +356,7 @@ struct IOSWorkoutScreen: View {
                 if let timer = orderedRestTimers.last {
                     IOSWorkoutGlassRestDock(
                         timer: timer,
-                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.name ?? "Pause",
+                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.name ?? String(localized: "Pause"),
                         onOpen: { pauseOpen = true },
                         onSkip: { dismissRestTimer(rowKey: timer.rowKey) }
                     )
@@ -364,9 +394,9 @@ struct IOSWorkoutScreen: View {
                 let logged = rows.reduce(0) { $0 + $1.sets.count }
                 IOSWorkoutGlassPauseScreen(
                     timer: timer,
-                    exerciseName: row?.exercise.name ?? "Übung",
+                    exerciseName: row?.exercise.name ?? String(localized: "Übung"),
                     nextSetNumber: row?.nextSetNumber ?? 1,
-                    progressText: planned > 0 ? "\(planned - open) / \(planned) Sätze" : ilCount(logged, "Satz", "Sätze"),
+                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze")),
                     onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
                     onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
                     onSkip: {
@@ -401,17 +431,17 @@ struct IOSWorkoutScreen: View {
         let currentIndex = groups.firstIndex { group in
             group.rows.contains { $0.target != nil && !$0.isComplete }
         }
-        let name = session.name.isEmpty ? "Freies Workout" : session.name
+        let name = session.name.isEmpty ? String(localized: "Freies Training") : session.name
         let planned = rows.reduce(0) { $0 + $1.loggingSlots.count }
         let open = rows.reduce(0) { $0 + ($1.remainingPlannedSets ?? 0) }
         let logged = rows.reduce(0) { $0 + $1.sets.count }
         let volume = rows.reduce(0.0) { total, row in
             total + row.sets.reduce(0.0) { $0 + $1.weightKg * Double($1.reps) }
         }
-        let progress = planned > 0 ? "\(planned - open) / \(planned) Sätze" : ilCount(logged, "Satz", "Sätze")
+        let progress = planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze"))
         return VStack(alignment: .leading, spacing: 12) {
             IOSWorkoutGlassHeader(
-                label: currentIndex.map { "\(name) · Übung \($0 + 1) von \(groups.count)" } ?? name,
+                label: currentIndex.map { String(localized: "\(name) · Übung \($0 + 1) von \(groups.count)") } ?? name,
                 startDate: session.startDate,
                 progressText: "\(progress) · \(ilVolumeText(volume.rounded(), unitSystem: settings.state.unitSystem))",
                 hasNotes: !session.notes.isEmpty,
@@ -499,9 +529,9 @@ struct IOSWorkoutScreen: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(session.name.isEmpty ? "Freies Workout" : session.name)
+                    Text(session.name.isEmpty ? String(localized: "Freies Training") : session.name)
                         .font(.geist(.title2, weight: .bold))
-                    Text(session.planId == nil ? "Freie Session" : "Plan-Session")
+                    Text(session.planId == nil ? String(localized: "Freie Session") : String(localized: "Plan-Session"))
                         .font(.geist(.subheadline))
                         .ironLogSecondaryText()
                 }
@@ -519,7 +549,7 @@ struct IOSWorkoutScreen: View {
                 Button {
                     showingNotes = true
                 } label: {
-                    Label(session.notes.isEmpty ? "Notiz" : "Notiz bearbeiten", systemImage: "note.text")
+                    Label(session.notes.isEmpty ? String(localized: "Notiz") : String(localized: "Notiz bearbeiten"), systemImage: "note.text")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -707,9 +737,9 @@ struct IOSWorkoutScreen: View {
 
     private func startFreeWorkout(name: String) {
         Task {
-            let success = await store.startWorkout(name: name.isEmpty ? "Freies Workout" : name)
+            let success = await store.startWorkout(name: name.isEmpty ? String(localized: "Freies Training") : name)
             if !success {
-                localErrorMessage = store.errorMessage ?? "Workout konnte nicht gestartet werden."
+                localErrorMessage = store.errorMessage ?? String(localized: "Training konnte nicht gestartet werden.")
             } else {
                 store.errorMessage = nil
             }
@@ -720,7 +750,7 @@ struct IOSWorkoutScreen: View {
         Task {
             let success = await store.startWorkout(name: plan.name, planId: plan.id)
             if !success {
-                localErrorMessage = store.errorMessage ?? "Plan konnte nicht gestartet werden."
+                localErrorMessage = store.errorMessage ?? String(localized: "Plan konnte nicht gestartet werden.")
             } else {
                 store.errorMessage = nil
             }
@@ -763,7 +793,7 @@ struct IOSWorkoutScreen: View {
     private func saveSet(_ set: ILWorkoutSet, intention: ILSetIntention) async -> Bool {
         let success = await store.saveSet(set, intention: intention)
         guard success else {
-            localErrorMessage = store.errorMessage ?? "Der Satz konnte nicht gespeichert werden."
+            localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gespeichert werden.")
             return false
         }
         store.errorMessage = nil
@@ -797,12 +827,38 @@ struct IOSWorkoutScreen: View {
     }
 
     private func deleteSet(_ set: ILWorkoutSet) {
+        guard !store.isBusy, !isRestoringSet else { return }
+        let intention = store.intention(forSetId: set.id)
         Task {
             let success = await store.command("set.delete", fields: ["id": set.id])
             if !success {
-                localErrorMessage = store.errorMessage ?? "Der Satz konnte nicht gelöscht werden."
-            } else {
+                localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht gelöscht werden.")
+            } else if activeSession?.id == set.sessionId {
                 store.errorMessage = nil
+                deletedSet = set
+                deletedIntention = intention
+                undoToken = UUID()
+            }
+        }
+    }
+
+    private func undoDeleteSet() {
+        guard var restored = deletedSet, restored.sessionId == activeSession?.id,
+              !store.isBusy, !isRestoringSet else { return }
+        let token = undoToken
+        let intention = deletedIntention
+        restored.id = 0
+        isRestoringSet = true
+        Task {
+            defer { isRestoringSet = false }
+            let success = await store.saveSet(restored, intention: intention)
+            guard undoToken == token else { return }
+            if success {
+                deletedSet = nil
+                undoToken = nil
+            } else {
+                localErrorMessage = store.errorMessage ?? String(localized: "Der Satz konnte nicht wiederhergestellt werden.")
+                undoToken = UUID()
             }
         }
     }
@@ -822,7 +878,7 @@ struct IOSWorkoutScreen: View {
                 adHocExerciseIDs = []
                 UserDefaults.standard.removeObject(forKey: adHocKey(for: session.id))
             } else {
-                localErrorMessage = store.errorMessage ?? "Workout konnte nicht beendet werden."
+                localErrorMessage = store.errorMessage ?? String(localized: "Training konnte nicht beendet werden.")
             }
         }
     }
@@ -838,7 +894,7 @@ struct IOSWorkoutScreen: View {
                 adHocExerciseIDs = []
                 UserDefaults.standard.removeObject(forKey: adHocKey(for: session.id))
             } else {
-                localErrorMessage = store.errorMessage ?? "Workout konnte nicht verworfen werden."
+                localErrorMessage = store.errorMessage ?? String(localized: "Training konnte nicht verworfen werden.")
             }
         }
     }
@@ -859,7 +915,7 @@ struct IOSWorkoutScreen: View {
             do {
                 let success = await store.command("workout.update", fields: ["session": try store.encoded(updated)])
                 if !success {
-                    localErrorMessage = store.errorMessage ?? "Notiz konnte nicht gespeichert werden."
+                    localErrorMessage = store.errorMessage ?? String(localized: "Notiz konnte nicht gespeichert werden.")
                 } else {
                     store.errorMessage = nil
                 }
@@ -1005,12 +1061,12 @@ private struct IOSWorkoutElapsedView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(iosWorkoutFormatDuration(max(0, Int(context.date.timeIntervalSince(startDate)))))
                     .font(.geist(.title3, weight: .semibold).monospacedDigit())
-                Text("Workout-Zeit")
+                Text("Training-Zeit")
                     .font(.geist(.caption))
                     .ironLogSecondaryText()
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Workout-Zeit")
+            .accessibilityLabel("Training-Zeit")
         }
     }
 }
@@ -1031,7 +1087,7 @@ private struct IOSWorkoutNotesSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Notizen zum laufenden Workout")
+                Text("Notizen zum laufenden Training")
                     .font(.geist(.headline))
                 TextEditor(text: $notes)
                     .frame(minHeight: 180)
@@ -1040,7 +1096,7 @@ private struct IOSWorkoutNotesSheet: View {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .stroke(.quaternary)
                     }
-                    .accessibilityLabel("Workout-Notizen")
+                    .accessibilityLabel("Training-Notizen")
                 Spacer()
             }
             .padding()

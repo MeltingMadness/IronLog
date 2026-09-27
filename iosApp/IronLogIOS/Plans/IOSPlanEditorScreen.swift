@@ -78,7 +78,7 @@ struct IOSPlanEditorScreen: View {
                             .ironLogSecondaryText()
                     }
                 } footer: {
-                    Text("Die Reihenfolge wird im Workout übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
+                    Text("Die Reihenfolge wird im Training übernommen. Ziele werden in \(IOSWeight.label(unitSystem)) eingegeben.")
                 }
 
                 if let errorMessage {
@@ -91,14 +91,14 @@ struct IOSPlanEditorScreen: View {
             .ironLogListRows()
         }
         .ironLogScreenBackground()
-        .navigationTitle(planID == nil ? "Neuer Plan" : "Plan bearbeiten")
+        .navigationTitle(planID == nil ? String(localized: "Neuer Plan") : String(localized: "Plan bearbeiten"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isSaving ? "Speichert …" : "Sichern") {
+                Button(isSaving ? String(localized: "Speichert …") : String(localized: "Sichern")) {
                     Task { await save() }
                 }
                 .disabled(isSaving || store.isBusy || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -142,7 +142,7 @@ struct IOSPlanEditorScreen: View {
             }
             Button("Abbrechen", role: .cancel) {}
         } message: {
-            Text("Der Plan und seine Ziele werden entfernt. Bereits aufgezeichnete Workouts bleiben erhalten.")
+            Text("Der Plan und seine Ziele werden entfernt. Bereits aufgezeichnete Trainings bleiben erhalten.")
         }
     }
 
@@ -158,7 +158,7 @@ struct IOSPlanEditorScreen: View {
     }
 
     private func exerciseName(for id: Int64) -> String {
-        data?.exercises.first(where: { $0.id == id })?.name ?? "Übung nicht gefunden (ID \(id))"
+        data?.exercises.first(where: { $0.id == id })?.name ?? String(localized: "Übung nicht gefunden (ID \(id))")
     }
 
     private func add(_ exercise: ILExercise) {
@@ -204,25 +204,25 @@ struct IOSPlanEditorScreen: View {
         errorMessage = nil
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            errorMessage = "Bitte gib einen Namen ein."
+            errorMessage = String(localized: "Bitte gib einen Namen ein.")
             return
         }
 
         var planExercises: [ILPlanExercise] = []
         for (index, row) in rows.enumerated() {
             guard row.setTargets.allSatisfy({ $0.reps > 0 && $0.reps <= 1000 && $0.weightKg.isFinite && $0.weightKg >= 0 }), row.setTargets.count <= 100 else {
-                errorMessage = "Bitte prüfe die einzelnen Satzvorgaben."
+                errorMessage = String(localized: "Bitte prüfe die einzelnen Satzvorgaben.")
                 return
             }
             guard let sets = IOSNumber.parseInt(row.targetSets), sets > 0,
                   let reps = IOSNumber.parseInt(row.targetReps), reps > 0,
                   let displayWeight = IOSNumber.parse(row.targetWeight), displayWeight >= 0 else {
-                errorMessage = "Sätze, Wiederholungen und Gewicht müssen gültige Zielwerte sein."
+                errorMessage = String(localized: "Sätze, Wiederholungen und Gewicht müssen gültige Zielwerte sein.")
                 return
             }
             let weightKg = IOSWeight.kilograms(value: displayWeight, unit: unitSystem)
             guard weightKg.isFinite else {
-                errorMessage = "Das Gewicht ist ungültig."
+                errorMessage = String(localized: "Das Gewicht ist ungültig.")
                 return
             }
             switch row.progression.validatedConfig() {
@@ -252,7 +252,7 @@ struct IOSPlanEditorScreen: View {
             hasEdits = false
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Der Plan konnte nicht gespeichert werden."
+            errorMessage = store.errorMessage ?? String(localized: "Der Plan konnte nicht gespeichert werden.")
         }
     }
 
@@ -263,7 +263,7 @@ struct IOSPlanEditorScreen: View {
         if await store.command("plan.delete", fields: ["id": planID]) {
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Der Plan konnte nicht gelöscht werden."
+            errorMessage = store.errorMessage ?? String(localized: "Der Plan konnte nicht gelöscht werden.")
         }
     }
 }
@@ -334,15 +334,15 @@ private struct IOSPlanExerciseRow: View {
             }
             if row.setTargets.isEmpty {
             HStack(spacing: 8) {
-                IOSCompactField(title: "Sätze", text: $row.targetSets, keyboard: .numberPad)
-                IOSCompactField(title: "Reps", text: $row.targetReps, keyboard: .numberPad)
+                IOSCompactField(title: String(localized: "Sätze"), text: $row.targetSets, keyboard: .numberPad)
+                IOSCompactField(title: String(localized: "Reps"), text: $row.targetReps, keyboard: .numberPad)
                 IOSCompactField(title: IOSWeight.label(unitSystem), text: $row.targetWeight, keyboard: .decimalPad)
             }
 
             } else {
                 ForEach(Array(row.setTargets.enumerated()), id: \.offset) { index, target in
                     HStack {
-                        Text("\(index + 1) · \(target.kind == "WARMUP" ? "Aufwärmen" : target.kind == "BACKOFF" ? "Backoff" : "Arbeitssatz")")
+                        Text("\(index + 1) · \(target.kind == "WARMUP" ? String(localized: "Aufwärmen") : target.kind == "BACKOFF" ? String(localized: "Backoff") : String(localized: "Arbeitssatz"))")
                         Spacer()
                         Text("\(IOSNumber.format(IOSWeight.display(kg: target.weightKg, unit: unitSystem))) × \(target.reps)").monospacedDigit()
                     }.font(.geist(.subheadline)).padding(.vertical, 6)
@@ -487,8 +487,8 @@ private struct IOSProgressionEditorSheet: View {
                         TextField("Backoff in %", text: $draft.backoffPercent)
                             .keyboardType(.decimalPad)
                         Text(IOSWeight.isImperial(unitSystem)
-                            ? "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb."
-                            : "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg.")
+                            ? String(localized: "Auch 1,5-lb-Schritte sind möglich, etwa 4 → 5,5 → 7 lb.")
+                            : String(localized: "Auch 1,5-kg-Schritte sind möglich, etwa 4 → 5,5 → 7 kg."))
                             .font(.geist(.footnote))
                             .ironLogSecondaryText()
                     }
@@ -551,7 +551,7 @@ private struct IOSIndividualSetTargetsEditor: View {
                                 }
                                 HStack {
                                     IOSCompactField(title: IOSWeight.label(unitSystem), text: $draft.weight, keyboard: .decimalPad)
-                                    IOSCompactField(title: "Wdh.", text: $draft.reps, keyboard: .numberPad)
+                                    IOSCompactField(title: String(localized: "Wdh."), text: $draft.reps, keyboard: .numberPad)
                                 }
                             }
                         }.onDelete { drafts.remove(atOffsets: $0) }
@@ -587,7 +587,7 @@ private struct IOSIndividualSetTargetsEditor: View {
             return ILPlannedSet(kind: draft.kind, reps: reps, weightKg: kg)
         }
         let work = targets.filter { $0.kind != "WARMUP" }
-        guard targets.count == drafts.count, let first = work.first else { error = "Bitte gültige Werte und mindestens einen Arbeitssatz angeben."; return }
+        guard targets.count == drafts.count, let first = work.first else { error = String(localized: "Bitte gültige Werte und mindestens einen Arbeitssatz angeben."); return }
         row.setTargets = targets
         row.targetSets = String(work.count)
         row.targetReps = String(first.reps)

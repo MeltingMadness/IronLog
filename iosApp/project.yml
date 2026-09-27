@@ -1,5 +1,6 @@
 name: IronLogIOS
 options:
+  developmentLanguage: de
   createIntermediateGroups: true
 configs:
   Debug: debug

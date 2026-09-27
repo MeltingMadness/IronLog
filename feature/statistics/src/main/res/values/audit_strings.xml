@@ -14,4 +14,9 @@
     <string name="stats_glass_metric_e1rm">1RM</string>
     <string name="stats_glass_metric_volume">Volumen</string>
     <string name="stats_glass_chart_cd">Verlauf %1$s von %2$s auf %3$s</string>
+    <string name="stats_action_load">Statistiken laden</string>
+    <string name="stats_action_change_metric">Metrikwechsel</string>
+    <string name="stats_number_unit_suffix">" %1$s"</string>
+    <string name="stats_exercise_details">%1$s · %2$s</string>
+    <string name="stats_dated_value">%1$s · %2$s</string>
 </resources>

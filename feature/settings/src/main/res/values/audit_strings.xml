@@ -7,4 +7,9 @@
     <string name="settings_backup_reminder_due_title">Externes Backup empfohlen</string>
     <string name="settings_backup_reminder_due_message">Seit dem letzten erfolgreichen Export sind mindestens sieben Tage vergangen. Das interne Sicherheitsbackup hilft nur auf diesem Gerät; ein externer Export schützt zusätzlich bei Geräteverlust.</string>
     <string name="settings_backup_recovery_note">Internes Sicherheitsbackup: schützt vor versehentlichen Änderungen auf diesem Gerät.</string>
+    <string name="settings_intensity_rpe">RPE</string>
+    <string name="settings_intensity_rir">RIR</string>
+    <string name="settings_weight_kg">%1$s kg</string>
+    <string name="settings_unknown_error">Aktion fehlgeschlagen: unbekannter Fehler</string>
+    <string name="settings_incident_subject">IronLog Incident %1$s</string>
 </resources>

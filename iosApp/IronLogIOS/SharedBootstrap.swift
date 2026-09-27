@@ -3,6 +3,6 @@ import Shared
 
 enum SharedBootstrap {
     static var statusLine: String {
-        "Shared framework connected"
+        String(localized: "Shared framework connected")
     }
 }

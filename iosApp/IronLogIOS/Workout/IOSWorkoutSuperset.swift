@@ -24,7 +24,7 @@ struct IOSWorkoutSupersetHeader: View {
 
     var body: some View {
         let palette = theme.palette(for: colorScheme)
-        let countLabel = exerciseCount == 1 ? "Übung" : "Übungen"
+        let countLabel = exerciseCount == 1 ? String(localized: "Übung") : String(localized: "Übungen")
 
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {

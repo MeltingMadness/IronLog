@@ -51,8 +51,8 @@ struct IOSWorkoutGlassHeader: View {
             }
             Spacer(minLength: 0)
             Menu {
-                Button(hasNotes ? "Notiz bearbeiten" : "Notiz", systemImage: "note.text", action: onNotes)
-                Button("Workout verwerfen", systemImage: "trash", role: .destructive, action: onDiscard)
+                Button(hasNotes ? String(localized: "Notiz bearbeiten") : String(localized: "Notiz"), systemImage: "note.text", action: onNotes)
+                Button("Training verwerfen", systemImage: "trash", role: .destructive, action: onDiscard)
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 17, weight: .bold))
@@ -64,7 +64,7 @@ struct IOSWorkoutGlassHeader: View {
                 Text("Beenden")
                     .font(.geist(.subheadline, weight: .heavy))
                     .padding(.horizontal, 18)
-                    .frame(minHeight: 44)
+                    .frame(minWidth: 44, minHeight: 44)
                     .liquidGlass(in: Capsule())
             }
             .buttonStyle(.plain)
@@ -110,7 +110,9 @@ struct IOSWorkoutGlassRail: View {
                             }
                             .padding(.leading, 8)
                             .padding(.trailing, 12)
-                            .frame(height: 36)
+                            .padding(.vertical, 10)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Capsule())
                             .background(ink.opacity(0.10), in: Capsule())
                             .opacity(0.8)
                         case .current:
@@ -118,13 +120,17 @@ struct IOSWorkoutGlassRail: View {
                                 .font(.geist(.footnote, weight: .heavy))
                                 .foregroundStyle(dark ? glassInk : .white)
                                 .padding(.horizontal, 14)
-                                .frame(height: 36)
+                                .padding(.vertical, 10)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Capsule())
                                 .background(dark ? Color.white : glassInk, in: Capsule())
                         case .upcoming:
                             Text(item.name)
                                 .foregroundStyle(ink.opacity(0.8))
                                 .padding(.horizontal, 12)
-                                .frame(height: 36)
+                                .padding(.vertical, 10)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Capsule())
                                 .overlay { Capsule().strokeBorder(ink.opacity(0.18)) }
                         }
                     }
@@ -142,8 +148,8 @@ struct IOSWorkoutGlassRail: View {
 
     private func accessibilityValue(_ status: IOSWorkoutRailStatus) -> String {
         switch status {
-        case .done: return "erledigt"
-        case .current: return "aktuell"
+        case .done: return String(localized: "erledigt")
+        case .current: return String(localized: "aktuell")
         case .upcoming: return ""
         }
     }
@@ -356,7 +362,7 @@ struct IOSWorkoutGlassRestDock: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Pause öffnen, \(exerciseName)")
-                .accessibilityValue(timer.isCountdown ? "Noch \(pauseClock(seconds))" : pauseClock(seconds))
+                .accessibilityValue(timer.isCountdown ? String(localized: "Noch \(pauseClock(seconds))") : pauseClock(seconds))
                 Button(action: onSkip) {
                     Text("Überspringen")
                         .font(.geist(.subheadline, weight: .heavy))
@@ -413,7 +419,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                         .font(.geist(.subheadline, weight: .heavy))
                         .foregroundStyle(ink)
                         .padding(.horizontal, 16)
-                        .frame(minHeight: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                         .liquidGlass(in: Capsule())
                         .buttonStyle(.plain)
                 }
@@ -464,8 +470,8 @@ struct IOSWorkoutGlassPauseScreen: View {
 
                 if timer.isCountdown {
                     HStack(spacing: 12) {
-                        pauseButton("−15 s", label: "Pause um 15 Sekunden verkürzen", action: onMinus)
-                        pauseButton("+30 s", label: "Pause um 30 Sekunden verlängern", action: onPlus)
+                        pauseButton(String(localized: "−15 s"), label: String(localized: "Pause um 15 Sekunden verkürzen"), action: onMinus)
+                        pauseButton(String(localized: "+30 s"), label: String(localized: "Pause um 30 Sekunden verlängern"), action: onPlus)
                     }
                 }
                 Spacer(minLength: 0)

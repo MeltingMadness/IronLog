@@ -20,6 +20,12 @@ dependency-freie Generierung spiegelt daraus die aktuellen Optionen
 `IronLogIOS.xcodeproj/project.pbxproj`. Sie erzeugt keine Abhängigkeiten und
 führt keinen Build aus. Nach neuen Swift-Dateien genügt ein erneuter Aufruf.
 
+Sichtbare UI-Texte stehen im String-Katalog `IronLogIOS/Localizable.xcstrings`.
+Quellsprache und Entwicklungssprache sind Deutsch (`de`); als Schlüssel dient
+der bestehende UI-Text. SwiftUI-Literale nutzen die automatische Lokalisierung,
+String-basierte Beschriftungen und Meldungen verwenden `String(localized:)`.
+Der Generator nimmt den Katalog als Resource in das App-Target auf.
+
 Das KMP-Framework wird über die Build-Phase `Build Shared Framework` erzeugt.
 `iosApp/scripts/build-shared.sh` sucht zuerst ein gültiges `JAVA_HOME` für JDK
 17, danach `/usr/libexec/java_home -v 17` und vorhandene Homebrew-JDK-17-Pfade.
@@ -75,3 +81,10 @@ erzeugen, aber nicht als iOS-App bauen oder ausführen.
 
 Für TestFlight werden zusätzlich Apple-Team, Bundle-ID, Provisioning und
 App-Store-Connect-Zugang benötigt.
+
+### Trainingsbedienung
+
+- Ohne geladene Trainingsdaten zeigt die App einen Ladeindikator oder den konkreten Fehler mit „Erneut versuchen“ und dem Weg zur Backup-Wiederherstellung. Der erneute Versuch liest die Shared-Projektion neu. Nach einem fehlgeschlagenen Datei-Start kann die aktuelle Shared-Schnittstelle die Datei nicht erneut öffnen; dafür bleibt die Backup-Wiederherstellung verfügbar.
+- Die Hauptaktion auf der Startseite startet den Rotationsvorschlag direkt, ersatzweise den ersten Plan oder ein freies Training. „Andere Pläne“ öffnet die Trainingsauswahl; freies Training bleibt separat erreichbar.
+- Nach dem Löschen eines Satzes im aktiven Training erscheint für acht Sekunden „Rückgängig“. Der zuletzt gelöschte Satz wird mit seiner Trainingsabsicht über `set.add` wiederhergestellt. Beim Sessionwechsel verfällt das Angebot.
+- Übungsleiste und Satzmenüs haben mindestens 44 pt große Touchflächen; die Übungsleiste wächst mit der Schriftgröße. Sichtbare App-Texte verwenden „Training“.

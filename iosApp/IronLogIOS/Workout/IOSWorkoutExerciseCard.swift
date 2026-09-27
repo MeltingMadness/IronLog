@@ -76,7 +76,7 @@ struct IOSWorkoutExerciseCard: View {
             }
 
             if let previousWeight = row.previousWorkWeightKg {
-                Label("Letztes passendes Workout: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
+                Label("Letztes passendes Training: \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))", systemImage: "clock.arrow.circlepath")
                     .font(.geist(.caption))
                     .foregroundStyle(palette.information)
                     .accessibilityLabel("Letztes passendes Gewicht \(iosWorkoutDisplayWeight(kilograms: previousWeight, unitSystem: unitSystem))")
@@ -205,7 +205,7 @@ private struct IOSWorkoutSetRow: View {
                 Button("Löschen", systemImage: "trash", role: .destructive) { onDelete() }
             } label: {
                 Image(systemName: "ellipsis")
-                    .frame(width: 28, height: 32)
+                    .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("Satz \(set.setNumber) bearbeiten oder löschen")
@@ -254,10 +254,10 @@ private struct IOSWorkoutInlineSetEntry: View {
         _kind = State(initialValue: row.nextPlannedSet?.kind == "WARMUP" ? .warmup : .normal)
     }
     private var source: String {
-        if row.target?.setTargets.isEmpty == false { return "Satzvorgabe aus dem Plan · editierbar" }
-        if row.sets.contains(where: { resolvedIOSWorkoutSetType($0) == .normal }) { return "Werte aus dem letzten Satz übernommen · editierbar" }
-        if (row.displayTarget?.weightKg ?? 0) <= 0, row.previousWorkWeightKg != nil { return "Gewicht aus dem letzten Training · editierbar" }
-        return row.target == nil ? "Werte für diesen Satz" : "Werte aus dem Plan · editierbar"
+        if row.target?.setTargets.isEmpty == false { return String(localized: "Satzvorgabe aus dem Plan · editierbar") }
+        if row.sets.contains(where: { resolvedIOSWorkoutSetType($0) == .normal }) { return String(localized: "Werte aus dem letzten Satz übernommen · editierbar") }
+        if (row.displayTarget?.weightKg ?? 0) <= 0, row.previousWorkWeightKg != nil { return String(localized: "Gewicht aus dem letzten Training · editierbar") }
+        return row.target == nil ? String(localized: "Werte für diesen Satz") : String(localized: "Werte aus dem Plan · editierbar")
     }
     var body: some View {
         if appearance == .liquidGlass {
@@ -295,22 +295,22 @@ private struct IOSWorkoutInlineSetEntry: View {
             HStack(spacing: 10) {
                 let stepText = IOSNumber.format(weightStep)
                 IOSWorkoutGlassStepper(
-                    label: "Gewicht",
+                    label: String(localized: "Gewicht"),
                     text: $weight,
                     unit: IOSWeight.label(unitSystem),
                     keyboard: .decimalPad,
-                    decreaseLabel: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) verringern",
-                    increaseLabel: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) erhöhen",
+                    decreaseLabel: String(localized: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) verringern"),
+                    increaseLabel: String(localized: "Gewicht um \(stepText) \(IOSWeight.label(unitSystem)) erhöhen"),
                     onDecrease: { adjustWeight(-weightStep) },
                     onIncrease: { adjustWeight(weightStep) }
                 )
                 IOSWorkoutGlassStepper(
-                    label: "Wiederholungen",
+                    label: String(localized: "Wiederholungen"),
                     text: $reps,
                     unit: nil,
                     keyboard: .numberPad,
-                    decreaseLabel: "Wiederholungen verringern",
-                    increaseLabel: "Wiederholungen erhöhen",
+                    decreaseLabel: String(localized: "Wiederholungen verringern"),
+                    increaseLabel: String(localized: "Wiederholungen erhöhen"),
                     onDecrease: { adjustReps(-1) },
                     onIncrease: { adjustReps(1) }
                 )
@@ -346,7 +346,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             }.font(.geist(.subheadline))
             if let error { Text(error).font(.geist(.caption)).foregroundStyle(.red) }
             Button { Task { await save() } } label: {
-                Text(busy ? "Speichert …" : "Satz \(row.nextSetNumber) loggen")
+                Text(busy ? String(localized: "Speichert …") : String(localized: "Satz \(row.nextSetNumber) loggen"))
             }
             .buttonStyle(IOSWorkoutGlassPrimaryButtonStyle())
             .disabled(busy)
@@ -362,8 +362,8 @@ private struct IOSWorkoutInlineSetEntry: View {
             Text("Satz \(row.nextSetNumber)").font(.geist(.headline))
             Text(source).font(.geist(.caption)).ironLogAccentText()
             HStack(spacing: 12) {
-                field("Gewicht (\(IOSWeight.label(unitSystem)))", text: $weight, keyboard: .decimalPad)
-                field("Wiederholungen", text: $reps, keyboard: .numberPad)
+                field(String(localized: "Gewicht (\(IOSWeight.label(unitSystem)))"), text: $weight, keyboard: .decimalPad)
+                field(String(localized: "Wiederholungen"), text: $reps, keyboard: .numberPad)
             }
             DisclosureGroup("RPE / RIR · Satztyp · Absicht") {
                 VStack(alignment: .leading, spacing: 12) {
@@ -384,7 +384,7 @@ private struct IOSWorkoutInlineSetEntry: View {
             }.font(.geist(.subheadline))
             if let error { Text(error).font(.geist(.caption)).foregroundStyle(.red) }
             Button { Task { await save() } } label: {
-                Label(busy ? "Speichert …" : "Satz \(row.nextSetNumber) bestätigen", systemImage: "checkmark")
+                Label(busy ? String(localized: "Speichert …") : String(localized: "Satz \(row.nextSetNumber) bestätigen"), systemImage: "checkmark")
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
             }.buttonStyle(.borderedProminent).ironLogButtonText().disabled(busy)
             if row.loggingSlots.count > 0 {
@@ -404,17 +404,17 @@ private struct IOSWorkoutInlineSetEntry: View {
     }
     private func save() async {
         guard !busy, let count = IOSNumber.parseInt(reps), count > 0,
-              let value = IOSNumber.parse(weight), value >= 0 else { error = "Bitte Gewicht und Wiederholungen prüfen."; return }
+              let value = IOSNumber.parse(weight), value >= 0 else { error = String(localized: "Bitte Gewicht und Wiederholungen prüfen."); return }
         let kg = IOSWeight.kilograms(value: value, unit: unitSystem)
-        guard kg.isFinite else { error = "Gewicht ist ungültig."; return }
+        guard kg.isFinite else { error = String(localized: "Gewicht ist ungültig."); return }
         let rpe: Double?
         do {
             rpe = try iosWorkoutStoredIntensityForSave(existingRPE: nil, inputText: intensity, configuredSystem: settings.state.intensitySystem, planTarget: row.target)
-        } catch { self.error = "Bitte Intensität unter RPE / RIR prüfen."; return }
+        } catch { self.error = String(localized: "Bitte Intensität unter RPE / RIR prüfen."); return }
         busy = true
         defer { busy = false }
         let set = ILWorkoutSet(sessionId: sessionID, exerciseId: row.exercise.id, setNumber: row.nextSetNumber, reps: count, weightKg: kg,
             setType: kind.rawValue, completedAt: Int64(Date().timeIntervalSince1970 * 1000), rpe: rpe, planTargetSnapshotId: row.targetID)
-        if !(await onSave(set, intention)) { error = "Satz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten." }
+        if !(await onSave(set, intention)) { error = String(localized: "Satz konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten.") }
     }
 }

@@ -1,5 +1,7 @@
 package com.ironlog.app.presentation.workout
 
+import com.ironlog.app.presentation.common.UiStrings
+import com.ironlog.feature.workout.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,7 +53,8 @@ class ActiveWorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
     private val progressionRepository: ProgressionRepository,
-    private val appPreferencesRepository: AppPreferencesRepository
+    private val appPreferencesRepository: AppPreferencesRepository,
+    private val strings: UiStrings
 ) : ViewModel() {
 
     private val sessionId: Long = savedStateHandle["sessionId"] ?: -1L
@@ -498,7 +501,7 @@ class ActiveWorkoutViewModel(
                 }
             } catch (e: Exception) {
                 setError(
-                    message = "Satz konnte nicht gespeichert werden: ${e.message}",
+                    message = strings.get(UxR.string.workout_set_save_failed, e.message.toString()),
                     retry = WorkoutRetryDescriptor.LogSet(
                         key = key,
                         exerciseId = exerciseId,
@@ -570,16 +573,16 @@ class ActiveWorkoutViewModel(
     private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {
         if (intensity.isBlank()) return null
         val rawVal = parseDecimal(intensity)
-            ?: throw IllegalArgumentException("Ungültiger ${intensitySystem.displayName}-Wert")
+            ?: throw IllegalArgumentException(strings.get(UxR.string.workout_intensity_invalid, intensitySystem.displayName))
         return WorkoutNumericValidation.storedRpe(rawVal, intensitySystem)
     }
 
     private fun requireValidSetInput(reps: Int, weightKg: Double) {
         require(WorkoutNumericValidation.isValidReps(reps)) {
-            "Wiederholungen müssen größer als 0 sein"
+            strings.get(UxR.string.workout_reps_invalid)
         }
         require(WorkoutNumericValidation.isValidWeightKg(weightKg)) {
-            "Gewicht muss endlich und nicht negativ sein"
+            strings.get(UxR.string.workout_weight_invalid)
         }
     }
 
@@ -640,7 +643,7 @@ class ActiveWorkoutViewModel(
                     }
                 } catch (e: Exception) {
                     setError(
-                        message = "Satz konnte nicht gelöscht werden: ${e.message}",
+                        message = strings.get(UxR.string.workout_set_delete_failed, e.message.toString()),
                         retry = WorkoutRetryDescriptor.DeleteSet(setId = setId)
                     )
                 }
@@ -690,7 +693,7 @@ class ActiveWorkoutViewModel(
                 try {
                     workoutRepository.addSet(set.copy(id = 0), intention)
                 } catch (e: Exception) {
-                    setError(message = "Satz konnte nicht wiederhergestellt werden: ${e.message}")
+                    setError(message = strings.get(UxR.string.workout_set_restore_failed, e.message.toString()))
                 }
             }
         }
@@ -755,7 +758,7 @@ class ActiveWorkoutViewModel(
                 }
             } catch (e: Exception) {
                 setError(
-                    message = "Satz konnte nicht aktualisiert werden: ${e.message}",
+                    message = strings.get(UxR.string.workout_set_update_failed, e.message.toString()),
                     retry = WorkoutRetryDescriptor.UpdateSet(
                         setId = setId,
                         reps = reps,
@@ -827,7 +830,7 @@ class ActiveWorkoutViewModel(
                     }
                 } catch (e: Exception) {
                     setError(
-                        message = "Training konnte nicht beendet werden: ${e.message}",
+                        message = strings.get(UxR.string.workout_finish_failed, e.message.toString()),
                         retry = WorkoutRetryDescriptor.FinishWorkout(
                             discardEmptySession = discardEmptySession
                         )

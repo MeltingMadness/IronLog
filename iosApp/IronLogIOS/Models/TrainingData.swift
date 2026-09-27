@@ -30,38 +30,38 @@ private func ilOptionalDate(fromEpochMillis value: Int64?) -> Date? {
 private enum ILDisplayNames {
     static func muscle(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "BRUST": return "Brust"
-        case "RUECKEN": return "Rücken"
-        case "BEINE": return "Beine"
-        case "SCHULTERN": return "Schultern"
-        case "BIZEPS": return "Bizeps"
-        case "TRIZEPS": return "Trizeps"
-        case "GESAESS": return "Gesäß"
-        case "CORE": return "Core"
-        case "UNTERARME": return "Unterarme"
-        case "WADEN": return "Waden"
+        case "BRUST": return String(localized: "Brust")
+        case "RUECKEN": return String(localized: "Rücken")
+        case "BEINE": return String(localized: "Beine")
+        case "SCHULTERN": return String(localized: "Schultern")
+        case "BIZEPS": return String(localized: "Bizeps")
+        case "TRIZEPS": return String(localized: "Trizeps")
+        case "GESAESS": return String(localized: "Gesäß")
+        case "CORE": return String(localized: "Core")
+        case "UNTERARME": return String(localized: "Unterarme")
+        case "WADEN": return String(localized: "Waden")
         default: return raw
         }
     }
 
     static func category(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "LANGHANTEL": return "Langhantel"
-        case "KURZHANTEL": return "Kurzhantel"
-        case "MASCHINE": return "Maschine"
-        case "KABEL": return "Kabel"
-        case "EIGENGEWICHT": return "Eigengewicht"
+        case "LANGHANTEL": return String(localized: "Langhantel")
+        case "KURZHANTEL": return String(localized: "Kurzhantel")
+        case "MASCHINE": return String(localized: "Maschine")
+        case "KABEL": return String(localized: "Kabel")
+        case "EIGENGEWICHT": return String(localized: "Eigengewicht")
         default: return raw
         }
     }
 
     static func scheme(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "MANUAL": return "Manuell"
-        case "LINEAR": return "Gewicht steigern"
-        case "DOUBLE": return "Wiederholungen, dann Gewicht"
-        case "TOTAL_REPS": return "Gesamtwiederholungen"
-        case "RPE_RIR": return "RPE/RIR"
+        case "MANUAL": return String(localized: "Manuell")
+        case "LINEAR": return String(localized: "Gewicht steigern")
+        case "DOUBLE": return String(localized: "Wiederholungen, dann Gewicht")
+        case "TOTAL_REPS": return String(localized: "Gesamtwiederholungen")
+        case "RPE_RIR": return String(localized: "RPE/RIR")
         default: return raw
         }
     }

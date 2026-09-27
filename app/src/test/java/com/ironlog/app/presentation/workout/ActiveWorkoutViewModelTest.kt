@@ -126,7 +126,7 @@ class ActiveWorkoutViewModelTest {
 
     private fun createViewModel(): ActiveWorkoutViewModel {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        return ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
     }
 
     private fun withMockedAppLoggerWarnings(block: () -> Unit) {
@@ -303,7 +303,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
@@ -343,7 +344,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         // Wie die Snackbar im Screen: jedes Event haelt den Collector an.
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -381,7 +383,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
@@ -406,7 +409,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
@@ -434,7 +438,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
@@ -469,7 +474,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch { vm.events.collect { emitted += it } }
@@ -681,7 +687,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -767,7 +774,7 @@ class ActiveWorkoutViewModelTest {
 
         // Create ViewModel with planId
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
 
         val collector = backgroundScope.launch { vm.uiState.collect() }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -946,7 +953,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1021,7 +1029,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1100,7 +1109,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1180,7 +1190,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1276,7 +1287,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         vm.addExercise(testExercise)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
@@ -1430,7 +1442,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1507,7 +1520,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1607,7 +1621,7 @@ class ActiveWorkoutViewModelTest {
         )
 
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1676,7 +1690,7 @@ class ActiveWorkoutViewModelTest {
         )
 
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId, "planId" to planId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1735,7 +1749,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1809,7 +1824,7 @@ class ActiveWorkoutViewModelTest {
     @Test
     fun `hinzugefuegte Uebungen ueberleben Prozesstod ueber SavedStateHandle`() = runTest {
         val savedStateHandle = SavedStateHandle(mapOf("sessionId" to sessionId))
-        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val vm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1821,7 +1836,7 @@ class ActiveWorkoutViewModelTest {
 
         // Simulate process death + recreation: a new ViewModel instance is created
         // with the same (restored) SavedStateHandle, before any sets exist.
-        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo)
+        val restoredVm = ActiveWorkoutViewModel(savedStateHandle, workoutRepo, exerciseRepo, statsRepo, progressionRepo, prefsRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1881,7 +1896,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1899,7 +1915,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val restoredCollector = backgroundScope.launch { restoredVm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -1958,7 +1975,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch { vm.uiState.collect { } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -2209,7 +2227,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             statsRepo,
             gatedProgressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val collector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
             vm.uiState.collect { }
@@ -2487,7 +2506,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
@@ -2527,7 +2547,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             stats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         val emitted = mutableListOf<WorkoutEvent>()
         val eventCollector = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) { vm.events.collect { emitted += it } }
@@ -2742,7 +2763,8 @@ class ActiveWorkoutViewModelTest {
             exerciseRepo,
             blockingStats,
             progressionRepo,
-            prefsRepo
+            prefsRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
 
         vm.logSet(exerciseId = testExercise.id, reps = 10, weightKg = 100.0)
@@ -2909,7 +2931,8 @@ class ActiveWorkoutViewModelTest {
         exerciseRepo,
         statsRepo,
         progressionRepository,
-        prefsRepo
+        prefsRepo,
+        strings = com.ironlog.app.fakes.TestUiStrings
     )
 
     private fun snapshotTarget(

@@ -51,7 +51,7 @@ class WorkoutHistoryViewModelDeletionTest {
             isActive = false
         )
         
-        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo, strings = com.ironlog.app.fakes.TestUiStrings)
         
         // delete the session
         vm.deleteSession(1L)
@@ -73,7 +73,7 @@ class WorkoutHistoryViewModelDeletionTest {
             isActive = false
         )
 
-        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo, strings = com.ironlog.app.fakes.TestUiStrings)
 
         workoutRepo.failDeleteSession = true
         vm.deleteSession(2L)
@@ -93,7 +93,7 @@ class WorkoutHistoryViewModelDeletionTest {
 
     @Test
     fun `history filter requests plan and time predicates from the full dataset query`() = runTest {
-        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo)
+        val vm = WorkoutHistoryViewModel(workoutRepo, planRepo, strings = com.ironlog.app.fakes.TestUiStrings)
 
         vm.setPlanFilter(42L)
         vm.setTimeRange(HistoryTimeRange.LAST_30_DAYS)

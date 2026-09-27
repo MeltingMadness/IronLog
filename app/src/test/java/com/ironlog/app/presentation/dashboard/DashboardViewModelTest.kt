@@ -115,7 +115,8 @@ class DashboardViewModelTest {
         progressionRepository,
         FakeDeloadRepository(),
         readinessSource,
-        readinessRepo
+        readinessRepo,
+        strings = com.ironlog.app.fakes.TestUiStrings
     )
 
     @Test
@@ -887,7 +888,8 @@ class DashboardViewModelTest {
             progressionRepository,
             deloadRepo,
             readinessSource,
-            readinessRepo
+            readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -940,7 +942,8 @@ class DashboardViewModelTest {
             progressionRepository,
             FakeDeloadRepository(),
             readinessSource,
-            readinessRepo
+            readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -968,7 +971,8 @@ class DashboardViewModelTest {
             progressionRepository,
             FakeDeloadRepository(),
             readinessSource,
-            readinessRepo
+            readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -994,7 +998,8 @@ class DashboardViewModelTest {
             progressionRepository,
             FakeDeloadRepository(),
             readinessSource,
-            readinessRepo
+            readinessRepo,
+            strings = com.ironlog.app.fakes.TestUiStrings
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1220,7 +1225,8 @@ class DashboardViewModelTest {
             val vm = DashboardViewModel(
                 workoutRepo, statsRepo, exerciseRepo, preferences, planRepo,
                 metaPlanRepo, progressionRepository, FakeDeloadRepository(),
-                readinessSource, readinessRepo
+                readinessSource, readinessRepo,
+                strings = com.ironlog.app.fakes.TestUiStrings
             )
             testDispatcher.scheduler.advanceUntilIdle()
             assertFalse(vm.uiState.value.isLoading)

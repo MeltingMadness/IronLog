@@ -79,14 +79,14 @@ struct IOSMetaPlanEditorScreen: View {
             .ironLogListRows()
         }
         .ironLogScreenBackground()
-        .navigationTitle(metaPlanID == nil ? "Neuer Meta-Plan" : "Meta-Plan bearbeiten")
+        .navigationTitle(metaPlanID == nil ? String(localized: "Neuer Meta-Plan") : String(localized: "Meta-Plan bearbeiten"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Abbrechen") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isSaving ? "Speichert …" : "Sichern") {
+                Button(isSaving ? String(localized: "Speichert …") : String(localized: "Sichern")) {
                     Task { await save() }
                 }
                 .disabled(isSaving || store.isBusy || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -142,7 +142,7 @@ struct IOSMetaPlanEditorScreen: View {
     }
 
     private func planName(for id: Int64) -> String {
-        data?.trainingPlans.first(where: { $0.id == id })?.name ?? "Plan nicht gefunden (ID \(id))"
+        data?.trainingPlans.first(where: { $0.id == id })?.name ?? String(localized: "Plan nicht gefunden (ID \(id))")
     }
 
     private func remove(_ item: IOSMetaPlanItemDraft) {
@@ -165,15 +165,15 @@ struct IOSMetaPlanEditorScreen: View {
         errorMessage = nil
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            errorMessage = "Bitte gib einen Namen ein."
+            errorMessage = String(localized: "Bitte gib einen Namen ein.")
             return
         }
         guard !items.isEmpty else {
-            errorMessage = "Füge mindestens einen Trainingsplan hinzu."
+            errorMessage = String(localized: "Füge mindestens einen Trainingsplan hinzu.")
             return
         }
         guard items.allSatisfy({ item in availablePlans.contains(where: { plan in plan.id == item.trainingPlanID }) }) else {
-            errorMessage = "Ein Teilplan ist nicht mehr verfügbar. Entferne ihn und wähle einen gültigen Plan."
+            errorMessage = String(localized: "Ein Teilplan ist nicht mehr verfügbar. Entferne ihn und wähle einen gültigen Plan.")
             return
         }
 
@@ -191,7 +191,7 @@ struct IOSMetaPlanEditorScreen: View {
         if await store.saveMetaPlan(plan, items: savedItems) {
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Der Meta-Plan konnte nicht gespeichert werden."
+            errorMessage = store.errorMessage ?? String(localized: "Der Meta-Plan konnte nicht gespeichert werden.")
         }
     }
 
@@ -209,7 +209,7 @@ struct IOSMetaPlanEditorScreen: View {
         if await store.command("metaplan.delete", fields: ["id": metaPlanID]) {
             dismiss()
         } else {
-            errorMessage = store.errorMessage ?? "Der Meta-Plan konnte nicht gelöscht werden."
+            errorMessage = store.errorMessage ?? String(localized: "Der Meta-Plan konnte nicht gelöscht werden.")
         }
     }
 }

@@ -212,10 +212,10 @@ struct IOSWorkoutRestTimerView: View {
                         Text(title)
                             .font(.geist(.subheadline, weight: .semibold))
                     } else {
-                        Text(timer.isCountdown ? "Pause" : "Pause läuft")
+                        Text(timer.isCountdown ? String(localized: "Pause") : String(localized: "Pause läuft"))
                             .font(.geist(.subheadline, weight: .semibold))
                     }
-                    Text(timer.isCountdown ? "Noch \(formatDuration(seconds))" : formatDuration(seconds))
+                    Text(timer.isCountdown ? String(localized: "Noch \(formatDuration(seconds))") : formatDuration(seconds))
                         .font(.geist(.headline).monospacedDigit())
                 }
 
@@ -224,7 +224,7 @@ struct IOSWorkoutRestTimerView: View {
                 Button("Beenden", action: onDismiss)
                     .buttonStyle(.bordered)
                     .tint(palette.textSecondary)
-                    .accessibilityLabel("Pausentimer für \(title ?? "Übung") beenden")
+                    .accessibilityLabel("Pausentimer für \(title ?? String(localized: "Übung")) beenden")
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -234,8 +234,8 @@ struct IOSWorkoutRestTimerView: View {
                     .stroke(timerColor.opacity(0.38), lineWidth: 1)
             }
             .accessibilityElement(children: .contain)
-            .accessibilityLabel(title ?? "Pausentimer")
-            .accessibilityValue(Text(timer.isCountdown ? "Noch \(formatDuration(seconds))" : formatDuration(seconds)))
+            .accessibilityLabel(title ?? String(localized: "Pausentimer"))
+            .accessibilityValue(Text(timer.isCountdown ? String(localized: "Noch \(formatDuration(seconds))") : formatDuration(seconds)))
         }
         // The row key keeps SwiftUI's card identity stable, while a fresh start
         // epoch restarts the completion task when the athlete logs the next set.

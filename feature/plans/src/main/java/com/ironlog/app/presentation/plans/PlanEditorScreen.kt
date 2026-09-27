@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.plans
 
+import com.ironlog.feature.plans.R as UxR
 import com.ironlog.app.presentation.common.IronLogTopBar
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -393,8 +394,8 @@ private fun PlanExerciseCard(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = item.planExercise.setTargets.isEmpty(), onClick = { onSetTargetsChange(emptyList()) }, label = { Text("Einfach") }, colors = IronLogInteractiveColors.filterChip())
-                FilterChip(selected = item.planExercise.setTargets.isNotEmpty(), onClick = { showSetTargets = true }, label = { Text("Einzelne Sätze") }, colors = IronLogInteractiveColors.filterChip())
+                FilterChip(selected = item.planExercise.setTargets.isEmpty(), onClick = { onSetTargetsChange(emptyList()) }, label = { Text(stringResource(UxR.string.plan_targets_simple)) }, colors = IronLogInteractiveColors.filterChip())
+                FilterChip(selected = item.planExercise.setTargets.isNotEmpty(), onClick = { showSetTargets = true }, label = { Text(stringResource(UxR.string.plan_targets_individual)) }, colors = IronLogInteractiveColors.filterChip())
             }
             if (item.planExercise.setTargets.isEmpty()) {
             Row(
@@ -446,10 +447,10 @@ private fun PlanExerciseCard(
 
             } else {
                 item.planExercise.setTargets.forEachIndexed { i, target ->
-                    Text("${i + 1} · ${plannedSetLabel(target.kind)} · ${WeightFormatting.convertToDisplay(target.weightKg, item.targetWeightInputUnit)} · ${target.reps} Wdh.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
+                    Text(stringResource(UxR.string.plan_target_summary, i + 1, plannedSetLabel(target.kind), WeightFormatting.convertToDisplay(target.weightKg, item.targetWeightInputUnit).toString(), target.reps), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
                 }
-                TextButton(onClick = { showSetTargets = true }, colors = IronLogInteractiveColors.textButton()) { Text("Satzvorgaben bearbeiten") }
-                Text("Einzelne Satzvorgaben werden manuell gesteigert.", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { showSetTargets = true }, colors = IronLogInteractiveColors.textButton()) { Text(stringResource(UxR.string.plan_targets_edit)) }
+                Text(stringResource(UxR.string.plan_targets_manual_hint), style = MaterialTheme.typography.bodySmall)
             }
 
             TextButton(

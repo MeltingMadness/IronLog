@@ -20,7 +20,7 @@ struct IOSWorkoutExercisePicker: View {
             VStack(spacing: 8) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        filter("Alle", value: nil)
+                        filter(String(localized: "Alle"), value: nil)
                         ForEach(Array(Set(exercises.map(\.primaryMuscleGroupDisplayName))).sorted(), id: \.self) { name in filter(name, value: name) }
                     }.padding(.horizontal)
                 }
@@ -47,7 +47,7 @@ struct IOSWorkoutExercisePicker: View {
                         }
                         .disabled(excludedIDs.contains(exercise.id))
                         .listRowBackground(selected.contains(exercise.id) ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
-                        .accessibilityValue(selected.contains(exercise.id) ? "Ausgewählt" : excludedIDs.contains(exercise.id) ? "Bereits hinzugefügt" : "Nicht ausgewählt")
+                        .accessibilityValue(selected.contains(exercise.id) ? String(localized: "Ausgewählt") : excludedIDs.contains(exercise.id) ? String(localized: "Bereits hinzugefügt") : String(localized: "Nicht ausgewählt"))
                     }
                     .ironLogListRows()
                 }.listStyle(.insetGrouped)
@@ -61,7 +61,7 @@ struct IOSWorkoutExercisePicker: View {
                 Button {
                     selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
                     dismiss()
-                } label: { Text("\(ilCount(selected.count, "Übung", "Übungen")) hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
+                } label: { Text("\(ilCount(selected.count, String(localized: "Übung"), String(localized: "Übungen"))) hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
                 .buttonStyle(.borderedProminent).ironLogButtonText().disabled(selected.isEmpty).padding().background(.bar)
             }
         }

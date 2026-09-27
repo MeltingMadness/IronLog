@@ -11,19 +11,19 @@ enum IOSExerciseMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .e1rm: return "e1RM"
-        case .weight: return "Gewicht"
-        case .reps: return "Wiederholungen"
-        case .volume: return "Volumen"
+        case .e1rm: return String(localized: "e1RM")
+        case .weight: return String(localized: "Gewicht")
+        case .reps: return String(localized: "Wiederholungen")
+        case .volume: return String(localized: "Volumen")
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .e1rm: return "e1RM"
-        case .weight: return "Gewicht"
-        case .reps: return "Wdh."
-        case .volume: return "Volumen"
+        case .e1rm: return String(localized: "e1RM")
+        case .weight: return String(localized: "Gewicht")
+        case .reps: return String(localized: "Wdh.")
+        case .volume: return String(localized: "Volumen")
         }
     }
 }
@@ -39,7 +39,7 @@ private enum IOSRecordFilter: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "Alle Rekorde"
+        case .all: return String(localized: "Alle Rekorde")
         default: return ilRecordTypeText(rawValue)
         }
     }
@@ -69,7 +69,7 @@ struct IOSExerciseStatisticsScreen: View {
     }
 
     private var exerciseName: String {
-        analyticsExercise?.exerciseName ?? exercise?.name ?? "Übung \(exerciseId)"
+        analyticsExercise?.exerciseName ?? exercise?.name ?? String(localized: "Übung \(exerciseId)")
     }
 
     var body: some View {
@@ -119,7 +119,7 @@ struct IOSExerciseStatisticsScreen: View {
                 )
             }
 
-            IronLogCard(title: "Entwicklung", subtitle: "Einheit pro Einheit · \(selectedMetric.title)") {
+            IronLogCard(title: String(localized: "Entwicklung"), subtitle: String(localized: "Einheit pro Einheit · \(selectedMetric.title)")) {
                 Picker("Metrik", selection: $selectedMetric) {
                     ForEach(IOSExerciseMetric.allCases) { metric in
                         Text(metric.shortTitle).tag(metric)
@@ -225,7 +225,7 @@ struct IOSExerciseStatisticsScreen: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Zurück")
                 if let exercise {
-                    Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilCount(analyticsExercise.sessions.count, "Einheit", "Einheiten")]
+                    Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilCount(analyticsExercise.sessions.count, String(localized: "Einheit"), String(localized: "Einheiten"))]
                         .joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
@@ -292,7 +292,7 @@ struct IOSExerciseStatisticsScreen: View {
         switch selectedMetric {
         case .e1rm: return ilWeightText(session.maxE1rmKg, unitSystem: unitSystem)
         case .weight: return ilWeightText(session.maxWeightKg, unitSystem: unitSystem)
-        case .reps: return "\(session.maxReps) Wdh."
+        case .reps: return String(localized: "\(session.maxReps) Wdh.")
         case .volume: return ilVolumeText(session.volumeKg, unitSystem: unitSystem)
         }
     }
@@ -311,7 +311,7 @@ private struct IOSExerciseRecordsCard: View {
     @Binding var filter: IOSRecordFilter
 
     var body: some View {
-        IronLogCard(title: "Persönliche Rekorde", subtitle: records.isEmpty ? nil : "Auswahl nach Rekordtyp") {
+        IronLogCard(title: String(localized: "Persönliche Rekorde"), subtitle: records.isEmpty ? nil : String(localized: "Auswahl nach Rekordtyp")) {
             Picker("Rekordfilter", selection: $filter) {
                 ForEach(IOSRecordFilter.allCases) { item in
                     Text(item.title).tag(item)
@@ -352,19 +352,19 @@ private struct IOSExerciseE1rmProgressionCard: View {
     let unitSystem: String
 
     var body: some View {
-        IronLogCard(title: "1RM-Entwicklung", subtitle: "Geschätzt nach der Epley-Formel") {
+        IronLogCard(title: String(localized: "1RM-Entwicklung"), subtitle: String(localized: "Geschätzt nach der Epley-Formel")) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
-                    metric(title: "Erstes 1RM", value: ilWeightText(firstE1rmKg, unitSystem: unitSystem))
-                    metric(title: "Aktuelles 1RM", value: ilWeightText(latestE1rmKg, unitSystem: unitSystem))
+                    metric(title: String(localized: "Erstes 1RM"), value: ilWeightText(firstE1rmKg, unitSystem: unitSystem))
+                    metric(title: String(localized: "Aktuelles 1RM"), value: ilWeightText(latestE1rmKg, unitSystem: unitSystem))
                 }
 
                 HStack(spacing: 12) {
                     metric(
-                        title: "Steigerung",
+                        title: String(localized: "Steigerung"),
                         value: ilWeightText(absoluteChangeKg, unitSystem: unitSystem, signed: true)
                     )
-                    metric(title: "Steigerung (%)", value: percentText(relativeChangePercent))
+                    metric(title: String(localized: "Steigerung (%)"), value: percentText(relativeChangePercent))
                 }
             }
         }
@@ -403,15 +403,15 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
     }
 
     var body: some View {
-        IronLogCard(title: "Vergleich zum vorherigen passenden Training", tone: .muted) {
+        IronLogCard(title: String(localized: "Vergleich zum vorherigen passenden Training"), tone: .muted) {
             VStack(alignment: .leading, spacing: 8) {
                 comparisonRow(
-                    label: "Vorheriges",
+                    label: String(localized: "Vorheriges"),
                     date: comparison.previous.completedAtEpochMillis,
                     value: metricText(comparison.previous)
                 )
                 comparisonRow(
-                    label: "Letztes",
+                    label: String(localized: "Letztes"),
                     date: comparison.latest.completedAtEpochMillis,
                     value: metricText(comparison.latest),
                     emphasized: true
@@ -445,7 +445,7 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
         switch metric {
         case .e1rm: return ilWeightText(session.maxE1rmKg, unitSystem: unitSystem)
         case .weight: return ilWeightText(session.maxWeightKg, unitSystem: unitSystem)
-        case .reps: return "\(session.maxReps) Wdh."
+        case .reps: return String(localized: "\(session.maxReps) Wdh.")
         case .volume: return ilVolumeText(session.volumeKg, unitSystem: unitSystem)
         }
     }
@@ -457,7 +457,7 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
         case .weight:
             return ilWeightText(comparison.weightDeltaKg, unitSystem: unitSystem, signed: true)
         case .reps:
-            return signedCount(comparison.repsDelta) + " Wdh."
+            return String(localized: "\(signedCount(comparison.repsDelta)) Wdh.")
         case .volume:
             return ilVolumeText(comparison.volumeDeltaKg, unitSystem: unitSystem, signed: true)
         }
@@ -475,7 +475,7 @@ private struct IOSExerciseSessionHistoryCard: View {
     let unitSystem: String
 
     var body: some View {
-        IronLogCard(title: "Einheiten", subtitle: "Quellwerte pro abgeschlossener Einheit") {
+        IronLogCard(title: String(localized: "Einheiten"), subtitle: String(localized: "Quellwerte pro abgeschlossener Einheit")) {
             if sessions.isEmpty {
                 Text("Noch keine Einheiten verfügbar.")
                     .font(.geist(.body))
@@ -507,7 +507,7 @@ private struct IOSExerciseSessionHistoryCard: View {
         switch selectedMetric {
         case .e1rm: return ilWeightText(session.maxE1rmKg, unitSystem: unitSystem)
         case .weight: return ilWeightText(session.maxWeightKg, unitSystem: unitSystem)
-        case .reps: return "\(session.maxReps) Wdh."
+        case .reps: return String(localized: "\(session.maxReps) Wdh.")
         case .volume: return ilVolumeText(session.volumeKg, unitSystem: unitSystem)
         }
     }
@@ -518,7 +518,7 @@ private struct IOSExerciseRecentSetsCard: View {
     let unitSystem: String
 
     var body: some View {
-        IronLogCard(title: "Letzte Sätze", tone: .muted) {
+        IronLogCard(title: String(localized: "Letzte Sätze"), tone: .muted) {
             ForEach(sets.prefix(12)) { set in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(ilAnalyticsDateTimeText(epochMillis: set.completedAtEpochMillis))
@@ -537,10 +537,10 @@ private struct IOSExerciseRecentSetsCard: View {
 
     private func setTypeText(_ raw: String) -> String {
         switch raw.uppercased() {
-        case "NORMAL": return "Arbeitssatz"
-        case "WARMUP": return "Aufwärmen"
-        case "DROP_SET": return "Dropsatz"
-        case "FAILURE": return "Failure-Satz"
+        case "NORMAL": return String(localized: "Arbeitssatz")
+        case "WARMUP": return String(localized: "Aufwärmen")
+        case "DROP_SET": return String(localized: "Dropsatz")
+        case "FAILURE": return String(localized: "Failure-Satz")
         default: return raw
         }
     }

@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.workout
 
+import com.ironlog.feature.workout.R as UxR
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -308,7 +309,7 @@ internal fun ActiveSetCockpitCard(
                 )
                 androidx.compose.material3.OutlinedTextField(
                     value = repsInput, onValueChange = { repsInput = it },
-                    label = { Text("Wdh.") }, singleLine = true,
+                    label = { Text(stringResource(UxR.string.workout_reps_short)) }, singleLine = true,
                     modifier = Modifier.weight(1f), enabled = !locked,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done)
                 )
@@ -374,7 +375,7 @@ internal fun ActiveSetCockpitCard(
                             val rpeVal = intensityInput.text.toDoubleOrNull()
                             val accent = rpeTextColor(rpeVal) ?: MaterialTheme.accentText
                             Text(
-                                text = "${intensitySystem.displayName} ${intensityInput.text}",
+                                text = stringResource(UxR.string.workout_intensity_value, intensitySystem.displayName, intensityInput.text),
                                 style = AthleticLabel,
                                 color = accent,
                                 fontWeight = FontWeight.Bold

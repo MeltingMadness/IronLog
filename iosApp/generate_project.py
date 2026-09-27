@@ -102,6 +102,7 @@ def resource_file_type(path: Path) -> str:
     return {
         ".json": "text.json",
         ".strings": "text.plist.strings",
+        ".xcstrings": "text.json.xcstrings",
         ".stringsdict": "text.plist.stringsdict",
         ".storyboard": "file.storyboard",
         ".xib": "file.xib",
@@ -493,10 +494,10 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\t};",
             f"\t\t\tbuildConfigurationList = {config_lists['project']} /* Build configuration list for PBXProject \"{PROJECT_NAME}\" */;",
             '\t\t\tcompatibilityVersion = "Xcode 15.0";',
-            "\t\t\tdevelopmentRegion = en;",
+            "\t\t\tdevelopmentRegion = de;",
             "\t\t\thasScannedForEncodings = 0;",
             "\t\t\tknownRegions = (",
-            "\t\t\t\ten,",
+            "\t\t\t\tde,",
             "\t\t\t\tBase,",
             "\t\t\t);",
             f"\t\t\tmainGroup = {groups['project_group']} /* {PROJECT_NAME} */;",
@@ -530,7 +531,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         for build_id in inventory.resource_build_ids[target]:
             reference_id, comment_name = inventory.build_files[build_id]
             del reference_id
-            lines.append(f"\t\t\t\t{build_id} /* {pbx_comment(comment_name)} in Resources */, ")
+            lines.append(f"\t\t\t\t{build_id} /* {pbx_comment(comment_name)} in Resources */,")
         lines.extend(
             [
                 "\t\t\t);",

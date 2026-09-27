@@ -50,7 +50,7 @@ struct IOSHistoryWeek: Identifiable, Equatable {
 private let historyGerman = Locale(identifier: "de_DE")
 
 private func historyGlassMinutes(_ minutes: Int) -> String {
-    minutes >= 60 ? "\(minutes / 60) h \(minutes % 60) min" : "\(minutes) min"
+    minutes >= 60 ? String(localized: "\(minutes / 60) h \(minutes % 60) min") : String(localized: "\(minutes) min")
 }
 
 /// Week header: name of the week, number of trainings, date range, total time and mini bars
@@ -61,11 +61,11 @@ struct IOSHistoryGlassWeekHeader: View {
 
     private var weekName: String {
         let current = IOSHistoryWeek.weekStart(of: now)
-        if week.weekStart == current { return "Diese Woche" }
+        if week.weekStart == current { return String(localized: "Diese Woche") }
         if let last = IOSHistoryWeek.calendar.date(byAdding: .weekOfYear, value: -1, to: current), week.weekStart == last {
-            return "Letzte Woche"
+            return String(localized: "Letzte Woche")
         }
-        return "KW \(IOSHistoryWeek.calendar.component(.weekOfYear, from: week.weekStart))"
+        return String(localized: "KW \(IOSHistoryWeek.calendar.component(.weekOfYear, from: week.weekStart))")
     }
 
     private var range: String {
@@ -85,7 +85,7 @@ struct IOSHistoryGlassWeekHeader: View {
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .ironLogSecondaryText()
-                Text(ilCount(week.workoutCount, "Training", "Trainings"))
+                Text(ilCount(week.workoutCount, String(localized: "Training"), String(localized: "Trainings")))
                     .font(.geist(.title2, weight: .heavy))
                 Text("\(range) · \(historyGlassMinutes(week.totalMinutes))")
                     .font(.geist(.caption))
@@ -110,7 +110,7 @@ private struct IOSHistoryGlassMiniBars: View {
     let weekStart: Date
     let now: Date
 
-    private static let dayLetters = ["M", "D", "M", "D", "F", "S", "S"]
+    private static let dayLetters = [String(localized: "M"), String(localized: "D"), String(localized: "M"), String(localized: "D"), String(localized: "F"), String(localized: "S"), String(localized: "S")]
 
     var body: some View {
         let maxMinutes = max(1, minutesPerDay.max() ?? 0)
@@ -155,8 +155,8 @@ struct IOSHistoryGlassRow: View {
         let exerciseCount = Set(sets.map(\.exerciseId)).count
         let volume = sets.filter(\.iosCountsAsWorkSet).reduce(0) { $0 + max(0, $1.weightKg) * Double(max(0, $1.reps)) }
         var parts = [
-            session.iosDurationSeconds < 60 ? "< 1 min" : historyGlassMinutes(Int(session.iosDurationSeconds / 60)),
-            ilCount(exerciseCount, "Übung", "Übungen")
+            session.iosDurationSeconds < 60 ? String(localized: "< 1 min") : historyGlassMinutes(Int(session.iosDurationSeconds / 60)),
+            ilCount(exerciseCount, String(localized: "Übung"), String(localized: "Übungen"))
         ]
         if volume > 0 { parts.append(IOSWeightFormatter.format(volume, unitSystem: unitSystem)) }
         return parts.joined(separator: " · ")

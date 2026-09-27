@@ -48,7 +48,7 @@ func ilWeightValue(_ kilograms: Double, unitSystem: String) -> Double {
 }
 
 func ilWeightUnit(_ unitSystem: String) -> String {
-    unitSystem.uppercased() == "IMPERIAL" ? "lb" : "kg"
+    unitSystem.uppercased() == "IMPERIAL" ? String(localized: "lb") : String(localized: "kg")
 }
 
 func ilWeightText(_ kilograms: Double?, unitSystem: String, signed: Bool = false) -> String {
@@ -74,26 +74,26 @@ func ilCountText(_ value: Int?) -> String {
 
 func ilMuscleDisplayName(_ raw: String) -> String {
     switch raw.uppercased() {
-    case "BRUST": return "Brust"
-    case "RUECKEN": return "Rücken"
-    case "BEINE": return "Beine"
-    case "SCHULTERN": return "Schultern"
-    case "BIZEPS": return "Bizeps"
-    case "TRIZEPS": return "Trizeps"
-    case "GESAESS": return "Gesäß"
-    case "CORE": return "Core"
-    case "UNTERARME": return "Unterarme"
-    case "WADEN": return "Waden"
+    case "BRUST": return String(localized: "Brust")
+    case "RUECKEN": return String(localized: "Rücken")
+    case "BEINE": return String(localized: "Beine")
+    case "SCHULTERN": return String(localized: "Schultern")
+    case "BIZEPS": return String(localized: "Bizeps")
+    case "TRIZEPS": return String(localized: "Trizeps")
+    case "GESAESS": return String(localized: "Gesäß")
+    case "CORE": return String(localized: "Core")
+    case "UNTERARME": return String(localized: "Unterarme")
+    case "WADEN": return String(localized: "Waden")
     default: return raw
     }
 }
 
 func ilRecordTypeText(_ raw: String) -> String {
     switch raw.uppercased() {
-    case "MAX_WEIGHT": return "Max. Gewicht"
-    case "MAX_REPS": return "Max. Wiederholungen"
-    case "MAX_VOLUME": return "Max. Volumen"
-    case "MAX_E1RM": return "Bestes e1RM"
+    case "MAX_WEIGHT": return String(localized: "Max. Gewicht")
+    case "MAX_REPS": return String(localized: "Max. Wiederholungen")
+    case "MAX_VOLUME": return String(localized: "Max. Volumen")
+    case "MAX_E1RM": return String(localized: "Bestes e1RM")
     default: return raw
     }
 }
@@ -105,7 +105,7 @@ func ilRecordValueText(type: String, value: Double, unitSystem: String) -> Strin
     case "MAX_VOLUME":
         return ilVolumeText(value, unitSystem: unitSystem)
     case "MAX_REPS":
-        return value.formatted(.number.precision(.fractionLength(0))) + " Wdh."
+        return String(localized: "\(value.formatted(.number.precision(.fractionLength(0)))) Wdh.")
     default:
         return value.formatted(.number.precision(.fractionLength(0...1)))
     }
@@ -113,28 +113,28 @@ func ilRecordValueText(type: String, value: Double, unitSystem: String) -> Strin
 
 func ilReadinessStatusText(_ status: ILTrainingReadinessStatus) -> String {
     switch status {
-    case .insufficientData: return "Noch nicht genug Daten"
-    case .noNotableStrain: return "Keine auffällige Belastung"
-    case .signalsPresent: return "Belastungssignale erkannt"
-    case .unknown: return "Unbekannter Status"
+    case .insufficientData: return String(localized: "Noch nicht genug Daten")
+    case .noNotableStrain: return String(localized: "Keine auffällige Belastung")
+    case .signalsPresent: return String(localized: "Belastungssignale erkannt")
+    case .unknown: return String(localized: "Unbekannter Status")
     }
 }
 
 func ilReadinessSignalText(_ signal: ILTrainingReadinessSignal) -> String {
     switch signal {
-    case .e1rmStagnation: return "e1RM stagniert"
-    case .e1rmDrop: return "e1RM fällt"
-    case .rpeCreep: return "RPE steigt"
-    case .failureFrequency: return "Viele Fehlersätze"
+    case .e1rmStagnation: return String(localized: "e1RM stagniert")
+    case .e1rmDrop: return String(localized: "e1RM fällt")
+    case .rpeCreep: return String(localized: "RPE steigt")
+    case .failureFrequency: return String(localized: "Viele Fehlersätze")
     }
 }
 
 func ilVolumeStatusText(_ status: ILTrainingVolumeStatus) -> String {
     switch status {
-    case .low: return "Unter MEV"
-    case .optimal: return "Im Zielbereich"
-    case .high: return "Über MRV"
-    case .unknown: return "Nicht klassifiziert"
+    case .low: return String(localized: "Unter MEV")
+    case .optimal: return String(localized: "Im Zielbereich")
+    case .high: return String(localized: "Über MRV")
+    case .unknown: return String(localized: "Nicht klassifiziert")
     }
 }
 
@@ -182,19 +182,19 @@ func ilEpochDateText(_ epochMillis: Int64?) -> String? {
 /// "Zuletzt heute/gestern/vor N Tagen" for a past load. `nil` stays explicit: the
 /// store holds no load, so nothing is interpreted.
 func ilPastDayText(_ epochMillis: Int64?, reference: Date = Date()) -> String {
-    guard let epochMillis else { return "Keine Belastung erfasst" }
+    guard let epochMillis else { return String(localized: "Keine Belastung erfasst") }
     let calendar = Calendar.current
     let then = calendar.startOfDay(for: Date(timeIntervalSince1970: TimeInterval(epochMillis) / 1_000.0))
     let today = calendar.startOfDay(for: reference)
     let days = calendar.dateComponents([.day], from: then, to: today).day ?? 0
-    if days <= 0 { return "Zuletzt heute" }
-    if days == 1 { return "Zuletzt gestern" }
-    return "Zuletzt vor \(days) Tagen"
+    if days <= 0 { return String(localized: "Zuletzt heute") }
+    if days == 1 { return String(localized: "Zuletzt gestern") }
+    return String(localized: "Zuletzt vor \(days) Tagen")
 }
 
 /// Work sets as a factual count. The shared projection reports fractional values
 /// because a secondary muscle group counts with half a set.
 func ilSetCountText(_ sets: Double) -> String {
     let value = sets.formatted(.number.precision(.fractionLength(0...1)))
-    return "\(value) \(sets == 1 ? "Satz" : "Sätze")"
+    return "\(value) \(sets == 1 ? String(localized: "Satz") : String(localized: "Sätze"))"
 }

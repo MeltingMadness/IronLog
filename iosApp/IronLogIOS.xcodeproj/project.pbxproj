@@ -26,6 +26,7 @@
 		36C034486A5A4F679E19397F /* Geist-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAF205F8D57F4CEC6E45D564 /* Geist-Medium.ttf */; };
 		393E6D0CB3AE25D2608C2CE6 /* IOSWorkoutCompletionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E139A39ACDF1DD4F28B03640 /* IOSWorkoutCompletionScreen.swift */; };
 		3EE6741AFE314AF47D0C4A18 /* IOSWeeklyVolumeTrendCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57493B46D0737E1DCA25483 /* IOSWeeklyVolumeTrendCard.swift */; };
+		44B3F800B32F2DC0375E14E7 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 94EA5902F40AED9C04C69255 /* Localizable.xcstrings */; };
 		4701EBA95FB4BEC2AF8ED846 /* IronLogIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447C61C75F4D0CA809ECC612 /* IronLogIOSTests.swift */; };
 		4CC1F4B2952153126BB5C8AC /* IOSProgressionReviewScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4291F379FACBEC41665E53 /* IOSProgressionReviewScreen.swift */; };
 		4DE13CA063E485D3BC27F865 /* IOSTrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B89E28761F801D15BB55BFB /* IOSTrainingStore.swift */; };
@@ -113,6 +114,7 @@
 		89CD13B98444966271EB4240 /* IronLogWeeklyMuscleVolume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogWeeklyMuscleVolume.swift; sourceTree = "<group>"; };
 		8D037261F5CC25904BEBBA5C /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
 		90CC60EBF15602AFA558C04E /* WorkoutDeloadModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeloadModeTests.swift; sourceTree = "<group>"; };
+		94EA5902F40AED9C04C69255 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		94F2CFEFECB47891BFC64652 /* IronLogFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IronLogFont.swift; sourceTree = "<group>"; };
 		9A84655D88907D47D386F49D /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
 		9D516DE9A339311F7C9D48BE /* ProgressionDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionDraftTests.swift; sourceTree = "<group>"; };
@@ -268,6 +270,7 @@
 			E993C0D9701F14D3277ACF36 /* IOSSettingsViewModel.swift */,
 			0B89E28761F801D15BB55BFB /* IOSTrainingStore.swift */,
 			4BCC5B8E55F164E9861E0536 /* IronLogApp.swift */,
+			94EA5902F40AED9C04C69255 /* Localizable.xcstrings */,
 			BC40F8E313FAE1B098EB015A /* PrivacyInfo.xcprivacy */,
 			BEC65BD5A1141010BA49E120 /* RootView.swift */,
 			ACA545153E6BF364D3143762 /* SettingsScreen.swift */,
@@ -407,10 +410,10 @@
 			};
 			buildConfigurationList = FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "IronLogIOS" */;
 			compatibilityVersion = "Xcode 15.0";
-			developmentRegion = en;
+			developmentRegion = de;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				de,
 				Base,
 			);
 			mainGroup = D60ADEB63C860AFBC2C3F9EF /* IronLogIOS */;
@@ -429,15 +432,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				74E621E79975027907297F0A /* Assets.xcassets in Resources */, 
-				73184BEB4004BA1081AF4291 /* Geist-Black.ttf in Resources */, 
-				24F32768B3ADB94966B2E663 /* Geist-Bold.ttf in Resources */, 
-				80A6424B6629844FBEA01CE7 /* Geist-ExtraBold.ttf in Resources */, 
-				D910FDF90D46BBEA2E6D7A31 /* Geist-Italic.ttf in Resources */, 
-				36C034486A5A4F679E19397F /* Geist-Medium.ttf in Resources */, 
-				C06EBD6423CE8AC7F4AB963A /* Geist-Regular.ttf in Resources */, 
-				B3B92541F7BA3D421AC52ADC /* Geist-SemiBold.ttf in Resources */, 
-				846137AA294ED448ADEF1100 /* PrivacyInfo.xcprivacy in Resources */, 
+				74E621E79975027907297F0A /* Assets.xcassets in Resources */,
+				73184BEB4004BA1081AF4291 /* Geist-Black.ttf in Resources */,
+				24F32768B3ADB94966B2E663 /* Geist-Bold.ttf in Resources */,
+				80A6424B6629844FBEA01CE7 /* Geist-ExtraBold.ttf in Resources */,
+				D910FDF90D46BBEA2E6D7A31 /* Geist-Italic.ttf in Resources */,
+				36C034486A5A4F679E19397F /* Geist-Medium.ttf in Resources */,
+				C06EBD6423CE8AC7F4AB963A /* Geist-Regular.ttf in Resources */,
+				B3B92541F7BA3D421AC52ADC /* Geist-SemiBold.ttf in Resources */,
+				44B3F800B32F2DC0375E14E7 /* Localizable.xcstrings in Resources */,
+				846137AA294ED448ADEF1100 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -540,7 +544,7 @@
 				07AAB061F48CA44C780ED1BA /* ProgressionDraftTests.swift in Sources */, 
 				0962839F50CB6B25ACF3781F /* RecoveryBridgeTests.swift in Sources */, 
 				63DB69889606D38B4932752A /* RestTimerAdjustTests.swift in Sources */, 
-				959A497FD64D3DE0178F51D7 /* ThemeContrastTests.swift in Sources */,
+				959A497FD64D3DE0178F51D7 /* ThemeContrastTests.swift in Sources */, 
 				187F2E4CBFAE37FBA1EE209B /* WorkoutDeloadModeTests.swift in Sources */, 
 				BD7AEFC04D1040F27E81E4BB /* WorkoutRestTimerPersistenceTests.swift in Sources */, 
 			);

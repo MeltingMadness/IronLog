@@ -1,5 +1,6 @@
 package com.ironlog.app.presentation.statistics
 
+import com.ironlog.feature.statistics.R as UxR
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -131,7 +132,7 @@ fun ExerciseStatsScreen(
             ) {
                 item {
                     GlassStatsHeader(
-                        subtitle = state.exercise?.let { "${it.primaryMuscleGroup.displayName} · ${it.category.displayName}" },
+                        subtitle = state.exercise?.let { stringResource(UxR.string.stats_exercise_details, it.primaryMuscleGroup.displayName, it.category.displayName) },
                         onBack = onBack
                     )
                 }
@@ -193,7 +194,7 @@ fun ExerciseStatsScreen(
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = "${exercise.primaryMuscleGroup.displayName} · ${exercise.category.displayName}",
+                            text = stringResource(UxR.string.stats_exercise_details, exercise.primaryMuscleGroup.displayName, exercise.category.displayName),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

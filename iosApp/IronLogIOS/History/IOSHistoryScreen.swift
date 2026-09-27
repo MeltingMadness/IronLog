@@ -70,12 +70,12 @@ struct IOSHistoryScreen: View {
                     ProgressView("Verlauf wird geladen …")
                 } else if completedSessions.isEmpty {
                     ContentUnavailableView(
-                        !hasSearchFilter && dateFilter == .all ? "Noch keine abgeschlossenen Trainings" : "Keine passenden Trainings",
+                        !hasSearchFilter && dateFilter == .all ? String(localized: "Noch keine abgeschlossenen Trainings") : String(localized: "Keine passenden Trainings"),
                         systemImage: "clock.arrow.circlepath",
                         description: Text(
                             !hasSearchFilter && dateFilter == .all
-                                ? "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Workout-Bereich."
-                                : "Passe Suche oder Zeitraum an."
+                                ? String(localized: "Abgeschlossene Sessions erscheinen hier. Eine aktive Session bleibt im Training-Bereich.")
+                                : String(localized: "Passe Suche oder Zeitraum an.")
                         )
                     )
                 } else if appearance == .liquidGlass {
@@ -121,10 +121,10 @@ struct IOSHistoryScreen: View {
                             }
                         }
                     } label: {
-                        Label(selectedPlanName ?? "Plan: Alle", systemImage: "rectangle.stack")
+                        Label(selectedPlanName ?? String(localized: "Plan: Alle"), systemImage: "rectangle.stack")
                     }
                     .accessibilityLabel("Plan filtern")
-                    .accessibilityValue(selectedPlanName ?? "Alle Pläne")
+                    .accessibilityValue(selectedPlanName ?? String(localized: "Alle Pläne"))
                 }
             }
             .navigationDestination(item: $openedSessionID) { sessionID in
@@ -235,8 +235,8 @@ struct IOSHistoryScreen: View {
             let success = await store.command("workout.delete", fields: ["id": session.id])
             guard !success else { return }
             alert = IOSHistoryAlert(
-                title: "Löschen fehlgeschlagen",
-                message: store.errorMessage ?? "Das Training konnte nicht gelöscht werden."
+                title: String(localized: "Löschen fehlgeschlagen"),
+                message: store.errorMessage ?? String(localized: "Das Training konnte nicht gelöscht werden.")
             )
         }
     }
@@ -273,14 +273,14 @@ private struct IOSHistorySummaryCard: View {
     let unitSystem: String
 
     var body: some View {
-        IronLogCard(title: "Zusammenfassung", subtitle: "Gefilterte abgeschlossene Trainings") {
+        IronLogCard(title: String(localized: "Zusammenfassung"), subtitle: String(localized: "Gefilterte abgeschlossene Trainings")) {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 20) { metrics }
                 VStack(alignment: .leading, spacing: 10) { metrics }
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(ilCount(summary.sessionCount, "Training", "Trainings")), \(ilCount(summary.setCount, "Satz", "Sätze")), " +
+                "\(ilCount(summary.sessionCount, String(localized: "Training"), String(localized: "Trainings"))), \(ilCount(summary.setCount, String(localized: "Satz"), String(localized: "Sätze"))), " +
                     "\(IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem)), " +
                     "\(IOSHistoryFormatting.duration(seconds: summary.durationSeconds))"
             )
@@ -288,10 +288,10 @@ private struct IOSHistorySummaryCard: View {
     }
 
     @ViewBuilder private var metrics: some View {
-        IOSHistoryMetric(title: "Trainings", value: "\(summary.sessionCount)", systemImage: "figure.strengthtraining.traditional")
-        IOSHistoryMetric(title: "Sätze", value: "\(summary.setCount)", systemImage: "list.number")
-        IOSHistoryMetric(title: "Volumen", value: IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
-        IOSHistoryMetric(title: "Zeit", value: IOSHistoryFormatting.duration(seconds: summary.durationSeconds), systemImage: "timer")
+        IOSHistoryMetric(title: String(localized: "Trainings"), value: "\(summary.sessionCount)", systemImage: "figure.strengthtraining.traditional")
+        IOSHistoryMetric(title: String(localized: "Sätze"), value: "\(summary.setCount)", systemImage: "list.number")
+        IOSHistoryMetric(title: String(localized: "Volumen"), value: IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
+        IOSHistoryMetric(title: String(localized: "Zeit"), value: IOSHistoryFormatting.duration(seconds: summary.durationSeconds), systemImage: "timer")
     }
 }
 
@@ -345,7 +345,7 @@ private struct IOSHistorySessionRow: View {
             }
             HStack(spacing: 14) {
                 Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
-                Label(ilCount(visibleSets.count, "Satz", "Sätze"), systemImage: "list.number")
+                Label(ilCount(visibleSets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
                 if volumeKg > 0 {
                     Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
                 }
@@ -395,7 +395,7 @@ struct IOSHistoryDetailScreen: View {
                 ContentUnavailableView("Training nicht gefunden", systemImage: "questionmark.folder")
             }
         }
-        .navigationTitle(session?.displayName(planName: planName) ?? "Training")
+        .navigationTitle(session?.displayName(planName: planName) ?? String(localized: "Training"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -539,7 +539,7 @@ struct IOSHistoryDetailScreen: View {
             if success {
                 editingSet = nil
             } else {
-                alert = IOSHistoryAlert(title: "Satz konnte nicht gespeichert werden", message: store.errorMessage ?? "Bitte prüfe die Werte.")
+                alert = IOSHistoryAlert(title: String(localized: "Satz konnte nicht gespeichert werden"), message: store.errorMessage ?? String(localized: "Bitte prüfe die Werte."))
             }
         }
     }
@@ -548,7 +548,7 @@ struct IOSHistoryDetailScreen: View {
         Task { @MainActor in
             let success = await store.command("set.delete", fields: ["id": set.id])
             if !success {
-                alert = IOSHistoryAlert(title: "Satz konnte nicht gelöscht werden", message: store.errorMessage ?? "Bitte versuche es erneut.")
+                alert = IOSHistoryAlert(title: String(localized: "Satz konnte nicht gelöscht werden"), message: store.errorMessage ?? String(localized: "Bitte versuche es erneut."))
             }
         }
     }
@@ -570,10 +570,10 @@ struct IOSHistoryDetailScreen: View {
                 if success {
                     showNotesEditor = false
                 } else {
-                    alert = IOSHistoryAlert(title: "Notiz konnte nicht gespeichert werden", message: store.errorMessage ?? "Bitte versuche es erneut.")
+                    alert = IOSHistoryAlert(title: String(localized: "Notiz konnte nicht gespeichert werden"), message: store.errorMessage ?? String(localized: "Bitte versuche es erneut."))
                 }
             } catch {
-                alert = IOSHistoryAlert(title: "Notiz konnte nicht gespeichert werden", message: error.localizedDescription)
+                alert = IOSHistoryAlert(title: String(localized: "Notiz konnte nicht gespeichert werden"), message: error.localizedDescription)
             }
         }
     }
@@ -586,7 +586,7 @@ struct IOSHistoryDetailScreen: View {
             if success {
                 dismiss()
             } else {
-                alert = IOSHistoryAlert(title: "Training konnte nicht gelöscht werden", message: store.errorMessage ?? "Bitte versuche es erneut.")
+                alert = IOSHistoryAlert(title: String(localized: "Training konnte nicht gelöscht werden"), message: store.errorMessage ?? String(localized: "Bitte versuche es erneut."))
             }
         }
     }
@@ -634,7 +634,7 @@ private struct IOSHistoryDetailHeader: View {
     }
 
     @ViewBuilder private var metrics: some View {
-        Label(ilCount(sets.count, "Satz", "Sätze"), systemImage: "list.number")
+        Label(ilCount(sets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
         Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
         Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
     }
@@ -649,7 +649,7 @@ private struct IOSHistoryExerciseSection: View {
     let onDelete: (ILWorkoutSet) -> Void
 
     var body: some View {
-        IronLogCard(title: exercise?.name ?? "Übung \(sets.first?.exerciseId ?? 0)", subtitle: exercise?.categoryDisplayName) {
+        IronLogCard(title: exercise?.name ?? String(localized: "Übung \(sets.first?.exerciseId ?? 0)"), subtitle: exercise?.categoryDisplayName) {
             if !records.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     Label("Persönliche Bestleistungen", systemImage: "rosette")
@@ -699,7 +699,8 @@ private struct IOSHistorySetRow: View {
                 Button("Löschen", systemImage: "trash", role: .destructive, action: onDelete)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .frame(width: 32, height: 32)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Aktionen für Satz \(set.setNumber)")
         }
@@ -786,11 +787,11 @@ private struct IOSHistorySetEditor: View {
     private func save() {
         let normalizedWeight = weightText.replacingOccurrences(of: ",", with: ".")
         guard let displayedWeight = Double(normalizedWeight), displayedWeight.isFinite, displayedWeight >= 0 else {
-            errorMessage = "Bitte gib ein gültiges Gewicht ein."
+            errorMessage = String(localized: "Bitte gib ein gültiges Gewicht ein.")
             return
         }
         guard let reps = Int(repsText), reps >= 0 else {
-            errorMessage = "Bitte gib eine gültige Wiederholungszahl ein."
+            errorMessage = String(localized: "Bitte gib eine gültige Wiederholungszahl ein.")
             return
         }
         let rpe: Double?
@@ -799,7 +800,7 @@ private struct IOSHistorySetEditor: View {
         } else if let parsed = Double(rpeText.replacingOccurrences(of: ",", with: ".")), parsed.isFinite, parsed >= 0, parsed <= 10 {
             rpe = parsed
         } else {
-            errorMessage = "Die RPE muss zwischen 0 und 10 liegen."
+            errorMessage = String(localized: "Die RPE muss zwischen 0 und 10 liegen.")
             return
         }
         var updated = set
@@ -869,7 +870,7 @@ extension ILWorkoutSession {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { return trimmed }
         if let planName, !planName.isEmpty { return planName }
-        return "Training vom \(IOSHistoryFormatting.date(startDate))"
+        return String(localized: "Training vom \(IOSHistoryFormatting.date(startDate))")
     }
 
     func iosSearchText(in data: ILTrainingData) -> String {

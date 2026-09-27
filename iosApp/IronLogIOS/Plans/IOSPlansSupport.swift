@@ -11,11 +11,11 @@ enum IOSProgressionScheme: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .manual: "Manuell"
-        case .linear: "Linear"
-        case .double: "Doppelprogression"
-        case .totalReps: "Gesamtwiederholungen"
-        case .rpeRir: "RPE/RIR"
+        case .manual: String(localized: "Manuell")
+        case .linear: String(localized: "Linear")
+        case .double: String(localized: "Doppelprogression")
+        case .totalReps: String(localized: "Gesamtwiederholungen")
+        case .rpeRir: String(localized: "RPE/RIR")
         }
     }
 }
@@ -60,19 +60,19 @@ struct IOSProgressionDraft: Equatable {
 
     func validatedConfig() -> Result<ILProgressionConfig, IOSProgressionValidationError> {
         if let unsupportedScheme {
-            return .failure(.init("Unbekanntes Progressionsschema \(unsupportedScheme); bitte zuerst manuell auswählen."))
+            return .failure(.init(String(localized: "Unbekanntes Progressionsschema \(unsupportedScheme); bitte zuerst manuell auswählen.")))
         }
         let stall = IOSNumber.parseInt(stallThreshold)
         let backoff = IOSNumber.parse(backoffPercent)
-        guard let stall, stall > 0 else { return .failure(.init("Das Fehlerlimit muss größer als 0 sein.")) }
-        guard let backoff, backoff >= 0, backoff <= 100 else { return .failure(.init("Der Backoff muss zwischen 0 und 100 % liegen.")) }
+        guard let stall, stall > 0 else { return .failure(.init(String(localized: "Das Fehlerlimit muss größer als 0 sein."))) }
+        guard let backoff, backoff >= 0, backoff <= 100 else { return .failure(.init(String(localized: "Der Backoff muss zwischen 0 und 100 % liegen."))) }
 
         if scheme == .manual {
             return .success(ILProgressionConfig(scheme: scheme.rawValue, stallThreshold: stall, backoffPercent: backoff, ruleRevision: 1))
         }
 
         guard let step = IOSNumber.parse(stepValue), step > 0 else {
-            return .failure(.init("Der Progressionsschritt muss größer als 0 sein."))
+            return .failure(.init(String(localized: "Der Progressionsschritt muss größer als 0 sein.")))
         }
         let stepKg = IOSWeight.kilograms(value: step, unit: stepUnit)
 
@@ -92,19 +92,19 @@ struct IOSProgressionDraft: Equatable {
         case .double:
             guard let min = IOSNumber.parseInt(minReps), min > 0,
                   let max = IOSNumber.parseInt(maxReps), max >= min else {
-                return .failure(.init("Min-/Max-Reps sind für die Doppelprogression ungültig."))
+                return .failure(.init(String(localized: "Min-/Max-Reps sind für die Doppelprogression ungültig.")))
             }
             config.minReps = min
             config.maxReps = max
         case .totalReps:
             guard let total = IOSNumber.parseInt(totalReps), total > 0 else {
-                return .failure(.init("Das Gesamtziel muss größer als 0 sein."))
+                return .failure(.init(String(localized: "Das Gesamtziel muss größer als 0 sein.")))
             }
             config.targetTotalReps = Int64(total)
         case .rpeRir:
             guard let target = IOSNumber.parse(targetRpe), target >= 1, target <= 10,
                   let tolerance = IOSNumber.parse(rpeTolerance), tolerance >= 0, tolerance <= 10 else {
-                return .failure(.init("RPE-Ziel und Toleranz müssen im Bereich 1–10 liegen."))
+                return .failure(.init(String(localized: "RPE-Ziel und Toleranz müssen im Bereich 1–10 liegen.")))
             }
             config.targetRpe = target
             config.rpeTolerance = tolerance
@@ -217,6 +217,6 @@ enum IOSWeight {
     }
 
     static func label(_ unit: String) -> String {
-        isImperial(unit) ? "lb" : "kg"
+        isImperial(unit) ? String(localized: "lb") : String(localized: "kg")
     }
 }

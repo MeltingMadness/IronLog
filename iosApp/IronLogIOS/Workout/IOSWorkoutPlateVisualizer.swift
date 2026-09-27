@@ -57,7 +57,7 @@ struct IOSWorkoutPlateVisualizer: View {
                 Label("Plattenrechner", systemImage: "circle.grid.2x2")
                     .font(.geist(.subheadline, weight: .semibold))
                 Spacer(minLength: 8)
-                Text(result.isExact ? "Exakt" : "Näherung")
+                Text(result.isExact ? String(localized: "Exakt") : String(localized: "Näherung"))
                     .font(.geist(.caption, weight: .semibold))
                     .foregroundStyle(result.isExact ? .green : .orange)
             }

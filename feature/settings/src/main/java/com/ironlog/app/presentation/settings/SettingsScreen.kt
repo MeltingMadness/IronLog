@@ -2,6 +2,7 @@ package com.ironlog.app.presentation.settings
 
 import com.ironlog.app.presentation.theme.IronLogInteractiveColors
 import com.ironlog.app.presentation.theme.accentText
+import com.ironlog.feature.settings.R as UxR
 import com.ironlog.app.presentation.common.IronLogTopBar
 import com.ironlog.app.domain.util.WeightFormatting
 import android.Manifest
@@ -143,7 +144,7 @@ fun SettingsScreen(
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "application/json"
                         putExtra(Intent.EXTRA_STREAM, event.report.uri)
-                        putExtra(Intent.EXTRA_SUBJECT, "IronLog Incident ${event.report.id}")
+                        putExtra(Intent.EXTRA_SUBJECT, context.getString(UxR.string.settings_incident_subject, event.report.id))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     context.startActivity(
@@ -406,13 +407,13 @@ fun SettingsScreen(
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.RPE,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RPE) },
-                            label = { Text("RPE") },
+                            label = { Text(stringResource(UxR.string.settings_intensity_rpe)) },
                             colors = IronLogInteractiveColors.filterChip()
                         )
                         FilterChip(
                             selected = state.preferences.intensitySystem == IntensitySystem.RIR,
                             onClick = { viewModel.updateIntensitySystem(IntensitySystem.RIR) },
-                            label = { Text("RIR") },
+                            label = { Text(stringResource(UxR.string.settings_intensity_rir)) },
                             colors = IronLogInteractiveColors.filterChip()
                         )
                     }
@@ -441,7 +442,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(dims.spacingXs)
                         ) {
                             listOf(20.0, 15.0, 10.0, 8.0, 2.5).forEach { barWeight ->
-                                val label = "${WeightFormatting.formatNumber(barWeight, 2)} kg"
+                                val label = stringResource(UxR.string.settings_weight_kg, WeightFormatting.formatNumber(barWeight, 2))
                                 FilterChip(
                                     selected = state.preferences.barbellWeightKg == barWeight,
                                     onClick = { viewModel.updateBarbellWeightKg(barWeight) },
@@ -474,7 +475,7 @@ fun SettingsScreen(
 
                             allPlateOptions.forEach { plate ->
                                 val isSelected = plate in currentPlates
-                                val plateLabel = "${WeightFormatting.formatNumber(plate, 2)} kg"
+                                val plateLabel = stringResource(UxR.string.settings_weight_kg, WeightFormatting.formatNumber(plate, 2))
 
                                 FilterChip(
                                     selected = isSelected,

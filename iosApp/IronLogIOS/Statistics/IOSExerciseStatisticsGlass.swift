@@ -21,7 +21,7 @@ struct IOSExerciseGlassHero: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(metric == .e1rm ? "GESCHÄTZTES 1RM" : metric.title.uppercased())
+                    Text(metric == .e1rm ? String(localized: "GESCHÄTZTES 1RM") : metric.title.uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .ironLogSecondaryText()
@@ -112,7 +112,7 @@ struct IOSExerciseGlassHero: View {
 
     private func text(_ value: Double) -> String {
         switch metric {
-        case .reps: return "\(Int(value)) Wdh."
+        case .reps: return String(localized: "\(Int(value)) Wdh.")
         case .volume: return ilVolumeText(value.rounded(), unitSystem: unitSystem)
         case .e1rm, .weight: return ilWeightText(value, unitSystem: unitSystem)
         }
@@ -128,7 +128,7 @@ struct IOSExerciseGlassHero: View {
         let delta = last - first
         let absolute: String
         switch metric {
-        case .reps: absolute = (delta > 0 ? "+" : "") + "\(Int(delta)) Wdh."
+        case .reps: absolute = (delta > 0 ? "+" : "") + String(localized: "\(Int(delta)) Wdh.")
         case .volume: absolute = ilVolumeText(delta.rounded(), unitSystem: unitSystem, signed: true)
         case .e1rm, .weight: absolute = ilWeightText(delta, unitSystem: unitSystem, signed: true)
         }
@@ -142,10 +142,10 @@ extension IOSExerciseMetric {
     /// Short labels for the glass segment bar.
     var glassTitle: String {
         switch self {
-        case .e1rm: return "1RM"
-        case .weight: return "Gewicht"
-        case .reps: return "Wdh."
-        case .volume: return "Volumen"
+        case .e1rm: return String(localized: "1RM")
+        case .weight: return String(localized: "Gewicht")
+        case .reps: return String(localized: "Wdh.")
+        case .volume: return String(localized: "Volumen")
         }
     }
 }
@@ -158,10 +158,10 @@ struct IOSExerciseGlassRecordTiles: View {
     var body: some View {
         let best = Dictionary(grouping: records, by: { $0.type.uppercased() }).mapValues { $0.map(\.value).max() ?? 0 }
         let tiles: [(String, String)] = [
-            ("BESTES 1RM", best["MAX_E1RM"].map { ilWeightText($0, unitSystem: unitSystem) } ?? "–"),
-            ("MAX. GEWICHT", best["MAX_WEIGHT"].map { ilWeightText($0, unitSystem: unitSystem) } ?? "–"),
-            ("MAX. WDH", best["MAX_REPS"].map { "\(Int($0))" } ?? "–"),
-            ("MAX. VOLUMEN", best["MAX_VOLUME"].map { ilVolumeText($0.rounded(), unitSystem: unitSystem) } ?? "–")
+            (String(localized: "BESTES 1RM"), best["MAX_E1RM"].map { ilWeightText($0, unitSystem: unitSystem) } ?? "–"),
+            (String(localized: "MAX. GEWICHT"), best["MAX_WEIGHT"].map { ilWeightText($0, unitSystem: unitSystem) } ?? "–"),
+            (String(localized: "MAX. WDH"), best["MAX_REPS"].map { "\(Int($0))" } ?? "–"),
+            (String(localized: "MAX. VOLUMEN"), best["MAX_VOLUME"].map { ilVolumeText($0.rounded(), unitSystem: unitSystem) } ?? "–")
         ]
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
             ForEach(tiles, id: \.0) { label, value in

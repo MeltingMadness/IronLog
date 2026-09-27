@@ -113,8 +113,8 @@ struct SettingsScreen: View {
 
                         Text(
                             viewModel.state.autoRestTimerEnabled
-                                ? "Nach passenden Arbeitssätzen läuft ein Countdown."
-                                : "Deaktiviert: Nach dem Satz läuft die Zeit aufwärts."
+                                ? String(localized: "Nach passenden Arbeitssätzen läuft ein Countdown.")
+                                : String(localized: "Deaktiviert: Nach dem Satz läuft die Zeit aufwärts.")
                         )
                         .font(.geist(.footnote))
                         .ironLogSecondaryText()
@@ -157,7 +157,7 @@ struct SettingsScreen: View {
                     }
 
                     Section("Reminder") {
-                        Toggle("Workout-Erinnerung", isOn: Binding(
+                        Toggle("Training-Erinnerung", isOn: Binding(
                             get: { viewModel.state.reminderEnabled },
                             set: viewModel.setReminderEnabled
                         ))
@@ -293,7 +293,7 @@ struct SettingsScreen: View {
                 viewModel.recordSuccessfulBackupExport()
             case .failure(let error):
                 viewModel.activeAlert = SettingsAlert(
-                    title: "Export fehlgeschlagen",
+                    title: String(localized: "Export fehlgeschlagen"),
                     message: error.localizedDescription
                 )
             }
@@ -332,7 +332,7 @@ struct SettingsScreen: View {
                 viewModel.cancelBackupImport()
             }
         } message: {
-            Text(viewModel.pendingImportSummary ?? "Die Backup-Datei wurde geprüft.")
+            Text(viewModel.pendingImportSummary ?? String(localized: "Die Backup-Datei wurde geprüft."))
         }
         .confirmationDialog(
             "Vorherige Trainingsdaten wiederherstellen?",
