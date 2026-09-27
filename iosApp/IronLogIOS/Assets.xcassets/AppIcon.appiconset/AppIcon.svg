@@ -1,26 +1,65 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 108 108" role="img" aria-label="IronLog">
-  <defs>
-    <!-- Android ic_launcher_background.xml: angle 135, start/center/end colors. -->
-    <linearGradient id="launcherBackground" x1="1" y1="1" x2="0" y2="0">
-      <stop offset="0" stop-color="#1A110C"/>
-      <stop offset="0.5" stop-color="#2B170D"/>
-      <stop offset="1" stop-color="#3D1A00"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Android ic_launcher_background.xml is an opaque rectangle. -->
-  <rect width="108" height="108" fill="url(#launcherBackground)"/>
-
-  <!-- Android ic_launcher_foreground.xml, kept in its 108dp viewport. -->
-  <circle cx="54" cy="54" r="40" fill="#FF8A1F"/>
-  <circle cx="54" cy="24" r="14" fill="#FFFFD8B0" fill-opacity="0.22"/>
-
-  <path fill="#FFFFFF" d="M34 44H40V64H34Z"/>
-  <path fill="#FFFFFF" d="M30 42H44V46H30Z"/>
-  <path fill="#FFFFFF" d="M30 62H44V66H30Z"/>
-  <path fill="#FFFFFF" d="M68 44H74V64H68Z"/>
-  <path fill="#FFFFFF" d="M64 42H78V46H64Z"/>
-  <path fill="#FFFFFF" d="M64 62H78V66H64Z"/>
-  <path fill="#FFFFFF" d="M40 52H68V56H40Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A2A"/><stop offset="1" stop-color="#E85500"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<rect x="160" y="760" width="704" height="16" fill="#7A2E00" fill-opacity="0.35"/>
+<rect x="128" y="416" width="96" height="96" fill="#0B0A14"/>
+<rect x="800" y="416" width="96" height="96" fill="#0B0A14"/>
+<rect x="128" y="448" width="96" height="96" fill="#0B0A14"/>
+<rect x="800" y="448" width="96" height="96" fill="#0B0A14"/>
+<rect x="320" y="416" width="384" height="96" fill="#0B0A14"/>
+<rect x="320" y="448" width="384" height="96" fill="#0B0A14"/>
+<rect x="288" y="352" width="96" height="256" fill="#0B0A14"/>
+<rect x="640" y="352" width="96" height="256" fill="#0B0A14"/>
+<rect x="224" y="192" width="128" height="576" fill="#0B0A14"/>
+<rect x="672" y="192" width="128" height="576" fill="#0B0A14"/>
+<rect x="224" y="672" width="128" height="96" fill="#0B0A14"/>
+<rect x="672" y="672" width="128" height="96" fill="#0B0A14"/>
+<rect x="224" y="224" width="96" height="480" fill="#0B0A14"/>
+<rect x="672" y="224" width="96" height="480" fill="#0B0A14"/>
+<rect x="160" y="288" width="128" height="384" fill="#0B0A14"/>
+<rect x="736" y="288" width="128" height="384" fill="#0B0A14"/>
+<rect x="160" y="576" width="128" height="96" fill="#0B0A14"/>
+<rect x="736" y="576" width="128" height="96" fill="#0B0A14"/>
+<rect x="160" y="320" width="96" height="288" fill="#0B0A14"/>
+<rect x="736" y="320" width="96" height="288" fill="#0B0A14"/>
+<rect x="160" y="448" width="32" height="32" fill="#FFFFFF"/>
+<rect x="832" y="448" width="32" height="32" fill="#FFFFFF"/>
+<rect x="160" y="480" width="32" height="32" fill="#FFD9B8"/>
+<rect x="832" y="480" width="32" height="32" fill="#FFD9B8"/>
+<rect x="352" y="448" width="320" height="32" fill="#FFFFFF"/>
+<rect x="352" y="480" width="320" height="32" fill="#FFD9B8"/>
+<rect x="320" y="384" width="32" height="192" fill="#3A2F5C"/>
+<rect x="672" y="384" width="32" height="192" fill="#3A2F5C"/>
+<rect x="256" y="224" width="64" height="512" fill="#171226"/>
+<rect x="704" y="224" width="64" height="512" fill="#171226"/>
+<rect x="256" y="704" width="64" height="32" fill="#0B0A14"/>
+<rect x="704" y="704" width="64" height="32" fill="#0B0A14"/>
+<rect x="256" y="256" width="32" height="416" fill="#3A2F5C"/>
+<rect x="704" y="256" width="32" height="416" fill="#3A2F5C"/>
+<rect x="192" y="320" width="64" height="320" fill="#FFFFFF"/>
+<rect x="768" y="320" width="64" height="320" fill="#FFFFFF"/>
+<rect x="192" y="608" width="64" height="32" fill="#C9C3D6"/>
+<rect x="768" y="608" width="64" height="32" fill="#C9C3D6"/>
+<rect x="192" y="352" width="32" height="224" fill="#FFFFFF"/>
+<rect x="768" y="352" width="32" height="224" fill="#FFFFFF"/>
+<rect x="192" y="800" width="640" height="96" fill="#0B0A14"/>
+<rect x="204" y="812" width="616" height="72" fill="#FFFFFF"/>
+<rect x="216" y="824" width="592" height="48" fill="#7A2E00"/>
+<rect x="224" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="282" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="341" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="399" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="458" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="516" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="574" y="832" width="50" height="32" fill="#FFFFFF"/>
+<rect x="633" y="832" width="50" height="32" fill="#B84400"/>
+<rect x="691" y="832" width="50" height="32" fill="#B84400"/>
+<rect x="750" y="832" width="50" height="32" fill="#B84400"/>
+<rect x="496" y="112" width="32" height="96" fill="#FFFFFF"/>
+<rect x="464" y="144" width="96" height="32" fill="#FFFFFF"/>
+<rect x="496" y="144" width="32" height="32" fill="#FFE27A"/>
+<rect x="400" y="88" width="16" height="48" fill="#FFFFFF"/>
+<rect x="384" y="104" width="48" height="16" fill="#FFFFFF"/>
+<rect x="608" y="88" width="16" height="48" fill="#FFFFFF"/>
+<rect x="592" y="104" width="48" height="16" fill="#FFFFFF"/>
 </svg>

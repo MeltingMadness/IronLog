@@ -89,7 +89,7 @@ Gilt für Android und iOS gleich:
 ## App-Hülle
 
 - Splash-Screen (`Theme.IronLog.Splash`): Hintergrund `#0C0806`, Icon-Hintergrund `#FF6B00`. Er bleibt sichtbar, bis die Design-Einstellungen geladen sind. So gibt es keinen weißen Blitz.
-- Adaptives App-Icon mit monochromer Variante (`app/src/main/res/drawable/ic_launcher_*`).
+- App-Icon „Level Up“: eine Pixel-Langhantel (dunkle und weiße Scheiben, schwarze Kontur) über einer Erfahrungsleiste mit zehn Segmenten, sieben davon voll, auf Amber-Verlauf `#FF8A2A` → `#E85500`. Android: adaptives Icon mit monochromer Variante (`app/src/main/res/drawable/ic_launcher_*`), der Inhalt liegt in der sicheren Zone. iOS: `Assets.xcassets/AppIcon.appiconset` (1024-px-PNG ohne Transparenz, `AppIcon.svg` als Quelle). Beide Plattformen nutzen dasselbe Pixelraster; wer das Icon ändert, ändert beide.
 
 ## Texte
 
