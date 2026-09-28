@@ -34,7 +34,8 @@ data class ProgressionConfigColumns(
     @ColumnInfo(name = "RpeTolerance") val rpeTolerance: Double? = null,
     @ColumnInfo(name = "StallThreshold", defaultValue = "2") val stallThreshold: Int = 2,
     @ColumnInfo(name = "BackoffPercent", defaultValue = "10.0") val backoffPercent: Double = 10.0,
-    @ColumnInfo(name = "RuleRevision", defaultValue = "1") val ruleRevision: Int = 1
+    @ColumnInfo(name = "RuleRevision", defaultValue = "1") val ruleRevision: Int = 1,
+    @ColumnInfo(name = "SuccessThreshold", defaultValue = "1") val successThreshold: Int = 1
 ) {
     fun toDomain(): ProgressionConfig {
         val parsedScheme = runCatching { enumValueOf<ProgressionScheme>(scheme) }.getOrNull()
@@ -51,6 +52,9 @@ data class ProgressionConfigColumns(
             storageReason = reason,
             rawScheme = scheme
         )
+
+        if (successThreshold !in 1..6 || (successThreshold != 1 &&
+                (parsedScheme != ProgressionScheme.LINEAR || ruleRevision != 2))) return invalid("INVALID_SUCCESS_THRESHOLD")
 
         val parsedUnit = incrementUnit?.let {
             runCatching { enumValueOf<UnitSystem>(it) }.getOrNull()
@@ -83,7 +87,7 @@ data class ProgressionConfigColumns(
                 if (step == null || !allNull(minReps, maxReps, targetTotalReps, targetRpe, rpeTolerance)) {
                     invalid("MALFORMED_LINEAR")
                 } else {
-                    ProgressionConfig.Linear(step, failurePolicy, ruleRevision)
+                    ProgressionConfig.Linear(step, failurePolicy, ruleRevision, successThreshold)
                 }
             }
 
@@ -138,6 +142,7 @@ data class ProgressionConfigColumns(
             )
 
             is ProgressionConfig.Linear -> fromActiveConfig(
+                successThreshold = value.successThreshold,
                 scheme = value.scheme,
                 step = value.step,
                 failurePolicy = value.failurePolicy,
@@ -184,7 +189,8 @@ data class ProgressionConfigColumns(
             maxReps: Int? = null,
             targetTotalReps: Long? = null,
             targetRpe: Double? = null,
-            rpeTolerance: Double? = null
+            rpeTolerance: Double? = null,
+            successThreshold: Int = 1
         ) = ProgressionConfigColumns(
             scheme = scheme.name,
             incrementValue = step.originalValue,
@@ -197,6 +203,7 @@ data class ProgressionConfigColumns(
             rpeTolerance = rpeTolerance,
             stallThreshold = failurePolicy.stallThreshold,
             backoffPercent = failurePolicy.backoffPercent,
+            successThreshold = successThreshold,
             ruleRevision = ruleRevision
         )
 

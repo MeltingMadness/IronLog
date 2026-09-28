@@ -3,8 +3,11 @@ package com.ironlog.shared.progression
 import kotlin.math.abs
 import kotlin.math.floor
 
-/** The only rule revision currently evaluated by the shared engine. */
-const val CURRENT_PROGRESSION_RULE_REVISION: Int = 1
+/** Revision 1 remains available for immutable historical snapshots. */
+const val CURRENT_PROGRESSION_RULE_REVISION: Int = 2
+
+fun isProgressionWorkSet(setType: String, ruleRevision: Int): Boolean =
+    setType == "NORMAL" || (ruleRevision == 2 && setType == "FAILURE")
 
 /** Same tolerance used by the Android evidence/provenance checks. */
 const val PROGRESSION_WEIGHT_TOLERANCE_KG: Double = 0.1
@@ -22,6 +25,21 @@ private const val WEIGHT_COMPARISON_EPSILON_KG = 0.000000001
  */
 class SharedProgressionEngine {
     fun evaluate(input: ProgressionInput): ProgressionResult {
+        val result = evaluateRules(input)
+        if (input.sourceTarget.config.ruleRevision != 2) return result
+        val counted = input.setsForTarget.filter { it.id in result.countedSetIds }
+        val workCount = input.setsForTarget.count { isProgressionWorkSet(it.setType, 2) }
+        return result.copy(reasonArguments = result.reasonArguments + mapOf(
+            "countedWorkSets" to counted.size.toDouble(),
+            "ignoredWarmupSets" to input.setsForTarget.count { it.setType == "WARMUP" }.toDouble(),
+            "ignoredDropSets" to input.setsForTarget.count { it.setType == "DROP_SET" }.toDouble(),
+            "ignoredBackoffSets" to input.setsForTarget.count { it.setType == "BACKOFF" }.toDouble(),
+            "ignoredExtraSets" to (workCount - counted.size).coerceAtLeast(0).toDouble(),
+            "failureMarkedSets" to counted.count { it.setType == "FAILURE" }.toDouble()
+        ))
+    }
+
+    private fun evaluateRules(input: ProgressionInput): ProgressionResult {
         val source = input.sourceTarget
         val target = source.target
         val availableEvidenceIds = availableWorkSetIds(input)
@@ -40,7 +58,7 @@ class SharedProgressionEngine {
                 reasonCode = ProgressionReasonCode.MANUAL_SCHEME
             )
         }
-        if (source.config.ruleRevision != CURRENT_PROGRESSION_RULE_REVISION) {
+        if (source.config.ruleRevision !in 1..CURRENT_PROGRESSION_RULE_REVISION) {
             return insufficient(
                 target = target,
                 reasonCode = ProgressionReasonCode.RULE_REVISION_UNSUPPORTED,
@@ -51,12 +69,21 @@ class SharedProgressionEngine {
         val prepared = prepare(input)
         if (prepared is Prepared.Invalid) return prepared.result
         val countedSets = (prepared as Prepared.Valid).sets
-        val actualWeightKg = evaluationWeightKg(countedSets)
-            ?: return mixedWeightOutcome(target, countedSets)
-        val actualReps = countedSets.minOf { it.reps }
+        val uniformWeight = evaluationWeightKg(countedSets)
+        val mixed = uniformWeight == null
         val config = source.config
+        if (mixed && config.ruleRevision == 1) return mixedWeightOutcome(target, countedSets)
+        val actualWeightKg = uniformWeight ?: countedSets.minOf { it.weightKg }
+        val actualReps = countedSets.minOf { it.reps }
+        if (mixed && actualWeightKg + PROGRESSION_WEIGHT_TOLERANCE_KG < target.weightKg) {
+            return mixedLoadRepeat(target, countedSets)
+        }
+        if (config.ruleRevision == 2 && (!increasedWeight(actualWeightKg, config).isFinite() ||
+                increasedWeight(actualWeightKg, config) <= actualWeightKg)) {
+            return insufficient(target, ProgressionReasonCode.SET_VALUE_INVALID, countedSetIds = availableEvidenceIds)
+        }
 
-        return when (config.scheme) {
+        val result = when (config.scheme) {
             "LINEAR" -> evaluateLinear(input, countedSets, actualWeightKg, actualReps)
             "DOUBLE" -> evaluateDouble(input, countedSets, actualWeightKg, actualReps)
             "TOTAL_REPS" -> evaluateTotalReps(input, countedSets, actualWeightKg)
@@ -69,6 +96,15 @@ class SharedProgressionEngine {
                 countedSetIds = countedSets.map { it.id }
             )
         }
+        // Different loads cannot establish a comparable failed attempt. Successful
+        // work confirms only the lowest load completed by every counted work set.
+        if (mixed && result.streakEffect == ProgressionStreakEffect.INCREMENT) {
+            return mixedLoadRepeat(target, countedSets)
+        }
+        return if (config.ruleRevision == 2) result.copy(reasonArguments = result.reasonArguments + mapOf(
+            "minWeightKg" to countedSets.minOf { it.weightKg },
+            "maxWeightKg" to countedSets.maxOf { it.weightKg }
+        )) else result
     }
 
     private fun evaluateLinear(
@@ -79,12 +115,25 @@ class SharedProgressionEngine {
     ): ProgressionResult {
         val target = input.sourceTarget.target
         val config = input.sourceTarget.config
-        val arguments = mapOf(
+        var arguments = mapOf(
             "targetReps" to target.reps.toDouble(),
             "actualReps" to actualReps.toDouble()
         )
         if (actualReps < target.reps) {
             return repetitionMissOutcome(input, countedSets, arguments, actualWeightKg)
+        }
+        if (config.ruleRevision == 2) {
+            val successes = (1 + input.previousComparableOutcomesNewestFirst
+                .takeWhile { it.sourceTarget == target && it.successful }.size).coerceAtMost(config.successThreshold)
+            arguments = arguments + mapOf(
+                "successfulSessions" to successes.toDouble(),
+                "requiredSuccesses" to config.successThreshold.toDouble(),
+                "actualWeightKg" to actualWeightKg
+            )
+            if (successes < config.successThreshold) {
+                return keep(target, ProgressionReasonCode.SUCCESS_CONFIRMATION_REQUIRED, arguments,
+                    ProgressionStreakEffect.RESET, countedSets.map { it.id })
+            }
         }
         return propose(
             target = target,
@@ -124,11 +173,12 @@ class SharedProgressionEngine {
             return propose(
                 target = target,
                 proposedTarget = target.copy(
-                    reps = target.reps + 1,
+                    reps = if (config.ruleRevision == 2) actualReps + 1 else target.reps + 1,
                     weightKg = actualWeightKg
                 ),
                 reasonCode = ProgressionReasonCode.REP_TARGET_ADVANCED,
-                reasonArguments = mapOf("actualWeightKg" to actualWeightKg),
+                reasonArguments = mapOf("actualWeightKg" to actualWeightKg) +
+                    (if (config.ruleRevision == 2) mapOf("actualReps" to actualReps.toDouble()) else emptyMap()),
                 streakEffect = ProgressionStreakEffect.RESET,
                 countedSetIds = countedSets.map { it.id }
             )
@@ -260,7 +310,9 @@ class SharedProgressionEngine {
                     set.exerciseId == source.exerciseId &&
                     set.planTargetSnapshotId == source.id
             }
-        if (!identityIsValid) {
+        if (!identityIsValid || (source.config.ruleRevision == 2 && input.setsForTarget.any {
+                it.setType !in setOf("NORMAL", "FAILURE", "WARMUP", "DROP_SET", "BACKOFF")
+            })) {
             return Prepared.Invalid(
                 insufficient(
                     target = source.target,
@@ -271,7 +323,7 @@ class SharedProgressionEngine {
         }
 
         val workSets = input.setsForTarget
-            .filter { it.setType == "NORMAL" }
+            .filter { isProgressionWorkSet(it.setType, source.config.ruleRevision) }
             .sortedWith(setComparator)
         val workSetNumbers = workSets.map { it.setNumber }
         if (workSetNumbers.any { it <= 0 } || workSetNumbers.distinct().size != workSetNumbers.size) {
@@ -325,7 +377,11 @@ class SharedProgressionEngine {
             backoffPercent = config.backoffPercent
         )
         val failuresIncludingCurrent = priorConsecutiveFailures(input) + 1
-        val repeatArguments = repeatReasonArguments + ("actualWeightKg" to baseWeightKg)
+        val streakArguments = if (config.ruleRevision == 2) mapOf(
+            "failedSessions" to failuresIncludingCurrent.toDouble(),
+            "failureThreshold" to failurePolicy.stallThreshold.toDouble()
+        ) else emptyMap()
+        val repeatArguments = repeatReasonArguments + ("actualWeightKg" to baseWeightKg) + streakArguments
         if (failuresIncludingCurrent < failurePolicy.stallThreshold) {
             return if (weightsDiffer(target.weightKg, baseWeightKg)) {
                 propose(
@@ -353,7 +409,7 @@ class SharedProgressionEngine {
                 target = target,
                 proposedTarget = target.copy(weightKg = backedOff),
                 reasonCode = ProgressionReasonCode.STALL_BACKOFF,
-                reasonArguments = additionalBackoffReasonArguments + mapOf(
+                reasonArguments = additionalBackoffReasonArguments + streakArguments + mapOf(
                     "backoffPercent" to failurePolicy.backoffPercent,
                     "actualWeightKg" to baseWeightKg
                 ),
@@ -364,7 +420,7 @@ class SharedProgressionEngine {
             keep(
                 target = target,
                 reasonCode = ProgressionReasonCode.BACKOFF_FLOOR_REACHED,
-                reasonArguments = additionalBackoffReasonArguments + mapOf(
+                reasonArguments = additionalBackoffReasonArguments + streakArguments + mapOf(
                     "backoffPercent" to failurePolicy.backoffPercent,
                     "actualWeightKg" to baseWeightKg
                 ),
@@ -414,6 +470,12 @@ class SharedProgressionEngine {
         )
     }
 
+    private fun mixedLoadRepeat(target: ProgressionTargetInput, sets: List<ProgressionSetInput>) = keep(
+        target, ProgressionReasonCode.MIXED_LOADS,
+        mapOf("minWeightKg" to sets.minOf { it.weightKg }, "maxWeightKg" to sets.maxOf { it.weightKg }),
+        ProgressionStreakEffect.IGNORE, sets.map { it.id }
+    )
+
     private fun increasedWeight(actualWeightKg: Double, config: ProgressionConfigInput): Double {
         val display = toDisplay(actualWeightKg, requireNotNull(config.incrementUnit))
         return toKg(display + requireNotNull(config.incrementValue), config.incrementUnit)
@@ -441,6 +503,7 @@ class SharedProgressionEngine {
         config: ProgressionConfigInput
     ): Boolean {
         if (config.storageReason != null) return false
+        if (!validSuccessThreshold(config)) return false
         val schemeFieldsValid = when (config.scheme) {
             "MANUAL" -> config.incrementValue == null && config.incrementUnit == null &&
                 config.incrementKg == null && config.minReps == null && config.maxReps == null &&
@@ -501,7 +564,7 @@ class SharedProgressionEngine {
         config.incrementValue != null && config.incrementUnit != null && config.incrementKg != null
 
     private fun availableWorkSetIds(input: ProgressionInput): List<Long> = input.setsForTarget
-        .filter { it.setType == "NORMAL" }
+        .filter { isProgressionWorkSet(it.setType, input.sourceTarget.config.ruleRevision) }
         .sortedWith(setComparator)
         .map { it.id }
         .filter { it > 0L }
@@ -599,6 +662,7 @@ object SharedProgressionConfigValidator {
         config: ProgressionConfigInput
     ): List<String> {
         val errors = linkedSetOf<String>()
+        if (!validSuccessThreshold(config)) errors += "config.successThreshold"
         if (target.sets <= 0) errors += "target.sets"
         if (target.reps <= 0) errors += "target.reps"
         if (!target.weightKg.isFinite() || target.weightKg < 0.0) errors += "target.weightKg"
@@ -700,3 +764,13 @@ object SharedProgressionConfigValidator {
 
 private val SUPPORTED_SCHEMES = setOf("MANUAL", "LINEAR", "DOUBLE", "TOTAL_REPS", "RPE_RIR")
 private val SUPPORTED_UNITS = setOf("METRIC", "IMPERIAL")
+
+private fun validSuccessThreshold(config: ProgressionConfigInput): Boolean =
+    config.successThreshold in 1..6 &&
+        (config.successThreshold == 1 || (config.scheme == "LINEAR" && config.ruleRevision == 2))
+
+/** A reset alone is not evidence of success (e.g. imported or informational outcomes). */
+fun isSuccessfulProgression(reasonCode: String, streakEffect: String): Boolean =
+    streakEffect == "RESET" && reasonCode in setOf(
+        "LOAD_ADVANCED", "REP_TARGET_ADVANCED", "TOTAL_REPS_COMPLETED", "RPE_WITHIN_TARGET", "SUCCESS_CONFIRMATION_REQUIRED"
+    )

@@ -642,7 +642,7 @@ object SharedTrainingAnalytics {
     }
 
     private fun isCountedSet(set: BackupWorkoutSet): Boolean = when (resolvedSetType(set)) {
-        NORMAL_SET_TYPE, DROP_SET_TYPE, FAILURE_SET_TYPE -> true
+        NORMAL_SET_TYPE, DROP_SET_TYPE, FAILURE_SET_TYPE, "BACKOFF" -> true
         WARMUP_SET_TYPE -> false
         else -> false
     }

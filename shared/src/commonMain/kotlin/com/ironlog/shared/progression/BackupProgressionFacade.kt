@@ -12,7 +12,8 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class BackupProgressionHistory(
     val streakEffect: ProgressionStreakEffect,
-    val sourceTarget: BackupProgressionTarget? = null
+    val sourceTarget: BackupProgressionTarget? = null,
+    val successful: Boolean = false
 )
 
 @Serializable
@@ -46,7 +47,8 @@ object BackupProgressionFacade {
             previousComparableOutcomesNewestFirst = previousOutcomesNewestFirst.map { previous ->
                 ProgressionPreviousOutcomeInput(
                     sourceTarget = previous.sourceTarget?.toPortable() ?: portableTarget.target,
-                    streakEffect = previous.streakEffect
+                    streakEffect = previous.streakEffect,
+                    successful = previous.successful
                 )
             }
         )
@@ -99,7 +101,8 @@ private fun BackupProgressionConfig.toPortable() = ProgressionConfigInput(
     rpeTolerance = rpeTolerance,
     stallThreshold = stallThreshold,
     backoffPercent = backoffPercent,
-    ruleRevision = ruleRevision
+    ruleRevision = ruleRevision,
+    successThreshold = successThreshold
 )
 
 private fun BackupWorkoutSet.toPortable() = ProgressionSetInput(

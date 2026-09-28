@@ -228,6 +228,7 @@ private struct IOSWorkoutSetRow: View {
         case .warmup: return .orange
         case .dropSet: return .purple
         case .failure: return .red
+        case .backoff: return .secondary
         }
     }
 }
@@ -251,7 +252,7 @@ private struct IOSWorkoutInlineSetEntry: View {
         self.row = row; self.sessionID = sessionID; self.unitSystem = unitSystem; self.onSave = onSave
         _weight = State(initialValue: IOSNumber.format(IOSWeight.display(kg: row.defaultWeightKg, unit: unitSystem)))
         _reps = State(initialValue: row.targetReps > 0 ? String(row.targetReps) : "")
-        _kind = State(initialValue: row.nextPlannedSet?.kind == "WARMUP" ? .warmup : .normal)
+        _kind = State(initialValue: IOSWorkoutSetType(rawValue: row.nextPlannedSet?.kind ?? "NORMAL") ?? .normal)
     }
     private var source: String {
         if row.target?.setTargets.isEmpty == false { return String(localized: "Satzvorgabe aus dem Plan · editierbar") }

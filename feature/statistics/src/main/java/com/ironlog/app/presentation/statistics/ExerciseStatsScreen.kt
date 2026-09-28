@@ -561,6 +561,7 @@ private fun recentSetTypeLabel(type: SetType): String = stringResource(
         SetType.WARMUP -> StatisticsR.string.stats_set_type_warmup
         SetType.DROP_SET -> StatisticsR.string.stats_set_type_drop
         SetType.FAILURE -> StatisticsR.string.stats_set_type_failure
+        SetType.BACKOFF -> StatisticsR.string.stats_set_type_backoff
     }
 )
 

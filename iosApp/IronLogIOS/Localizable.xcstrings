@@ -451,6 +451,16 @@
         }
       }
     },
+    "%lld von %lld vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld von %lld vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert."
+          }
+        }
+      }
+    },
     "%lld weitere geplante Sätze offen": {
       "localizations": {
         "de": {
@@ -941,6 +951,16 @@
         }
       }
     },
+    "Alle Arbeitssätze müssen das Ziel erreichen. Deloads werden übersprungen; andere Lasten oder Ziele beginnen eine neue Bestätigung.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Arbeitssätze müssen das Ziel erreichen. Deloads werden übersprungen; andere Lasten oder Ziele beginnen eine neue Bestätigung."
+          }
+        }
+      }
+    },
     "Alle Gründe": {
       "localizations": {
         "de": {
@@ -1007,6 +1027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alle geplanten Sätze bestätigt"
+          }
+        }
+      }
+    },
+    "Alle gewerteten Sätze bestätigen mindestens %@. Dieses Gewicht ist die Grundlage des Vorschlags.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle gewerteten Sätze bestätigen mindestens %@. Dieses Gewicht ist die Grundlage des Vorschlags."
           }
         }
       }
@@ -1411,6 +1441,16 @@
         }
       }
     },
+    "Backoff-Satz": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backoff-Satz"
+          }
+        }
+      }
+    },
     "Backoff-Satz: %@": {
       "localizations": {
         "de": {
@@ -1611,12 +1651,32 @@
         }
       }
     },
+    "Bestätigung: %lld von %lld vergleichbaren Erfolgen.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätigung: %lld von %lld vergleichbaren Erfolgen."
+          }
+        }
+      }
+    },
     "Bewertung: %@": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bewertung: %@"
+          }
+        }
+      }
+    },
+    "Bis zum Versagen": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bis zum Versagen"
           }
         }
       }
@@ -1911,6 +1971,16 @@
         }
       }
     },
+    "Das Fehlerlimit muss zwischen 1 und 6 liegen.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Fehlerlimit muss zwischen 1 und 6 liegen."
+          }
+        }
+      }
+    },
     "Das Gesamtziel muss größer als 0 sein.": {
       "localizations": {
         "de": {
@@ -1927,6 +1997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Das Gewicht ist ungültig."
+          }
+        }
+      }
+    },
+    "Das RPE-Ziel muss zwischen 1 und 10, die Toleranz zwischen 0 und 2 liegen.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das RPE-Ziel muss zwischen 1 und 10, die Toleranz zwischen 0 und 2 liegen."
           }
         }
       }
@@ -2191,6 +2271,16 @@
         }
       }
     },
+    "Der Backoff muss zwischen 1 und 30 % liegen.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Backoff muss zwischen 1 und 30 % liegen."
+          }
+        }
+      }
+    },
     "Der Deload-Modus passt die angezeigten Trainingsziele an.": {
       "localizations": {
         "de": {
@@ -2397,6 +2487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Die Aktion hat keine bestätigten Trainingsdaten zurückgegeben."
+          }
+        }
+      }
+    },
+    "Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch."
           }
         }
       }
@@ -3041,6 +3141,16 @@
         }
       }
     },
+    "Erfolgreiche Einheiten vor der Steigerung": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erfolgreiche Einheiten vor der Steigerung"
+          }
+        }
+      }
+    },
     "Erneut versuchen": {
       "localizations": {
         "de": {
@@ -3597,6 +3707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Gesäß"
+          }
+        }
+      }
+    },
+    "Gewertet: %lld Arbeitssätze, davon %lld bis zum Versagen. Ausgelassen: %lld Aufwärm-, %lld Drop-, %lld Backoff- und %lld zusätzliche Arbeitssätze.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gewertet: %lld Arbeitssätze, davon %lld bis zum Versagen. Ausgelassen: %lld Aufwärm-, %lld Drop-, %lld Backoff- und %lld zusätzliche Arbeitssätze."
           }
         }
       }
@@ -7891,6 +8011,16 @@
         }
       }
     },
+    "Vergleichbare Fehlversuche: %lld von %lld bis zum Backoff.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vergleichbare Fehlversuche: %lld von %lld bis zum Backoff."
+          }
+        }
+      }
+    },
     "Vergleichbarkeit unterbrochen": {
       "localizations": {
         "de": {
@@ -8517,6 +8647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wochenvolumen wird geladen …"
+          }
+        }
+      }
+    },
+    "Wähle 1 bis 6 vergleichbare Erfolge in Folge.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle 1 bis 6 vergleichbare Erfolge in Folge."
           }
         }
       }

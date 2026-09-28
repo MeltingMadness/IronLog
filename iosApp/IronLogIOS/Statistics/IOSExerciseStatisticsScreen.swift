@@ -540,6 +540,7 @@ private struct IOSExerciseRecentSetsCard: View {
         case "NORMAL": return String(localized: "Arbeitssatz")
         case "WARMUP": return String(localized: "Aufwärmen")
         case "DROP_SET": return String(localized: "Dropsatz")
+        case "BACKOFF": return String(localized: "Backoff-Satz")
         case "FAILURE": return String(localized: "Failure-Satz")
         default: return raw
         }

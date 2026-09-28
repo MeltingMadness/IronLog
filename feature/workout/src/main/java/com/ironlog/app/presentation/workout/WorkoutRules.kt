@@ -61,8 +61,7 @@ internal fun roundToOneDecimal(value: Double): Double =
 
 /**
  * Returns whether logging [newSetType] completes the planned slots for one exact row.
- * Planned slots are fulfilled by NORMAL sets only; warmups, drop sets and failure sets remain
- * useful workout evidence but must not make a planned exercise appear complete. The active
+ * NORMAL and FAILURE fulfill work slots; warmups, drops and backoffs do not. The active
  * deload mode changes the effective set target used for this decision.
  */
 internal fun isPlannedExerciseComplete(
@@ -72,11 +71,16 @@ internal fun isPlannedExerciseComplete(
     newSetType: SetType
 ): Boolean {
     val effectiveTarget = planTarget?.let { applyDeloadToTarget(it, deloadMode) } ?: return false
+    if (effectiveTarget.setTargets.isNotEmpty()) {
+        return com.ironlog.shared.plans.PlannedSets.matchedIndices(
+            effectiveTarget.setTargets, previousSets.map { it.setType.name } + newSetType.name
+        ).all { it != null }
+    }
     val targetSetCount = effectiveTarget.target.sets
     if (targetSetCount <= 0) return false
 
-    val normalSetCount = previousSets.count { it.setType == SetType.NORMAL } +
-        if (newSetType == SetType.NORMAL) 1 else 0
+    val normalSetCount = previousSets.count { it.setType == SetType.NORMAL || it.setType == SetType.FAILURE } +
+        if (newSetType == SetType.NORMAL || newSetType == SetType.FAILURE) 1 else 0
     return normalSetCount >= targetSetCount
 }
 

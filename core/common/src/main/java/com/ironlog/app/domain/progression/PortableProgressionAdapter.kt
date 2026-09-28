@@ -43,7 +43,8 @@ internal object PortableProgressionAdapter {
         previousComparableOutcomesNewestFirst = previousComparableOutcomesNewestFirst.map {
             ProgressionPreviousOutcomeInput(
                 sourceTarget = it.sourceTarget.target.toPortable(),
-                streakEffect = it.streakEffect.toShared()
+                streakEffect = it.streakEffect.toShared(),
+                successful = it.successful
             )
         }
     )
@@ -68,6 +69,7 @@ internal object PortableProgressionAdapter {
         )
 
         is ProgressionConfig.Linear -> activeConfig(
+            successThreshold = successThreshold,
             scheme = scheme.name,
             step = step,
             failurePolicy = failurePolicy,
@@ -117,7 +119,8 @@ internal object PortableProgressionAdapter {
         maxReps: Int? = null,
         targetTotalReps: Long? = null,
         targetRpe: Double? = null,
-        rpeTolerance: Double? = null
+        rpeTolerance: Double? = null,
+        successThreshold: Int = 1
     ) = ProgressionConfigInput(
         scheme = scheme,
         incrementValue = step.originalValue,
@@ -130,6 +133,7 @@ internal object PortableProgressionAdapter {
         rpeTolerance = rpeTolerance,
         stallThreshold = failurePolicy.stallThreshold,
         backoffPercent = failurePolicy.backoffPercent,
+        successThreshold = successThreshold,
         ruleRevision = ruleRevision
     )
 

@@ -36,8 +36,15 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     var matchedSlots: [Int?] {
         var used = Set<Int>()
         return loggingSlots.map { slot in
-            let kind = slot.kind == "BACKOFF" ? "NORMAL" : slot.kind
-            guard let index = sets.indices.first(where: { !used.contains($0) && resolvedIOSWorkoutSetType(sets[$0]).rawValue == kind }) else { return nil }
+            guard let index = sets.indices.first(where: { index in
+                guard !used.contains(index) else { return false }
+                let kind = resolvedIOSWorkoutSetType(sets[index])
+                switch slot.kind {
+                case "NORMAL": return kind == .normal || kind == .failure
+                case "BACKOFF": return kind == .backoff || kind == .normal // Legacy backoff records.
+                default: return kind.rawValue == slot.kind
+                }
+            }) else { return nil }
             used.insert(index)
             return index
         }
@@ -48,12 +55,12 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
     var targetReps: Int {
         if target?.setTargets.isEmpty == false { return nextPlannedSet?.reps ?? displayTarget?.reps ?? 0 }
-        return sets.last(where: { resolvedIOSWorkoutSetType($0) == .normal })?.reps ?? displayTarget?.reps ?? 0
+        return sets.last(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) })?.reps ?? displayTarget?.reps ?? 0
     }
 
     var defaultWeightKg: Double {
         if target?.setTargets.isEmpty == false, let nextPlannedSet { return nextPlannedSet.weightKg }
-        if let last = sets.last(where: { resolvedIOSWorkoutSetType($0) == .normal }) { return last.weightKg }
+        if let last = sets.last(where: { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) }) { return last.weightKg }
         guard let target else { return previousWorkWeightKg ?? 0 }
         let displayWeight = displayTarget?.weightKg ?? target.target.weightKg
         return displayWeight > 0 ? displayWeight : (previousWorkWeightKg ?? 0)
@@ -64,7 +71,7 @@ struct IOSWorkoutExerciseRow: Identifiable, Equatable {
     }
 
     var completedNormalSets: Int {
-        sets.filter { resolvedIOSWorkoutSetType($0) == .normal }.count
+        sets.filter { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) }.count
     }
 
     var remainingPlannedSets: Int? {
@@ -726,7 +733,7 @@ struct IOSWorkoutScreen: View {
             // an older work-set hint instead of leaking across sessions.
             guard !exerciseSets.isEmpty else { continue }
             return exerciseSets
-                .filter { resolvedIOSWorkoutSetType($0) == .normal }
+                .filter { [IOSWorkoutSetType.normal, .failure].contains(resolvedIOSWorkoutSetType($0)) }
                 .sorted {
                     $0.completedAt == $1.completedAt ? $0.id > $1.id : $0.completedAt > $1.completedAt
                 }
@@ -805,13 +812,10 @@ struct IOSWorkoutScreen: View {
             let rowKey = iosWorkoutRestTimerRowKey(for: set)
             if resolvedIOSWorkoutSetType(set) == .warmup {
                 dismissRestTimer(rowKey: rowKey)
-            } else if let targetID = set.planTargetSnapshotId,
-                      let target = store.data?.workoutPlanTargets.first(where: { $0.id == targetID }),
-                      let savedSets = store.data?.sets(for: session) {
-                let completedNormalSets = savedSets.filter {
-                    $0.planTargetSnapshotId == targetID && resolvedIOSWorkoutSetType($0) == .normal
-                }.count
-                if completedNormalSets >= deloadAdjustedTarget(target.target).sets {
+            } else if set.planTargetSnapshotId != nil,
+                      let data = store.data,
+                      let row = exerciseRows(session: session, data: data).first(where: { $0.id == rowKey }) {
+                if row.isComplete {
                     dismissRestTimer(rowKey: rowKey)
                 } else {
                     startRestTimer(sessionID: session.id, rowKey: rowKey)

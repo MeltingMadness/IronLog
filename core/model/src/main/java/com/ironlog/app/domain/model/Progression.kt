@@ -1,6 +1,6 @@
 package com.ironlog.app.domain.model
 
-const val CURRENT_PROGRESSION_RULE_REVISION = 1
+const val CURRENT_PROGRESSION_RULE_REVISION = 2
 
 enum class ProgressionScheme { MANUAL, LINEAR, DOUBLE, TOTAL_REPS, RPE_RIR }
 
@@ -20,7 +20,7 @@ sealed interface ProgressionConfig {
     val ruleRevision: Int
 
     data class Manual(
-        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+        override val ruleRevision: Int = 1
     ) : ProgressionConfig {
         override val scheme = ProgressionScheme.MANUAL
     }
@@ -28,7 +28,8 @@ sealed interface ProgressionConfig {
     data class Linear(
         val step: WeightStep,
         val failurePolicy: FailurePolicy = FailurePolicy(),
-        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION
+        override val ruleRevision: Int = CURRENT_PROGRESSION_RULE_REVISION,
+        val successThreshold: Int = 1
     ) : ProgressionConfig {
         override val scheme = ProgressionScheme.LINEAR
     }
@@ -103,12 +104,15 @@ enum class ProgressionReasonCode {
     MANUAL_SCHEME,
     SET_NUMBER_INVALID,
     SET_VALUE_INVALID,
-    BACKOFF_FLOOR_REACHED
+    BACKOFF_FLOOR_REACHED,
+    SUCCESS_CONFIRMATION_REQUIRED,
+    MIXED_LOADS
 }
 
 data class PreviousProgressionOutcome(
     val sourceTarget: WorkoutPlanTarget,
-    val streakEffect: ProgressionStreakEffect
+    val streakEffect: ProgressionStreakEffect,
+    val successful: Boolean = false
 )
 
 data class ProgressionContext(

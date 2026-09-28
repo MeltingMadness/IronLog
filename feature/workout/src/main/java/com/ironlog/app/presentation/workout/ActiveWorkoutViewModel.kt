@@ -196,7 +196,7 @@ class ActiveWorkoutViewModel(
                 return@mapNotNull null
             }
             val lastWorkSet = row.sets
-                .filter { it.setType == SetType.NORMAL }
+                .filter { it.setType == SetType.NORMAL || it.setType == SetType.FAILURE }
                 .sortedBy { it.setNumber }
                 .lastOrNull()
                 ?: return@mapNotNull null

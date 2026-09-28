@@ -15,8 +15,13 @@ object PlannedSets {
     fun matchedIndices(targets: List<PlannedSet>, recordedKinds: List<String>): List<Int?> {
         val used = mutableSetOf<Int>()
         return targets.map { target ->
-            val kind = if (target.kind == "BACKOFF") "NORMAL" else target.kind
-            recordedKinds.indices.firstOrNull { it !in used && recordedKinds[it] == kind }?.also { used.add(it) }
+            recordedKinds.indices.firstOrNull { index ->
+                index !in used && when (target.kind) {
+                    "NORMAL" -> recordedKinds[index] in setOf("NORMAL", "FAILURE")
+                    "BACKOFF" -> recordedKinds[index] in setOf("BACKOFF", "NORMAL") // Legacy recorded backoffs.
+                    else -> recordedKinds[index] == target.kind
+                }
+            }?.also { used.add(it) }
         }
     }
     /** Only performed slots change; unperformed slots and their order stay intact. */

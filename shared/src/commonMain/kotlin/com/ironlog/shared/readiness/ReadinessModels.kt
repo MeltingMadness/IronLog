@@ -95,6 +95,7 @@ enum class SetType {
     WARMUP,
     FAILURE,
     DROP_SET,
+    BACKOFF,
     UNKNOWN,
 }
 

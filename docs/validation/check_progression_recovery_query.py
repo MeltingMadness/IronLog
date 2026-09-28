@@ -5,7 +5,7 @@ import re
 import sqlite3
 
 root = Path(__file__).resolve().parents[2]
-schema = json.loads((root / 'core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/11.json').read_text())
+schema = json.loads((root / 'core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/15.json').read_text())
 db = sqlite3.connect(':memory:')
 entities = {e['tableName']: e for e in schema['database']['entities']}
 for name, entity in entities.items():
@@ -45,3 +45,38 @@ before_rows = [r[0] for r in db.execute(queries['getCompletedSessionIdsWithMissi
 assert all_rows == [1, 2, 3, 10], all_rows
 assert before_rows == [1, 2, 3], before_rows
 print('Recovery SQL: missing + legacy candidates selected; current/decided/edited/nonzero/manual rows excluded; chronological bound passed.')
+
+# Deloads are absent from both recovery and failure-history queries; legacy unknown
+# context remains eligible. Execute the Room query text rather than a second SQL model.
+db.execute('UPDATE workout_sessions SET isDeload = 1 WHERE id = 1')
+assert [r[0] for r in db.execute(queries['getCompletedSessionIdsWithMissingOutcomes'])] == [2, 3, 10]
+assert [r[0] for r in db.execute(queries['getCompletedSessionIdsWithMissingOutcomesBefore'],
+    {'sourceEndTime': 500, 'sourceSessionId': 5})] == [2, 3]
+history_args = dict(planId=1, exerciseId=1, orderIndex=0, sourceEndTime=500, sourceSessionId=5)
+assert [r[0] for r in db.execute(queries['getPreviousTargets'], history_args)] == [4, 3, 2]
+
+args = dict(planId=1, exerciseId=1, orderIndex=0, sourceEndTime=100, sourceSessionId=1)
+freshness = queries['hasNewerCompletedWork']
+def superseded(**changes):
+    return bool(db.execute(freshness, args | changes).fetchone()[0])
+
+assert not superseded()  # An unused plan position is not new evidence.
+insert('workout_sets', dict(id=100, sessionId=3, exerciseId=1, planTargetSnapshotId=3,
+    setNumber=1, reps=7, weightKg=100, setType='NORMAL'))
+assert superseded()  # The outcome is INFORMATIONAL, not PENDING.
+assert not superseded(planId=2)
+assert not superseded(exerciseId=2)
+assert not superseded(orderIndex=1)
+assert superseded(sourceEndTime=300, sourceSessionId=2)
+assert not superseded(sourceEndTime=300, sourceSessionId=3)
+db.execute('UPDATE workout_sessions SET isDeload = 1 WHERE id = 3')
+assert not superseded()
+db.execute('UPDATE workout_sessions SET isDeload = NULL WHERE id = 3')
+assert superseded()
+db.execute("UPDATE workout_sets SET setType = 'WARMUP' WHERE id = 100")
+assert not superseded()
+db.execute("UPDATE workout_sets SET setType = 'FAILURE' WHERE id = 100")
+assert superseded()  # Recent failed work must also prevent replaying old advice.
+db.execute('UPDATE workout_sessions SET endTime = NULL WHERE id = 3')
+assert not superseded()
+print('Freshness SQL: newer work supersedes advice; deloads, warmups, unused positions and unfinished sessions do not; completion-time ties and legacy context passed.')

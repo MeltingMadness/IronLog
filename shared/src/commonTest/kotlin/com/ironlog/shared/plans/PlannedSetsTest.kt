@@ -13,4 +13,11 @@ class PlannedSetsTest {
         assertEquals(listOf(1, 3, null), PlannedSets.matchedIndices(targets, recorded.map { it.kind }))
         assertEquals(listOf(targets[0], targets[1].copy(reps = 9), targets[2]), PlannedSets.mergePerformed(targets, recorded))
     }
+    @Test fun failureFillsAWorkSlotAndExplicitBackoffKeepsItsOwnSlot() {
+        val targets = listOf(PlannedSet(), PlannedSet(kind = "BACKOFF"))
+        assertEquals(listOf(0, 1), PlannedSets.matchedIndices(targets, listOf("FAILURE", "BACKOFF")))
+        assertEquals(listOf(null), PlannedSets.matchedIndices(listOf(PlannedSet()), listOf("BACKOFF")))
+        // Previous app versions recorded planned backoffs as NORMAL.
+        assertEquals(listOf(0), PlannedSets.matchedIndices(listOf(PlannedSet(kind = "BACKOFF")), listOf("NORMAL")))
+    }
 }

@@ -147,7 +147,7 @@
     <string name="workout_warmup_chip">Aufwärmen</string>
     <string name="workout_set_type_normal">Normal</string>
     <string name="workout_set_type_drop_set">Drop-Set</string>
-    <string name="workout_set_type_failure">Fehlversuch</string>
+    <string name="workout_set_type_failure">Versagen</string>
     <!-- Satzintention: eigener Vertrag, unabhaengig von der Satzart oben. -->
     <string name="workout_set_intention_label">Absicht</string>
     <string name="workout_set_intention_unknown">Nicht angegeben</string>
@@ -558,4 +558,8 @@
     <string name="common_action_not_found">%1$s fehlgeschlagen: Daten nicht gefunden.</string>
     <string name="common_action_conflict">%1$s fehlgeschlagen: inkonsistenter Zustand.</string>
     <string name="common_action_failed">%1$s fehlgeschlagen.</string>
+    <string name="workout_set_type_backoff">Backoff-Satz</string>
+    <string name="plan_editor_progression_success_threshold">Erfolgreiche Einheiten vor der Steigerung</string>
+    <string name="plan_editor_progression_error_success_threshold">Wähle 1 bis 6 vergleichbare Erfolge in Folge.</string>
+    <string name="plan_editor_progression_success_hint">Alle Arbeitssätze müssen das Ziel erreichen. Deloads werden übersprungen; andere Lasten oder Ziele beginnen eine neue Bestätigung.</string>
 </resources>

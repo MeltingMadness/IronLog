@@ -404,6 +404,7 @@ private fun setTypeLabel(type: SetType, setNumber: Int): String = when (type) {
     SetType.WARMUP -> stringResource(id = R.string.workout_detail_set_warmup, setNumber)
     SetType.DROP_SET -> stringResource(id = HistoryR.string.history_set_drop, setNumber)
     SetType.FAILURE -> stringResource(id = HistoryR.string.history_set_failure, setNumber)
+    SetType.BACKOFF -> stringResource(id = HistoryR.string.history_set_backoff, setNumber)
 }
 
 @Composable

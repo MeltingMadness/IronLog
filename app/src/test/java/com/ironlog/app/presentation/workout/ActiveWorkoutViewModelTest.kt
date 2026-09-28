@@ -1729,7 +1729,7 @@ class ActiveWorkoutViewModelTest {
     }
 
     @Test
-    fun `rest timer counts only normal sets against the deload target`() = runTest {
+    fun `rest timer counts failure work sets against the deload target`() = runTest {
         prefsRepo.updateAutoRestTimerEnabled(true)
         prefsRepo.updateDeloadMode(DeloadMode.HALVE_SET_VOLUME)
         val planId = 89L
@@ -1760,7 +1760,7 @@ class ActiveWorkoutViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(key in vm.uiState.value.restTimers)
 
-        // FAILURE is recorded but must not fill one of the two effective deload slots.
+        // A set performed to failure still completes one effective work slot.
         vm.logSet(
             key = key,
             exerciseId = testExercise.id,
@@ -1768,11 +1768,6 @@ class ActiveWorkoutViewModelTest {
             weightKg = 80.0,
             setType = SetType.FAILURE
         )
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertTrue(key in vm.uiState.value.restTimers)
-
-        // The second NORMAL set completes ceil(4 / 2) effective slots.
-        vm.logSet(key = key, exerciseId = testExercise.id, reps = 8, weightKg = 80.0)
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(key !in vm.uiState.value.restTimers)
 

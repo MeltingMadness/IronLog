@@ -106,14 +106,17 @@ class BackupLifecycleRoundTripTest {
             assertTrue("export must contain skip", payload.metaPlanSkips.any { it.id == SKIP_ID })
             assertTrue("export must contain targets", payload.workoutPlanTargets.any { it.id == TARGET_ID })
             assertTrue("export must contain suggestions", payload.progressionSuggestions.any { it.id == SUGGESTION_ID })
-            assertEquals(14, payload.schemaVersion)
+            assertEquals(15, payload.schemaVersion)
+            assertEquals(2, payload.planExercises.single().progression.successThreshold)
+            assertTrue(payload.workoutSets.any { it.setType == "FAILURE" })
+            assertTrue(payload.workoutSets.any { it.setType == "BACKOFF" })
 
             // Mutate/empty the database so the imported document must prove itself.
             harness.mutateAwayFromSeededState()
 
             val preview = harness.repository.previewImport(MEMORY_URI)
             assertTrue("preview must validate", preview.isValid)
-            assertEquals(14, preview.schemaVersion)
+            assertEquals(15, preview.schemaVersion)
             assertEquals(sha256Hex(exported), preview.sha256)
             assertPreviewCounts(preview, payload)
 
@@ -278,7 +281,7 @@ class BackupLifecycleRoundTripTest {
     }
 
     private fun openRawConnection(dbName: String): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(14) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(15) {
             override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(
@@ -361,7 +364,8 @@ class BackupLifecycleRoundTripTest {
             incrementKg = 2.5,
             stallThreshold = 2,
             backoffPercent = 10.0,
-            ruleRevision = 1
+            ruleRevision = 2,
+            successThreshold = 2
         )
 
         suspend fun seedFullDomain() {
@@ -468,13 +472,20 @@ class BackupLifecycleRoundTripTest {
                         setNumber = index + 1,
                         reps = 6,
                         weightKg = 120.0,
-                        setType = "NORMAL",
+                        setType = if (id == SET_3_ID) "FAILURE" else "NORMAL",
                         completedAt = 3100L + index,
                         rpe = if (id == SET_2_ID) 9.0 else 8.0,
                         planTargetSnapshotId = TARGET_ID
                     )
                 )
             }
+            workoutSetDao.insert(
+                WorkoutSetEntity(
+                    id = SET_3_ID + 1, sessionId = SESSION_ID, exerciseId = CUSTOM_SQUAT_ID,
+                    setNumber = 4, reps = 10, weightKg = 90.0, setType = "BACKOFF",
+                    completedAt = 3200L, planTargetSnapshotId = TARGET_ID
+                )
+            )
             progressionDao.replaceAllSuggestions(
                 listOf(
                     ProgressionSuggestionEntity(
@@ -491,7 +502,7 @@ class BackupLifecycleRoundTripTest {
                         reasonCode = "LOAD_ADVANCED",
                         reasonArgumentsJson = "{\"actualWeightKg\":120.0,\"expectedWeightKg\":120.0}",
                         countedSetIdsJson = "[$SET_1_ID,$SET_2_ID,$SET_3_ID]",
-                        streakEffect = "INCREMENT",
+                        streakEffect = "RESET",
                         suggestedTarget = ProgressionTargetColumns(sets = 3, reps = 6, weightKg = 122.5),
                         status = "PENDING",
                         wasEdited = false,
@@ -513,7 +524,7 @@ class BackupLifecycleRoundTripTest {
                 )
             )
 
-            exportedSetCount = 3
+            exportedSetCount = workoutSetDao.getAllSetsList().size
         }
 
         suspend fun mutateAwayFromSeededState() {
@@ -717,7 +728,8 @@ private fun ProgressionConfigColumns.toBackup() = BackupProgressionConfig(
     rpeTolerance = rpeTolerance,
     stallThreshold = stallThreshold,
     backoffPercent = backoffPercent,
-    ruleRevision = ruleRevision
+    ruleRevision = ruleRevision,
+    successThreshold = successThreshold
 )
 
 private fun ProgressionTargetColumns.toBackup() = BackupProgressionTarget(

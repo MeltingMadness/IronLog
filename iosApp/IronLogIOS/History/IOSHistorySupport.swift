@@ -113,6 +113,7 @@ extension ILWorkoutSet {
         case "NORMAL": return String(localized: "Arbeitssatz")
         case "WARMUP": return String(localized: "Aufwärmsatz")
         case "DROP_SET": return String(localized: "Dropsatz")
+        case "BACKOFF": return String(localized: "Backoff-Satz")
         case "FAILURE": return String(localized: "Versagen")
         default: return iosResolvedSetType
         }

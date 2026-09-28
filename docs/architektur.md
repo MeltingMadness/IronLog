@@ -32,15 +32,15 @@ iosApp/                 Native SwiftUI-App, siehe iosApp/README.md
 
 **Bottom-Navigation:** Home, Pläne, Verlauf, Übungen. Einstellungen, aktives Workout, Progressions-Review und Detailseiten sind eigene Ziele ohne Tab.
 
-## Datenbank (Room, Version 14)
+## Datenbank (Room, Version 15)
 
-Das exportierte Schema liegt in `core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/14.json`. Es gibt durchgehende Migrationen von 1 bis 14. Tests dazu: `app/src/androidTest/.../IronLogDatabaseMigrationTest.kt`.
+Das exportierte Schema liegt in `core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/15.json`. Es gibt durchgehende Migrationen von 1 bis 15. Migration 14→15 ergänzt die Erfolgsbestätigung und stellt aktive Planregeln auf Revision 2 um; historische Snapshots behalten ihre Revision. Tests dazu: `app/src/androidTest/.../IronLogDatabaseMigrationTest.kt`.
 
 | Tabelle | Zweck | Wichtige Beziehungen |
 |---|---|---|
 | `exercises` | Übungen (Seed-Daten + eigene), archivierbar | – |
 | `workout_sessions` | Ein Training. `endTime = NULL` heißt: läuft noch. `planId`/`metaPlanId` für den Kontext, `isDeload` für den Deload-Kontext (`NULL` = unbekannt, bei Altbeständen) | – |
-| `workout_sets` | Ein Satz mit Gewicht, Wdh., Satztyp (`NORMAL`, `WARMUP`, `DROP_SET`, `FAILURE`), RPE | → session (CASCADE), → exercise (RESTRICT), → plan-target-snapshot (SET NULL) |
+| `workout_sets` | Ein Satz mit Gewicht, Wdh., Satztyp (`NORMAL`, `WARMUP`, `DROP_SET`, `FAILURE`, `BACKOFF`), RPE | → session (CASCADE), → exercise (RESTRICT), → plan-target-snapshot (SET NULL) |
 | `personal_records` | Rekorde pro Übung | → exercise (CASCADE) |
 | `training_plans` | Trainingspläne | – |
 | `plan_exercises` | Übungen im Plan: Zielwerte, optionale individuelle Satzvorgaben (`setTargetsJson`), Supersatz-Gruppe, Progressions-Konfiguration (flach gespeichert) | → plan (CASCADE), → exercise (CASCADE) |
@@ -62,7 +62,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Backup
 
-- Format: JSON, `BackupPayloadV1` mit `schemaVersion = 14` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten und die Satzvorgaben. Modelle und Validator liegen in `:shared` (`com.ironlog.shared.backup`). `data` nutzt sie über Typaliase.
+- Format: JSON, `BackupPayloadV1` mit `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.ironlog.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
 - Ältere Backups ohne neuere Felder (Meta-Plan-Skips, Progression, Readiness, Satzvorgaben) lassen sich weiter importieren. Backups aus einer neueren App-Version werden mit einer klaren Meldung abgelehnt. Fehlende Felder bekommen sichere Standardwerte.
 - Vor jedem Import und jeder Wiederherstellung legt die App ein **internes Sicherheitsbackup** an und prüft es per SHA-256 (`FileRecoveryBackupStore`).
 - Einstellungen und Erinnerungen sind **nicht** Teil des Backups.

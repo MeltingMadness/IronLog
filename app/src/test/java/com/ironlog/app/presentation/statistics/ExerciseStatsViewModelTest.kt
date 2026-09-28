@@ -321,13 +321,16 @@ class ExerciseStatsViewModelTest {
         exerciseRepo.addExercise(fly)
 
         val monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        // Completed fixtures must already be in the past on every weekday,
+        // including Monday morning. A Wednesday fixture is future work on Monday.
+        val completedThisWeek = monday.atStartOfDay()
 
         // Diese Woche: 6 Arbeitssaetze Bankdruecken (Brust + Trizeps)
         repeat(6) { i ->
             statisticsRepo.addExerciseSet(
                 WorkoutSet(
                     id = i + 1L, sessionId = 1L, exerciseId = benchPress.id, setNumber = i + 1,
-                    reps = 8, weightKg = 60.0, setType = SetType.NORMAL, completedAt = monday.atTime(10, 0)
+                    reps = 8, weightKg = 60.0, setType = SetType.NORMAL, completedAt = completedThisWeek
                 )
             )
         }
@@ -338,7 +341,7 @@ class ExerciseStatsViewModelTest {
                     id = 10L + i, sessionId = 2L, exerciseId = fly.id, setNumber = i + 1,
                     reps = 10, weightKg = 20.0,
                     setType = if (i == 0) SetType.FAILURE else SetType.NORMAL,
-                    completedAt = monday.plusDays(2).atTime(18, 0)
+                    completedAt = completedThisWeek
                 )
             )
         }
@@ -354,7 +357,7 @@ class ExerciseStatsViewModelTest {
         statisticsRepo.addExerciseSet(
             WorkoutSet(
                 id = 31L, sessionId = 4L, exerciseId = benchPress.id, setNumber = 1,
-                reps = 5, weightKg = 20.0, setType = SetType.WARMUP, completedAt = monday.atTime(9, 0)
+                reps = 5, weightKg = 20.0, setType = SetType.WARMUP, completedAt = completedThisWeek
             )
         )
 
