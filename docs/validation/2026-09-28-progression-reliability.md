@@ -56,6 +56,10 @@ Die gezielt ausgewählten Prüfungen sind nach den Änderungen bestanden:
 
 Beim Versionssprung wurden ältere Testfixtures ausdrücklich auf Revision 1 festgelegt, damit sie weiterhin das historische Verhalten prüfen. Backup-Erwartungen wurden auf Schema 15 und die erweiterte Satz-Fixture angepasst. Nach diesen Korrekturen wurden jeweils nur die betroffenen Prüfungen wiederholt.
 
+## Nachprüfung im Pull Request
+
+Der erste vollständige CI-Lauf von PR #45 deckte einen bereits vorhandenen datumsabhängigen Test auf: `ExerciseStatsViewModelTest` platzierte sechs als abgeschlossen gedachte Sätze auf den Mittwoch der aktuellen Woche. Bei Ausführung am Montag filtert die App diese korrekt als zukünftig heraus (6 statt der erwarteten 12 Sätze). Die Fixture verwendet nun den Wochenbeginn, der an jedem Wochentag bereits erreicht ist. Die Erwartungswerte und die produktive Statistiklogik bleiben unverändert; beide Wochenvolumen-Fälle wurden gezielt nachgeprüft.
+
 ## Reproduzierbare Auswahl
 
 JDK 17 voraussetzen. Die Befehle listen die insgesamt verwendete gezielte Auswahl; bereits erfolgreiche Teilgruppen müssen bei weiteren Änderungen nur bei sachlichem Anlass erneut laufen.
