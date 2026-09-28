@@ -12,6 +12,7 @@ import com.ironlog.shared.backup.BackupTrainingPlan
 import com.ironlog.shared.backup.BackupWorkoutSession
 import com.ironlog.shared.backup.BackupWorkoutPlanTarget
 import com.ironlog.shared.backup.BackupWorkoutSet
+import com.ironlog.shared.backup.forCurrentPlan
 import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import com.ironlog.shared.backup.SUPPORTED_BACKUP_SET_TYPES
 import com.ironlog.shared.backup.WARMUP_SET_TYPE
@@ -84,6 +85,7 @@ private object SharedBackupPayloadCodec {
                 schemaVersion = CURRENT_BACKUP_SCHEMA_VERSION,
                 appVersion = "",
                 exportedAtEpochMillis = 0L,
+                planExercises = decoded.planExercises.map { it.copy(progression = it.progression.forCurrentPlan()) },
                 workoutSets = decoded.workoutSets.map { set ->
                     set.copy(
                         setType = set.resolvedSetType(),

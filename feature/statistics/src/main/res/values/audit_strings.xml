@@ -19,4 +19,5 @@
     <string name="stats_number_unit_suffix">" %1$s"</string>
     <string name="stats_exercise_details">%1$s · %2$s</string>
     <string name="stats_dated_value">%1$s · %2$s</string>
+    <string name="stats_set_type_backoff">Backoff</string>
 </resources>

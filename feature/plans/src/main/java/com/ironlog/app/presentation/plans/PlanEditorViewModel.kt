@@ -35,11 +35,13 @@ enum class ProgressionField {
     TARGET_RPE,
     RPE_TOLERANCE,
     STALL_THRESHOLD,
+    SUCCESS_THRESHOLD,
     BACKOFF_PERCENT
 }
 
 fun progressionFieldForValidationPath(path: String): ProgressionField? = when (path) {
     "config.step.originalValue", "config.step.kilograms" -> ProgressionField.STEP
+    "config.successThreshold" -> ProgressionField.SUCCESS_THRESHOLD
     "config.minReps" -> ProgressionField.MIN_REPS
     "config.maxReps" -> ProgressionField.MAX_REPS
     "config.targetTotalReps" -> ProgressionField.TOTAL_REPS
@@ -62,6 +64,7 @@ data class ProgressionEditorUi(
     val stallThreshold: String,
     val backoffPercent: String,
     val unitSystem: UnitSystem,
+    val successThreshold: String = "1",
     val originalStep: WeightStep? = null,
     val stepWasEdited: Boolean = false,
     val errors: Map<ProgressionField, String> = emptyMap()
@@ -430,6 +433,7 @@ class PlanEditorViewModel(
             ProgressionField.RPE_TOLERANCE -> current.copy(rpeTolerance = value)
             ProgressionField.STALL_THRESHOLD -> current.copy(stallThreshold = value)
             ProgressionField.BACKOFF_PERCENT -> current.copy(backoffPercent = value)
+            ProgressionField.SUCCESS_THRESHOLD -> current.copy(successThreshold = value)
         }
         _uiState.value = _uiState.value.copy(
             progressionEditor = updated.copy(errors = updated.errors - field)
@@ -756,6 +760,7 @@ class PlanEditorViewModel(
             } else {
                 base.rpeTolerance
             },
+            successThreshold = if (config is ProgressionConfig.Linear) config.successThreshold.toString() else "1",
             stallThreshold = failurePolicy.stallThreshold.toString(),
             backoffPercent = editableNumber(failurePolicy.backoffPercent),
             originalStep = step,
@@ -830,6 +835,12 @@ class PlanEditorViewModel(
             null
         }
 
+        val successThreshold = if (draft.scheme == ProgressionScheme.LINEAR) {
+            parseInteger(draft.successThreshold)?.takeIf { it in 1..6 } ?: run {
+                errors[ProgressionField.SUCCESS_THRESHOLD] = "config.successThreshold"
+                null
+            }
+        } else 1
         var minReps: Int? = null
         var maxReps: Int? = null
         var totalReps: Long? = null
@@ -877,7 +888,7 @@ class PlanEditorViewModel(
         )
         val config = when (draft.scheme) {
             ProgressionScheme.MANUAL -> ProgressionConfig.Manual()
-            ProgressionScheme.LINEAR -> ProgressionConfig.Linear(validStep, failurePolicy)
+            ProgressionScheme.LINEAR -> ProgressionConfig.Linear(validStep, failurePolicy, successThreshold = requireNotNull(successThreshold))
             ProgressionScheme.DOUBLE -> ProgressionConfig.DoubleProgression(
                 minReps = requireNotNull(minReps),
                 maxReps = requireNotNull(maxReps),

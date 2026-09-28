@@ -32,6 +32,7 @@ struct IOSProgressionDraft: Equatable {
     var rpeTolerance = "1"
     var stallThreshold = "2"
     var backoffPercent = "10"
+    var successThreshold = "1"
 
     init(record: ILProgressionConfig = ILProgressionConfig(), unitSystem: String = "METRIC") {
         if let decodedScheme = IOSProgressionScheme(rawValue: record.scheme) {
@@ -54,6 +55,7 @@ struct IOSProgressionDraft: Equatable {
         if let value = record.targetTotalReps { totalReps = String(value) }
         if let value = record.targetRpe { targetRpe = IOSNumber.format(value) }
         if let value = record.rpeTolerance { rpeTolerance = IOSNumber.format(value) }
+        successThreshold = String(record.successThreshold)
         stallThreshold = String(record.stallThreshold)
         backoffPercent = IOSNumber.format(record.backoffPercent)
     }
@@ -62,13 +64,15 @@ struct IOSProgressionDraft: Equatable {
         if let unsupportedScheme {
             return .failure(.init(String(localized: "Unbekanntes Progressionsschema \(unsupportedScheme); bitte zuerst manuell auswählen.")))
         }
+        if scheme == .manual { return .success(ILProgressionConfig()) }
         let stall = IOSNumber.parseInt(stallThreshold)
         let backoff = IOSNumber.parse(backoffPercent)
-        guard let stall, stall > 0 else { return .failure(.init(String(localized: "Das Fehlerlimit muss größer als 0 sein."))) }
-        guard let backoff, backoff >= 0, backoff <= 100 else { return .failure(.init(String(localized: "Der Backoff muss zwischen 0 und 100 % liegen."))) }
+        guard let stall, (1...6).contains(stall) else { return .failure(.init(String(localized: "Das Fehlerlimit muss zwischen 1 und 6 liegen."))) }
+        guard let backoff, backoff.isFinite, backoff >= 1, backoff <= 30 else { return .failure(.init(String(localized: "Der Backoff muss zwischen 1 und 30 % liegen."))) }
 
-        if scheme == .manual {
-            return .success(ILProgressionConfig(scheme: scheme.rawValue, stallThreshold: stall, backoffPercent: backoff, ruleRevision: 1))
+        let successes = scheme == .linear ? IOSNumber.parseInt(successThreshold) : 1
+        guard let successes, (1...6).contains(successes) else {
+            return .failure(.init(String(localized: "Wähle 1 bis 6 vergleichbare Erfolge in Folge.")))
         }
 
         guard let step = IOSNumber.parse(stepValue), step > 0 else {
@@ -83,7 +87,8 @@ struct IOSProgressionDraft: Equatable {
             incrementKg: stepKg,
             stallThreshold: stall,
             backoffPercent: backoff,
-            ruleRevision: 1
+            ruleRevision: 2,
+            successThreshold: successes
         )
 
         switch scheme {
@@ -103,8 +108,8 @@ struct IOSProgressionDraft: Equatable {
             config.targetTotalReps = Int64(total)
         case .rpeRir:
             guard let target = IOSNumber.parse(targetRpe), target >= 1, target <= 10,
-                  let tolerance = IOSNumber.parse(rpeTolerance), tolerance >= 0, tolerance <= 10 else {
-                return .failure(.init(String(localized: "RPE-Ziel und Toleranz müssen im Bereich 1–10 liegen.")))
+                  let tolerance = IOSNumber.parse(rpeTolerance), tolerance >= 0, tolerance <= 2 else {
+                return .failure(.init(String(localized: "Das RPE-Ziel muss zwischen 1 und 10, die Toleranz zwischen 0 und 2 liegen.")))
             }
             config.targetRpe = target
             config.rpeTolerance = tolerance

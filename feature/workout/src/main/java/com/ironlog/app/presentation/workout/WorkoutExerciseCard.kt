@@ -123,7 +123,7 @@ internal fun ExerciseCard(
     }
     var showPreviousSession by remember(exerciseWithSets.key) { mutableStateOf(false) }
     val loggedSets = exerciseWithSets.sets.filter { it.reps > 0 }
-    val completedWorkSets = loggedSets.count { it.setType == SetType.NORMAL }
+    val completedWorkSets = loggedSets.count { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }
     val slots = planTarget?.loggingSlots().orEmpty()
     val targetSetCount = slots.size
 
@@ -289,15 +289,15 @@ internal fun ExerciseCard(
                                 }
                                 ActiveSetCockpitCard(
                                     setNumber = setIndex,
-                                    setType = if (slot.kind == "WARMUP") SetType.WARMUP else SetType.NORMAL,
+                                    setType = when (slot.kind) { "WARMUP" -> SetType.WARMUP; "BACKOFF" -> SetType.BACKOFF; else -> SetType.NORMAL },
                                     isExtraOrAdHoc = false,
                                     isEditMode = false,
                                     coachHint = coachHint,
-                                    valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { it.setType == SetType.NORMAL }) stringResource(R.string.workout_value_source_last_set) else stringResource(R.string.workout_value_source_plan),
+                                    valueSource = if (planTarget.setTargets.isEmpty() && loggedSets.any { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }) stringResource(R.string.workout_value_source_last_set) else stringResource(R.string.workout_value_source_plan),
                                     coachRecommendation = nextSetRecommendation,
-                                    defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
+                                    defaultWeight = formatWeightValue(if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.weightKg ?: slot.weightKg else slot.weightKg, unitSystem),
                                     weightPlaceholder = targetWeightHint(planTarget, unitSystem, previousWeightHint),
-                                    defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { it.setType == SetType.NORMAL }?.reps ?: slot.reps else slot.reps).toString(),
+                                    defaultReps = (if (planTarget.setTargets.isEmpty()) loggedSets.lastOrNull { (it.setType == SetType.NORMAL || it.setType == SetType.FAILURE) }?.reps ?: slot.reps else slot.reps).toString(),
                                     repsPlaceholder = if (planTarget.target.reps > 0) planTarget.target.reps.toString() else null,
                                     defaultIntensity = "",
                                     intensityPlaceholder = intensityPlaceholder,

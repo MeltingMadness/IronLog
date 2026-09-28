@@ -463,7 +463,7 @@ struct ILWorkoutSet: Codable, Equatable, Identifiable {
         case nil: return false
         case "NORMAL": return isWarmup == true
         case "WARMUP": return isWarmup == false
-        case "DROP_SET", "FAILURE": return isWarmup == true
+        case "DROP_SET", "FAILURE", "BACKOFF": return isWarmup == true
         default: return isWarmup == true
         }
     }
@@ -590,6 +590,7 @@ struct ILProgressionConfig: Codable, Equatable {
     var stallThreshold: Int
     var backoffPercent: Double
     var ruleRevision: Int
+    var successThreshold: Int
 
     init(
         scheme: String = "MANUAL",
@@ -603,7 +604,8 @@ struct ILProgressionConfig: Codable, Equatable {
         rpeTolerance: Double? = nil,
         stallThreshold: Int = 2,
         backoffPercent: Double = 10.0,
-        ruleRevision: Int = 1
+        ruleRevision: Int = 1,
+        successThreshold: Int = 1
     ) {
         self.scheme = scheme
         self.incrementValue = incrementValue
@@ -617,10 +619,11 @@ struct ILProgressionConfig: Codable, Equatable {
         self.stallThreshold = stallThreshold
         self.backoffPercent = backoffPercent
         self.ruleRevision = ruleRevision
+        self.successThreshold = successThreshold
     }
 
     private enum CodingKeys: String, CodingKey {
-        case scheme, incrementValue, incrementUnit, incrementKg, minReps, maxReps, targetTotalReps, targetRpe, rpeTolerance, stallThreshold, backoffPercent, ruleRevision
+        case scheme, incrementValue, incrementUnit, incrementKg, minReps, maxReps, targetTotalReps, targetRpe, rpeTolerance, stallThreshold, backoffPercent, ruleRevision, successThreshold
     }
 
     init(from decoder: Decoder) throws {
@@ -637,6 +640,7 @@ struct ILProgressionConfig: Codable, Equatable {
         stallThreshold = try c.decodeOrDefault(Int.self, forKey: .stallThreshold, default: 2)
         backoffPercent = try c.decodeOrDefault(Double.self, forKey: .backoffPercent, default: 10.0)
         ruleRevision = try c.decodeOrDefault(Int.self, forKey: .ruleRevision, default: 1)
+        successThreshold = try c.decodeOrDefault(Int.self, forKey: .successThreshold, default: 1)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -653,6 +657,7 @@ struct ILProgressionConfig: Codable, Equatable {
         try c.encode(stallThreshold, forKey: .stallThreshold)
         try c.encode(backoffPercent, forKey: .backoffPercent)
         try c.encode(ruleRevision, forKey: .ruleRevision)
+        try c.encode(successThreshold, forKey: .successThreshold)
     }
 
     var schemeDisplayName: String { ILDisplayNames.scheme(scheme) }

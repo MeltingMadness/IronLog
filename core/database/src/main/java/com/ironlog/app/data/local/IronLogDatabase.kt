@@ -44,7 +44,7 @@ import com.ironlog.app.data.seed.ExerciseSeedData
         ProgressionSuggestionEntity::class,
         ReadinessDataEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 abstract class IronLogDatabase : RoomDatabase() {
@@ -414,6 +414,18 @@ abstract class IronLogDatabase : RoomDatabase() {
 
         fun migration13To14ForTests(): Migration = MIGRATION_13_14
 
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN progressionSuccessThreshold INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE workout_plan_targets ADD COLUMN progressionSuccessThreshold INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE progression_suggestions ADD COLUMN sourceProgressionSuccessThreshold INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("UPDATE plan_exercises SET progressionRuleRevision = 2 WHERE progressionRuleRevision = 1 AND progressionScheme IN ('LINEAR', 'DOUBLE', 'TOTAL_REPS', 'RPE_RIR')")
+            }
+        }
+
+        @VisibleForTesting
+        fun migration14To15ForTests(): Migration = MIGRATION_14_15
+
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `workout_sessions` ADD COLUMN `isDeload` INTEGER")
@@ -623,7 +635,8 @@ abstract class IronLogDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
-                    MIGRATION_13_14
+                    MIGRATION_13_14,
+                    MIGRATION_14_15
                 )
                 .addCallback(SeedCallback())
                 .build()

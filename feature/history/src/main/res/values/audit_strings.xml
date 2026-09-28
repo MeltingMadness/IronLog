@@ -40,4 +40,5 @@
     <string name="history_action_delete_workout">Training löschen</string>
     <string name="history_intensity_rpe">" @ RPE %1$s"</string>
     <string name="history_intensity_rir">" @ %1$s RIR"</string>
+    <string name="history_set_backoff">Backoff-Satz %1$d</string>
 </resources>

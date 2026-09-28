@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** Revision-1 fixtures protect replay of historical snapshots; shared ProgressionV2Test covers V2. */
 class ProgressionEngineTest {
     private val engine = ProgressionEngine()
 
@@ -808,7 +809,8 @@ class ProgressionEngineTest {
         stallThreshold: Int = 2
     ) = ProgressionConfig.Linear(
         step = WeightStep(stepLb, UnitSystem.IMPERIAL, WeightFormatting.convertToKg(stepLb, UnitSystem.IMPERIAL)),
-        failurePolicy = FailurePolicy(stallThreshold, backoff)
+        failurePolicy = FailurePolicy(stallThreshold, backoff),
+        ruleRevision = 1
     )
 
     private fun double(
@@ -821,7 +823,8 @@ class ProgressionEngineTest {
         minReps = min,
         maxReps = max,
         step = WeightStep(stepKg, UnitSystem.METRIC, stepKg),
-        failurePolicy = FailurePolicy(stallThreshold, backoff)
+        failurePolicy = FailurePolicy(stallThreshold, backoff),
+        ruleRevision = 1
     )
 
     private fun totalReps(
@@ -832,7 +835,8 @@ class ProgressionEngineTest {
     ) = ProgressionConfig.TotalReps(
         targetTotalReps = target,
         step = WeightStep(stepKg, UnitSystem.METRIC, stepKg),
-        failurePolicy = FailurePolicy(stallThreshold, backoff)
+        failurePolicy = FailurePolicy(stallThreshold, backoff),
+        ruleRevision = 1
     )
 
     private fun rpe(
@@ -845,7 +849,8 @@ class ProgressionEngineTest {
         targetRpe = target,
         tolerance = tolerance,
         step = WeightStep(stepKg, UnitSystem.METRIC, stepKg),
-        failurePolicy = FailurePolicy(stallThreshold, backoff)
+        failurePolicy = FailurePolicy(stallThreshold, backoff),
+        ruleRevision = 1
     )
 
     private companion object {

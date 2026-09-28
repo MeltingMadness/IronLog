@@ -586,6 +586,18 @@ private fun ProgressionEditorSheet(
                             keyboardType = KeyboardType.Decimal
                         )
 
+                        if (draft.scheme == ProgressionScheme.LINEAR) {
+                            ProgressionInput(
+                                value = draft.successThreshold,
+                                onValueChange = { onFieldChanged(ProgressionField.SUCCESS_THRESHOLD, it) },
+                                label = stringResource(R.string.plan_editor_progression_success_threshold),
+                                field = ProgressionField.SUCCESS_THRESHOLD,
+                                errors = draft.errors,
+                                keyboardType = KeyboardType.Number
+                            )
+                            Text(stringResource(R.string.plan_editor_progression_success_hint),
+                                style = MaterialTheme.typography.bodySmall)
+                        }
                         when (draft.scheme) {
                             ProgressionScheme.DOUBLE -> {
                                 ProgressionInput(
@@ -767,6 +779,7 @@ private fun progressionPreview(draft: ProgressionEditorUi): String {
 @Composable
 private fun progressionError(field: ProgressionField): String = stringResource(
     id = when (field) {
+        ProgressionField.SUCCESS_THRESHOLD -> R.string.plan_editor_progression_error_success_threshold
         ProgressionField.STEP -> R.string.plan_editor_progression_error_step
         ProgressionField.MIN_REPS -> R.string.plan_editor_progression_error_min_reps
         ProgressionField.MAX_REPS -> R.string.plan_editor_progression_error_max_reps

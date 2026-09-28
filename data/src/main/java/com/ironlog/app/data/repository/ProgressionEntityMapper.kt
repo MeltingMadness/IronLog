@@ -99,7 +99,8 @@ class ProgressionEntityMapper(
     fun toPreviousOutcome(row: ProgressionSuggestionEntity): PreviousProgressionOutcome =
         PreviousProgressionOutcome(
             sourceTarget = toSourceTarget(row),
-            streakEffect = enumValueOf<ProgressionStreakEffect>(row.streakEffect)
+            streakEffect = enumValueOf<ProgressionStreakEffect>(row.streakEffect),
+            successful = com.ironlog.shared.progression.isSuccessfulProgression(row.reasonCode, row.streakEffect)
         )
 
     fun toDomain(

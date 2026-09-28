@@ -457,12 +457,13 @@ object SharedReadinessProjection {
             "WARMUP" -> SetType.WARMUP
             "FAILURE" -> SetType.FAILURE
             "DROP_SET" -> SetType.DROP_SET
+            "BACKOFF" -> SetType.BACKOFF
             else -> SetType.UNKNOWN
         }
 
     private fun isCountedSet(set: BackupWorkoutSet): Boolean =
         when (set.resolvedSetType().trim().uppercase()) {
-            "NORMAL", "DROP_SET", "FAILURE" -> true
+            "NORMAL", "DROP_SET", "FAILURE", "BACKOFF" -> true
             else -> false
         }
 

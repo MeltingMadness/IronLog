@@ -245,6 +245,7 @@ private fun ProgressionReviewCard(
                 text = ProgressionReasonText(item, unitSystem),
                 style = MaterialTheme.typography.bodyMedium
             )
+            ProgressionEvidenceExplanation(item, unitSystem)
             Spacer(Modifier.height(12.dp))
             val trainedWeight = uniformCountedWeightKg(item.countedSets)
             trainedWeight?.let { weight ->
@@ -343,7 +344,8 @@ private fun EvidenceSets(sets: List<WorkoutSet>, unitSystem: UnitSystem) {
                     )
                 }
                 Text(
-                    text = text,
+                    text = if (set.setType == com.ironlog.app.domain.model.SetType.FAILURE)
+                        "$text · ${stringResource(R.string.workout_set_type_failure)}" else text,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -484,3 +486,29 @@ private fun formatNumber(value: Double): String = NumberFormat.getNumberInstance
     minimumFractionDigits = 0
     isGroupingUsed = false
 }.format(value)
+
+@Composable
+private fun ProgressionEvidenceExplanation(item: ProgressionReviewItemUi, unitSystem: UnitSystem) {
+    val args = item.reasonArguments
+    fun count(key: String): Int? = args[key]?.takeIf { it.isFinite() && it >= 0 && it <= Int.MAX_VALUE && it % 1.0 == 0.0 }?.toInt()
+    val counted = count("countedWorkSets") ?: return
+    Text(stringResource(ProgressionR.string.review_evidence_roles, counted,
+        count("failureMarkedSets") ?: 0, count("ignoredWarmupSets") ?: 0,
+        count("ignoredDropSets") ?: 0, count("ignoredBackoffSets") ?: 0, count("ignoredExtraSets") ?: 0),
+        style = MaterialTheme.typography.bodySmall)
+    val successes = count("successfulSessions")
+    val required = count("requiredSuccesses")
+    if (successes != null && required != null && item.reasonCode != com.ironlog.app.domain.model.ProgressionReasonCode.SUCCESS_CONFIRMATION_REQUIRED) {
+        Text(stringResource(ProgressionR.string.review_success_count, successes, required), style = MaterialTheme.typography.bodySmall)
+    }
+    val failures = count("failedSessions")
+    val threshold = count("failureThreshold")
+    if (failures != null && threshold != null) {
+        Text(stringResource(ProgressionR.string.review_failure_count, failures, threshold), style = MaterialTheme.typography.bodySmall)
+    }
+    val minimum = args["minWeightKg"]
+    val maximum = args["maxWeightKg"]
+    if (item.proposed != null && minimum != null && maximum != null && minimum.isFinite() && maximum.isFinite() && maximum - minimum > 0.1) {
+        Text(stringResource(ProgressionR.string.review_mixed_confirmed, WeightFormatting.formatWeight(minimum, unitSystem)), style = MaterialTheme.typography.bodySmall)
+    }
+}

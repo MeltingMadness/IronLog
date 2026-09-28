@@ -51,6 +51,7 @@ import com.ironlog.app.domain.repository.BackupImportPreview
 import com.ironlog.app.domain.repository.BackupRepository
 import com.ironlog.app.domain.repository.RecoveryBackup
 import com.ironlog.app.domain.util.BuildInfo
+import com.ironlog.shared.backup.forCurrentPlan
 import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import com.ironlog.shared.backup.SUPPORTED_BACKUP_SET_TYPES
 import com.ironlog.shared.readinessdata.ReadinessData
@@ -322,7 +323,7 @@ class BackupRepositoryImpl(
         workoutSessions = workoutSessions.distinctBy { it.id }.map { it.toEntity() },
         workoutSets = workoutSets.distinctBy { it.id }.map { it.toWorkoutSetEntity() },
         trainingPlans = trainingPlans.distinctBy { it.id }.map { it.toEntity() },
-        planExercises = planExercises.distinctBy { it.id }.map { it.toEntity() },
+        planExercises = planExercises.distinctBy { it.id }.map { it.copy(progression = it.progression.forCurrentPlan()).toEntity() },
         personalRecords = personalRecords.distinctBy { it.id }.map { it.toEntity() },
         metaTrainingPlans = metaTrainingPlans.distinctBy { it.id }.map { it.toEntity() },
         metaPlanItems = metaPlanItems.distinctBy { it.id }.map { it.toEntity() },
@@ -438,7 +439,8 @@ class BackupRepositoryImpl(
             rpeTolerance = rpeTolerance,
             stallThreshold = stallThreshold,
             backoffPercent = backoffPercent,
-            ruleRevision = ruleRevision
+            ruleRevision = ruleRevision,
+            successThreshold = successThreshold
         )
 
     private fun ProgressionTargetColumns.toBackup(): BackupProgressionTarget =
@@ -570,7 +572,8 @@ class BackupRepositoryImpl(
             rpeTolerance = rpeTolerance,
             stallThreshold = stallThreshold,
             backoffPercent = backoffPercent,
-            ruleRevision = ruleRevision
+            ruleRevision = ruleRevision,
+            successThreshold = successThreshold
         )
 
     private fun BackupProgressionTarget.toEntity(): ProgressionTargetColumns =

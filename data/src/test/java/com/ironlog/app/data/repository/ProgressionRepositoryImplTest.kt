@@ -110,6 +110,25 @@ class ProgressionRepositoryImplTest {
             val sessionId = arg<Long>(4)
             previousTargetBounds += endTime to sessionId
             previousTargetsByPosition[Triple(planId, exerciseId, orderIndex)].orEmpty()
+                .filter { sessions[it.sessionId]?.isDeload != true }
+        }
+        coEvery { progressionDao.hasNewerCompletedWork(any(), any(), any(), any(), any()) } answers {
+            val planId = arg<Long>(0)
+            val exerciseId = arg<Long>(1)
+            val orderIndex = arg<Int>(2)
+            val sourceEnd = arg<Long>(3)
+            val sourceId = arg<Long>(4)
+            targetsBySession.values.flatten().any { target ->
+                val session = sessions[target.sessionId]
+                val end = session?.endTime
+                target.planId == planId && target.exerciseId == exerciseId && target.orderIndex == orderIndex &&
+                    end != null && session.isDeload != true &&
+                    (end > sourceEnd || (end == sourceEnd && session.id > sourceId)) &&
+                    setsBySession[target.sessionId].orEmpty().any { set ->
+                        set.planTargetSnapshotId == target.id && set.sessionId == target.sessionId &&
+                            set.exerciseId == target.exerciseId && set.setType != "WARMUP"
+                    }
+            }
         }
         coEvery { progressionDao.getSuggestionsForTargetIds(any()) } answers {
             val ids = firstArg<List<Long>>()
@@ -1265,6 +1284,89 @@ class ProgressionRepositoryImplTest {
         assertEquals(7_000L, suggestions.single().decidedAtEpochMillis)
         coVerify(exactly = 0) { trainingPlanDao.getPlanExerciseAt(any(), any(), any()) }
         coVerify(exactly = 0) { trainingPlanDao.updatePlanExerciseTargetsById(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `newer informational work blocks an old increase`() = runTest {
+        seedPending(id = 1, planId = 2)
+        planExercises += matchingPlanExercise(planId = 2)
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        targetsBySession[12] = listOf(target(id = 42, sessionId = 12))
+        setsBySession[12] = listOf(set(id = 50, sessionId = 12, snapshotId = 42, reps = 7))
+        suggestions += suggestion(id = 2, sourceSessionId = 12, sourceTargetSnapshotId = 42)
+
+        val result = repository.acceptSuggestions(mapOf(1L to ProgressionTarget(3, 8, 102.5)))
+
+        assertEquals(ProgressionDecisionResult.Stale(setOf(1L)), result)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(ProgressionSuggestionStatus.INFORMATIONAL.name, suggestions.last().status)
+    }
+
+    @Test
+    fun `deload generation never calls the progression engine`() = runTest {
+        sessions[9] = sessions.getValue(9).copy(isDeload = true)
+        targetsBySession[9] = listOf(target(id = 41))
+        setsBySession[9] = listOf(set(id = 1, weightKg = 85.0))
+
+        val result = repository.generateOutcomesForSession(9)
+
+        assertEquals(0, result.insertedCount)
+        assertTrue(suggestions.isEmpty())
+        assertTrue(contexts.isEmpty())
+    }
+
+    @Test
+    fun `legacy pending deload suggestion cannot change a plan`() = runTest {
+        seedPending(id = 1)
+        planExercises += matchingPlanExercise()
+        sessions[9] = sessions.getValue(9).copy(isDeload = true)
+
+        val result = repository.acceptSuggestions(mapOf(1L to ProgressionTarget(3, 8, 87.5)))
+
+        assertEquals(ProgressionDecisionResult.Stale(setOf(1L)), result)
+        assertEquals(100.0, planExercises.single().targetWeightKg, 0.0)
+    }
+
+    @Test
+    fun `v2 confirms two successes with failure evidence and accepts only the current proposal`() = runTest {
+        val config = linearConfig(ruleRevision = 2).copy(successThreshold = 2)
+        val firstTarget = target(id = 41, config = config)
+        targetsBySession[9] = listOf(firstTarget)
+        setsBySession[9] = listOf(
+            set(id = 1), set(id = 2, setNumber = 2),
+            set(id = 3, setNumber = 3).copy(setType = "FAILURE"),
+            set(id = 4, setNumber = 4, weightKg = 80.0).copy(setType = "BACKOFF")
+        )
+        planExercises += matchingPlanExercise(planId = 2, config = config)
+        val realRepository = newRepository(ProgressionEngine())
+
+        realRepository.generateOutcomesForSession(9)
+        val first = suggestions.single()
+        assertEquals("SUCCESS_CONFIRMATION_REQUIRED", first.reasonCode)
+        assertEquals("INFORMATIONAL", first.status)
+        assertEquals("[1,2,3]", first.countedSetIdsJson)
+
+        sessions[12] = completedSession(id = 12, endTime = 2_000)
+        targetsBySession[12] = listOf(target(id = 42, sessionId = 12, config = config))
+        previousTargetsByPosition[Triple(2, 7, 0)] = listOf(firstTarget)
+        setsBySession[12] = listOf(
+            set(id = 11, sessionId = 12, snapshotId = 42),
+            set(id = 12, sessionId = 12, snapshotId = 42, setNumber = 2),
+            set(id = 13, sessionId = 12, snapshotId = 42, setNumber = 3).copy(setType = "FAILURE")
+        )
+        hydratedSets = setsBySession.values.flatten()
+
+        realRepository.generateOutcomesForSession(12)
+        val proposed = suggestions.single { it.sourceSessionId == 12L }
+        assertEquals("LOAD_ADVANCED", proposed.reasonCode)
+        assertEquals("PENDING", proposed.status)
+        assertEquals(2, proposed.sourceProgression.successThreshold)
+        assertEquals(ProgressionTargetColumns(3, 8, 102.5), proposed.suggestedTarget)
+
+        val result = realRepository.acceptSuggestions(mapOf(proposed.id to ProgressionTarget(3, 8, 102.5)))
+        assertEquals(ProgressionDecisionResult.Accepted(setOf(proposed.id)), result)
+        assertEquals(102.5, planExercises.single().targetWeightKg, 0.0)
+        assertEquals(first, suggestions.single { it.sourceSessionId == 9L })
     }
 
     private fun newRepository(

@@ -103,6 +103,34 @@ class PlanEditorViewModelTest {
     )
 
     @Test
+    fun `linear confirmation count survives editing and plan persistence`() = runTest {
+        val planId = seedPlanExercise(ProgressionConfig.Linear(WeightStep(2.5, UnitSystem.METRIC, 2.5), successThreshold = 2))
+        val vm = createViewModel(planId)
+        advanceUntilIdle()
+        vm.openProgressionEditor(0)
+        assertEquals("2", vm.uiState.value.progressionEditor?.successThreshold)
+        vm.updateProgressionField(ProgressionField.SUCCESS_THRESHOLD, "3")
+        vm.saveProgressionEditor()
+        vm.savePlan()
+        advanceUntilIdle()
+        val config = fakePlanRepo.getPlanById(planId)!!.exercises.single().progressionConfig as ProgressionConfig.Linear
+        assertEquals(3, config.successThreshold)
+        assertEquals(2, config.ruleRevision)
+    }
+
+    @Test
+    fun `invalid success count stays editable without changing the plan`() = runTest {
+        val planId = seedPlanExercise(ProgressionConfig.Linear(WeightStep(2.5, UnitSystem.METRIC, 2.5), successThreshold = 2))
+        val vm = createViewModel(planId)
+        advanceUntilIdle()
+        vm.openProgressionEditor(0)
+        vm.updateProgressionField(ProgressionField.SUCCESS_THRESHOLD, "0")
+        vm.saveProgressionEditor()
+        assertTrue(vm.uiState.value.progressionEditor!!.errors.containsKey(ProgressionField.SUCCESS_THRESHOLD))
+        assertEquals(2, (vm.uiState.value.exercises.single().planExercise.progressionConfig as ProgressionConfig.Linear).successThreshold)
+    }
+
+    @Test
     fun `quick progression choice closes sheet and persists after saving plan`() = runTest {
         val original = ProgressionConfig.DoubleProgression(
             minReps = 8, maxReps = 12,

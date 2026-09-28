@@ -10,6 +10,9 @@ import com.ironlog.shared.backup.BackupWorkoutPlanTarget
 import com.ironlog.shared.backup.BackupWorkoutSet
 import com.ironlog.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import com.ironlog.shared.backup.NORMAL_SET_TYPE
+import com.ironlog.shared.backup.WARMUP_SET_TYPE
+import com.ironlog.shared.progression.isProgressionWorkSet
+import com.ironlog.shared.progression.isSuccessfulProgression
 import com.ironlog.shared.progression.BackupProgressionFacade
 import com.ironlog.shared.progression.BackupProgressionHistory
 import com.ironlog.shared.progression.ProgressionOutcomeType
@@ -70,7 +73,7 @@ class ProgressionLifecycle(
                 current = generated.payload
                 inserted += generated.insertedCount
             }
-            current
+            expireOutdatedHistory(current)
         }
         return inserted
     }
@@ -106,7 +109,7 @@ class ProgressionLifecycle(
             }
 
             val generated = generateForSession(current, requested)
-            current = generated.payload
+            current = expireOutdatedHistory(generated.payload)
             result = generationResultForSession(current, sessionId, generated.insertedCount)
             current
         }
@@ -119,8 +122,8 @@ class ProgressionLifecycle(
 
     /**
      * Marks pending suggestions stale when the current plan row no longer equals their immutable
-     * source target/configuration.  Accepted, rejected, informational and already stale rows are
-     * never rewritten.
+     * source target/configuration, or completed work has made their advice obsolete.
+     * Accepted, rejected, informational and already stale rows are never rewritten.
      */
     suspend fun reconcileOutstandingSuggestions(): Set<Long> {
         val staleIds = linkedSetOf<Long>()
@@ -128,7 +131,7 @@ class ProgressionLifecycle(
             val now = { nowEpochMillis().coerceAtLeast(0L) }
             val updated = state.progressionSuggestions.map { suggestion ->
                 if (suggestion.status == STATUS_PENDING &&
-                    !currentPlanMatches(state, suggestion)
+                    (!currentPlanMatches(state, suggestion) || hasOutdatedHistory(state, suggestion))
                 ) {
                     staleIds += suggestion.id
                     suggestion.copy(
@@ -191,7 +194,7 @@ class ProgressionLifecycle(
             }
 
             val staleIds = selected.filter { suggestion ->
-                !currentPlanMatches(state, suggestion) || hasNewerPendingHistory(state, suggestion)
+                !currentPlanMatches(state, suggestion) || hasOutdatedHistory(state, suggestion)
             }.mapTo(linkedSetOf()) { it.id }
             if (staleIds.isNotEmpty()) {
                 result = ProgressionDecisionResult.Stale(staleIds)
@@ -299,7 +302,7 @@ class ProgressionLifecycle(
     }
 
     private fun completedPlanSessions(state: BackupPayloadV1) = state.workoutSessions
-        .filter { it.endTime != null && it.planId != null }
+        .filter { it.endTime != null && it.planId != null && it.isDeload != true }
         .sortedWith(compareBy({ it.endTime }, { it.id }))
 
     private fun sessionNeedsGeneration(state: BackupPayloadV1, sessionId: Long): Boolean {
@@ -331,7 +334,7 @@ class ProgressionLifecycle(
         state: BackupPayloadV1,
         session: com.ironlog.shared.backup.BackupWorkoutSession,
     ): GeneratedSession {
-        if (session.endTime == null || session.planId == null) {
+        if (session.endTime == null || session.planId == null || session.isDeload == true) {
             return GeneratedSession(state, 0)
         }
 
@@ -460,6 +463,7 @@ class ProgressionLifecycle(
             .mapNotNull { previous ->
                 val session = state.workoutSessions.firstOrNull { it.id == previous.sessionId }
                     ?: return@mapNotNull null
+                if (session.isDeload == true) return@mapNotNull null
                 val end = session.endTime ?: return@mapNotNull null
                 if (end < sourceEndTime || (end == sourceEndTime && session.id < sourceSessionId)) {
                     PreviousTarget(previous, end, session.id)
@@ -493,7 +497,7 @@ class ProgressionLifecycle(
         // Android evaluates the current actual load only after validating the complete
         // comparable history. This preserves fail-closed provenance checks even when the
         // current session has malformed or non-uniform weights.
-        val currentActualWeight = evaluatedActualWeight(currentSets, target.target.sets)
+        val currentActualWeight = evaluatedActualWeight(currentSets, target.target.sets, target.progression.ruleRevision)
             ?: return emptyList()
         val outcomes = mutableListOf<BackupProgressionHistory>()
         for ((previous, row) in validatedRows) {
@@ -503,6 +507,7 @@ class ProgressionLifecycle(
             outcomes += BackupProgressionHistory(
                 streakEffect = enumValueOf<ProgressionStreakEffect>(row.streakEffect),
                 sourceTarget = row.sourceTarget,
+                successful = isSuccessfulProgression(row.reasonCode, row.streakEffect),
             )
         }
         return outcomes
@@ -526,7 +531,7 @@ class ProgressionLifecycle(
         }
 
         val orderedWorkSets = setsForTarget
-            .filter { it.resolvedSetType() == NORMAL_SET_TYPE }
+            .filter { isProgressionWorkSet(it.resolvedSetType(), source.progression.ruleRevision) }
             .sortedWith(compareBy({ it.setNumber }, { it.completedAt }, { it.id }))
         val availableEvidenceIds = orderedWorkSets.map { it.id }.filter { it > 0L }.distinct()
         fun countedEvidenceIds(): List<Long> = orderedWorkSets.take(source.target.sets).map { it.id }
@@ -656,7 +661,7 @@ class ProgressionLifecycle(
         val sets = row.countedSetIds.map { setsById[it] ?: return null }
         if (sets.any { set ->
                 set.id <= 0L ||
-                    set.resolvedSetType() != NORMAL_SET_TYPE ||
+                    !isProgressionWorkSet(set.resolvedSetType(), target.progression.ruleRevision) ||
                     set.sessionId != target.sessionId ||
                     set.exerciseId != target.exerciseId ||
                     set.planTargetSnapshotId != target.id ||
@@ -666,6 +671,7 @@ class ProgressionLifecycle(
         ) return null
         val ordered = sets.sortedWith(compareBy({ it.setNumber }, { it.completedAt }, { it.id }))
         if (ordered.map { it.id } != row.countedSetIds) return null
+        if (target.progression.ruleRevision == 2) return ordered.minOf { it.weightKg }
         val actual = ordered.first().weightKg
         return actual.takeIf { ordered.drop(1).all { set -> abs(set.weightKg - actual) <= WEIGHT_TOLERANCE_KG } }
     }
@@ -673,10 +679,11 @@ class ProgressionLifecycle(
     private fun evaluatedActualWeight(
         sets: List<BackupWorkoutSet>,
         targetSets: Int,
+        ruleRevision: Int,
     ): Double? {
         if (targetSets <= 0) return null
         val counted = sets
-            .filter { it.resolvedSetType() == NORMAL_SET_TYPE }
+            .filter { isProgressionWorkSet(it.resolvedSetType(), ruleRevision) }
             .sortedWith(compareBy({ it.setNumber }, { it.completedAt }, { it.id }))
             .take(targetSets)
         if (counted.size != targetSets ||
@@ -684,6 +691,7 @@ class ProgressionLifecycle(
             counted.map { it.id }.distinct().size != counted.size ||
             counted.any { !it.weightKg.isFinite() || it.weightKg < 0.0 }
         ) return null
+        if (ruleRevision == 2) return counted.minOf { it.weightKg }
         val actual = counted.first().weightKg
         return actual.takeIf { counted.drop(1).all { set -> abs(set.weightKg - actual) <= WEIGHT_TOLERANCE_KG } }
     }
@@ -743,6 +751,7 @@ class ProgressionLifecycle(
         stallThreshold = stallThreshold,
         backoffPercent = backoffPercent,
         ruleRevision = ruleRevision,
+        successThreshold = successThreshold,
     )
 
     /**
@@ -774,13 +783,35 @@ class ProgressionLifecycle(
             current.supersetGroupId == suggestion.supersetGroupId
     }
 
-    private fun hasNewerPendingHistory(
+    private fun expireOutdatedHistory(state: BackupPayloadV1): BackupPayloadV1 = state.copy(
+        progressionSuggestions = state.progressionSuggestions.map { suggestion ->
+            if (suggestion.status == STATUS_PENDING && hasOutdatedHistory(state, suggestion)) {
+                suggestion.copy(status = STATUS_STALE, decidedAtEpochMillis = nowEpochMillis().coerceAtLeast(0L))
+            } else {
+                suggestion
+            }
+        },
+    )
+
+    /** Validity depends on completed work, even if its outcome is missing or informational. */
+    private fun hasOutdatedHistory(
         state: BackupPayloadV1,
         suggestion: BackupProgressionSuggestion,
     ): Boolean {
         val sourceSession = state.workoutSessions.firstOrNull { it.id == suggestion.sourceSessionId }
             ?: return true
         val sourceEnd = sourceSession.endTime ?: return true
+        if (sourceSession.isDeload == true) return true
+        val newerWork = state.workoutPlanTargets.any { target ->
+            target.planId == suggestion.planId && target.exerciseId == suggestion.exerciseId &&
+                target.orderIndex == suggestion.orderIndex &&
+                isSessionNewer(state, target.sessionId, sourceEnd, suggestion.sourceSessionId) &&
+                state.workoutSets.any { set ->
+                    set.planTargetSnapshotId == target.id && set.sessionId == target.sessionId &&
+                        set.exerciseId == target.exerciseId && set.resolvedSetType() != WARMUP_SET_TYPE
+                }
+        }
+        if (newerWork) return true
         return state.progressionSuggestions.any { other ->
             other.id != suggestion.id &&
                 other.status == STATUS_PENDING &&
@@ -797,6 +828,7 @@ class ProgressionLifecycle(
     ): Boolean {
         val candidate = state.workoutSessions.firstOrNull { it.id == candidateSessionId } ?: return false
         val candidateEnd = candidate.endTime ?: return false
+        if (candidate.isDeload == true) return false
         return candidateEnd > sourceEnd || (candidateEnd == sourceEnd && candidate.id > sourceSessionId)
     }
 

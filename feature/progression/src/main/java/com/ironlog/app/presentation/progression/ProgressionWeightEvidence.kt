@@ -10,7 +10,7 @@ fun uniformCountedWeightKg(sets: List<WorkoutSet>): Double? {
     if (!first.isFinite() || first < 0.0) return null
     return first.takeIf {
         sets.all { set ->
-            set.setType == SetType.NORMAL && set.weightKg.isFinite() &&
+            (set.setType == SetType.NORMAL || set.setType == SetType.FAILURE) && set.weightKg.isFinite() &&
                 set.weightKg >= 0.0 && abs(set.weightKg - first) <= 0.1
         }
     }

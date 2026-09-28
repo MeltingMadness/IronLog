@@ -239,7 +239,7 @@ class DeloadDetector(val config: Config = Config()) {
                         workSets += 1
                         failures += 1
                     }
-                    SetType.WARMUP, SetType.DROP_SET -> Unit
+                    SetType.WARMUP, SetType.DROP_SET, SetType.BACKOFF -> Unit
                 }
             }
         }

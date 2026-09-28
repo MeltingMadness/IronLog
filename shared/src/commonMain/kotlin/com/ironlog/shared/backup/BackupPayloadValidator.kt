@@ -404,7 +404,7 @@ object BackupPayloadValidator {
                         errors += "Progression suggestion ${suggestion.id} references missing workout set $setId"
                     }
                 }
-                set.resolvedSetType() != NORMAL_SET_TYPE -> {
+                !com.ironlog.shared.progression.isProgressionWorkSet(set.resolvedSetType(), suggestion.sourceProgression.ruleRevision) -> {
                     errors += "Progression suggestion ${suggestion.id} references ${set.resolvedSetType()} set $setId"
                 }
                 set.planTargetSnapshotId != suggestion.sourceTargetSnapshotId ||
@@ -546,6 +546,10 @@ object BackupPayloadValidator {
             errors += "$label has unknown progression scheme ${config.scheme}"
             return
         }
+        if (config.successThreshold !in 1..6 || (config.successThreshold != 1 &&
+                (config.scheme != "LINEAR" || config.ruleRevision != 2))) {
+            errors += "$label has invalid success threshold"
+        }
         if (config.ruleRevision <= 0) {
             errors += "$label progression rule revision must be positive"
         }
@@ -655,6 +659,8 @@ object BackupPayloadValidator {
     private val UNITS = setOf("METRIC", "IMPERIAL")
     private val OUTCOME_TYPES = setOf("PROPOSE_CHANGE", "KEEP_TARGET", "INSUFFICIENT_DATA")
     private val REASON_CODES = setOf(
+        "SUCCESS_CONFIRMATION_REQUIRED",
+        "MIXED_LOADS",
         "REP_TARGET_ADVANCED",
         "LOAD_ADVANCED",
         "TOTAL_REPS_COMPLETED",
@@ -675,6 +681,9 @@ object BackupPayloadValidator {
     private val STATUSES = setOf("PENDING", "ACCEPTED", "REJECTED", "STALE", "INFORMATIONAL")
     private val DECISION_STATUSES = setOf("PENDING", "ACCEPTED", "REJECTED", "STALE")
     private val REASON_ARGUMENT_KEYS = setOf(
+        "successfulSessions", "requiredSuccesses", "failedSessions", "failureThreshold",
+        "minWeightKg", "maxWeightKg", "countedWorkSets", "ignoredWarmupSets",
+        "ignoredDropSets", "ignoredBackoffSets", "ignoredExtraSets", "failureMarkedSets",
         "expectedWeightKg",
         "actualWeightKg",
         "targetSets",

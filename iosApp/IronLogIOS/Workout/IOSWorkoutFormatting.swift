@@ -5,6 +5,7 @@ enum IOSWorkoutSetType: String, CaseIterable, Identifiable {
     case warmup = "WARMUP"
     case dropSet = "DROP_SET"
     case failure = "FAILURE"
+    case backoff = "BACKOFF"
 
     var id: String { rawValue }
 
@@ -13,7 +14,8 @@ enum IOSWorkoutSetType: String, CaseIterable, Identifiable {
         case .normal: return String(localized: "Arbeitsset")
         case .warmup: return String(localized: "Warmup")
         case .dropSet: return String(localized: "Drop-Set")
-        case .failure: return String(localized: "Failure-Set")
+        case .failure: return String(localized: "Versagen")
+        case .backoff: return String(localized: "Backoff-Satz")
         }
     }
 
@@ -22,7 +24,8 @@ enum IOSWorkoutSetType: String, CaseIterable, Identifiable {
         case .normal: return String(localized: "Arbeit")
         case .warmup: return String(localized: "Warmup")
         case .dropSet: return String(localized: "Drop")
-        case .failure: return String(localized: "Failure")
+        case .failure: return String(localized: "Versagen")
+        case .backoff: return String(localized: "Backoff")
         }
     }
 }

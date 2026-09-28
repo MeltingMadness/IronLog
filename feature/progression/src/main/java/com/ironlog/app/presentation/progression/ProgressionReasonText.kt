@@ -17,6 +17,14 @@ fun ProgressionReasonText(
 ): String {
     val arguments = item.reasonArguments
     return when (item.reasonCode) {
+        ProgressionReasonCode.SUCCESS_CONFIRMATION_REQUIRED -> {
+            val achieved = arguments.validWholeNumber("successfulSessions")
+            val required = arguments.validWholeNumber("requiredSuccesses")
+            if (achieved != null && required != null && achieved in 1 until required && required in 2..6) {
+                stringResource(ProgressionR.string.review_success_confirmation, achieved, required)
+            } else unavailableReason()
+        }
+        ProgressionReasonCode.MIXED_LOADS -> stringResource(ProgressionR.string.review_mixed_loads)
         ProgressionReasonCode.REP_TARGET_ADVANCED ->
             stringResource(R.string.progression_review_reason_rep_advanced)
 

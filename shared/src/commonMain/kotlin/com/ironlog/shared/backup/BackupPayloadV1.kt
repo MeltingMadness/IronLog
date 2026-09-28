@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
  * Schema 13 adds the optional readiness side channel [BackupPayloadV1.readinessData]
  * (daily check-ins and per-set intentions) without changing the workout graph.
  */
-const val CURRENT_BACKUP_SCHEMA_VERSION = 14
+const val CURRENT_BACKUP_SCHEMA_VERSION = 15
 const val SET_TYPE_BACKUP_SCHEMA_VERSION = 12
 const val READINESS_BACKUP_SCHEMA_VERSION = 13
 const val SESSION_DELOAD_BACKUP_SCHEMA_VERSION = 13
@@ -23,12 +23,14 @@ const val NORMAL_SET_TYPE = "NORMAL"
 const val WARMUP_SET_TYPE = "WARMUP"
 const val DROP_SET_TYPE = "DROP_SET"
 const val FAILURE_SET_TYPE = "FAILURE"
+const val BACKOFF_SET_TYPE = "BACKOFF"
 
 val SUPPORTED_BACKUP_SET_TYPES: Set<String> = setOf(
     NORMAL_SET_TYPE,
     WARMUP_SET_TYPE,
     DROP_SET_TYPE,
-    FAILURE_SET_TYPE
+    FAILURE_SET_TYPE,
+    BACKOFF_SET_TYPE
 )
 
 @Serializable
@@ -172,7 +174,8 @@ data class BackupProgressionConfig(
     val rpeTolerance: Double? = null,
     val stallThreshold: Int = 2,
     val backoffPercent: Double = 10.0,
-    val ruleRevision: Int = 1
+    val ruleRevision: Int = 1,
+    val successThreshold: Int = 1
 )
 
 @Serializable
@@ -246,3 +249,8 @@ data class BackupMetaPlanSkip(
     val trainingPlanId: Long,
     val skippedAt: Long
 )
+
+/** Upgrade live plans only; snapshots and decided suggestions retain their recorded rules. */
+fun BackupProgressionConfig.forCurrentPlan(): BackupProgressionConfig =
+    if (scheme in setOf("LINEAR", "DOUBLE", "TOTAL_REPS", "RPE_RIR") && ruleRevision == 1)
+        copy(ruleRevision = 2) else this

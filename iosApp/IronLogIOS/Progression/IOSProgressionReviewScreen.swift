@@ -333,6 +333,9 @@ private struct IOSProgressionSuggestionCard: View {
             Text(IOSProgressionReasonText.text(for: suggestion, unitSystem: unitSystem))
                 .font(.geist(.body))
 
+            if let explanation = IOSProgressionReasonText.evidence(for: suggestion, unitSystem: unitSystem) {
+                Text(explanation).font(.geist(.footnote)).ironLogSecondaryText()
+            }
             if let suggestedTarget = suggestion.suggestedTarget {
                 IOSProgressionTargetBlock(title: String(localized: "Vorgeschlagen"), target: suggestedTarget, unitSystem: unitSystem, tone: .primary)
             } else {
@@ -438,6 +441,7 @@ private struct IOSProgressionEvidenceBlock: View {
                     HStack(spacing: 6) {
                         Text("Satz \(set.setNumber):")
                         Text("\(IOSWeightFormatter.format(set.weightKg, unitSystem: unitSystem)) × \(set.reps) Wdh")
+                        if set.resolvedSetType == "FAILURE" { Text("Bis zum Versagen") }
                         if let rpe = set.rpe, rpe.isFinite {
                             Text("· RPE \(IOSProgressionFormatting.number(rpe))")
                         }
@@ -566,6 +570,12 @@ private enum IOSProgressionReasonText {
     static func text(for suggestion: ILProgressionSuggestion, unitSystem: String) -> String {
         let args = suggestion.reasonArguments
         switch suggestion.reasonCode.uppercased() {
+        case "SUCCESS_CONFIRMATION_REQUIRED":
+            guard let achieved = whole(args["successfulSessions"]), let required = whole(args["requiredSuccesses"]),
+                  achieved >= 1, achieved < required, (2...6).contains(required) else { return unavailable }
+            return String(localized: "\(achieved) von \(required) vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert.")
+        case "MIXED_LOADS":
+            return String(localized: "Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch.")
         case "REP_TARGET_ADVANCED":
             return String(localized: "Das Wiederholungsziel wurde erreicht und wird erhöht.")
         case "LOAD_ADVANCED":
@@ -619,6 +629,27 @@ private enum IOSProgressionReasonText {
         default:
             return unavailable
         }
+    }
+
+    static func evidence(for suggestion: ILProgressionSuggestion, unitSystem: String) -> String? {
+        let args = suggestion.reasonArguments
+        guard let counted = whole(args["countedWorkSets"]), counted >= 0 else { return nil }
+        let failure = whole(args["failureMarkedSets"]) ?? 0
+        let warmup = whole(args["ignoredWarmupSets"]) ?? 0
+        let drop = whole(args["ignoredDropSets"]) ?? 0
+        let backoff = whole(args["ignoredBackoffSets"]) ?? 0
+        let extra = whole(args["ignoredExtraSets"]) ?? 0
+        var lines = [String(localized: "Gewertet: \(counted) Arbeitssätze, davon \(failure) bis zum Versagen. Ausgelassen: \(warmup) Aufwärm-, \(drop) Drop-, \(backoff) Backoff- und \(extra) zusätzliche Arbeitssätze.")]
+        if let achieved = whole(args["successfulSessions"]), let required = whole(args["requiredSuccesses"]), suggestion.reasonCode != "SUCCESS_CONFIRMATION_REQUIRED" {
+            lines.append(String(localized: "Bestätigung: \(achieved) von \(required) vergleichbaren Erfolgen."))
+        }
+        if let failed = whole(args["failedSessions"]), let threshold = whole(args["failureThreshold"]) {
+            lines.append(String(localized: "Vergleichbare Fehlversuche: \(failed) von \(threshold) bis zum Backoff."))
+        }
+        if suggestion.suggestedTarget != nil, let minimum = finite(args["minWeightKg"]), let maximum = finite(args["maxWeightKg"]), maximum - minimum > 0.1 {
+            lines.append(String(localized: "Alle gewerteten Sätze bestätigen mindestens \(IOSWeightFormatter.format(minimum, unitSystem: unitSystem)). Dieses Gewicht ist die Grundlage des Vorschlags."))
+        }
+        return lines.joined(separator: "\n")
     }
 
     private static let unavailable = String(localized: "Die Begründung kann wegen unvollständiger Auswertungsdaten nicht sicher angezeigt werden.")

@@ -57,6 +57,29 @@ interface ProgressionDao {
     @Query("SELECT * FROM progression_suggestions WHERE status = 'PENDING' ORDER BY id")
     suspend fun getPendingSuggestions(): List<ProgressionSuggestionEntity>
 
+    /** Completion time, not the generated outcome's status, determines proposal freshness. */
+    @Query(
+        """
+        SELECT EXISTS (
+            SELECT 1 FROM workout_plan_targets t
+            JOIN workout_sessions s ON s.id = t.sessionId
+            JOIN workout_sets w ON w.planTargetSnapshotId = t.id
+                AND w.sessionId = s.id AND w.exerciseId = t.exerciseId
+            WHERE t.planId = :planId AND t.exerciseId = :exerciseId AND t.orderIndex = :orderIndex
+              AND s.endTime IS NOT NULL AND COALESCE(s.isDeload, 0) = 0
+              AND (s.endTime > :sourceEndTime OR (s.endTime = :sourceEndTime AND s.id > :sourceSessionId))
+              AND w.setType != 'WARMUP'
+        )
+        """
+    )
+    suspend fun hasNewerCompletedWork(
+        planId: Long,
+        exerciseId: Long,
+        orderIndex: Int,
+        sourceEndTime: Long,
+        sourceSessionId: Long
+    ): Boolean
+
     @Query(
         """
         SELECT t.* FROM workout_plan_targets t
@@ -65,6 +88,7 @@ interface ProgressionDao {
           AND t.exerciseId = :exerciseId
           AND t.orderIndex = :orderIndex
           AND s.endTime IS NOT NULL
+          AND COALESCE(s.isDeload, 0) = 0
           AND (s.endTime < :sourceEndTime OR (s.endTime = :sourceEndTime AND s.id < :sourceSessionId))
         ORDER BY s.endTime DESC, s.id DESC, t.id DESC
         """
@@ -85,6 +109,7 @@ interface ProgressionDao {
         SELECT DISTINCT t.sessionId FROM workout_plan_targets t
         JOIN workout_sessions s ON s.id = t.sessionId
         WHERE s.endTime IS NOT NULL
+          AND COALESCE(s.isDeload, 0) = 0
           AND NOT (
               t.progressionScheme = 'MANUAL'
               AND t.progressionIncrementValue IS NULL
@@ -133,6 +158,7 @@ interface ProgressionDao {
         SELECT DISTINCT t.sessionId FROM workout_plan_targets t
         JOIN workout_sessions s ON s.id = t.sessionId
         WHERE s.endTime IS NOT NULL
+          AND COALESCE(s.isDeload, 0) = 0
           AND (s.endTime < :sourceEndTime OR (s.endTime = :sourceEndTime AND s.id < :sourceSessionId))
           AND NOT (
               t.progressionScheme = 'MANUAL'

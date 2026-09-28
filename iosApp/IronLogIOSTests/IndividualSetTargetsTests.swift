@@ -30,6 +30,21 @@ final class IndividualSetTargetsTests: XCTestCase {
         XCTAssertEqual(row.target?.setTargets.count, 4)
     }
 
+    func testFailureWorkAndExplicitBackoffCompleteTheirOwnSlots() {
+        let sets = [
+            ILWorkoutSet(id: 1, setType: "WARMUP"),
+            ILWorkoutSet(id: 2, setType: "NORMAL"),
+            ILWorkoutSet(id: 3, setType: "FAILURE")
+        ]
+        let unfinished = makeRow(sets: sets)
+        XCTAssertEqual(unfinished.nextPlannedSet?.kind, "BACKOFF")
+        XCTAssertFalse(unfinished.isComplete)
+        let completed = makeRow(sets: sets + [ILWorkoutSet(id: 4, setType: "BACKOFF")])
+        XCTAssertTrue(completed.isComplete)
+        XCTAssertEqual(completed.completedNormalSets, 2)
+        XCTAssertTrue(makeRow(sets: sets + [ILWorkoutSet(id: 4, setType: "NORMAL")]).isComplete)
+    }
+
     private func makeRow(sets: [ILWorkoutSet] = [], displaySets: Int = 3) -> IOSWorkoutExerciseRow {
         let target = ILWorkoutPlanTarget(id: 1, target: ILProgressionTarget(sets: 3, reps: 8, weightKg: 60), setTargets: [
             ILPlannedSet(kind: "WARMUP", reps: 10, weightKg: 20),

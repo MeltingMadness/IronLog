@@ -24,6 +24,7 @@ data class ProgressionConfigInput(
     val stallThreshold: Int = 2,
     val backoffPercent: Double = 10.0,
     val ruleRevision: Int = 1,
+    val successThreshold: Int = 1,
     /** Non-null values are storage/parser failures and make the config invalid. */
     val storageReason: String? = null,
     /** Retains an unknown scheme for diagnostics when a payload is malformed. */
@@ -73,7 +74,8 @@ data class ProgressionSetInput(
 @Serializable
 data class ProgressionPreviousOutcomeInput(
     val sourceTarget: ProgressionTargetInput,
-    val streakEffect: ProgressionStreakEffect
+    val streakEffect: ProgressionStreakEffect,
+    val successful: Boolean = false
 )
 
 @Serializable
@@ -115,7 +117,9 @@ enum class ProgressionReasonCode {
     MANUAL_SCHEME,
     SET_NUMBER_INVALID,
     SET_VALUE_INVALID,
-    BACKOFF_FLOOR_REACHED
+    BACKOFF_FLOOR_REACHED,
+    SUCCESS_CONFIRMATION_REQUIRED,
+    MIXED_LOADS
 }
 
 @Serializable

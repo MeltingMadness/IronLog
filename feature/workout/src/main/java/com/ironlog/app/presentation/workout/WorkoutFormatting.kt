@@ -54,6 +54,7 @@ internal fun setTypeLabel(setNumber: Int, setType: SetType): String = when (setT
     SetType.WARMUP -> "W$setNumber"
     SetType.DROP_SET -> "D$setNumber"
     SetType.FAILURE -> "F$setNumber"
+    SetType.BACKOFF -> "B$setNumber"
 }
 
 internal fun SetType.labelRes(): Int = when (this) {
@@ -61,6 +62,7 @@ internal fun SetType.labelRes(): Int = when (this) {
     SetType.WARMUP -> R.string.workout_warmup_chip
     SetType.DROP_SET -> R.string.workout_set_type_drop_set
     SetType.FAILURE -> R.string.workout_set_type_failure
+    SetType.BACKOFF -> R.string.workout_set_type_backoff
 }
 
 internal fun SetIntention.labelRes(): Int = when (this) {

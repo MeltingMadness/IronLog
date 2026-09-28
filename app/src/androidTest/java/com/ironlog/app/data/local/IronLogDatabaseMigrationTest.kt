@@ -2,6 +2,7 @@ package com.ironlog.app.data.local
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
@@ -13,10 +14,51 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
+import org.junit.Rule
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class IronLogDatabaseMigrationTest {
+
+    @get:Rule
+    val migrationHelper = MigrationTestHelper(
+        InstrumentationRegistry.getInstrumentation(), IronLogDatabase::class.java
+    )
+
+    @Test
+    fun migration14To15_upgradesLiveRulesButPreservesHistoricalSnapshots() {
+        val dbName = "ironlog-migration-14-15-test.db"
+        migrationHelper.createDatabase(dbName, 14).use { db ->
+            db.execSQL("INSERT INTO exercises VALUES (1, 'Squat', 'BEINE', '', 'LANGHANTEL', 1, '', 0)")
+            db.execSQL("INSERT INTO training_plans VALUES (1, 'Training', 1000)")
+            db.execSQL("INSERT INTO workout_sessions (id, startTime, endTime, durationSeconds, name, notes, planId) VALUES (1, 1000, 2000, 1, 'Session', '', 1)")
+            db.execSQL("INSERT INTO plan_exercises (id, planId, exerciseId, orderIndex, targetSets, targetReps, targetWeightKg, progressionScheme, progressionIncrementValue, progressionIncrementUnit, progressionIncrementKg) VALUES (1, 1, 1, 0, 3, 8, 100.0, 'LINEAR', 2.5, 'METRIC', 2.5)")
+            db.execSQL("INSERT INTO plan_exercises (id, planId, exerciseId, orderIndex, targetSets, targetReps, targetWeightKg) VALUES (2, 1, 1, 1, 3, 8, 100.0)")
+            db.execSQL("INSERT INTO workout_plan_targets (id, sessionId, planId, exerciseId, orderIndex, targetSets, targetReps, targetWeightKg, progressionScheme, progressionIncrementValue, progressionIncrementUnit, progressionIncrementKg) VALUES (1, 1, 1, 1, 0, 3, 8, 100.0, 'LINEAR', 2.5, 'METRIC', 2.5)")
+            db.execSQL("""
+                INSERT INTO progression_suggestions (id, sourceSessionId, sourceTargetSnapshotId, planId, exerciseId, orderIndex,
+                    outcomeType, reasonCode, reasonArgumentsJson, countedSetIdsJson, streakEffect, status, wasEdited, createdAtEpochMillis,
+                    sourceSets, sourceReps, sourceWeightKg, sourceProgressionScheme, sourceProgressionIncrementValue,
+                    sourceProgressionIncrementUnit, sourceProgressionIncrementKg, suggestedSets, suggestedReps, suggestedWeightKg)
+                VALUES (1, 1, 1, 1, 1, 0, 'PROPOSE_CHANGE', 'LOAD_ADVANCED', '{}', '[]', 'RESET', 'PENDING', 0, 2100,
+                    3, 8, 100.0, 'LINEAR', 2.5, 'METRIC', 2.5, 3, 8, 102.5)
+            """.trimIndent())
+        }
+        migrationHelper.runMigrationsAndValidate(
+            dbName, 15, true, IronLogDatabase.migration14To15ForTests()
+        ).use { db ->
+            assertEquals(2, queryInt(db, "SELECT progressionRuleRevision FROM plan_exercises WHERE id = 1"))
+            assertEquals(1, queryInt(db, "SELECT progressionRuleRevision FROM plan_exercises WHERE id = 2"))
+            assertEquals(1, queryInt(db, "SELECT progressionRuleRevision FROM workout_plan_targets WHERE id = 1"))
+            assertEquals(1, queryInt(db, "SELECT sourceProgressionRuleRevision FROM progression_suggestions WHERE id = 1"))
+            assertEquals(1, queryInt(db, "SELECT progressionSuccessThreshold FROM plan_exercises WHERE id = 1"))
+            assertEquals(1, queryInt(db, "SELECT progressionSuccessThreshold FROM workout_plan_targets WHERE id = 1"))
+            assertEquals(1, queryInt(db, "SELECT sourceProgressionSuccessThreshold FROM progression_suggestions WHERE id = 1"))
+            assertEquals(102.5, queryDouble(db, "SELECT suggestedWeightKg FROM progression_suggestions WHERE id = 1"), 0.0)
+            assertEquals("PENDING", queryString(db, "SELECT status FROM progression_suggestions WHERE id = 1"))
+            db.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
+        }
+    }
 
     @Test
     fun migration5To6_addsMetaTablesAndSessionReferenceColumns() {
@@ -151,11 +193,11 @@ class IronLogDatabaseMigrationTest {
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(14, cursor.getInt(0))
+                assertEquals(15, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "ae45104c3ae7a04dd1f4ef2615def501"
+                "613f5c12189bc8f57c30fe16c97534d6"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -195,11 +237,11 @@ class IronLogDatabaseMigrationTest {
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(14, cursor.getInt(0))
+                assertEquals(15, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "ae45104c3ae7a04dd1f4ef2615def501"
+                "613f5c12189bc8f57c30fe16c97534d6"
             )
             assertExerciseDataPreserved(db)
             assertChildDataPreserved(db)
@@ -279,11 +321,11 @@ class IronLogDatabaseMigrationTest {
         rawHelper.writableDatabase.use { db ->
             db.query("PRAGMA user_version").use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals(14, cursor.getInt(0))
+                assertEquals(15, cursor.getInt(0))
             }
             assertRecordedIdentityHash(
                 db,
-                "ae45104c3ae7a04dd1f4ef2615def501"
+                "613f5c12189bc8f57c30fe16c97534d6"
             )
             assertTrue(tableExists(db, "meta_plan_skips"))
             assertTrue(hasIndex(db, "meta_plan_skips", "index_meta_plan_skips_metaPlanId"))
@@ -349,6 +391,7 @@ class IronLogDatabaseMigrationTest {
             .addMigrations(IronLogDatabase.migration11To12ForTests())
             .addMigrations(IronLogDatabase.migration12To13ForTests())
             .addMigrations(IronLogDatabase.migration13To14ForTests())
+            .addMigrations(IronLogDatabase.migration14To15ForTests())
             .build()
         runBlocking { database.exerciseDao().getCount() }
         database.close()
@@ -644,6 +687,7 @@ class IronLogDatabaseMigrationTest {
             .addMigrations(IronLogDatabase.migration11To12ForTests())
             .addMigrations(IronLogDatabase.migration12To13ForTests())
             .addMigrations(IronLogDatabase.migration13To14ForTests())
+            .addMigrations(IronLogDatabase.migration14To15ForTests())
             .allowMainThreadQueries()
             .build()
     }
@@ -658,6 +702,7 @@ class IronLogDatabaseMigrationTest {
             .addMigrations(IronLogDatabase.migration11To12ForTests())
             .addMigrations(IronLogDatabase.migration12To13ForTests())
             .addMigrations(IronLogDatabase.migration13To14ForTests())
+            .addMigrations(IronLogDatabase.migration14To15ForTests())
             .allowMainThreadQueries()
             .build()
     }
@@ -666,7 +711,7 @@ class IronLogDatabaseMigrationTest {
         context: Context,
         dbName: String
     ): SupportSQLiteOpenHelper {
-        val callback = object : SupportSQLiteOpenHelper.Callback(14) {
+        val callback = object : SupportSQLiteOpenHelper.Callback(15) {
             override fun onCreate(db: SupportSQLiteDatabase) = Unit
 
             override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit

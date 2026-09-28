@@ -463,8 +463,14 @@ private struct IOSProgressionEditorSheet: View {
                         }
 
                         switch draft.scheme {
-                        case .manual, .linear:
+                        case .manual:
                             EmptyView()
+                        case .linear:
+                            TextField("Erfolgreiche Einheiten vor der Steigerung", text: $draft.successThreshold)
+                                .keyboardType(.numberPad)
+                            Text("Alle Arbeitssätze müssen das Ziel erreichen. Deloads werden übersprungen; andere Lasten oder Ziele beginnen eine neue Bestätigung.")
+                                .font(.geist(.footnote))
+                                .ironLogSecondaryText()
                         case .double:
                             TextField("Min-Reps", text: $draft.minReps)
                                 .keyboardType(.numberPad)
