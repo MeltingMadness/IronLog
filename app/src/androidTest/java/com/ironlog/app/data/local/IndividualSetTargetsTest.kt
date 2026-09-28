@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class IndividualSetTargetsTest {
-    @Test fun migration13To14PreservesPlanAndSnapshot() = runBlocking {
+    @Test fun migration13To15PreservesPlanAndSnapshot() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val name = "individual-targets-migration-test.db"
@@ -46,14 +46,19 @@ class IndividualSetTargetsTest {
         }).build())
         helper.writableDatabase
         helper.close()
-        val db = Room.databaseBuilder(context, IronLogDatabase::class.java, name).addMigrations(IronLogDatabase.migration13To14ForTests()).build()
+        val db = Room.databaseBuilder(context, IronLogDatabase::class.java, name)
+            .addMigrations(
+                IronLogDatabase.migration13To14ForTests(),
+                IronLogDatabase.migration14To15ForTests()
+            )
+            .build()
         try {
             val plan = db.trainingPlanDao().getExercisesForPlan(1).single()
             assertEquals(3, plan.targetSets)
             assertEquals(60.0, plan.targetWeightKg, 0.0)
             assertEquals("[]", plan.setTargetsJson)
             assertEquals("[]", db.progressionDao().getTargetsForSession(1).single().setTargetsJson)
-            assertEquals(14, db.openHelper.writableDatabase.version)
+            assertEquals(15, db.openHelper.writableDatabase.version)
         } finally { db.close(); context.deleteDatabase(name) }
     }
 

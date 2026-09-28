@@ -60,6 +60,8 @@ Beim Versionssprung wurden ältere Testfixtures ausdrücklich auf Revision 1 fes
 
 Der erste vollständige CI-Lauf von PR #45 deckte einen bereits vorhandenen datumsabhängigen Test auf: `ExerciseStatsViewModelTest` platzierte sechs als abgeschlossen gedachte Sätze auf den Mittwoch der aktuellen Woche. Bei Ausführung am Montag filtert die App diese korrekt als zukünftig heraus (6 statt der erwarteten 12 Sätze). Die Fixture verwendet nun den Wochenbeginn, der an jedem Wochentag bereits erreicht ist. Die Erwartungswerte und die produktive Statistiklogik bleiben unverändert; beide Wochenvolumen-Fälle wurden gezielt nachgeprüft.
 
+Im folgenden Lauf bestanden Unit-/Shared-Tests, Lint und Debug-Build. Der Emulatorlauf führte 41 Tests aus; einzig der ältere Migrationstest in `IndividualSetTargetsTest` scheiterte, weil sein eigener Room-Builder nur die Migration 13→14 registrierte, während die aktuelle Datenbank Schema 15 verlangt. Der Test registriert jetzt die vollständige Kette 13→14→15 und prüft weiterhin den Erhalt von Plan und Trainingssnapshot. Dieser einzelne Fall wurde nach der Korrektur auf dem lokalen API-35-Emulator erfolgreich ausgeführt. Die produktive Migrationskette enthielt 14→15 bereits. Vor dem Merge müssen die vollständigen vorhandenen CI-Gates am endgültigen Commit grün sein.
+
 ## Reproduzierbare Auswahl
 
 JDK 17 voraussetzen. Die Befehle listen die insgesamt verwendete gezielte Auswahl; bereits erfolgreiche Teilgruppen müssen bei weiteren Änderungen nur bei sachlichem Anlass erneut laufen.
@@ -91,4 +93,4 @@ xcodebuild -project iosApp/IronLogIOS.xcodeproj -scheme IronLogIOS \
 
 ## Grenzen der Prüfung
 
-Android-Debug-APK und nativer iOS-Simulator-Build sind gebaut. Die oben genannten Geräteprüfungen sind Daten-/Logiktests; eine visuelle oder umfassende interaktive UI-Abnahme wurde nicht durchgeführt. Keine vollständige Testsuite, kein Release-Build, keine neue CI, kein Upload und keine Veröffentlichung. Die vorhandenen Compiler-/Gradle-Abkündigungshinweise bleiben bestehen.
+Android-Debug-APK und nativer iOS-Simulator-Build sind gebaut. Die lokalen Prüfungen bleiben auf die betroffenen Fälle begrenzt; die vorhandene GitHub-CI prüft den PR vollständig. Die oben genannten lokalen Geräteprüfungen sind Daten-/Logiktests; eine visuelle oder umfassende interaktive UI-Abnahme wurde nicht durchgeführt. Kein Release-Build und keine Veröffentlichung im Rahmen der lokalen Prüfung. Die bestehende CI enthält keinen nativen iOS-Job; die iOS-Nachweise stammen vom lokalen Simulator. Die vorhandenen Compiler-/Gradle-Abkündigungshinweise bleiben bestehen.
