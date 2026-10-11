@@ -454,7 +454,8 @@ private struct IOSProgressionEditorSheet: View {
                         HStack {
                             TextField("Schritt", text: $draft.stepValue)
                                 .keyboardType(.decimalPad)
-                            Picker("Einheit", selection: $draft.stepUnit) {
+                            // German still reads "Einheit"; the key keeps kg/lb apart from sessions.
+                            Picker("Maßeinheit", selection: $draft.stepUnit) {
                                 Text("kg").tag("KG")
                                 Text("lb").tag("LB")
                             }

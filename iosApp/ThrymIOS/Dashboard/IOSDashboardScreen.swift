@@ -561,7 +561,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     /// The single evidence line kept outside the disclosure: how many exercises the core
     /// could actually evaluate, and how many comparable units carry that statement.
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
-        Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, String(localized: "Übung"), String(localized: "Übungen"))) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, String(localized: "vergleichbare Einheit"), String(localized: "vergleichbare Einheiten")))")
+        Text("\(trend.exercisesWithSufficientHistory) von \(trend.analyzedExerciseCount) Übungen auswertbar · \(trend.dataQuality.comparableUnitCount) vergleichbare Einheiten")
             .font(.geist(.subheadline))
             .thrymSecondaryText()
             .fixedSize(horizontal: false, vertical: true)
@@ -587,13 +587,13 @@ private struct IOSDashboardTrainingTrendCard: View {
                         .thrymSecondaryText()
 
                     if trend.repeatedDeclineExerciseCount > 0 {
-                        Text("\(trend.repeatedDeclineExerciseCount) Übung\(trend.repeatedDeclineExerciseCount == 1 ? "" : "en") mit wiederholtem Rückgang")
+                        Text("\(trend.repeatedDeclineExerciseCount) Übungen mit wiederholtem Rückgang")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
-                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))))")
+                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(strongest.comparableUnitCount) Einheiten)")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                             .fixedSize(horizontal: false, vertical: true)
@@ -651,7 +651,7 @@ private struct IOSDashboardTrainingTrendCard: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(exercise.exerciseName) · \(ilExerciseTrendStatusText(exercise.status))")
                             .font(.geist(.caption))
-                        Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))) · \(ilConfidenceText(exercise.confidence))")
+                        Text("\(changeText(exercise.changePercent)) über \(exercise.comparableUnitCount) Einheiten · \(ilConfidenceText(exercise.confidence))")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                     }
@@ -1128,7 +1128,7 @@ private struct IOSDashboardPendingProgressions: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Progression prüfen")
                         .font(.geist(.headline))
-                    Text("\(count) Vorschlag\(count == 1 ? "" : "e") wartet auf deine Entscheidung.")
+                    Text("\(count) Vorschläge warten auf deine Entscheidung.")
                         .font(.geist(.subheadline))
                         .thrymSecondaryText()
                 }

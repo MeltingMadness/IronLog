@@ -62,10 +62,19 @@ func ilVolumeText(_ kilograms: Double?, unitSystem: String, signed: Bool = false
     ilWeightText(kilograms, unitSystem: unitSystem, signed: signed)
 }
 
-/// Count with the matching German noun, e.g. "1 Training" / "3 Trainings".
-func ilCount<T: BinaryInteger>(_ value: T, _ singular: String, _ plural: String) -> String {
-    "\(Int(value).formatted(.number)) \(value == 1 ? singular : plural)"
-}
+// Counted nouns, e.g. "1 workout" / "3 workouts". Each key carries the count and
+// the catalog holds the noun as a plural variation, so every language applies its
+// own plural rules. Kotlin `Int` values arrive as `Int32` and are converted by the
+// caller, which keeps the keys on `%lld`.
+func ilWorkoutCountText(_ value: Int) -> String { String(localized: "\(value) Trainings") }
+func ilSetCountText(_ value: Int) -> String { String(localized: "\(value) Sätze") }
+func ilExerciseCountText(_ value: Int) -> String { String(localized: "\(value) Übungen") }
+/// Completed training sessions ("Einheiten"), not measurement units.
+func ilSessionCountText(_ value: Int) -> String { String(localized: "\(value) Einheiten") }
+func ilPlanCountText(_ value: Int) -> String { String(localized: "\(value) Pläne") }
+func ilMetaPlanCountText(_ value: Int) -> String { String(localized: "\(value) Meta-Pläne") }
+func ilProgressionSuggestionCountText(_ value: Int) -> String { String(localized: "\(value) Progressionsvorschläge") }
+func ilRepCountText(_ value: Int) -> String { String(localized: "\(value) Wiederholungen") }
 
 func ilCountText(_ value: Int?) -> String {
     guard let value else { return "—" }
@@ -105,7 +114,8 @@ func ilRecordValueText(type: String, value: Double, unitSystem: String) -> Strin
     case "MAX_VOLUME":
         return ilVolumeText(value, unitSystem: unitSystem)
     case "MAX_REPS":
-        return String(localized: "\(value.formatted(.number.precision(.fractionLength(0)))) Wdh.")
+        guard let reps = Int(exactly: value.rounded()) else { return value.formatted(.number.precision(.fractionLength(0))) }
+        return String(localized: "\(reps) Wdh.")
     default:
         return value.formatted(.number.precision(.fractionLength(0...1)))
     }
@@ -195,6 +205,7 @@ func ilPastDayText(_ epochMillis: Int64?, reference: Date = Date()) -> String {
 /// Work sets as a factual count. The shared projection reports fractional values
 /// because a secondary muscle group counts with half a set.
 func ilSetCountText(_ sets: Double) -> String {
-    let value = sets.formatted(.number.precision(.fractionLength(0...1)))
-    return "\(value) \(sets == 1 ? String(localized: "Satz") : String(localized: "Sätze"))"
+    if let whole = Int(exactly: sets) { return ilSetCountText(whole) }
+    // A fractional count always takes the plural ("1.5 sets", "1,5 Sätze").
+    return String(localized: "\(sets.formatted(.number.precision(.fractionLength(0...1)))) Sätze")
 }

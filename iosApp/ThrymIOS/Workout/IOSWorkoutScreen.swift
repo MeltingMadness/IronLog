@@ -403,7 +403,7 @@ struct IOSWorkoutScreen: View {
                     timer: timer,
                     exerciseName: row?.exercise.name ?? String(localized: "Übung"),
                     nextSetNumber: row?.nextSetNumber ?? 1,
-                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze")),
+                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged),
                     onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
                     onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
                     onSkip: {
@@ -445,7 +445,7 @@ struct IOSWorkoutScreen: View {
         let volume = rows.reduce(0.0) { total, row in
             total + row.sets.reduce(0.0) { $0 + $1.weightKg * Double($1.reps) }
         }
-        let progress = planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze"))
+        let progress = planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged)
         return VStack(alignment: .leading, spacing: 12) {
             IOSWorkoutGlassHeader(
                 label: currentIndex.map { String(localized: "\(name) · Übung \($0 + 1) von \(groups.count)") } ?? name,

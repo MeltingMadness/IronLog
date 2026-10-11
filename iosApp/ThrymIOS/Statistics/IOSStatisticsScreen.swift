@@ -249,8 +249,8 @@ private struct IOSStatisticsSummary: View {
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
-                    summaryMetric(String(localized: "Woche"), ilCount(analytics.workoutsThisWeek, String(localized: "Training"), String(localized: "Trainings")))
-                    summaryMetric(String(localized: "Monat"), ilCount(analytics.workoutsThisMonth, String(localized: "Training"), String(localized: "Trainings")))
+                    summaryMetric(String(localized: "Woche"), ilWorkoutCountText(analytics.workoutsThisWeek))
+                    summaryMetric(String(localized: "Monat"), ilWorkoutCountText(analytics.workoutsThisMonth))
                     if let last = ilAnalyticsDateText(analytics.lastSessionDate) {
                         summaryMetric(String(localized: "Letztes Training"), last)
                     }
@@ -297,7 +297,7 @@ private struct IOSExerciseStatisticsRow: View {
                     Text(exercise.exerciseName ?? String(localized: "Übung \(exercise.exerciseId)"))
                         .font(.geist(.headline))
                         .foregroundStyle(.primary)
-                    Text([muscleName, ilCount(exercise.sessions.count, String(localized: "Einheit"), String(localized: "Einheiten"))].filter { !$0.isEmpty }.joined(separator: " · "))
+                    Text([muscleName, ilSessionCountText(exercise.sessions.count)].filter { !$0.isEmpty }.joined(separator: " · "))
                         .font(.geist(.caption))
                         .thrymSecondaryText()
                 }

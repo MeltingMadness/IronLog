@@ -61,7 +61,7 @@ struct IOSWorkoutExercisePicker: View {
                 Button {
                     selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
                     dismiss()
-                } label: { Text("\(ilCount(selected.count, String(localized: "Übung"), String(localized: "Übungen"))) hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
+                } label: { Text("\(selected.count) Übungen hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
                 .buttonStyle(.borderedProminent).thrymButtonText().disabled(selected.isEmpty).padding().background(.bar)
             }
         }

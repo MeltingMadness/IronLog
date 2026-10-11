@@ -343,12 +343,12 @@ final class IOSSettingsViewModel: ObservableObject {
             ? String(localized: "Die vorhandenen lokalen Trainingsdaten werden vollständig ersetzt.")
             : String(localized: "Auf diesem Gerät sind noch keine lokalen Trainingsdaten geladen.")
         let counts: [String] = [
-            ilCount(preview.exerciseCount, String(localized: "Übung"), String(localized: "Übungen")),
-            ilCount(preview.workoutSessionCount, String(localized: "Training"), String(localized: "Trainings")),
-            ilCount(preview.workoutSetCount, String(localized: "Satz"), String(localized: "Sätze")),
-            ilCount(preview.trainingPlanCount, String(localized: "Plan"), String(localized: "Pläne")),
-            ilCount(preview.metaPlanCount, String(localized: "Meta-Plan"), String(localized: "Meta-Pläne")),
-            ilCount(preview.progressionSuggestionCount, String(localized: "Progressionsvorschlag"), String(localized: "Progressionsvorschläge"))
+            ilExerciseCountText(Int(preview.exerciseCount)),
+            ilWorkoutCountText(Int(preview.workoutSessionCount)),
+            ilSetCountText(Int(preview.workoutSetCount)),
+            ilPlanCountText(Int(preview.trainingPlanCount)),
+            ilMetaPlanCountText(Int(preview.metaPlanCount)),
+            ilProgressionSuggestionCountText(Int(preview.progressionSuggestionCount))
         ]
         return String(localized: "Schema \(preview.schemaVersion): \(counts.joined(separator: ", ")). \(existingDataMessage)")
     }
@@ -469,7 +469,14 @@ final class IOSSettingsViewModel: ObservableObject {
 
     var recoverySummary: String? {
         guard let recovery = recoveryBackup else { return nil }
-        return String(localized: "\(Int(recovery.exerciseCount)) Übungen, \(Int(recovery.workoutSessionCount)) Trainings, \(Int(recovery.workoutSetCount)) Sätze, \(Int(recovery.trainingPlanCount)) Pläne, \(Int(recovery.metaPlanCount)) Meta-Pläne, \(Int(recovery.progressionSuggestionCount)) Progressionsvorschläge")
+        return [
+            ilExerciseCountText(Int(recovery.exerciseCount)),
+            ilWorkoutCountText(Int(recovery.workoutSessionCount)),
+            ilSetCountText(Int(recovery.workoutSetCount)),
+            ilPlanCountText(Int(recovery.trainingPlanCount)),
+            ilMetaPlanCountText(Int(recovery.metaPlanCount)),
+            ilProgressionSuggestionCountText(Int(recovery.progressionSuggestionCount))
+        ].joined(separator: ", ")
     }
 
     private func pushReminderState(enabled: Bool, hour: Int? = nil, minute: Int? = nil, days: [String]? = nil) {

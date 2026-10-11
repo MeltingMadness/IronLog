@@ -85,7 +85,7 @@ struct IOSHistoryGlassWeekHeader: View {
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .thrymSecondaryText()
-                Text(ilCount(week.workoutCount, String(localized: "Training"), String(localized: "Trainings")))
+                Text(ilWorkoutCountText(week.workoutCount))
                     .font(.geist(.title2, weight: .heavy))
                 Text("\(range) · \(historyGlassMinutes(week.totalMinutes))")
                     .font(.geist(.caption))
@@ -102,7 +102,7 @@ struct IOSHistoryGlassWeekHeader: View {
     }
 }
 
-private struct IOSHistoryGlassMiniBars: View {
+struct IOSHistoryGlassMiniBars: View {
     @Environment(\.thrymTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
 
@@ -110,7 +110,16 @@ private struct IOSHistoryGlassMiniBars: View {
     let weekStart: Date
     let now: Date
 
-    private static let dayLetters = [String(localized: "M"), String(localized: "D"), String(localized: "M"), String(localized: "D"), String(localized: "F"), String(localized: "S"), String(localized: "S")]
+    /// Narrow weekday symbol of `day` in the app language ("M", "T", "W", … in
+    /// English; "M", "D", "M", … in German). It is read from the bar's own date,
+    /// so the letters follow whatever week start the history calendar uses.
+    static func dayLetter(for day: Date) -> String {
+        var calendar = IOSHistoryWeek.calendar
+        calendar.locale = .current
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let index = calendar.component(.weekday, from: day) - 1
+        return symbols.indices.contains(index) ? symbols[index] : ""
+    }
 
     var body: some View {
         let maxMinutes = max(1, minutesPerDay.max() ?? 0)
@@ -129,7 +138,7 @@ private struct IOSHistoryGlassMiniBars: View {
                         }
                     }
                     .frame(width: 8, height: 40)
-                    Text(Self.dayLetters[index])
+                    Text(verbatim: Self.dayLetter(for: day))
                         .font(.geist(size: 12, weight: isToday ? .heavy : .semibold))
                         .foregroundStyle(isToday ? theme.palette(for: colorScheme).textPrimary : theme.palette(for: colorScheme).textSecondary)
                 }
@@ -156,7 +165,7 @@ struct IOSHistoryGlassRow: View {
         let volume = sets.filter(\.iosCountsAsWorkSet).reduce(0) { $0 + max(0, $1.weightKg) * Double(max(0, $1.reps)) }
         var parts = [
             session.iosDurationSeconds < 60 ? String(localized: "< 1 min") : historyGlassMinutes(Int(session.iosDurationSeconds / 60)),
-            ilCount(exerciseCount, String(localized: "Übung"), String(localized: "Übungen"))
+            ilExerciseCountText(exerciseCount)
         ]
         if volume > 0 { parts.append(IOSWeightFormatter.format(volume, unitSystem: unitSystem)) }
         return parts.joined(separator: " · ")

@@ -280,7 +280,7 @@ private struct IOSHistorySummaryCard: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(ilCount(summary.sessionCount, String(localized: "Training"), String(localized: "Trainings"))), \(ilCount(summary.setCount, String(localized: "Satz"), String(localized: "Sätze"))), " +
+                "\(ilWorkoutCountText(summary.sessionCount)), \(ilSetCountText(summary.setCount)), " +
                     "\(IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem)), " +
                     "\(IOSHistoryFormatting.duration(seconds: summary.durationSeconds))"
             )
@@ -345,7 +345,7 @@ private struct IOSHistorySessionRow: View {
             }
             HStack(spacing: 14) {
                 Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
-                Label(ilCount(visibleSets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
+                Label(ilSetCountText(visibleSets.count), systemImage: "list.number")
                 if volumeKg > 0 {
                     Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
                 }
@@ -634,7 +634,7 @@ private struct IOSHistoryDetailHeader: View {
     }
 
     @ViewBuilder private var metrics: some View {
-        Label(ilCount(sets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
+        Label(ilSetCountText(sets.count), systemImage: "list.number")
         Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
         Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
     }

@@ -24,7 +24,6 @@ struct IOSWorkoutSupersetHeader: View {
 
     var body: some View {
         let palette = theme.palette(for: colorScheme)
-        let countLabel = exerciseCount == 1 ? String(localized: "Übung") : String(localized: "Übungen")
 
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
@@ -38,7 +37,7 @@ struct IOSWorkoutSupersetHeader: View {
 
                 Spacer(minLength: 8)
 
-                Text("\(exerciseCount) \(countLabel)")
+                Text(ilExerciseCountText(exerciseCount))
                     .font(.geist(.caption))
                     .foregroundStyle(palette.textSecondary)
             }
@@ -58,7 +57,7 @@ struct IOSWorkoutSupersetHeader: View {
                 .stroke(.purple.opacity(0.28), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Superset #\(groupID), \(exerciseCount) \(countLabel)")
+        .accessibilityLabel("Superset #\(groupID), \(exerciseCount) Übungen")
         .accessibilityValue(exerciseNames)
     }
 }

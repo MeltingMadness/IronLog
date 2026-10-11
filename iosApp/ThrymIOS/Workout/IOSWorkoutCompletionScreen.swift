@@ -11,7 +11,7 @@ struct IOSWorkoutFinishSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Training beenden?").font(.geist(.title2, weight: .bold))
-            Text(remaining > 0 ? String(localized: "Noch \(remaining) \(remaining == 1 ? String(localized: "geplanter Satz") : String(localized: "geplante Sätze")) offen. \(planned - remaining) von \(planned) absolviert.") : String(localized: "Deine bestätigten Sätze werden gespeichert."))
+            Text(remaining > 0 ? String(localized: "Noch \(remaining) geplante Sätze offen. \(planned - remaining) von \(planned) absolviert.") : String(localized: "Deine bestätigten Sätze werden gespeichert."))
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
@@ -92,7 +92,7 @@ struct IOSWorkoutCompletionScreen: View {
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                     if remaining > 0 {
-                        Text("Vorzeitig beendet · \(ilCount(sets.count, String(localized: "bestätigter Satz"), String(localized: "bestätigte Sätze")))")
+                        Text("Vorzeitig beendet · \(sets.count) bestätigte Sätze")
                             .thrymSecondaryText()
                     }
                 }

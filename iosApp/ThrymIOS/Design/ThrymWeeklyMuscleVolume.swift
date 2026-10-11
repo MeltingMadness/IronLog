@@ -358,7 +358,7 @@ struct ThrymWeeklyMuscleVolumeRow: View {
         guard let weeklySets = volume.weeklySets, weeklySets.isFinite else {
             return "—"
         }
-        return "\(thrymFormatSets(weeklySets)) \(weeklySets == 1 ? String(localized: "Satz") : String(localized: "Sätze"))"
+        return ilSetCountText(weeklySets)
     }
 
     private var thrymThresholdDescription: String? {
