@@ -28,38 +28,6 @@
         }
       }
     },
-    "%@ Wdh.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ Wdh."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ reps"
-          }
-        }
-      }
-    },
-    "%@ hinzufügen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ hinzufügen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add %@"
-          }
-        }
-      }
-    },
     "%@ kg": {
       "localizations": {
         "de": {
@@ -135,13 +103,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · %lld Wdh. · %@ e1RM · %@"
+            "value": "%1$@ · %#@reps@ · %3$@ e1RM · %4$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh."
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh."
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ · %lld reps · %@ e1RM · %@"
+            "value": "%1$@ · %#@reps@ · %3$@ e1RM · %4$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reps"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -194,45 +206,117 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ × %lld Wdh"
+            "value": "%1$@ × %#@reps@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ × %lld reps"
+            "value": "%1$@ × %#@reps@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reps"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "%@ × %lld Wdh · %@": {
+    "%@ über %lld Einheiten · %@": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ × %lld Wdh · %@"
+            "value": "%1$@ über %#@sessions@ · %3$@"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Einheit"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Einheiten"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ × %lld reps · %@"
-          }
-        }
-      }
-    },
-    "%@ über %@ · %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ über %@ · %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ over %@ · %@"
+            "value": "%1$@ over %#@sessions@ · %3$@"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg session"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg sessions"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -372,45 +456,402 @@
       },
       "shouldTranslate": false
     },
-    "%lld %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld %@"
-          }
-        }
-      },
-      "shouldTranslate": false
-    },
     "%lld / %lld Sätze": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld / %lld Sätze"
+            "value": "%1$lld / %#@sets@"
+          },
+          "substitutions": {
+            "sets": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Satz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Sätze"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld / %lld sets"
+            "value": "%1$lld / %#@sets@"
+          },
+          "substitutions": {
+            "sets": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "%lld Entscheidung(en) ausstehend": {
+    "%lld Einheiten": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Einheit"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Einheiten"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld session"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sessions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Entscheidungen ausstehend": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Entscheidung ausstehend"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Entscheidungen ausstehend"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld decision pending"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld decisions pending"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Meta-Pläne": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Meta-Plan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Meta-Pläne"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld meta plan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld meta plans"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Pläne": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Plan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Pläne"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld plan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld plans"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Progressionsvorschläge": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Progressionsvorschlag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Progressionsvorschläge"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld progression suggestion"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld progression suggestions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Sätze": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Satz"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Sätze"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld set"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sets"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Sätze × %lld Wdh · %@": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld Entscheidung(en) ausstehend"
+            "value": "%#@sets@ × %#@reps@ · %3$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wdh"
+                    }
+                  }
+                }
+              }
+            },
+            "sets": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Satz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Sätze"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld decision(s) pending"
+            "value": "%#@sets@ × %#@reps@ · %3$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reps"
+                    }
+                  }
+                }
+              }
+            },
+            "sets": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -418,31 +859,119 @@
     "%lld Teilpläne": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Teilpläne"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Teilplan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Teilpläne"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sub-plans"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sub-plan"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld sub-plans"
+                }
+              }
+            }
           }
         }
       }
     },
-    "%lld Vorschlag%@ wartet auf deine Entscheidung.": {
+    "%lld Trainings": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Vorschlag%@ wartet auf deine Entscheidung."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Training"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Trainings"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld suggestion%@ awaiting your decision."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workout"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld workouts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Vorschläge warten auf deine Entscheidung.": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Vorschlag wartet auf deine Entscheidung."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Vorschläge warten auf deine Entscheidung."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld suggestion awaiting your decision."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld suggestions awaiting your decision."
+                }
+              }
+            }
           }
         }
       }
@@ -450,15 +979,79 @@
     "%lld Wdh.": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Wdh."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wdh."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wdh."
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld reps"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Wiederholungen": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wiederholung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Wiederholungen"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld rep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld reps"
+                }
+              }
+            }
           }
         }
       }
@@ -468,13 +1061,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld Wiederholungen, %@"
+            "value": "%#@reps@, %2$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wiederholung"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wiederholungen"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld reps, %@"
+            "value": "%#@reps@, %2$@"
+          },
+          "substitutions": {
+            "reps": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reps"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -482,15 +1119,39 @@
     "%lld abgeschlossene Einheiten": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld abgeschlossene Einheiten"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld abgeschlossene Einheit"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld abgeschlossene Einheiten"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld completed sessions"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld completed session"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld completed sessions"
+                }
+              }
+            }
           }
         }
       }
@@ -498,15 +1159,39 @@
     "%lld abgeschlossene Trainings": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld abgeschlossene Trainings"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld abgeschlossenes Training"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld abgeschlossene Trainings"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld completed workouts"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld completed workout"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld completed workouts"
+                }
+              }
+            }
           }
         }
       }
@@ -587,34 +1272,62 @@
       },
       "shouldTranslate": false
     },
-    "%lld von %@ auswertbar · %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld von %@ auswertbar · %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld of %@ analyzable · %@"
-          }
-        }
-      }
-    },
     "%lld von %lld Arbeitssätzen": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld von %lld Arbeitssätzen"
+            "value": "%1$lld von %#@sets@"
+          },
+          "substitutions": {
+            "sets": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Arbeitssatz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Arbeitssätzen"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld of %lld work sets"
+            "value": "%1$lld of %#@sets@"
+          },
+          "substitutions": {
+            "sets": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -624,13 +1337,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld von %lld Zielwiederholungen wurden erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+            "value": "%1$lld von %#@target@ erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+          },
+          "substitutions": {
+            "target": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Zielwiederholung wurde"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Zielwiederholungen wurden"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld of %lld target reps reached. The rep target stays the same; the weight you used is kept."
+            "value": "%1$lld of %#@target@ reached. The rep target stays the same; the weight you used is kept."
+          },
+          "substitutions": {
+            "target": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg target rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg target reps"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -640,13 +1397,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld von %lld Zielwiederholungen wurden erreicht; das Gewicht steigt um %@ %@."
+            "value": "%1$lld von %#@target@ erreicht; das Gewicht steigt um %3$@ %4$@."
+          },
+          "substitutions": {
+            "target": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Zielwiederholung wurde"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Zielwiederholungen wurden"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld of %lld target reps reached; the weight increases by %@ %@."
+            "value": "%1$lld of %#@target@ reached; the weight increases by %3$@ %4$@."
+          },
+          "substitutions": {
+            "target": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg target rep"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg target reps"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -656,13 +1457,157 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld von %lld vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert."
+            "value": "%1$lld von %#@successes@ erreicht. Das Ziel bleibt bis zur Bestätigung unverändert."
+          },
+          "substitutions": {
+            "successes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbaren Erfolg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbaren Erfolgen"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld of %lld comparable successes reached. The target stays the same until confirmed."
+            "value": "%1$lld of %#@successes@ reached. The target stays the same until confirmed."
+          },
+          "substitutions": {
+            "successes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable success"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable successes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld von %lld Übungen auswertbar · %lld vergleichbare Einheiten": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %#@exercises@ auswertbar · %#@sessions@"
+          },
+          "substitutions": {
+            "exercises": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Übung"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Übungen"
+                    }
+                  }
+                }
+              }
+            },
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbare Einheit"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbare Einheiten"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %#@exercises@ analyzable · %#@sessions@"
+          },
+          "substitutions": {
+            "exercises": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exercise"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exercises"
+                    }
+                  }
+                }
+              }
+            },
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable session"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable sessions"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -670,15 +1615,39 @@
     "%lld weitere geplante Sätze offen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld weitere geplante Sätze offen"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld weiterer geplanter Satz offen"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld weitere geplante Sätze offen"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld more planned sets remaining"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more planned set remaining"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more planned sets remaining"
+                }
+              }
+            }
           }
         }
       }
@@ -694,50 +1663,122 @@
       },
       "shouldTranslate": false
     },
-    "%lld Übung%@ mit wiederholtem Rückgang": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Übung%@ mit wiederholtem Rückgang"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld exercise%@ with repeated decline"
-          }
-        }
-      }
-    },
     "%lld Übungen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Übungen"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übungen"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld exercises"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercises"
+                }
+              }
+            }
           }
         }
       }
     },
-    "%lld Übungen, %lld Trainings, %lld Sätze, %lld Pläne, %lld Meta-Pläne, %lld Progressionsvorschläge": {
+    "%lld Übungen hinzufügen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Übungen, %lld Trainings, %lld Sätze, %lld Pläne, %lld Meta-Pläne, %lld Progressionsvorschläge"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übung hinzufügen"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übungen hinzufügen"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld exercises, %lld workouts, %lld sets, %lld plans, %lld meta plans, %lld progression suggestions"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Add %lld exercise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Add %lld exercises"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Übungen mit wiederholtem Rückgang": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übung mit wiederholtem Rückgang"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Übungen mit wiederholtem Rückgang"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercise with repeated decline"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld exercises with repeated decline"
+                }
+              }
+            }
           }
         }
       }
@@ -764,16 +1805,45 @@
       },
       "shouldTranslate": false
     },
-    "+ %@": {
+    "+ %lld weitere Übungen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "+ %@"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+ %lld weitere Übung"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+ %lld weitere Übungen"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+ %lld more exercise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "+ %lld more exercises"
+                }
+              }
+            }
           }
         }
-      },
-      "shouldTranslate": false
+      }
     },
     "+ Arbeitssatz": {
       "localizations": {
@@ -834,21 +1904,16 @@
         }
       }
     },
-    "1 Teilplan": {
+    "0–9": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "1 Teilplan"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 sub-plan"
+            "value": "0–9"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "1 bedeutet kein bis sehr geringer, 5 sehr starker Muskelkater. Nicht gemeldete Muskeln bleiben offen.": {
       "localizations": {
@@ -898,22 +1963,6 @@
         }
       }
     },
-    "1 Übung": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 Übung"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 exercise"
-          }
-        }
-      }
-    },
     "1RM": {
       "localizations": {
         "de": {
@@ -940,6 +1989,17 @@
           }
         }
       }
+    },
+    "1–10": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1–10"
+          }
+        }
+      },
+      "shouldTranslate": false
     },
     "2 · niedrig": {
       "localizations": {
@@ -2531,13 +3591,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bestätigung: %lld von %lld vergleichbaren Erfolgen."
+            "value": "Bestätigung: %1$lld von %#@successes@."
+          },
+          "substitutions": {
+            "successes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbaren Erfolg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbaren Erfolgen"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Confirmation: %lld of %lld comparable successes."
+            "value": "Confirmation: %1$lld of %#@successes@."
+          },
+          "substitutions": {
+            "successes": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable success"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable successes"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2602,6 +3706,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Please check intensity under RPE / RIR."
+          }
+        }
+      }
+    },
+    "Bitte Training zuerst beenden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitte Training zuerst beenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please finish the workout first"
           }
         }
       }
@@ -2974,22 +4096,6 @@
         }
       }
     },
-    "D": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "D"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "T"
-          }
-        }
-      }
-    },
     "DIESE WOCHE": {
       "localizations": {
         "de": {
@@ -3018,22 +4124,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appearance"
-          }
-        }
-      }
-    },
-    "Das Fehlerlimit muss größer als 0 sein.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Das Fehlerlimit muss größer als 0 sein."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The stall limit must be greater than 0."
           }
         }
       }
@@ -3493,22 +4583,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deload week active"
-          }
-        }
-      }
-    },
-    "Der Backoff muss zwischen 0 und 100 % liegen.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der Backoff muss zwischen 0 und 100 % liegen."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Back-off must be between 0 and 100%."
           }
         }
       }
@@ -4005,6 +5079,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "The order carries over to the workout. Targets are entered in %@."
+          }
+        }
+      }
+    },
+    "Die Rotation hat sich geändert oder ein Training ist aktiv. Bitte erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Rotation hat sich geändert oder ein Training ist aktiv. Bitte erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rotation has changed or a workout is in progress. Please check again."
           }
         }
       }
@@ -4649,22 +5741,6 @@
         }
       }
     },
-    "Einheit": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Einheit"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "session"
-          }
-        }
-      }
-    },
     "Einheit mit geplantem Versagen neutral behandelt": {
       "localizations": {
         "de": {
@@ -4698,6 +5774,7 @@
       }
     },
     "Einheiten": {
+      "comment": "Card title: completed training sessions of one exercise.",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -4708,7 +5785,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "sessions"
+            "value": "Sessions"
           }
         }
       }
@@ -5012,6 +6089,24 @@
         }
       }
     },
+    "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another workout is already in progress. Resume or finish it first."
+          }
+        }
+      }
+    },
     "Es wurde keine Backup-Datei ausgewählt.": {
       "localizations": {
         "de": {
@@ -5092,60 +6187,12 @@
         }
       }
     },
-    "F": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "F"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "F"
-          }
-        }
-      }
-    },
-    "Failure": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failure"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failure"
-          }
-        }
-      }
-    },
     "Failure-Satz": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Failure-Satz"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failure set"
-          }
-        }
-      }
-    },
-    "Failure-Set": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failure-Set"
           }
         },
         "en": {
@@ -5508,13 +6555,97 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Für die Auswertung waren %lld Arbeitssätze nötig, vorhanden waren %lld."
+            "value": "Für die Auswertung %#@needed@, vorhanden %#@available@."
+          },
+          "substitutions": {
+            "available": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "war %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "waren %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "needed": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "war %arg Arbeitssatz nötig"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "waren %arg Arbeitssätze nötig"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The evaluation needed %lld work sets, but only %lld were available."
+            "value": "The evaluation needed %#@needed@, but only %#@available@ available."
+          },
+          "substitutions": {
+            "available": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg was"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg were"
+                    }
+                  }
+                }
+              }
+            },
+            "needed": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -5812,13 +6943,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gewertet: %lld Arbeitssätze, davon %lld bis zum Versagen. Ausgelassen: %lld Aufwärm-, %lld Drop-, %lld Backoff- und %lld zusätzliche Arbeitssätze."
+            "value": "Gewertet: %#@counted@, davon %2$lld bis zum Versagen. Ausgelassen: %3$lld Aufwärm-, %4$lld Drop-, %5$lld Backoff- und %6$lld zusätzliche Arbeitssätze."
+          },
+          "substitutions": {
+            "counted": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Arbeitssatz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Arbeitssätze"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Counted: %lld work sets, %lld of them to failure. Excluded: %lld warm-up, %lld drop, %lld back-off, and %lld extra work sets."
+            "value": "Counted: %#@counted@, %2$lld of them to failure. Excluded: %3$lld warm-up, %4$lld drop, %5$lld back-off, and %6$lld extra work sets."
+          },
+          "substitutions": {
+            "counted": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg work sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -6143,18 +7318,19 @@
         }
       }
     },
-    "Heute  %@ × %lld": {
+    "Heute": {
+      "comment": "Row label in the plan changes sheet: the value logged today, next to \"Plan\".",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Heute  %@ × %lld"
+            "value": "Heute"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today  %@ × %lld"
+            "value": "Today"
           }
         }
       }
@@ -6496,6 +7672,7 @@
       }
     },
     "KW %lld": {
+      "comment": "Calendar week label in the history, e.g. \"KW 41\" / \"Week 41\".",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -6571,6 +7748,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "No deload needed"
+          }
+        }
+      }
+    },
+    "Kein Plan für dieses Training vorhanden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Plan für dieses Training vorhanden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This workout has no plan"
           }
         }
       }
@@ -7354,22 +8549,6 @@
         }
       }
     },
-    "M": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "M"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "M"
-          }
-        }
-      }
-    },
     "MAX. GEWICHT": {
       "localizations": {
         "de": {
@@ -7590,6 +8769,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Max reps"
+          }
+        }
+      }
+    },
+    "Maßeinheit": {
+      "comment": "Plan editor picker for the weight unit of the progression step (kg/lb).",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einheit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unit"
+          }
+        }
+      }
+    },
+    "Maßeinheiten": {
+      "comment": "Settings picker for the unit system (metric/imperial). Not \"Einheiten\" = training sessions.",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einheiten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Units"
           }
         }
       }
@@ -7855,13 +9068,77 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mindestens %lld Wiederholungen waren erwartet, erreicht wurden %lld. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+            "value": "Mindestens %#@expected@ erwartet, erreicht %#@actual@. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten."
+          },
+          "substitutions": {
+            "actual": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "wurde %arg"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "wurden %arg"
+                    }
+                  }
+                }
+              }
+            },
+            "expected": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wiederholung war"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Wiederholungen waren"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "At least %lld reps were expected; you reached %lld. The rep target stays the same; the weight you used is kept."
+            "value": "At least %#@expected@ expected; you reached %2$lld. The rep target stays the same; the weight you used is kept."
+          },
+          "substitutions": {
+            "expected": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg rep was"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg reps were"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -7942,6 +9219,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Group with previous exercise"
+          }
+        }
+      }
+    },
+    "Mitgelieferte Übung. Die App zeigt sie als „%@“ an.": {
+      "comment": "Exercise editor footer for a built-in exercise: the name field holds the stored canonical name, %@ is the name the app shows.",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitgelieferte Übung. Die App zeigt sie als „%@“ an."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in exercise. The app shows it as “%@”."
           }
         }
       }
@@ -8485,34 +9779,62 @@
         }
       }
     },
-    "Noch %lld %@ offen. %lld von %lld absolviert.": {
+    "Noch %lld geplante Sätze offen. %lld von %lld absolviert.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Noch %lld %@ offen. %lld von %lld absolviert."
+            "value": "Noch %#@remaining@ offen. %2$lld von %3$lld absolviert."
+          },
+          "substitutions": {
+            "remaining": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg geplanter Satz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg geplante Sätze"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld %@ remaining. %lld of %lld completed."
-          }
-        }
-      }
-    },
-    "Noch %lld Minuten %lld Sekunden": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noch %lld Minuten %lld Sekunden"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld minutes %lld seconds left"
+            "value": "%#@remaining@ remaining. %2$lld of %3$lld completed."
+          },
+          "substitutions": {
+            "remaining": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg planned set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg planned sets"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -9264,6 +10586,23 @@
         }
       }
     },
+    "Pausentimer beenden": {
+      "comment": "Button that dismisses a running rest timer. Not \"Beenden\" = finish the workout.",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
     "Pausentimer für %@ beenden": {
       "localizations": {
         "de": {
@@ -9324,22 +10663,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan"
-          }
-        }
-      }
-    },
-    "Plan   %@ × %lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan   %@ × %lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan   %@ × %lld"
           }
         }
       }
@@ -9516,6 +10839,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep plan unchanged"
+          }
+        }
+      }
+    },
+    "Plan wurde geändert. Bitte im Editor prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan wurde geändert. Bitte im Editor prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plan was changed. Please check it in the editor."
+          }
+        }
+      }
+    },
+    "Plan wurde seit dem Training geändert. Bitte im Editor prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan wurde seit dem Training geändert. Bitte im Editor prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plan changed after the workout. Please check it in the editor."
           }
         }
       }
@@ -9824,34 +11183,20 @@
         }
       }
     },
-    "Progressionsvorschlag": {
+    "Progressionsvorschlag ist veraltet.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Progressionsvorschlag"
+            "value": "Progressionsvorschlag ist veraltet."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "progression suggestion"
-          }
-        }
-      }
-    },
-    "Progressionsvorschläge": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Progressionsvorschläge"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "progression suggestions"
+            "value": "This progression suggestion is out of date."
           }
         }
       }
@@ -10076,22 +11421,6 @@
         }
       }
     },
-    "RPE-Ziel und Toleranz müssen im Bereich 1–10 liegen.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RPE-Ziel und Toleranz müssen im Bereich 1–10 liegen."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RPE target and tolerance must be within 1–10."
-          }
-        }
-      }
-    },
     "RPE/RIR": {
       "localizations": {
         "de": {
@@ -10126,6 +11455,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rate of Perceived Exertion"
+          }
+        }
+      }
+    },
+    "Recovery-Snapshot ist inkonsistent oder wurde verändert.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovery-Snapshot ist inkonsistent oder wurde verändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The recovery snapshot is inconsistent or was modified."
           }
         }
       }
@@ -10370,22 +11717,6 @@
         }
       }
     },
-    "S": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "S"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "S"
-          }
-        }
-      }
-    },
     "Samstag": {
       "localizations": {
         "de": {
@@ -10413,7 +11744,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "set"
+            "value": "Set"
           }
         }
       }
@@ -11426,18 +12757,62 @@
         }
       }
     },
-    "Stärkster Rückgang: %@ (%@ über %@)": {
+    "Stärkster Rückgang: %@ (%@ über %lld Einheiten)": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stärkster Rückgang: %@ (%@ über %@)"
+            "value": "Stärkster Rückgang: %1$@ (%2$@ über %#@sessions@)"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Einheit"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Einheiten"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Largest decline: %@ (%@ over %@)"
+            "value": "Largest decline: %1$@ (%2$@ over %#@sessions@)"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg session"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg sessions"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -11447,13 +12822,57 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stärkster Rückgang: %@ (%@ über %lld vergleichbare Einheiten)"
+            "value": "Stärkster Rückgang: %1$@ (%2$@ über %#@sessions@)"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbare Einheit"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg vergleichbare Einheiten"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Largest decline: %@ (%@ over %lld comparable sessions)"
+            "value": "Largest decline: %1$@ (%2$@ over %#@sessions@)"
+          },
+          "substitutions": {
+            "sessions": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable session"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg comparable sessions"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -11474,18 +12893,62 @@
         }
       }
     },
-    "Superset #%lld, %lld %@": {
+    "Superset #%lld, %lld Übungen": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Superset #%lld, %lld %@"
+            "value": "Superset #%1$lld, %#@exercises@"
+          },
+          "substitutions": {
+            "exercises": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Übung"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Übungen"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Superset #%lld, %lld %@"
+            "value": "Superset #%1$lld, %#@exercises@"
+          },
+          "substitutions": {
+            "exercises": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exercise"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg exercises"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -11966,6 +13429,7 @@
       }
     },
     "Training nicht gefunden": {
+      "comment": "Also emitted by the shared Kotlin core; see ilSharedMessage(_:).",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -12157,7 +13621,26 @@
         }
       }
     },
+    "Trainingsdaten konnten nicht atomar gespeichert werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht atomar gespeichert werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be saved atomically"
+          }
+        }
+      }
+    },
     "Trainingsdaten konnten nicht geladen werden.": {
+      "comment": "Also emitted by the shared Kotlin core; see ilSharedMessage(_:).",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -12169,6 +13652,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't load training data."
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be read."
           }
         }
       }
@@ -12185,6 +13686,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't read training data: %@"
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten nicht gespeichert werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be saved."
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten zwischen Vorschau und Import nicht geladen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten zwischen Vorschau und Import nicht geladen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be loaded between preview and import."
           }
         }
       }
@@ -12237,6 +13774,60 @@
         }
       }
     },
+    "Trainingsdaten wurden seit der Recovery-Vorschau geändert. Bitte erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden seit der Recovery-Vorschau geändert. Bitte erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data changed since the recovery preview. Please check again."
+          }
+        }
+      }
+    },
+    "Trainingsdaten wurden zwischen Vorschau und Import geladen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden zwischen Vorschau und Import geladen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data was loaded between preview and import."
+          }
+        }
+      }
+    },
+    "Trainingsdaten wurden zwischen Vorschau und Import geändert. Bitte Backup erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden zwischen Vorschau und Import geändert. Bitte Backup erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data changed between preview and import. Please check the backup again."
+          }
+        }
+      }
+    },
     "Trainingsdaten zurücksetzen": {
       "localizations": {
         "de": {
@@ -12249,6 +13840,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset training data"
+          }
+        }
+      }
+    },
+    "Trainingsdaten-Datei kann nicht gelesen werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten-Datei kann nicht gelesen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The training data file can't be read"
           }
         }
       }
@@ -13101,34 +14710,42 @@
         }
       }
     },
-    "Vorzeitig beendet · %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorzeitig beendet · %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ended early · %@"
-          }
-        }
-      }
-    },
     "Vorzeitig beendet · %lld bestätigte Sätze": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorzeitig beendet · %lld bestätigte Sätze"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Vorzeitig beendet · %lld bestätigter Satz"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Vorzeitig beendet · %lld bestätigte Sätze"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ended early · %lld confirmed sets"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ended early · %lld confirmed set"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ended early · %lld confirmed sets"
+                }
+              }
+            }
           }
         }
       }
@@ -13373,6 +14990,132 @@
         }
       }
     },
+    "Wiederherstellungspunkt enthält ein ungültiges Datum.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt enthält ein ungültiges Datum."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point contains an invalid date."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt enthält eine ungültige Dateigröße.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt enthält eine ungültige Dateigröße."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point contains an invalid file size."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt ist inkonsistent oder wurde verändert.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt ist inkonsistent oder wurde verändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point is inconsistent or was modified."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht atomar gespeichert werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht atomar gespeichert werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be saved atomically"
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht geladen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht geladen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be loaded."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be read."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht verifiziert werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht verifiziert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be verified."
+          }
+        }
+      }
+    },
     "Wiederherstellungspunkt nicht verfügbar": {
       "localizations": {
         "de": {
@@ -13405,6 +15148,42 @@
         }
       }
     },
+    "Wiederherstellungspunkte können nicht gelesen werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkte können nicht gelesen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore points can't be read"
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkte sind beschädigt und können nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkte sind beschädigt und können nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore points are damaged and can't be read."
+          }
+        }
+      }
+    },
     "Wiederholte Verschlechterung erkannt": {
       "localizations": {
         "de": {
@@ -13433,22 +15212,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Repeated decline"
-          }
-        }
-      }
-    },
-    "Wiederholung": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wiederholung"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "rep"
           }
         }
       }
@@ -13773,6 +15536,24 @@
         }
       }
     },
+    "Zeit für dein Training.": {
+      "comment": "Body of the workout reminder notification (IosSettingsFeature.kt), localized on delivery.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeit für dein Training."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time for your workout."
+          }
+        }
+      }
+    },
     "Zeitraum": {
       "localizations": {
         "de": {
@@ -13840,15 +15621,39 @@
     "Ziel %lld Wdh.": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ziel %lld Wdh."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ziel %lld Wdh."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ziel %lld Wdh."
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Target %lld reps"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Target %lld rep"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Target %lld reps"
+                }
+              }
+            }
           }
         }
       }
@@ -14176,15 +15981,39 @@
     "Zuletzt vor %lld Tagen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zuletzt vor %lld Tagen"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Zuletzt vor %lld Tag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Zuletzt vor %lld Tagen"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last trained %lld days ago"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last trained %lld day ago"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last trained %lld days ago"
+                }
+              }
+            }
           }
         }
       }
@@ -14317,38 +16146,6 @@
         }
       }
     },
-    "bestätigte Sätze": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "bestätigte Sätze"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "confirmed sets"
-          }
-        }
-      }
-    },
-    "bestätigter Satz": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "bestätigter Satz"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "confirmed set"
-          }
-        }
-      }
-    },
     "e1RM": {
       "localizations": {
         "de": {
@@ -14436,38 +16233,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "planned"
-          }
-        }
-      }
-    },
-    "geplante Sätze": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "geplante Sätze"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "planned sets"
-          }
-        }
-      }
-    },
-    "geplanter Satz": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "geplanter Satz"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "planned set"
           }
         }
       }
@@ -14665,38 +16430,6 @@
         }
       }
     },
-    "vergleichbare Einheit": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "vergleichbare Einheit"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "comparable session"
-          }
-        }
-      }
-    },
-    "vergleichbare Einheiten": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "vergleichbare Einheiten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "comparable sessions"
-          }
-        }
-      }
-    },
     "viel Volumen": {
       "localizations": {
         "de": {
@@ -14725,38 +16458,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "of %@"
-          }
-        }
-      }
-    },
-    "weitere Übung": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "weitere Übung"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "more exercise"
-          }
-        }
-      }
-    },
-    "weitere Übungen": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "weitere Übungen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "more exercises"
           }
         }
       }
@@ -14812,15 +16513,39 @@
     "zuletzt vor %lld Tagen": {
       "localizations": {
         "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "zuletzt vor %lld Tagen"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "zuletzt vor %lld Tag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "zuletzt vor %lld Tagen"
+                }
+              }
+            }
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "last trained %lld days ago"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "last trained %lld day ago"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "last trained %lld days ago"
+                }
+              }
+            }
           }
         }
       }
@@ -15093,6 +16818,23 @@
         }
       }
     },
+    "Übung (Anzahl)": {
+      "comment": "Unit under the exercise count on the completion screen, like \"min\" and \"kg\" (count is 1).",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exercise"
+          }
+        }
+      }
+    },
     "Übung bearbeiten": {
       "localizations": {
         "de": {
@@ -15201,6 +16943,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exercises (%lld)"
+          }
+        }
+      }
+    },
+    "Übungen (Anzahl)": {
+      "comment": "Unit under the exercise count on the completion screen, like \"min\" and \"kg\" (count is not 1).",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übungen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exercises"
           }
         }
       }

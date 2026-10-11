@@ -44,7 +44,7 @@ struct IOSDashboardGlassHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: "de_DE"))).uppercased())
+                Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide)).uppercased())
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .thrymSecondaryText()
@@ -147,7 +147,7 @@ struct IOSDashboardGlassCommandCenter: View {
                     }
                     if exercises.count > 3 {
                         let more = exercises.count - 3
-                        Text("+ \(ilCount(more, String(localized: "weitere Übung"), String(localized: "weitere Übungen")))")
+                        Text("+ \(more) weitere Übungen")
                             .font(.geist(.footnote, weight: .bold))
                             .thrymSecondaryText()
                             .padding(.top, 8)
@@ -211,7 +211,7 @@ struct IOSDashboardGlassCommandCenter: View {
     private var subtitle: String {
         if activeSession != nil { return String(localized: "Ein begonnenes Training wartet auf dich.") }
         if planName != nil {
-            return [ilCount(exercises.count, String(localized: "Übung"), String(localized: "Übungen")), lastDoneText].joined(separator: " · ")
+            return [ilExerciseCountText(exercises.count), lastDoneText].joined(separator: " · ")
         }
         return String(localized: "Starte eine freie Einheit und halte sie sauber fest.")
     }
@@ -253,7 +253,7 @@ struct IOSDashboardGlassCommandCenter: View {
     }
 
     private func exerciseName(_ exercise: ILPlanExercise) -> String {
-        data?.exercises.first { $0.id == exercise.exerciseId }?.name ?? String(localized: "Übung")
+        data?.exercises.first { $0.id == exercise.exerciseId }?.displayName ?? String(localized: "Übung")
     }
 
     /// "3 × 8 · 82,5 kg"; without a target weight only sets and reps.
@@ -286,14 +286,14 @@ struct IOSDashboardGlassWeekStrip: View {
                     .tracking(0.8)
                     .thrymSecondaryText()
                 Spacer()
-                Text("\(ilCount(workoutsThisWeek, String(localized: "Training"), String(localized: "Trainings"))) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
+                Text("\(ilWorkoutCountText(workoutsThisWeek)) · \(ilVolumeText(volumeKg.rounded(), unitSystem: unitSystem))")
                     .font(.geist(.subheadline, weight: .bold))
                     .monospacedDigit()
             }
             HStack(spacing: 0) {
                 ForEach(days) { day in
                     VStack(spacing: 6) {
-                        Text(day.date.formatted(.dateTime.weekday(.abbreviated).locale(Locale(identifier: "de_DE"))).replacingOccurrences(of: ".", with: ""))
+                        Text(day.date.formatted(.dateTime.weekday(.abbreviated)).replacingOccurrences(of: ".", with: ""))
                             .font(.geist(size: 12, weight: .bold))
                             .thrymSecondaryText()
                         ZStack {
@@ -324,7 +324,7 @@ struct IOSDashboardGlassWeekStrip: View {
     }
 
     private func accessibilityText(_ day: IOSDashboardWeekDay) -> String {
-        let name = day.date.formatted(.dateTime.weekday(.wide).locale(Locale(identifier: "de_DE")))
+        let name = day.date.formatted(.dateTime.weekday(.wide))
         if day.trained { return String(localized: "\(name), trainiert") }
         if day.isToday { return String(localized: "\(name), heute") }
         return String(localized: "\(name), offen")

@@ -1,0 +1,12 @@
+// Local signing overrides. Copy this file to iosApp/Local.xcconfig, which is
+// git-ignored, and uncomment the lines you need. Config/Signing.xcconfig
+// includes it for the app and test targets.
+//
+// Your Apple Developer team ID (Xcode > Settings > Accounts). A free
+// personal team is enough to run the app on your own device.
+// DEVELOPMENT_TEAM = ABCDE12345
+//
+// Bundle IDs are unique across all Apple teams and com.thrym.ios is reserved
+// for the official app, so use your own reverse-DNS ID. The test bundle
+// becomes $(THRYM_BUNDLE_ID).tests.
+// THRYM_BUNDLE_ID = com.example.thrym

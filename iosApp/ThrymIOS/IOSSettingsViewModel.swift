@@ -193,7 +193,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Backup fehlgeschlagen"),
-                        message: error ?? String(localized: "Backup konnte nicht exportiert werden.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht exportiert werden.")
                     )
                 }
             }
@@ -241,7 +241,7 @@ final class IOSSettingsViewModel: ObservableObject {
                         } else {
                             self.activeAlert = SettingsAlert(
                                 title: String(localized: "Import abgebrochen"),
-                                message: error ?? String(localized: "Backup konnte nicht geprüft werden.")
+                                message: error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht geprüft werden.")
                             )
                         }
                     }
@@ -273,7 +273,7 @@ final class IOSSettingsViewModel: ObservableObject {
                     title: didImport ? String(localized: "Backup importiert") : String(localized: "Import fehlgeschlagen"),
                     message: didImport
                         ? String(localized: "Die lokalen Trainingsdaten wurden wiederhergestellt.")
-                        : (error ?? String(localized: "Backup konnte nicht importiert werden."))
+                        : (error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht importiert werden."))
                 )
                 if didImport {
                     self.refreshRecoveryBackup()
@@ -294,7 +294,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 if let error, recovery == nil {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Wiederherstellungspunkt nicht verfügbar"),
-                        message: error
+                        message: ilSharedMessage(error)
                     )
                 } else {
                     self.recoveryBackup = recovery
@@ -325,7 +325,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Wiederherstellung fehlgeschlagen"),
-                        message: error ?? String(localized: "Kein Wiederherstellungspunkt ist verfügbar.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Kein Wiederherstellungspunkt ist verfügbar.")
                     )
                     self.refreshRecoveryBackup()
                 }
@@ -343,12 +343,12 @@ final class IOSSettingsViewModel: ObservableObject {
             ? String(localized: "Die vorhandenen lokalen Trainingsdaten werden vollständig ersetzt.")
             : String(localized: "Auf diesem Gerät sind noch keine lokalen Trainingsdaten geladen.")
         let counts: [String] = [
-            ilCount(preview.exerciseCount, String(localized: "Übung"), String(localized: "Übungen")),
-            ilCount(preview.workoutSessionCount, String(localized: "Training"), String(localized: "Trainings")),
-            ilCount(preview.workoutSetCount, String(localized: "Satz"), String(localized: "Sätze")),
-            ilCount(preview.trainingPlanCount, String(localized: "Plan"), String(localized: "Pläne")),
-            ilCount(preview.metaPlanCount, String(localized: "Meta-Plan"), String(localized: "Meta-Pläne")),
-            ilCount(preview.progressionSuggestionCount, String(localized: "Progressionsvorschlag"), String(localized: "Progressionsvorschläge"))
+            ilExerciseCountText(Int(preview.exerciseCount)),
+            ilWorkoutCountText(Int(preview.workoutSessionCount)),
+            ilSetCountText(Int(preview.workoutSetCount)),
+            ilPlanCountText(Int(preview.trainingPlanCount)),
+            ilMetaPlanCountText(Int(preview.metaPlanCount)),
+            ilProgressionSuggestionCountText(Int(preview.progressionSuggestionCount))
         ]
         return String(localized: "Schema \(preview.schemaVersion): \(counts.joined(separator: ", ")). \(existingDataMessage)")
     }
@@ -362,7 +362,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 self.isBusy = false
                 self.activeAlert = SettingsAlert(
                     title: success.boolValue ? String(localized: "Daten zurückgesetzt") : String(localized: "Reset fehlgeschlagen"),
-                    message: success.boolValue ? String(localized: "Lokale Trainingsdaten wurden zurückgesetzt.") : (error ?? String(localized: "Daten konnten nicht zurückgesetzt werden."))
+                    message: success.boolValue ? String(localized: "Lokale Trainingsdaten wurden zurückgesetzt.") : (error.map(ilSharedMessage) ?? String(localized: "Daten konnten nicht zurückgesetzt werden."))
                 )
             }
         }
@@ -396,7 +396,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Report fehlgeschlagen"),
-                        message: error ?? String(localized: "Incident-Report konnte nicht erstellt werden.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Incident-Report konnte nicht erstellt werden.")
                     )
                 }
             }
@@ -469,7 +469,14 @@ final class IOSSettingsViewModel: ObservableObject {
 
     var recoverySummary: String? {
         guard let recovery = recoveryBackup else { return nil }
-        return String(localized: "\(Int(recovery.exerciseCount)) Übungen, \(Int(recovery.workoutSessionCount)) Trainings, \(Int(recovery.workoutSetCount)) Sätze, \(Int(recovery.trainingPlanCount)) Pläne, \(Int(recovery.metaPlanCount)) Meta-Pläne, \(Int(recovery.progressionSuggestionCount)) Progressionsvorschläge")
+        return [
+            ilExerciseCountText(Int(recovery.exerciseCount)),
+            ilWorkoutCountText(Int(recovery.workoutSessionCount)),
+            ilSetCountText(Int(recovery.workoutSetCount)),
+            ilPlanCountText(Int(recovery.trainingPlanCount)),
+            ilMetaPlanCountText(Int(recovery.metaPlanCount)),
+            ilProgressionSuggestionCountText(Int(recovery.progressionSuggestionCount))
+        ].joined(separator: ", ")
     }
 
     private func pushReminderState(enabled: Bool, hour: Int? = nil, minute: Int? = nil, days: [String]? = nil) {

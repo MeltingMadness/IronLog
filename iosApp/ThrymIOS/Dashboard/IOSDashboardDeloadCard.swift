@@ -14,6 +14,8 @@ struct IOSDashboardDeloadCard: View {
     let onActivate: (String) -> Void
     let onDeactivate: () -> Void
 
+    @Environment(IOSTrainingStore.self) private var store
+
     private var isActive: Bool {
         activeMode.uppercased() != "NONE" && !activeMode.isEmpty
     }
@@ -50,7 +52,7 @@ struct IOSDashboardDeloadCard: View {
         }
 
         if let decline = trend.strongestDecline, let change = decline.changePercent {
-            Text("Stärkster Rückgang: \(decline.exerciseName) (\(percentText(change)) über \(decline.comparableUnitCount) vergleichbare Einheiten)")
+            Text("Stärkster Rückgang: \(ilExerciseDisplayName(id: decline.exerciseId, storedName: decline.exerciseName, in: store.data) ?? decline.exerciseName) (\(percentText(change)) über \(decline.comparableUnitCount) vergleichbare Einheiten)")
                 .font(.geist(.subheadline, weight: .semibold))
         }
 

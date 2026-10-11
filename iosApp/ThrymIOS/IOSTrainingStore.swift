@@ -30,7 +30,7 @@ final class IOSTrainingStore {
 
     init() {
         feature = IosTrainingFeature()
-        errorMessage = feature.currentError()
+        errorMessage = feature.currentError().map(ilSharedMessage)
         if let json = feature.currentJson() { receive(json) }
         observation = feature.watchJson(onState: { [weak self] json in
             Task { @MainActor in self?.receive(json) }
@@ -61,7 +61,7 @@ final class IOSTrainingStore {
         if let json = feature.currentJson() {
             _ = receive(json)
         } else {
-            errorMessage = feature.currentError() ?? String(localized: "Trainingsdaten konnten nicht geladen werden.")
+            errorMessage = feature.currentError().map(ilSharedMessage) ?? String(localized: "Trainingsdaten konnten nicht geladen werden.")
         }
     }
 
@@ -174,7 +174,7 @@ final class IOSTrainingStore {
                     continuation.resume(returning: (value, error))
                 }
             }
-            if let error = result.1 { errorMessage = error; return false }
+            if let error = result.1 { errorMessage = ilSharedMessage(error); return false }
             guard let snapshot = result.0 else {
                 errorMessage = String(localized: "Die Aktion hat keine bestätigten Trainingsdaten zurückgegeben.")
                 return false

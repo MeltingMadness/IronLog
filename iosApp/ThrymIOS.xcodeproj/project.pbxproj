@@ -14,6 +14,7 @@
 		0C8A93AF24DBC77CF800B81F /* IOSExerciseLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */; };
 		0CBA1C2ABF0D7495C137673E /* ThrymFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C24432BBA49DFDD9176238 /* ThrymFont.swift */; };
 		1079DDCBF80F6035B1474524 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6615F1684CAAE08BA07D3060 /* ShareSheet.swift */; };
+		11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */; };
 		12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */; };
 		152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */; };
 		15940760C4BFBEF6E77765E1 /* IOSWorkoutRestTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */; };
@@ -23,6 +24,7 @@
 		2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */; };
 		2890A5F4C453F4E9CD5A1ECF /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */; };
 		2D11D82A07934287F0C6D91D /* ThrymTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE26BB69E200C0434567A41 /* ThrymTheme.swift */; };
+		2DADCA32056FC9E39A81773B /* ExerciseDisplayName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */; };
 		336D8F7D69FEA96F40791BB2 /* WorkoutRestTimerPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB67C04D1909008666D4B2AB /* WorkoutRestTimerPersistenceTests.swift */; };
 		3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */; };
 		3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */; };
@@ -36,6 +38,7 @@
 		468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */; };
 		4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */; };
 		4EDC10180EC500E2E49FA0B7 /* IOSWorkoutExercisePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */; };
+		5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */; };
 		5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */; };
 		5B4063CD77FDFA3C1B8FC30D /* AnalyticsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */; };
 		5E22350D24D617FBD09D1618 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B88909E7F012EDD309E39DEE /* Assets.xcassets */; };
@@ -43,6 +46,7 @@
 		626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */; };
 		681D867FEABAF5CD430DAFC0 /* IOSDashboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */; };
 		69E5BA086F1027852CE94E3A /* IOSMetaPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFBCEB9E5A7EB3D48561850 /* IOSMetaPlanEditorScreen.swift */; };
+		6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */; };
 		6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */; };
 		7022F82939E5099EE7259E8D /* IOSDashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03AD6F3E304A10130A9DF070 /* IOSDashboardScreen.swift */; };
 		746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */; };
@@ -58,6 +62,7 @@
 		9DBA38D1A2E509EEEC35DB4D /* IOSWorkoutStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4B30723AC61668DC29AC4E /* IOSWorkoutStartView.swift */; };
 		A34F1E6FCF6645B47823A4BD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B637839ED260DCCEDE13908 /* RootView.swift */; };
 		A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */; };
+		A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */; };
 		B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD65B83BB36D7689497F892 /* Readiness.swift */; };
 		B64146B4A52DDB3852663236 /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */; };
 		BA3968065D314047D901169A /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */; };
@@ -66,6 +71,7 @@
 		C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 22EB9C83245895F54F157452 /* Geist-Regular.ttf */; };
 		C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */; };
 		CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */; };
+		D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */; };
 		D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */; };
 		D3A7429B86011C2F10380902 /* Geist-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CF45EE706088987B53B2E57 /* Geist-Black.ttf */; };
 		D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 175CDFFC00E37243DD0A1389 /* Shared.framework */; };
@@ -90,7 +96,9 @@
 		08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFormatting.swift; sourceTree = "<group>"; };
 		0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
 		0AD65B83BB36D7689497F892 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
+		0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayName.swift; sourceTree = "<group>"; };
 		0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Bold.ttf; sourceTree = "<group>"; };
+		10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringCatalogTests.swift; sourceTree = "<group>"; };
 		128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryBridgeTests.swift; sourceTree = "<group>"; };
 		175CDFFC00E37243DD0A1389 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework"; sourceTree = SOURCE_ROOT; };
 		18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionDraftTests.swift; sourceTree = "<group>"; };
@@ -102,8 +110,11 @@
 		2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
 		2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
 		2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocumentTests.swift; sourceTree = "<group>"; };
+		30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
+		312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
+		37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputFormatTests.swift; sourceTree = "<group>"; };
 		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
 		404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
 		4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
@@ -122,6 +133,7 @@
 		776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
 		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
 		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
+		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
 		89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymLiquidGlass.swift; sourceTree = "<group>"; };
 		8B637839ED260DCCEDE13908 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		8D66E0D6C780D99643A8D982 /* Geist-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-ExtraBold.ttf; sourceTree = "<group>"; };
@@ -152,6 +164,7 @@
 		EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExerciseCard.swift; sourceTree = "<group>"; };
 		EB7BB1CE6F7B229C510E6660 /* Geist-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Italic.ttf; sourceTree = "<group>"; };
 		F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSetEditor.swift; sourceTree = "<group>"; };
+		F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayNameTests.swift; sourceTree = "<group>"; };
 		FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseLibraryScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -266,6 +279,7 @@
 			44AB20737046B73011DC7B99 /* Statistics */,
 			D25050EF8BFCD4C91FEE3984 /* Workout */,
 			D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */,
+			7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */,
 			08346D3592622BE21A3EB412 /* Info.plist */,
 			1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */,
 			4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */,
@@ -299,11 +313,20 @@
 			path = Workout;
 			sourceTree = "<group>";
 		};
+		D35BDCF6803CCB1A9C4483A8 /* Config */ = {
+			isa = PBXGroup;
+		children = (
+			30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */,
+		);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		D60ADEB63C860AFBC2C3F9EF /* ThrymIOS */ = {
 			isa = PBXGroup;
 		children = (
 			CF8D0BD4B75E8C2C174692A5 /* ThrymIOS */,
 			EEFE21A1443933CA4DE017DA /* ThrymIOSTests */,
+			D35BDCF6803CCB1A9C4483A8 /* Config */,
 			00C45FD35CB0F9C5F764F070 /* Products */,
 			ED2F3B048716C9DC7573911C /* Frameworks */,
 		);
@@ -333,12 +356,16 @@
 			7838DB869BCC15E07679638E /* BackupBridgeTests.swift */,
 			2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */,
 			D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */,
+			F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */,
 			00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */,
 			4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */,
 			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
+			312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */,
+			37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */,
 			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
 			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
 			DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */,
+			10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */,
 			C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */,
 			C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */,
 			90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */,
@@ -350,6 +377,7 @@
 		F6AA6DE13F902674E46301CA /* Models */ = {
 			isa = PBXGroup;
 		children = (
+			0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */,
 			0AD65B83BB36D7689497F892 /* Readiness.swift */,
 			3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */,
 			29CDDDCC6B306D44725E8C3B /* TrainingData.swift */,
@@ -410,9 +438,10 @@
 			};
 			buildConfigurationList = FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "ThrymIOS" */;
 			compatibilityVersion = "Xcode 15.0";
-			developmentRegion = de;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				en,
 				de,
 				Base,
 			);
@@ -440,6 +469,7 @@
 				38B663E7B1FC0688050F5167 /* Geist-Medium.ttf in Resources */,
 				C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */,
 				8C79BC323D0EC1F76130807E /* Geist-SemiBold.ttf in Resources */,
+				D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */,
 				E300F0BA46649AAA60F2A89E /* Localizable.xcstrings in Resources */,
 				DC65B269DAAA2935FEFF4176 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -495,6 +525,7 @@
 				916C6AF65FBA8D8B3C3542FD /* IOSHistoryGlass.swift in Sources */, 
 				8436ECBCD7C2E0A7E34D37A9 /* IOSHistoryScreen.swift in Sources */, 
 				3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */, 
+				2DADCA32056FC9E39A81773B /* ExerciseDisplayName.swift in Sources */, 
 				B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */, 
 				3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */, 
 				0453D846071EF7D5BBCD4FDB /* TrainingData.swift in Sources */, 
@@ -537,12 +568,16 @@
 				9060EB2531467B89CBFEF653 /* BackupBridgeTests.swift in Sources */, 
 				D883EE647FD2F508F84819DA /* BinaryFileDocumentTests.swift in Sources */, 
 				2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */, 
+				6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */, 
 				6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */, 
 				746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */, 
 				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 
+				A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */, 
+				5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */, 
 				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
 				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
 				468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */, 
+				11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */, 
 				12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */, 
 				EFEFDF4CFC853E1764F495EE /* ThrymIOSTests.swift in Sources */, 
 				152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */, 
@@ -601,6 +636,7 @@
 		};
 		3CF6A4F2E05B3AAE7E2CBFEE /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = Thrym;
@@ -608,14 +644,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ThrymIOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
 				PRODUCT_NAME = ThrymIOS;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -627,6 +662,7 @@
 		};
 		23FB2CAEB38545C3793097DD /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = Thrym;
@@ -634,14 +670,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_TESTABILITY = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ThrymIOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
 				PRODUCT_NAME = ThrymIOS;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -653,17 +688,17 @@
 		};
 		E2657B9FA91DD4A55652006F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
 				PRODUCT_NAME = ThrymIOSTests;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -676,17 +711,17 @@
 		};
 		B4343C19535B18410503AED7 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
 				PRODUCT_NAME = ThrymIOSTests;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

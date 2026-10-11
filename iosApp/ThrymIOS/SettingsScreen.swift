@@ -9,7 +9,9 @@ struct SettingsScreen: View {
             Form {
                 Group {
                     Section("Anzeige") {
-                        Picker("Einheiten", selection: Binding(
+                        // "Maßeinheiten" keeps the unit system apart from "Einheiten" (sessions);
+                        // German still reads "Einheiten".
+                        Picker("Maßeinheiten", selection: Binding(
                             get: { viewModel.state.unitSystem },
                             set: viewModel.updateUnitSystem
                         )) {

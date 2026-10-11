@@ -287,7 +287,7 @@ private struct ThrymWeeklyMuscleVolumeWeekHeader: View {
               let start = Self.isoFormatter.date(from: weekStart),
               let end = Calendar(identifier: .gregorian).date(byAdding: .day, value: 6, to: start)
         else { return nil }
-        return "\(Self.displayFormatter.string(from: start)) – \(Self.displayFormatter.string(from: end))"
+        return (start..<end).formatted(Self.rangeStyle)
     }
 
     private static let isoFormatter: DateFormatter = {
@@ -299,14 +299,14 @@ private struct ThrymWeeklyMuscleVolumeWeekHeader: View {
         return formatter
     }()
 
-    private static let displayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter
-    }()
+    /// Week range in the app locale ("12.–18. Okt. 2026" / "Oct 12 – 18, 2026"), read in
+    /// UTC like the parsed week start.
+    private static var rangeStyle: Date.IntervalFormatStyle {
+        var style = Date.IntervalFormatStyle(date: .abbreviated, time: .omitted)
+        style.calendar = Calendar(identifier: .gregorian)
+        style.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        return style
+    }
 }
 
 /// A single weekly volume row with optional threshold markers.
@@ -358,7 +358,7 @@ struct ThrymWeeklyMuscleVolumeRow: View {
         guard let weeklySets = volume.weeklySets, weeklySets.isFinite else {
             return "—"
         }
-        return "\(thrymFormatSets(weeklySets)) \(weeklySets == 1 ? String(localized: "Satz") : String(localized: "Sätze"))"
+        return ilSetCountText(weeklySets)
     }
 
     private var thrymThresholdDescription: String? {

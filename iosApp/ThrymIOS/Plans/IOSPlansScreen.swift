@@ -247,7 +247,7 @@ private struct IOSPlanListRow: View {
                     Text(plan.name)
                         .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
-                    Text(exerciseCount == 1 ? String(localized: "1 Übung") : String(localized: "\(exerciseCount) Übungen"))
+                    Text(ilExerciseCountText(exerciseCount))
                         .font(.geist(.caption))
                         .thrymSecondaryText()
                 }
@@ -294,7 +294,7 @@ private struct IOSMetaPlanListRow: View {
                     Text(plan.name)
                         .font(.geist(.body, weight: .semibold))
                         .foregroundStyle(.primary)
-                    Text(itemCount == 1 ? String(localized: "1 Teilplan") : String(localized: "\(itemCount) Teilpläne"))
+                    Text("\(itemCount) Teilpläne")
                         .font(.geist(.caption))
                         .thrymSecondaryText()
                 }

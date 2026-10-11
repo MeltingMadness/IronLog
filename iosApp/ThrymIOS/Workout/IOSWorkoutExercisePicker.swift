@@ -12,7 +12,7 @@ struct IOSWorkoutExercisePicker: View {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         return exercises.filter {
             (group == nil || $0.primaryMuscleGroupDisplayName == group) &&
-            (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) || $0.categoryDisplayName.localizedCaseInsensitiveContains(query))
+            (query.isEmpty || $0.nameMatches(query) || $0.categoryDisplayName.localizedCaseInsensitiveContains(query))
         }
     }
     var body: some View {
@@ -37,7 +37,7 @@ struct IOSWorkoutExercisePicker: View {
                         } label: {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 5) {
-                                    Text(exercise.name).font(.geist(.headline)).foregroundStyle(.primary)
+                                    Text(exercise.displayName).font(.geist(.headline)).foregroundStyle(.primary)
                                     Text("\(exercise.primaryMuscleGroupDisplayName) · \(exercise.categoryDisplayName)").font(.geist(.caption)).thrymSecondaryText()
                                 }
                                 Spacer()
@@ -61,7 +61,7 @@ struct IOSWorkoutExercisePicker: View {
                 Button {
                     selected.compactMap { id in exercises.first { $0.id == id } }.forEach(onSelect)
                     dismiss()
-                } label: { Text("\(ilCount(selected.count, String(localized: "Übung"), String(localized: "Übungen"))) hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
+                } label: { Text("\(selected.count) Übungen hinzufügen").frame(maxWidth: .infinity).padding(.vertical, 6) }
                 .buttonStyle(.borderedProminent).thrymButtonText().disabled(selected.isEmpty).padding().background(.bar)
             }
         }

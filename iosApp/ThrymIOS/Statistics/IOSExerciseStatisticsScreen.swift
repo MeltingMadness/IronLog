@@ -69,7 +69,7 @@ struct IOSExerciseStatisticsScreen: View {
     }
 
     private var exerciseName: String {
-        analyticsExercise?.exerciseName ?? exercise?.name ?? String(localized: "Übung \(exerciseId)")
+        exercise?.displayName ?? analyticsExercise?.exerciseName ?? String(localized: "Übung \(exerciseId)")
     }
 
     var body: some View {
@@ -225,7 +225,7 @@ struct IOSExerciseStatisticsScreen: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Zurück")
                 if let exercise {
-                    Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilCount(analyticsExercise.sessions.count, String(localized: "Einheit"), String(localized: "Einheiten"))]
+                    Text([exercise.primaryMuscleGroupDisplayName, exercise.categoryDisplayName, ilSessionCountText(analyticsExercise.sessions.count)]
                         .joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
@@ -457,15 +457,10 @@ private struct IOSExerciseLastWorkoutComparisonCard: View {
         case .weight:
             return ilWeightText(comparison.weightDeltaKg, unitSystem: unitSystem, signed: true)
         case .reps:
-            return String(localized: "\(signedCount(comparison.repsDelta)) Wdh.")
+            return (comparison.repsDelta > 0 ? "+" : "") + String(localized: "\(comparison.repsDelta) Wdh.")
         case .volume:
             return ilVolumeText(comparison.volumeDeltaKg, unitSystem: unitSystem, signed: true)
         }
-    }
-
-    private func signedCount(_ value: Int) -> String {
-        let sign = value > 0 ? "+" : ""
-        return "\(sign)\(value)"
     }
 }
 

@@ -27,7 +27,7 @@ struct IOSWorkoutExerciseCard: View {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        Text(row.exercise.name)
+                        Text(row.exercise.displayName)
                             .font(.geist(.headline, weight: .semibold))
                         if row.target != nil {
                             Text("Plan")
@@ -56,7 +56,7 @@ struct IOSWorkoutExerciseCard: View {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
                 }
-                .accessibilityLabel("Aktionen für \(row.exercise.name)")
+                .accessibilityLabel("Aktionen für \(row.exercise.displayName)")
             }
 
             if row.target != nil, let displayTarget = row.displayTarget {
@@ -322,10 +322,10 @@ private struct IOSWorkoutInlineSetEntry: View {
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .thrymSecondaryText()
+                    // Input strings in the locale's format ("7.5" / "7,5"); the parser takes both.
                     IOSWorkoutGlassIntensityBar(
-                        options: intensityScale == "RIR"
-                            ? ["0", "1", "2", "3", "4"]
-                            : ["7", "7,5", "8", "8,5", "9", "9,5", "10"],
+                        options: (intensityScale == "RIR" ? [0, 1, 2, 3, 4] : [7, 7.5, 8, 8.5, 9, 9.5, 10])
+                            .map { IOSNumber.format($0, fractionDigits: 1) },
                         selection: $intensity
                     )
                 }

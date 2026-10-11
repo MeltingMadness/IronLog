@@ -1,6 +1,6 @@
 name: ThrymIOS
 options:
-  developmentLanguage: de
+  developmentLanguage: en
   createIntermediateGroups: true
 configs:
   Debug: debug
@@ -9,13 +9,15 @@ settings:
   base:
     PRODUCT_NAME: ThrymIOS
     SWIFT_VERSION: 5.10
-    DEVELOPMENT_TEAM: ""
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
 targets:
   ThrymIOS:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     sources:
       - path: ThrymIOS
     dependencies:
@@ -26,12 +28,13 @@ targets:
       path: ThrymIOS/Info.plist
       properties:
         CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        CFBundleLocalizations: [en, de]
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UILaunchScreen: {}
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.thrym.ios
+        PRODUCT_BUNDLE_IDENTIFIER: $(THRYM_BUNDLE_ID) # aus Config/Signing.xcconfig
         APP_DISPLAY_NAME: Thrym # aus ../branding.properties, siehe generate_project.py
         INFOPLIST_FILE: ThrymIOS/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -45,13 +48,16 @@ targets:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     sources:
       - path: ThrymIOSTests
     dependencies:
       - target: ThrymIOS
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.thrym.ios.tests
+        PRODUCT_BUNDLE_IDENTIFIER: $(THRYM_BUNDLE_ID).tests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
   ThrymIOS:

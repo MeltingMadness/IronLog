@@ -497,6 +497,7 @@ private struct IOSDashboardCommandCenter: View {
 private struct IOSDashboardTrainingTrendCard: View {
     let trend: ILTrainingTrendAssessment?
 
+    @Environment(IOSTrainingStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Collapsed, the card stays scannable (ring, status, evidence). Every reason,
     /// exercise and data-quality note the core computed stays reachable behind this
@@ -561,7 +562,7 @@ private struct IOSDashboardTrainingTrendCard: View {
     /// The single evidence line kept outside the disclosure: how many exercises the core
     /// could actually evaluate, and how many comparable units carry that statement.
     private func evidenceLine(_ trend: ILTrainingTrendAssessment) -> some View {
-        Text("\(trend.exercisesWithSufficientHistory) von \(ilCount(trend.analyzedExerciseCount, String(localized: "Übung"), String(localized: "Übungen"))) auswertbar · \(ilCount(trend.dataQuality.comparableUnitCount, String(localized: "vergleichbare Einheit"), String(localized: "vergleichbare Einheiten")))")
+        Text("\(trend.exercisesWithSufficientHistory) von \(trend.analyzedExerciseCount) Übungen auswertbar · \(trend.dataQuality.comparableUnitCount) vergleichbare Einheiten")
             .font(.geist(.subheadline))
             .thrymSecondaryText()
             .fixedSize(horizontal: false, vertical: true)
@@ -587,13 +588,13 @@ private struct IOSDashboardTrainingTrendCard: View {
                         .thrymSecondaryText()
 
                     if trend.repeatedDeclineExerciseCount > 0 {
-                        Text("\(trend.repeatedDeclineExerciseCount) Übung\(trend.repeatedDeclineExerciseCount == 1 ? "" : "en") mit wiederholtem Rückgang")
+                        Text("\(trend.repeatedDeclineExerciseCount) Übungen mit wiederholtem Rückgang")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                     }
 
                     if let strongest = trend.strongestDecline, let change = strongest.changePercent {
-                        Text("Stärkster Rückgang: \(strongest.exerciseName) (\(changeText(change)) über \(ilCount(strongest.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))))")
+                        Text("Stärkster Rückgang: \(exerciseName(strongest)) (\(changeText(change)) über \(strongest.comparableUnitCount) Einheiten)")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                             .fixedSize(horizontal: false, vertical: true)
@@ -641,6 +642,10 @@ private struct IOSDashboardTrainingTrendCard: View {
         }
     }
 
+    private func exerciseName(_ exercise: ILExerciseTrend) -> String {
+        ilExerciseDisplayName(id: exercise.exerciseId, storedName: exercise.exerciseName, in: store.data) ?? exercise.exerciseName
+    }
+
     @ViewBuilder
     private func allExercises(_ trend: ILTrainingTrendAssessment) -> some View {
         if !trend.exercises.isEmpty {
@@ -649,9 +654,9 @@ private struct IOSDashboardTrainingTrendCard: View {
                     .font(.geist(.caption, weight: .semibold))
                 ForEach(trend.exercises, id: \.exerciseId) { exercise in
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("\(exercise.exerciseName) · \(ilExerciseTrendStatusText(exercise.status))")
+                        Text("\(exerciseName(exercise)) · \(ilExerciseTrendStatusText(exercise.status))")
                             .font(.geist(.caption))
-                        Text("\(changeText(exercise.changePercent)) über \(ilCount(exercise.comparableUnitCount, String(localized: "Einheit"), String(localized: "Einheiten"))) · \(ilConfidenceText(exercise.confidence))")
+                        Text("\(changeText(exercise.changePercent)) über \(exercise.comparableUnitCount) Einheiten · \(ilConfidenceText(exercise.confidence))")
                             .font(.geist(.caption))
                             .thrymSecondaryText()
                     }
@@ -1128,7 +1133,7 @@ private struct IOSDashboardPendingProgressions: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Progression prüfen")
                         .font(.geist(.headline))
-                    Text("\(count) Vorschlag\(count == 1 ? "" : "e") wartet auf deine Entscheidung.")
+                    Text("\(count) Vorschläge warten auf deine Entscheidung.")
                         .font(.geist(.subheadline))
                         .thrymSecondaryText()
                 }
@@ -1158,6 +1163,8 @@ private struct IOSDashboardRecentRecords: View {
     let records: [ILTrainingAnalyticsRecord]
     let unitSystem: String
 
+    @Environment(IOSTrainingStore.self) private var store
+
     var body: some View {
         ThrymCard(title: String(localized: "Neue Rekorde"), subtitle: records.isEmpty ? nil : String(localized: "Zuletzt erfasst")) {
             if records.isEmpty {
@@ -1169,7 +1176,7 @@ private struct IOSDashboardRecentRecords: View {
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(records) { record in
                             VStack(alignment: .leading, spacing: 7) {
-                                Text(record.exerciseName ?? String(localized: "Übung \(record.exerciseId)"))
+                                Text(ilExerciseDisplayName(id: record.exerciseId, storedName: record.exerciseName, in: store.data) ?? String(localized: "Übung \(record.exerciseId)"))
                                     .font(.geist(.headline))
                                     .lineLimit(2)
                                 Text(ilRecordTypeText(record.type))

@@ -118,7 +118,7 @@ struct IOSProgressionReviewScreen: View {
             LazyVStack(alignment: .leading, spacing: 14) {
                 if pendingCount > 0 {
                     ThrymCard(tone: .muted) {
-                        Label("\(pendingCount) Entscheidung(en) ausstehend", systemImage: "checkmark.circle")
+                        Label("\(pendingCount) Entscheidungen ausstehend", systemImage: "checkmark.circle")
                             .font(.geist(.headline))
                         Text("Ein Vorschlag ändert dein Planziel erst nach einer bewussten Übernahme. Bearbeitete Quellen bleiben unverändert.")
                             .font(.geist(.subheadline))
@@ -190,7 +190,7 @@ struct IOSProgressionReviewScreen: View {
     }
 
     private func exerciseName(for suggestion: ILProgressionSuggestion) -> String? {
-        store.data?.exercises.first(where: { $0.id == suggestion.exerciseId })?.name
+        store.data?.exercises.first(where: { $0.id == suggestion.exerciseId })?.displayName
     }
 
     private func planName(for suggestion: ILProgressionSuggestion) -> String? {
@@ -401,12 +401,12 @@ private struct IOSProgressionTargetBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.geist(.subheadline, weight: .semibold))
-            Text("\(ilCount(target.sets, String(localized: "Satz"), String(localized: "Sätze"))) × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+            Text("\(target.sets) Sätze × \(target.reps) Wdh · \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
                 .font(.geist(.body).monospacedDigit())
                 .foregroundStyle(tone.color(for: theme.palette(for: colorScheme)))
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title): \(ilCount(target.sets, String(localized: "Satz"), String(localized: "Sätze"))), \(ilCount(target.reps, String(localized: "Wiederholung"), String(localized: "Wiederholungen"))), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
+        .accessibilityLabel("\(title): \(ilSetCountText(target.sets)), \(ilRepCountText(target.reps)), \(IOSWeightFormatter.format(target.weightKg, unitSystem: unitSystem))")
     }
 }
 

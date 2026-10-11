@@ -18,8 +18,19 @@ from typing import Iterable
 
 
 PROJECT_NAME = "ThrymIOS"
-APP_BUNDLE_IDENTIFIER = "com.thrym.ios"
-TEST_BUNDLE_IDENTIFIER = "com.thrym.ios.tests"
+TESTS_NAME = f"{PROJECT_NAME}Tests"
+APP_PRODUCT_NAME = f"{PROJECT_NAME}.app"
+TESTS_PRODUCT_NAME = f"{TESTS_NAME}.xctest"
+# Signing lives in a tracked xcconfig so contributors can set their own team
+# and bundle ID in the git-ignored ``Local.xcconfig`` it includes. The targets
+# therefore must not set DEVELOPMENT_TEAM themselves: target settings would
+# override the xcconfig value.
+SIGNING_XCCONFIG = "Config/Signing.xcconfig"
+BUNDLE_ID_SETTING = "THRYM_BUNDLE_ID"
+# English is the development language and the fallback for every other
+# device language; German is shipped as a translation.
+DEVELOPMENT_REGION = "en"
+KNOWN_REGIONS = ("en", "de", "Base")
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.10"
 PROJECT_OBJECT_VERSION = "56"
@@ -236,8 +247,8 @@ def collect_group(
 
 def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, str]]:
     inventory = ProjectInventory()
-    app_root = project_root / "ThrymIOS"
-    tests_root = project_root / "ThrymIOSTests"
+    app_root = project_root / PROJECT_NAME
+    tests_root = project_root / TESTS_NAME
 
     app_group_id = collect_group(
         inventory,
@@ -245,7 +256,7 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         directory=app_root,
         target="app",
         group_key="app",
-        group_name="ThrymIOS",
+        group_name=PROJECT_NAME,
         include_info_plist=True,
     )
     tests_group_id = collect_group(
@@ -254,8 +265,26 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         directory=tests_root,
         target="tests",
         group_key="tests",
-        group_name="ThrymIOSTests",
+        group_name=TESTS_NAME,
     )
+
+    # The signing xcconfig is a build input only: it gets a file reference for
+    # baseConfigurationReference but no build phase.
+    signing_path = Path(SIGNING_XCCONFIG)
+    config_group_id = stable_id("group", "config")
+    signing_reference = add_file(
+        inventory,
+        target="config",
+        root=project_root,
+        path=project_root / signing_path,
+        file_type="text.xcconfig",
+        build_phase=None,
+    )
+    inventory.groups[config_group_id] = {
+        "name": signing_path.parent.name,
+        "path": signing_path.parent.as_posix(),
+        "children": [(signing_reference.reference_id, signing_path.name)],
+    }
 
     products_group_id = stable_id("group", "products")
     frameworks_group_id = stable_id("group", "frameworks")
@@ -280,25 +309,25 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
     )
     inventory.groups[frameworks_group_id]["children"] = [(shared_reference_id, "Shared.framework")]
 
-    app_product_reference_id = stable_id("file", "product:ThrymIOS.app")
-    tests_product_reference_id = stable_id("file", "product:ThrymIOSTests.xctest")
+    app_product_reference_id = stable_id("file", f"product:{APP_PRODUCT_NAME}")
+    tests_product_reference_id = stable_id("file", f"product:{TESTS_PRODUCT_NAME}")
     inventory.file_references[app_product_reference_id] = InventoryFile(
         target="product",
-        relative_path="ThrymIOS.app",
+        relative_path=APP_PRODUCT_NAME,
         reference_id=app_product_reference_id,
         build_file_id=None,
         file_type="wrapper.application",
     )
     inventory.file_references[tests_product_reference_id] = InventoryFile(
         target="product",
-        relative_path="ThrymIOSTests.xctest",
+        relative_path=TESTS_PRODUCT_NAME,
         reference_id=tests_product_reference_id,
         build_file_id=None,
         file_type="wrapper.cfbundle",
     )
     inventory.groups[products_group_id]["children"] = [
-        (app_product_reference_id, "ThrymIOS.app"),
-        (tests_product_reference_id, "ThrymIOSTests.xctest"),
+        (app_product_reference_id, APP_PRODUCT_NAME),
+        (tests_product_reference_id, TESTS_PRODUCT_NAME),
     ]
 
     project_group_id = stable_id("group", "project")
@@ -306,8 +335,9 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         "name": None,
         "path": None,
         "children": [
-            (app_group_id, "ThrymIOS"),
-            (tests_group_id, "ThrymIOSTests"),
+            (app_group_id, PROJECT_NAME),
+            (tests_group_id, TESTS_NAME),
+            (config_group_id, signing_path.parent.name),
             (products_group_id, "Products"),
             (frameworks_group_id, "Frameworks"),
         ],
@@ -322,6 +352,7 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         "shared_reference": shared_reference_id,
         "app_product": app_product_reference_id,
         "tests_product": tests_product_reference_id,
+        "signing_xcconfig": signing_reference.reference_id,
     }
 
 
@@ -472,12 +503,12 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\t);",
             f"\t\t\tname = {PROJECT_NAME};",
             f"\t\t\tproductName = {PROJECT_NAME};",
-            f"\t\t\tproductReference = {groups['app_product']} /* {PROJECT_NAME}.app */;",
+            f"\t\t\tproductReference = {groups['app_product']} /* {APP_PRODUCT_NAME} */;",
             "\t\t\tproductType = \"com.apple.product-type.application\";",
             "\t\t};",
-            f"\t\t{tests_target_id} /* ThrymIOSTests */ = {{",
+            f"\t\t{tests_target_id} /* {TESTS_NAME} */ = {{",
             "\t\t\tisa = PBXNativeTarget;",
-            f"\t\t\tbuildConfigurationList = {config_lists['tests']} /* Build configuration list for PBXNativeTarget \"ThrymIOSTests\" */;",
+            f"\t\t\tbuildConfigurationList = {config_lists['tests']} /* Build configuration list for PBXNativeTarget \"{TESTS_NAME}\" */;",
             "\t\t\tbuildPhases = (",
             f"\t\t\t\t{phase_ids['tests_sources']} /* Sources */,",
             f"\t\t\t\t{phase_ids['tests_frameworks']} /* Frameworks */,",
@@ -488,9 +519,9 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\tdependencies = (",
             f"\t\t\t\t{dependency_id} /* PBXTargetDependency */,",
             "\t\t\t);",
-            "\t\t\tname = ThrymIOSTests;",
-            "\t\t\tproductName = ThrymIOSTests;",
-            f"\t\t\tproductReference = {groups['tests_product']} /* ThrymIOSTests.xctest */;",
+            f"\t\t\tname = {TESTS_NAME};",
+            f"\t\t\tproductName = {TESTS_NAME};",
+            f"\t\t\tproductReference = {groups['tests_product']} /* {TESTS_PRODUCT_NAME} */;",
             "\t\t\tproductType = \"com.apple.product-type.bundle.unit-test\";",
             "\t\t};",
             "/* End PBXNativeTarget section */",
@@ -507,11 +538,10 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\t};",
             f"\t\t\tbuildConfigurationList = {config_lists['project']} /* Build configuration list for PBXProject \"{PROJECT_NAME}\" */;",
             '\t\t\tcompatibilityVersion = "Xcode 15.0";',
-            "\t\t\tdevelopmentRegion = de;",
+            f"\t\t\tdevelopmentRegion = {DEVELOPMENT_REGION};",
             "\t\t\thasScannedForEncodings = 0;",
             "\t\t\tknownRegions = (",
-            "\t\t\t\tde,",
-            "\t\t\t\tBase,",
+            *(f"\t\t\t\t{region}," for region in KNOWN_REGIONS),
             "\t\t\t);",
             f"\t\t\tmainGroup = {groups['project_group']} /* {PROJECT_NAME} */;",
             f"\t\t\tproductRefGroup = {groups['products_group']} /* Products */;",
@@ -519,7 +549,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\tprojectRoot = \"\";",
             "\t\t\ttargets = (",
             f"\t\t\t\t{app_target_id} /* {PROJECT_NAME} */,",
-            f"\t\t\t\t{tests_target_id} /* ThrymIOSTests */,",
+            f"\t\t\t\t{tests_target_id} /* {TESTS_NAME} */,",
             "\t\t\t);",
             "\t\t};",
             "/* End PBXProject section */",
@@ -636,33 +666,43 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SWIFT_VERSION": SWIFT_VERSION,
     }
+    # DEVELOPMENT_TEAM is deliberately absent from both targets; it comes
+    # from SIGNING_XCCONFIG (and the contributor's optional Local.xcconfig).
     app_common = {
         "APP_DISPLAY_NAME": read_app_display_name(),
         "CODE_SIGN_STYLE": "Automatic",
-        "DEVELOPMENT_TEAM": "",
         "FRAMEWORK_SEARCH_PATHS": "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
-        "INFOPLIST_FILE": "ThrymIOS/Info.plist",
+        "INFOPLIST_FILE": f"{PROJECT_NAME}/Info.plist",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @executable_path/Frameworks",
-        "PRODUCT_BUNDLE_IDENTIFIER": APP_BUNDLE_IDENTIFIER,
+        "PRODUCT_BUNDLE_IDENTIFIER": f"$({BUNDLE_ID_SETTING})",
         "PRODUCT_NAME": PROJECT_NAME,
         "TARGETED_DEVICE_FAMILY": "1",
     }
     tests_common = {
         "BUNDLE_LOADER": "$(TEST_HOST)",
         "CODE_SIGN_STYLE": "Automatic",
-        "DEVELOPMENT_TEAM": "",
         "GENERATE_INFOPLIST_FILE": "YES",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @loader_path/Frameworks @executable_path/Frameworks",
-        "PRODUCT_BUNDLE_IDENTIFIER": TEST_BUNDLE_IDENTIFIER,
-        "PRODUCT_NAME": "ThrymIOSTests",
+        "PRODUCT_BUNDLE_IDENTIFIER": f"$({BUNDLE_ID_SETTING}).tests",
+        "PRODUCT_NAME": TESTS_NAME,
         "TARGETED_DEVICE_FAMILY": "1",
-        "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/ThrymIOS.app/ThrymIOS",
+        "TEST_HOST": f"$(BUILT_PRODUCTS_DIR)/{APP_PRODUCT_NAME}/{PROJECT_NAME}",
     }
 
-    def render_config(config_id: str, name: str, settings: dict[str, str]) -> None:
+    def render_config(
+        config_id: str,
+        name: str,
+        settings: dict[str, str],
+        base_configuration: str | None = None,
+    ) -> None:
         lines.append(f"\t\t{config_id} /* {name} */ = {{")
         lines.append("\t\t\tisa = XCBuildConfiguration;")
+        if base_configuration:
+            lines.append(
+                f"\t\t\tbaseConfigurationReference = {base_configuration} "
+                f"/* {pbx_comment(Path(SIGNING_XCCONFIG).name)} */;"
+            )
         lines.append("\t\t\tbuildSettings = {")
         for key in sorted(settings):
             lines.append(f"\t\t\t\t{key} = {pbx_quote(settings[key])};")
@@ -688,6 +728,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
                 "SWIFT_OPTIMIZATION_LEVEL": "-Onone" if name == "Debug" else "-O",
                 **project_common,
             },
+            base_configuration=groups["signing_xcconfig"],
         )
     for name in ("Debug", "Release"):
         render_config(
@@ -698,12 +739,13 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
                 "SWIFT_OPTIMIZATION_LEVEL": "-Onone" if name == "Debug" else "-O",
                 **project_common,
             },
+            base_configuration=groups["signing_xcconfig"],
         )
     lines.extend(["/* End XCBuildConfiguration section */", "", "/* Begin XCConfigurationList section */"])
     for owner in ("project", "app", "tests"):
         lines.extend(
             [
-                f"\t\t{config_lists[owner]} /* Build configuration list for {('PBXProject' if owner == 'project' else 'PBXNativeTarget')} \"{PROJECT_NAME if owner != 'tests' else 'ThrymIOSTests'}\" */ = {{",
+                f"\t\t{config_lists[owner]} /* Build configuration list for {('PBXProject' if owner == 'project' else 'PBXNativeTarget')} \"{PROJECT_NAME if owner != 'tests' else TESTS_NAME}\" */ = {{",
                 "\t\t\tisa = XCConfigurationList;",
                 "\t\t\tbuildConfigurations = (",
                 f"\t\t\t\t{config_ids[owner]['Debug']} /* Debug */,",
@@ -727,8 +769,8 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "project": project_id,
         "app_target": app_target_id,
         "tests_target": tests_target_id,
-        "app_product_name": "ThrymIOS.app",
-        "tests_product_name": "ThrymIOSTests.xctest",
+        "app_product_name": APP_PRODUCT_NAME,
+        "tests_product_name": TESTS_PRODUCT_NAME,
     }
 
 
@@ -741,7 +783,7 @@ def render_scheme(ids: dict[str, str]) -> str:
     )
     tests_ref = (
         f'<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{ids["tests_target"]}" '
-        f'BuildableName="{ids["tests_product_name"]}" BlueprintName="ThrymIOSTests" '
+        f'BuildableName="{ids["tests_product_name"]}" BlueprintName="{TESTS_NAME}" '
         f'ReferencedContainer="{container}" />'
     )
     return "\n".join(
@@ -786,10 +828,12 @@ def render_scheme(ids: dict[str, str]) -> str:
 def main() -> None:
     script_path = Path(__file__).resolve()
     ios_root = script_path.parent
-    app_root = ios_root / "ThrymIOS"
-    tests_root = ios_root / "ThrymIOSTests"
+    app_root = ios_root / PROJECT_NAME
+    tests_root = ios_root / TESTS_NAME
     if not app_root.is_dir() or not tests_root.is_dir():
-        raise SystemExit("ThrymIOS and ThrymIOSTests source directories are required")
+        raise SystemExit(f"{PROJECT_NAME} and {TESTS_NAME} source directories are required")
+    if not (ios_root / SIGNING_XCCONFIG).is_file():
+        raise SystemExit(f"{SIGNING_XCCONFIG} is required")
 
     pbxproj, ids = render_pbxproj(ios_root)
     project_dir = ios_root / f"{PROJECT_NAME}.xcodeproj"

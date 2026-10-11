@@ -280,7 +280,7 @@ private struct IOSHistorySummaryCard: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
-                "\(ilCount(summary.sessionCount, String(localized: "Training"), String(localized: "Trainings"))), \(ilCount(summary.setCount, String(localized: "Satz"), String(localized: "Sätze"))), " +
+                "\(ilWorkoutCountText(summary.sessionCount)), \(ilSetCountText(summary.setCount)), " +
                     "\(IOSWeightFormatter.format(summary.volumeKg, unitSystem: unitSystem)), " +
                     "\(IOSHistoryFormatting.duration(seconds: summary.durationSeconds))"
             )
@@ -345,7 +345,7 @@ private struct IOSHistorySessionRow: View {
             }
             HStack(spacing: 14) {
                 Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
-                Label(ilCount(visibleSets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
+                Label(ilSetCountText(visibleSets.count), systemImage: "list.number")
                 if volumeKg > 0 {
                     Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
                 }
@@ -634,7 +634,7 @@ private struct IOSHistoryDetailHeader: View {
     }
 
     @ViewBuilder private var metrics: some View {
-        Label(ilCount(sets.count, String(localized: "Satz"), String(localized: "Sätze")), systemImage: "list.number")
+        Label(ilSetCountText(sets.count), systemImage: "list.number")
         Label(IOSWeightFormatter.format(volumeKg, unitSystem: unitSystem), systemImage: "scalemass")
         Label(IOSHistoryFormatting.duration(seconds: session.iosDurationSeconds), systemImage: "timer")
     }
@@ -649,7 +649,7 @@ private struct IOSHistoryExerciseSection: View {
     let onDelete: (ILWorkoutSet) -> Void
 
     var body: some View {
-        ThrymCard(title: exercise?.name ?? String(localized: "Übung \(sets.first?.exerciseId ?? 0)"), subtitle: exercise?.categoryDisplayName) {
+        ThrymCard(title: exercise?.displayName ?? String(localized: "Übung \(sets.first?.exerciseId ?? 0)"), subtitle: exercise?.categoryDisplayName) {
             if !records.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     Label("Persönliche Bestleistungen", systemImage: "rosette")
@@ -876,7 +876,8 @@ extension ILWorkoutSession {
     func iosSearchText(in data: ILTrainingData) -> String {
         let exerciseText: [String] = data.sets(for: self).compactMap { set -> String? in
             guard let exercise = data.exercises.first(where: { $0.id == set.exerciseId }) else { return nil }
-            return [exercise.name, exercise.notes].joined(separator: " ")
+            // Displayed and stored name, so both languages find a built-in exercise.
+            return [exercise.displayName, exercise.name, exercise.notes].joined(separator: " ")
         }
         let planName = planId.flatMap { id in data.trainingPlans.first(where: { $0.id == id })?.name }
         return [name, notes, planName ?? "", exerciseText.joined(separator: " ")].joined(separator: " ")

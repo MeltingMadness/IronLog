@@ -36,15 +36,15 @@ struct IOSExerciseLibraryScreen: View {
             filtered.filter { $0.primaryMuscleGroup == muscle }
         } ?? filtered
         guard !searchText.isEmpty else {
-            return muscleFiltered.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            return muscleFiltered.sortedByDisplayName()
         }
         return muscleFiltered
             .filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.nameMatches(searchText) ||
                     $0.primaryMuscleGroupDisplayName.localizedCaseInsensitiveContains(searchText) ||
                     $0.categoryDisplayName.localizedCaseInsensitiveContains(searchText)
             }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .sortedByDisplayName()
     }
 
     var body: some View {
@@ -130,7 +130,7 @@ struct IOSExerciseLibraryScreen: View {
             }
         }
         .confirmationDialog(
-            pendingDelete.map { String(localized: "\($0.name) löschen?") } ?? String(localized: "Übung löschen?"),
+            pendingDelete.map { String(localized: "\($0.displayName) löschen?") } ?? String(localized: "Übung löschen?"),
             isPresented: Binding(
                 get: { pendingDelete != nil },
                 set: { if !$0 { pendingDelete = nil } }
@@ -208,7 +208,7 @@ private struct IOSExerciseListRow: View {
                     .frame(width: 30)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 7) {
-                        Text(exercise.name)
+                        Text(exercise.displayName)
                             .font(.geist(.body, weight: .semibold))
                             .foregroundStyle(.primary)
                         if exercise.isArchived {
@@ -282,7 +282,7 @@ private struct IOSExerciseEditorScreen: View {
     var body: some View {
         Form {
             Group {
-                Section("Übung") {
+                Section {
                     TextField("Name", text: $name)
                         .textInputAutocapitalization(.words)
                     Picker("Kategorie", selection: $category) {
@@ -294,6 +294,13 @@ private struct IOSExerciseEditorScreen: View {
                         ForEach(muscleGroups, id: \.self) { muscle in
                             Text(muscleDisplayName(muscle)).tag(muscle)
                         }
+                    }
+                } header: {
+                    Text("Übung")
+                } footer: {
+                    // The field edits the stored canonical name; say how the app shows it.
+                    if let exercise, exercise.displayName != exercise.name, name == exercise.name {
+                        Text("Mitgelieferte Übung. Die App zeigt sie als „\(exercise.displayName)“ an.")
                     }
                 }
 

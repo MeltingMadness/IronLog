@@ -235,9 +235,7 @@ struct IOSWorkoutScreen: View {
 
     private var exercisePickerSheet: some View {
         IOSWorkoutExercisePicker(
-            exercises: data?.visibleExercises.sorted {
-                $0.name.localizedStandardCompare($1.name) == .orderedAscending
-            } ?? [],
+            exercises: data?.visibleExercises.sortedByDisplayName() ?? [],
             excludedIDs: Set(adHocExerciseIDs),
             onSelect: addAdHocExercise
         )
@@ -363,7 +361,7 @@ struct IOSWorkoutScreen: View {
                 if let timer = orderedRestTimers.last {
                     IOSWorkoutGlassRestDock(
                         timer: timer,
-                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.name ?? String(localized: "Pause"),
+                        exerciseName: rows.first { $0.id == timer.rowKey }?.exercise.displayName ?? String(localized: "Pause"),
                         onOpen: { pauseOpen = true },
                         onSkip: { dismissRestTimer(rowKey: timer.rowKey) }
                     )
@@ -401,9 +399,9 @@ struct IOSWorkoutScreen: View {
                 let logged = rows.reduce(0) { $0 + $1.sets.count }
                 IOSWorkoutGlassPauseScreen(
                     timer: timer,
-                    exerciseName: row?.exercise.name ?? String(localized: "Übung"),
+                    exerciseName: row?.exercise.displayName ?? String(localized: "Übung"),
                     nextSetNumber: row?.nextSetNumber ?? 1,
-                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze")),
+                    progressText: planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged),
                     onMinus: { adjustRestTimer(rowKey: timer.rowKey, by: -15) },
                     onPlus: { adjustRestTimer(rowKey: timer.rowKey, by: 30) },
                     onSkip: {
@@ -445,7 +443,7 @@ struct IOSWorkoutScreen: View {
         let volume = rows.reduce(0.0) { total, row in
             total + row.sets.reduce(0.0) { $0 + $1.weightKg * Double($1.reps) }
         }
-        let progress = planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilCount(logged, String(localized: "Satz"), String(localized: "Sätze"))
+        let progress = planned > 0 ? String(localized: "\(planned - open) / \(planned) Sätze") : ilSetCountText(logged)
         return VStack(alignment: .leading, spacing: 12) {
             IOSWorkoutGlassHeader(
                 label: currentIndex.map { String(localized: "\(name) · Übung \($0 + 1) von \(groups.count)") } ?? name,
@@ -462,7 +460,7 @@ struct IOSWorkoutScreen: View {
                         let done = group.rows.allSatisfy { $0.target != nil && $0.isComplete }
                         return IOSWorkoutRailItem(
                             id: group.id,
-                            name: group.rows.map(\.exercise.name).joined(separator: " + "),
+                            name: group.rows.map(\.exercise.displayName).joined(separator: " + "),
                             status: index == currentIndex ? .current : (done ? .done : .upcoming)
                         )
                     },
@@ -498,7 +496,7 @@ struct IOSWorkoutScreen: View {
                 IOSWorkoutSupersetHeader(
                     groupID: groupID,
                     exerciseCount: group.rows.count,
-                    exerciseNames: group.rows.map { $0.exercise.name }.joined(separator: " • ")
+                    exerciseNames: group.rows.map { $0.exercise.displayName }.joined(separator: " • ")
                 )
                 .padding(.horizontal)
             }
@@ -946,7 +944,7 @@ struct IOSWorkoutScreen: View {
         let row = rows.first { $0.id == timer.rowKey }
         IOSWorkoutRestTimerView(
             timer: timer,
-            title: row?.exercise.name,
+            title: row?.exercise.displayName,
             accentColor: restTimerTint(for: timer.rowKey, groups: groups),
             onDismiss: { dismissRestTimer(rowKey: timer.rowKey) },
             onComplete: { dismissRestTimer(rowKey: timer.rowKey) }
