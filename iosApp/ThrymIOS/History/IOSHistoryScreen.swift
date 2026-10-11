@@ -649,7 +649,7 @@ private struct IOSHistoryExerciseSection: View {
     let onDelete: (ILWorkoutSet) -> Void
 
     var body: some View {
-        ThrymCard(title: exercise?.name ?? String(localized: "Übung \(sets.first?.exerciseId ?? 0)"), subtitle: exercise?.categoryDisplayName) {
+        ThrymCard(title: exercise?.displayName ?? String(localized: "Übung \(sets.first?.exerciseId ?? 0)"), subtitle: exercise?.categoryDisplayName) {
             if !records.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
                     Label("Persönliche Bestleistungen", systemImage: "rosette")
@@ -876,7 +876,8 @@ extension ILWorkoutSession {
     func iosSearchText(in data: ILTrainingData) -> String {
         let exerciseText: [String] = data.sets(for: self).compactMap { set -> String? in
             guard let exercise = data.exercises.first(where: { $0.id == set.exerciseId }) else { return nil }
-            return [exercise.name, exercise.notes].joined(separator: " ")
+            // Displayed and stored name, so both languages find a built-in exercise.
+            return [exercise.displayName, exercise.name, exercise.notes].joined(separator: " ")
         }
         let planName = planId.flatMap { id in data.trainingPlans.first(where: { $0.id == id })?.name }
         return [name, notes, planName ?? "", exerciseText.joined(separator: " ")].joined(separator: " ")

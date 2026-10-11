@@ -15,7 +15,7 @@ struct IOSWorkoutFinishSheet: View {
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(rows.filter { ($0.remainingPlannedSets ?? 0) > 0 }) { row in
-                        HStack { Text(row.exercise.name); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").thrymSecondaryText() }
+                        HStack { Text(row.exercise.displayName); Spacer(); Text("\(row.remainingPlannedSets ?? 0) offen").thrymSecondaryText() }
                     }
                 }
             }.frame(maxHeight: 170)
@@ -56,7 +56,7 @@ struct IOSWorkoutCompletionScreen: View {
         guard let data = store.data else { return [] }
         let end = session.endTime ?? Int64(Date().timeIntervalSince1970 * 1_000)
         let exerciseIDs = Set(sets.map(\.exerciseId))
-        let names = Dictionary(uniqueKeysWithValues: data.exercises.map { ($0.id, $0.name) })
+        let names = Dictionary(uniqueKeysWithValues: data.exercises.map { ($0.id, $0.displayName) })
         let order = ["MAX_WEIGHT", "MAX_REPS", "MAX_VOLUME", "MAX_E1RM"]
         return Dictionary(grouping: data.personalRecords.filter {
             exerciseIDs.contains($0.exerciseId) && $0.achievedAt >= session.startTime && $0.achievedAt <= end
@@ -66,7 +66,7 @@ struct IOSWorkoutCompletionScreen: View {
                 .sorted { (order.firstIndex(of: $0) ?? 9) < (order.firstIndex(of: $1) ?? 9) }
             return (exercise: names[id] ?? String(localized: "Übung"), types: types)
         }
-        .sorted { $0.exercise < $1.exercise }
+        .sorted { $0.exercise.localizedStandardCompare($1.exercise) == .orderedAscending }
     }
 
     /// Liquid Glass: "Geschafft.", three lenses, records on tinted glass, the
@@ -131,7 +131,7 @@ struct IOSWorkoutCompletionScreen: View {
 
                 ForEach(trained) { row in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(row.exercise.name).font(.geist(.headline, weight: .heavy))
+                        Text(row.exercise.displayName).font(.geist(.headline, weight: .heavy))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
                             Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))")
                                 .font(.geist(.subheadline))
@@ -222,7 +222,7 @@ struct IOSWorkoutCompletionScreen: View {
                 metric(String(localized: "Volumen"), iosWorkoutDisplayWeight(kilograms: sets.reduce(0) { $0 + $1.weightKg * Double($1.reps) }, unitSystem: unitSystem))
                 ForEach(rows.filter { !$0.sets.isEmpty }) { row in
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(row.exercise.name).font(.geist(.headline))
+                        Text(row.exercise.displayName).font(.geist(.headline))
                         ForEach(row.sets.filter { $0.reps > 0 }) { set in
                             Text("Satz \(set.setNumber) · \(iosSetValueText(weightKg: set.weightKg, reps: set.reps, unitSystem: unitSystem))").font(.geist(.subheadline)).monospacedDigit()
                         }
@@ -286,7 +286,7 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                 let set = row.sets[match]
                                 if set.reps != slots[index].reps || set.weightKg != slots[index].weightKg {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("\(row.exercise.name) · Satz \(index + 1)").font(.geist(.headline))
+                                        Text("\(row.exercise.displayName) · Satz \(index + 1)").font(.geist(.headline))
                                         Text("Plan   \(iosWorkoutDisplayWeight(kilograms: slots[index].weightKg, unitSystem: unitSystem)) × \(slots[index].reps)")
                                         Text("Heute  \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").thrymAccentText()
                                     }.padding().frame(maxWidth: .infinity, alignment: .leading)

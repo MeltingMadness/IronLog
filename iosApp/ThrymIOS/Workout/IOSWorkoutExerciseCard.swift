@@ -27,7 +27,7 @@ struct IOSWorkoutExerciseCard: View {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        Text(row.exercise.name)
+                        Text(row.exercise.displayName)
                             .font(.geist(.headline, weight: .semibold))
                         if row.target != nil {
                             Text("Plan")
@@ -56,7 +56,7 @@ struct IOSWorkoutExerciseCard: View {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
                 }
-                .accessibilityLabel("Aktionen für \(row.exercise.name)")
+                .accessibilityLabel("Aktionen für \(row.exercise.displayName)")
             }
 
             if row.target != nil, let displayTarget = row.displayTarget {

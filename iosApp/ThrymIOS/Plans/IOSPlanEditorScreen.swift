@@ -23,7 +23,7 @@ struct IOSPlanEditorScreen: View {
     private var availableExercises: [ILExercise] {
         (data?.exercises ?? [])
             .filter { !$0.isArchived }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .sortedByDisplayName()
     }
 
     var body: some View {
@@ -158,7 +158,7 @@ struct IOSPlanEditorScreen: View {
     }
 
     private func exerciseName(for id: Int64) -> String {
-        data?.exercises.first(where: { $0.id == id })?.name ?? String(localized: "Übung nicht gefunden (ID \(id))")
+        data?.exercises.first(where: { $0.id == id })?.displayName ?? String(localized: "Übung nicht gefunden (ID \(id))")
     }
 
     private func add(_ exercise: ILExercise) {

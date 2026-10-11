@@ -83,7 +83,7 @@ struct IOSWorkoutSetEditor: View {
                 Group {
                     Section {
                         HStack {
-                            Text(context.row.exercise.name)
+                            Text(context.row.exercise.displayName)
                                 .font(.geist(.headline))
                             Spacer()
                             if let target = context.row.displayTarget {

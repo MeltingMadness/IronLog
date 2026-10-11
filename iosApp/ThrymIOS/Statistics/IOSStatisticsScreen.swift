@@ -153,6 +153,7 @@ struct IOSStatisticsScreen: View {
                     NavigationLink(value: exercise.exerciseId) {
                         IOSExerciseStatisticsRow(
                             exercise: exercise,
+                            exerciseName: exerciseName(for: exercise),
                             muscleName: muscleName(for: exercise.exerciseId),
                             unitSystem: unitSystem
                         )
@@ -185,8 +186,9 @@ struct IOSStatisticsScreen: View {
     private func filteredExercises(_ analytics: ILTrainingAnalytics) -> [ILExerciseAnalytics] {
         let normalizedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return analytics.exerciseStatistics.filter { exercise in
-            let name = exercise.exerciseName ?? exerciseName(for: exercise.exerciseId)
-            let matchesSearch = normalizedQuery.isEmpty || name.lowercased().contains(normalizedQuery)
+            // Match the displayed name and the stored one, like the exercise library.
+            let names = [exerciseName(for: exercise), exercise.exerciseName ?? ""]
+            let matchesSearch = normalizedQuery.isEmpty || names.contains { $0.lowercased().contains(normalizedQuery) }
             let matchesMuscle = muscleFilter == "ALL" || muscleName(for: exercise.exerciseId) == muscleFilter
             return matchesSearch && matchesMuscle
         }
@@ -196,8 +198,9 @@ struct IOSStatisticsScreen: View {
         store.data?.exercises.first(where: { $0.id == exerciseId })?.primaryMuscleGroupDisplayName ?? ""
     }
 
-    private func exerciseName(for exerciseId: Int64) -> String {
-        store.data?.exercises.first(where: { $0.id == exerciseId })?.name ?? String(localized: "Übung \(exerciseId)")
+    private func exerciseName(for exercise: ILExerciseAnalytics) -> String {
+        ilExerciseDisplayName(id: exercise.exerciseId, storedName: exercise.exerciseName, in: store.data)
+            ?? String(localized: "Übung \(exercise.exerciseId)")
     }
 
     private var filterMenu: some View {
@@ -285,6 +288,7 @@ private struct IOSStatisticsSummary: View {
 
 private struct IOSExerciseStatisticsRow: View {
     let exercise: ILExerciseAnalytics
+    let exerciseName: String
     let muscleName: String
     let unitSystem: String
 
@@ -294,7 +298,7 @@ private struct IOSExerciseStatisticsRow: View {
         ThrymCard(tone: .standard) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(exercise.exerciseName ?? String(localized: "Übung \(exercise.exerciseId)"))
+                    Text(exerciseName)
                         .font(.geist(.headline))
                         .foregroundStyle(.primary)
                     Text([muscleName, ilSessionCountText(exercise.sessions.count)].filter { !$0.isEmpty }.joined(separator: " · "))

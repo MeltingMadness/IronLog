@@ -190,7 +190,7 @@ struct IOSProgressionReviewScreen: View {
     }
 
     private func exerciseName(for suggestion: ILProgressionSuggestion) -> String? {
-        store.data?.exercises.first(where: { $0.id == suggestion.exerciseId })?.name
+        store.data?.exercises.first(where: { $0.id == suggestion.exerciseId })?.displayName
     }
 
     private func planName(for suggestion: ILProgressionSuggestion) -> String? {

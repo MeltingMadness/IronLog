@@ -69,7 +69,7 @@ struct IOSExerciseStatisticsScreen: View {
     }
 
     private var exerciseName: String {
-        analyticsExercise?.exerciseName ?? exercise?.name ?? String(localized: "Übung \(exerciseId)")
+        exercise?.displayName ?? analyticsExercise?.exerciseName ?? String(localized: "Übung \(exerciseId)")
     }
 
     var body: some View {

@@ -253,7 +253,7 @@ struct IOSDashboardGlassCommandCenter: View {
     }
 
     private func exerciseName(_ exercise: ILPlanExercise) -> String {
-        data?.exercises.first { $0.id == exercise.exerciseId }?.name ?? String(localized: "Übung")
+        data?.exercises.first { $0.id == exercise.exerciseId }?.displayName ?? String(localized: "Übung")
     }
 
     /// "3 × 8 · 82,5 kg"; without a target weight only sets and reps.

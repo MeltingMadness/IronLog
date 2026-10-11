@@ -9222,6 +9222,23 @@
         }
       }
     },
+    "Mitgelieferte Übung. Die App zeigt sie als „%@“ an.": {
+      "comment": "Exercise editor footer for a built-in exercise: the name field holds the stored canonical name, %@ is the name the app shows.",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitgelieferte Übung. Die App zeigt sie als „%@“ an."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in exercise. The app shows it as “%@”."
+          }
+        }
+      }
+    },
     "Mittlere Evidenz": {
       "localizations": {
         "de": {
