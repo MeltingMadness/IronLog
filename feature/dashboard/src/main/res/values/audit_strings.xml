@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="dashboard_audit_analysis_title">Belastungsanalyse</string>
-    <string name="dashboard_audit_analysis_unavailable">Auswertung nicht verfügbar</string>
-    <string name="dashboard_audit_analysis_unavailable_detail">Die Trainingsdaten-Heuristik konnte nicht geladen werden.</string>
-    <string name="dashboard_audit_analysis_insufficient">Noch zu wenig Daten</string>
-    <string name="dashboard_audit_analysis_insufficient_detail">Mindestens %1$d Einheiten im %2$d-Wochen-Fenster nötig.</string>
-    <string name="dashboard_audit_analysis_no_notable_strain">Kein auffälliger Trend oder Belastungssignal</string>
-    <string name="dashboard_audit_analysis_signals_present">Auffällige Belastungssignale</string>
-    <string name="dashboard_audit_analysis_score">Heuristischer Belastungswert: %1$d/100</string>
-    <string name="dashboard_audit_analysis_no_score">—</string>
-    <string name="dashboard_audit_analysis_window">Fenster: %1$s – %2$s</string>
-    <string name="dashboard_audit_analysis_evidence">Evidenz: %1$d Einheiten · %2$d Verbundübungen</string>
-    <string name="dashboard_audit_analysis_heuristic">Heuristik aus Trainingsdaten, keine medizinische Einschätzung.</string>
+    <string name="dashboard_audit_analysis_title">Strain analysis</string>
+    <string name="dashboard_audit_analysis_unavailable">Analysis unavailable</string>
+    <string name="dashboard_audit_analysis_unavailable_detail">The training data heuristic couldn\'t be loaded.</string>
+    <string name="dashboard_audit_analysis_insufficient">Not enough data yet</string>
+    <string name="dashboard_audit_analysis_insufficient_detail">At least %1$d sessions needed in the %2$d-week window.</string>
+    <string name="dashboard_audit_analysis_no_notable_strain">No notable trend or strain signal</string>
+    <string name="dashboard_audit_analysis_signals_present">Notable strain signals</string>
+    <string name="dashboard_audit_analysis_score">Heuristic strain score: %1$d/100</string>
+    <string name="dashboard_audit_analysis_no_score" translatable="false">—</string>
+    <string name="dashboard_audit_analysis_window">Window: %1$s – %2$s</string>
+    <string name="dashboard_audit_analysis_evidence">Evidence: %1$d sessions · %2$d compound exercises</string>
+    <string name="dashboard_audit_analysis_heuristic">Heuristic based on training data, not a medical assessment.</string>
 
-    <string name="dashboard_audit_deload_title_recommended">Deload-Option aus Trainingsdaten</string>
-    <string name="dashboard_audit_deload_title_active">Deload-Woche aktiv</string>
-    <string name="dashboard_audit_deload_body">Auffällige Belastungssignale wurden im Analysefenster gefunden. Die Empfehlung ist eine Trainingsheuristik und keine medizinische Einschätzung.</string>
-    <string name="dashboard_audit_deload_score">Heuristischer Belastungswert: %1$d/100</string>
-    <string name="dashboard_audit_deload_window">Fenster: %1$s – %2$s · %3$d Einheiten</string>
-    <string name="dashboard_welcome_back">WILLKOMMEN ZURÜCK</string>
-    <string name="dashboard_weekly_volume_failed">Die Wochen-Auswertung konnte nicht geladen werden.</string>
-    <string name="dashboard_readiness_failed">Der Trainingstrend konnte nicht berechnet werden.</string>
-    <string name="dashboard_check_in_failed">Die Tagesform konnte nicht gespeichert werden.</string>
-    <string name="dashboard_unknown_exercise">Unbekannt</string>
-    <string name="dashboard_load_failed">Dashboard konnte nicht geladen werden.</string>
-    <string name="dashboard_workout_already_active">Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.</string>
-    <string name="dashboard_plan_changed">Der vorgeschlagene Plan hat sich geändert. Bitte erneut versuchen.</string>
-    <string name="dashboard_skip_failed">Teilplan konnte nicht übersprungen werden: %1$s</string>
-    <string name="dashboard_meta_plan_invalid">Meta-Plan ist unvollständig oder enthält keine gültigen Unterpläne.</string>
-    <string name="dashboard_meta_start_failed">Meta-Plan-Training konnte nicht gestartet werden: %1$s</string>
-    <string name="dashboard_workout_auto_name">Training %1$s</string>
-    <string name="dashboard_start_failed">Training konnte nicht gestartet werden: %1$s</string>
-    <string name="dashboard_plan_start_failed">Training nach Plan konnte nicht gestartet werden: %1$s</string>
-    <string name="dashboard_deload_end_failed">Deload-Modus konnte nicht beendet werden.</string>
-    <string name="dashboard_deload_start_failed">Deload-Modus konnte nicht aktiviert werden.</string>
-    <string name="dashboard_checkin_scale_value">%1$s %2$d/5</string>
+    <string name="dashboard_audit_deload_title_recommended">Deload option based on training data</string>
+    <string name="dashboard_audit_deload_title_active">Deload week active</string>
+    <string name="dashboard_audit_deload_body">Notable strain signals were found in the analysis window. This recommendation is a training heuristic, not a medical assessment.</string>
+    <string name="dashboard_audit_deload_score">Heuristic strain score: %1$d/100</string>
+    <string name="dashboard_audit_deload_window">Window: %1$s – %2$s · %3$d sessions</string>
+    <string name="dashboard_welcome_back">WELCOME BACK</string>
+    <string name="dashboard_weekly_volume_failed">The weekly summary couldn\'t be loaded.</string>
+    <string name="dashboard_readiness_failed">The training trend couldn\'t be calculated.</string>
+    <string name="dashboard_check_in_failed">Your daily form couldn\'t be saved.</string>
+    <string name="dashboard_unknown_exercise">Unknown</string>
+    <string name="dashboard_load_failed">Couldn\'t load the dashboard.</string>
+    <string name="dashboard_workout_already_active">Another workout is already active. Please resume or finish it first.</string>
+    <string name="dashboard_plan_changed">The suggested plan has changed. Please try again.</string>
+    <string name="dashboard_skip_failed">Couldn\'t skip sub-plan: %1$s</string>
+    <string name="dashboard_meta_plan_invalid">Meta plan is incomplete or has no valid sub-plans.</string>
+    <string name="dashboard_meta_start_failed">Couldn\'t start meta plan workout: %1$s</string>
+    <string name="dashboard_workout_auto_name">Workout %1$s</string>
+    <string name="dashboard_start_failed">Couldn\'t start workout: %1$s</string>
+    <string name="dashboard_plan_start_failed">Couldn\'t start plan workout: %1$s</string>
+    <string name="dashboard_deload_end_failed">Couldn\'t end deload mode.</string>
+    <string name="dashboard_deload_start_failed">Couldn\'t activate deload mode.</string>
+    <string name="dashboard_checkin_scale_value" translatable="false">%1$s %2$d/5</string>
 </resources>

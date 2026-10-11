@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="review_confirmation_hint">Diese Vorschläge ändern deinen Plan erst, wenn du sie übernimmst. Sie gelten für das nächste Training.</string>
-    <string name="review_finish_edit_first">Bitte übernimm oder verwirf zuerst deine offene Bearbeitung.</string>
-    <string name="review_accept_count">Vorschläge übernehmen (%1$d)</string>
-    <string name="review_loading">Trainingsauswertung wird geladen …</string>
-    <string name="review_empty_session">Für dieses Training liegt keine Auswertung vor. Vorschläge entstehen nach einem abgeschlossenen Training mit einer aktivierten Progressionsregel im Plan.</string>
-    <string name="review_past_title">Frühere Auswertungen</string>
-    <string name="review_empty_all">Keine offenen Auswertungen. Nach einem Training mit einer aktivierten Progressionsregel findest du hier die nächsten Vorschläge.</string>
+    <string name="review_confirmation_hint">These suggestions only change your plan once you apply them. They apply to your next workout.</string>
+    <string name="review_finish_edit_first">Please apply or discard your open edit first.</string>
+    <string name="review_accept_count">Apply suggestions (%1$d)</string>
+    <string name="review_loading">Loading workout review…</string>
+    <string name="review_empty_session">There\'s no review for this workout. Suggestions are created after you complete a workout whose plan has a progression rule enabled.</string>
+    <string name="review_past_title">Past reviews</string>
+    <string name="review_empty_all">No open reviews. After a workout with an enabled progression rule, your next suggestions will appear here.</string>
     <string name="review_plan">Plan: %1$s</string>
-    <string name="review_plan_unavailable">Der zugehörige Plan ist nicht mehr verfügbar.</string>
-    <string name="review_training_date">Trainingsdaten vom %1$s</string>
-    <string name="review_created_date">Bewertung vom %1$s</string>
-    <string name="review_trained_weight">Trainierte Last: %1$s</string>
-    <string name="review_stored_plan_weight">Damals gespeichertes Planziel: %1$s</string>
-    <string name="review_next_weight">Vorgeschlagenes Gewicht: %1$s</string>
-    <string name="review_repeat_weight">Gewicht beim nächsten Versuch beibehalten: %1$s</string>
-    <string name="review_legacy_weight_comparison">Diese ältere Auswertung verglich das damalige Planziel %1$s mit der trainierten Last %2$s. Das ist kein Beleg für unterschiedliche Satzgewichte.</string>
-    <string name="review_success_confirmation">%1$d von %2$d vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert.</string>
-    <string name="review_mixed_loads">Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch.</string>
-    <string name="review_evidence_roles">Gewertet: %1$d Arbeitssätze, davon %2$d bis zum Versagen. Ausgelassen: %3$d Aufwärm-, %4$d Drop-, %5$d Backoff- und %6$d zusätzliche Arbeitssätze.</string>
-    <string name="review_success_count">Bestätigung: %1$d von %2$d vergleichbaren Erfolgen.</string>
-    <string name="review_failure_count">Vergleichbare Fehlversuche: %1$d von %2$d bis zum Backoff.</string>
-    <string name="review_mixed_confirmed">Alle gewerteten Sätze bestätigen mindestens %1$s. Dieses Gewicht ist die Grundlage des Vorschlags.</string>
+    <string name="review_plan_unavailable">The related plan is no longer available.</string>
+    <string name="review_training_date">Workout data from %1$s</string>
+    <string name="review_created_date">Evaluated on %1$s</string>
+    <string name="review_trained_weight">Weight lifted: %1$s</string>
+    <string name="review_stored_plan_weight">Plan target at the time: %1$s</string>
+    <string name="review_next_weight">Suggested weight: %1$s</string>
+    <string name="review_repeat_weight">Keep weight for next attempt: %1$s</string>
+    <string name="review_legacy_weight_comparison">This older review compared the plan target at the time (%1$s) with the weight you lifted (%2$s). That doesn\'t mean your sets used different weights.</string>
+    <string name="review_success_confirmation">%1$d of %2$d comparable successes reached. The target stays the same until confirmed.</string>
+    <string name="review_mixed_loads">Your work sets used different weights, so together they don\'t confirm the target yet. Target kept; this session doesn\'t count as a comparable failed attempt.</string>
+    <string name="review_evidence_roles">Counted: %1$d work sets, %2$d of them to failure. Excluded: %3$d warm-up, %4$d drop, %5$d back-off, and %6$d extra work sets.</string>
+    <string name="review_success_count">Confirmation: %1$d of %2$d comparable successes.</string>
+    <string name="review_failure_count">Comparable failed attempts: %1$d of %2$d before back-off.</string>
+    <string name="review_mixed_confirmed">All counted sets confirm at least %1$s. This weight is the basis for the suggestion.</string>
 </resources>
