@@ -49,7 +49,7 @@ Test- und Buildprotokolle liegen unter `build/parity-2026-09-11/`. Frühere XML-
 - Geräteprüfung: Android-Room-Instrumentation, aktualisierte Screenshots sowie die reale Installation/der Kaltstart bleiben bis zur Rückkehr des Nutzers offen.
 - App Store: Wiederkehrender Fehler vor dem Download im Apple-Media-Services-Authentifizierungsablauf. App- und Dienstneustart ohne Erfolg; erneute interaktive App-Store-Anmeldung steht aus. Kein Account und keine Caches wurden gelöscht.
 
-Android-Artefakt: `/Users/maert/Documents/IronLog-Analysen/2026-09-11/release/IronLog-1.1.3.apk`
+Android-Artefakt: `<lokales Analyseverzeichnis>/2026-09-11/release/IronLog-1.1.3.apk`
 
 APK SHA-256: `5897414a2139616a8da241c80bf6101b8532b2101fc379cbe5ee60e8f30838a8`
 

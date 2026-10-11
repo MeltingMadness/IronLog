@@ -11,6 +11,6 @@ Vom Benutzer ausdrücklich nach Kenntnis der lokalen Prüfung und ausstehenden C
 - Wochenkarte auf dem echten Gerät sichtbar und per Screenshot geprüft: drei Trainings, 43,5 gewichtete Muskelbeiträge; Brust/Rücken/Beine je 6, Schultern 7,5. Das ist keine vollständige visuelle QA der gesamten App.
 - Export nach Update erfolgreich (Schema 12 / App 1.1.0). Alle IDs und bisherigen exportierten Datenfelder stimmen mit dem Export vor dem Update überein: 84 Übungen, 30 Einheiten, 420 Sätze, 6 Trainingspläne, 22 Planübungen, 92 Rekorde, 1 Metaplan, 6 Metaplaneinträge, 3 Auslassungen, 23 Ziel-Snapshots und 23 Progressionsauswertungen.
 - Alle 420 Sätze sind im neuen Export ausdrücklich NORMAL. Die frühere Unsicherheit über den Satztyp ist damit für diesen Datenbestand aufgelöst. Keine Progressionswerte geändert und keine historischen Entscheidungen überschrieben.
-- Sicherungen und Vergleichsnachweis liegen privat außerhalb des Git-Repositories unter `/Users/maert/Documents/IronLog-Analysen/2026-09-05/`.
+- Sicherungen und Vergleichsnachweis liegen privat außerhalb des Git-Repositories unter `<lokales Analyseverzeichnis>/2026-09-05/`.
 
 Kein vollständiger Instrumentation-/Backup-Restore-Lauf auf dem Benutzergerät. Kein CI-geprüftes Release dieses Arbeitsstands; die vorhandenen gezielten Tests und Geräteprüfungen bleiben begrenzte Nachweise.
