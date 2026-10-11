@@ -37,6 +37,7 @@
 		468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */; };
 		4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */; };
 		4EDC10180EC500E2E49FA0B7 /* IOSWorkoutExercisePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */; };
+		5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */; };
 		5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */; };
 		5B4063CD77FDFA3C1B8FC30D /* AnalyticsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */; };
 		5E22350D24D617FBD09D1618 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B88909E7F012EDD309E39DEE /* Assets.xcassets */; };
@@ -111,6 +112,7 @@
 		304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
 		312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
+		37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputFormatTests.swift; sourceTree = "<group>"; };
 		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
 		404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
 		4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
@@ -357,6 +359,7 @@
 			4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */,
 			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
 			312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */,
+			37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */,
 			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
 			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
 			DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */,
@@ -567,6 +570,7 @@
 				746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */, 
 				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 
 				A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */, 
+				5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */, 
 				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
 				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
 				468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */, 

@@ -221,7 +221,8 @@ struct IOSWorkoutRestTimerView: View {
 
                 Spacer(minLength: 8)
 
-                Button("Beenden", action: onDismiss)
+                // Own key: "Beenden" alone is the finish-workout action.
+                Button("Pausentimer beenden", action: onDismiss)
                     .buttonStyle(.bordered)
                     .tint(palette.textSecondary)
                     .accessibilityLabel("Pausentimer für \(title ?? String(localized: "Übung")) beenden")

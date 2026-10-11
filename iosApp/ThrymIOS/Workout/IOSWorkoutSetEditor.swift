@@ -58,7 +58,7 @@ struct IOSWorkoutSetEditor: View {
             unitSystem: "METRIC"
         )
         _repsText = State(initialValue: existing.map { String($0.reps) } ?? String(max(1, context.row.targetReps)))
-        _weightText = State(initialValue: iosWorkoutDecimal(inputWeight))
+        _weightText = State(initialValue: IOSNumber.format(inputWeight))
         _intensityText = State(initialValue: existing.flatMap {
             iosWorkoutFormatIntensity(storedRPE: $0.rpe, intensitySystem: "RPE")
         } ?? "")
@@ -240,7 +240,7 @@ struct IOSWorkoutSetEditor: View {
         didApplyEnvironmentDefaults = true
 
         if let kilograms = iosWorkoutParseDecimal(weightText) {
-            weightText = iosWorkoutDecimal(
+            weightText = IOSNumber.format(
                 iosWorkoutWeightInInputUnit(kilograms: kilograms, unitSystem: unitSystem)
             )
         }

@@ -37,9 +37,12 @@ func resolvedIOSWorkoutSetType(_ set: ILWorkoutSet) -> IOSWorkoutSetType {
     return set.isWarmup == true ? .warmup : .normal
 }
 
+/// Number for display in the current locale, grouped ("1,250.5" / "1.250,5").
+/// Text fields use `IOSNumber.format` instead, which never groups, so the parser
+/// reads the value back unchanged.
 func iosWorkoutDecimal(_ value: Double, fractionDigits: Int = 2) -> String {
     let formatter = NumberFormatter()
-    formatter.locale = Locale(identifier: "de_DE")
+    formatter.locale = .current
     formatter.numberStyle = .decimal
     formatter.minimumFractionDigits = 0
     formatter.maximumFractionDigits = fractionDigits
@@ -94,7 +97,8 @@ func iosWorkoutFormatIntensity(
 ) -> String? {
     guard let storedRPE, intensitySystem.uppercased() != "OFF" else { return nil }
     let value = intensitySystem.uppercased() == "RIR" ? 10 - storedRPE : storedRPE
-    return iosWorkoutDecimal(value, fractionDigits: 1)
+    // Also the prefill of the intensity field, so it uses the input format.
+    return IOSNumber.format(value, fractionDigits: 1)
 }
 
 func iosWorkoutStoredRPE(

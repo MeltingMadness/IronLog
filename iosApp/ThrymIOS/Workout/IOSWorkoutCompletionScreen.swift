@@ -80,7 +80,7 @@ struct IOSWorkoutCompletionScreen: View {
         return ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
-                    Text([session.startDate.formatted(.dateTime.weekday(.wide).day().month(.twoDigits).locale(Locale(identifier: "de_DE"))), session.name.isEmpty ? nil : session.name]
+                    Text([session.startDate.formatted(.dateTime.weekday(.wide).day().month(.twoDigits)), session.name.isEmpty ? nil : session.name]
                         .compactMap { $0 }.joined(separator: " · ").uppercased())
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
@@ -103,7 +103,7 @@ struct IOSWorkoutCompletionScreen: View {
                     lens(session.durationSeconds < 60 ? "< 1" : "\(session.durationSeconds / 60)", unit: String(localized: "min"), label: String(localized: "Dauer"))
                     lens(String(volumeText.split(separator: " ").dropLast().joined(separator: " ")),
                          unit: String(volumeText.split(separator: " ").last ?? ""), label: String(localized: "Volumen"))
-                    lens("\(trained.count)", unit: trained.count == 1 ? String(localized: "Übung") : String(localized: "Übungen"), label: String(localized: "Übungen"))
+                    lens("\(trained.count)", unit: trained.count == 1 ? String(localized: "Übung (Anzahl)", comment: "Unit under the exercise count, like min and kg") : String(localized: "Übungen (Anzahl)", comment: "Unit under the exercise count, like min and kg"), label: String(localized: "Übungen"))
                 }
 
                 if !records.isEmpty {
@@ -287,8 +287,18 @@ private struct IOSWorkoutPlanChangesSheet: View {
                                 if set.reps != slots[index].reps || set.weightKg != slots[index].weightKg {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("\(row.exercise.displayName) · Satz \(index + 1)").font(.geist(.headline))
-                                        Text("Plan   \(iosWorkoutDisplayWeight(kilograms: slots[index].weightKg, unitSystem: unitSystem)) × \(slots[index].reps)")
-                                        Text("Heute  \(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").thrymAccentText()
+                                        // A grid keeps the values aligned whatever the label lengths.
+                                        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
+                                            GridRow {
+                                                Text("Plan")
+                                                Text("\(iosWorkoutDisplayWeight(kilograms: slots[index].weightKg, unitSystem: unitSystem)) × \(slots[index].reps)")
+                                            }
+                                            GridRow {
+                                                Text("Heute").thrymAccentText()
+                                                Text("\(iosWorkoutDisplayWeight(kilograms: set.weightKg, unitSystem: unitSystem)) × \(set.reps)").thrymAccentText()
+                                            }
+                                        }
+                                        .monospacedDigit()
                                     }.padding().frame(maxWidth: .infinity, alignment: .leading)
                                         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                                 }

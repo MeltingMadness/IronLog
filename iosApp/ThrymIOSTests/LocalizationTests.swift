@@ -42,9 +42,9 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(try text("\(2) / \(5) Sätze", "en"), "2 / 5 sets")
         XCTAssertEqual(try text("\(0) / \(1) Sätze", "de"), "0 / 1 Satz")
 
-        XCTAssertEqual(try text("Noch \(1) Minuten \(1) Sekunden", "en"), "1 minute 1 second left")
-        XCTAssertEqual(try text("Noch \(2) Minuten \(30) Sekunden", "de"), "Noch 2 Minuten 30 Sekunden")
-        XCTAssertEqual(try text("Noch \(1) Minuten \(1) Sekunden", "de"), "Noch 1 Minute 1 Sekunde")
+        XCTAssertEqual(try text("Superset #\(2), \(1) Übungen", "en"), "Superset #2, 1 exercise")
+        XCTAssertEqual(try text("Superset #\(2), \(3) Übungen", "en"), "Superset #2, 3 exercises")
+        XCTAssertEqual(try text("Superset #\(1), \(1) Übungen", "de"), "Superset #1, 1 Übung")
 
         XCTAssertEqual(try text("\(1) Sätze × \(8) Wdh · \("80 kg")", "en"), "1 set × 8 reps · 80 kg")
         XCTAssertEqual(try text("\(3) Sätze × \(1) Wdh · \("80 kg")", "de"), "3 Sätze × 1 Wdh · 80 kg")
@@ -63,6 +63,20 @@ final class LocalizationTests: XCTestCase {
         // English diagnostics have no catalog entry and pass through unchanged.
         let diagnostic = "Unknown training command: plan.archive"
         XCTAssertEqual(ilSharedMessage(diagnostic), diagnostic)
+    }
+
+    func testRestTimerValueUsesDurationFormatting() throws {
+        // The VoiceOver value wraps a localized Duration ("1 minute, 30 seconds").
+        let english = Duration.seconds(90).formatted(
+            Duration.UnitsFormatStyle(allowedUnits: [.minutes, .seconds], width: .wide).locale(Locale(identifier: "en"))
+        )
+        XCTAssertEqual(try text("Noch \(english)", "en"), "\(english) left")
+        XCTAssertTrue(english.contains("1 minute") && english.contains("30 seconds"), english)
+        let german = Duration.seconds(61).formatted(
+            Duration.UnitsFormatStyle(allowedUnits: [.minutes, .seconds], width: .wide).locale(Locale(identifier: "de"))
+        )
+        XCTAssertEqual(try text("Noch \(german)", "de"), "Noch \(german)")
+        XCTAssertTrue(german.contains("1 Minute") && german.contains("1 Sekunde"), german)
     }
 
     func testHistoryDayLettersFollowTheDate() throws {

@@ -7318,18 +7318,19 @@
         }
       }
     },
-    "Heute  %@ × %lld": {
+    "Heute": {
+      "comment": "Row label in the plan changes sheet: the value logged today, next to \"Plan\".",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Heute  %@ × %lld"
+            "value": "Heute"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Today  %@ × %lld"
+            "value": "Today"
           }
         }
       }
@@ -9778,106 +9779,6 @@
         }
       }
     },
-    "Noch %lld Minuten %lld Sekunden": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noch %#@minutes@ %#@seconds@"
-          },
-          "substitutions": {
-            "minutes": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg Minute"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg Minuten"
-                    }
-                  }
-                }
-              }
-            },
-            "seconds": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg Sekunde"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg Sekunden"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%#@minutes@ %#@seconds@ left"
-          },
-          "substitutions": {
-            "minutes": {
-              "argNum": 1,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg minute"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg minutes"
-                    }
-                  }
-                }
-              }
-            },
-            "seconds": {
-              "argNum": 2,
-              "formatSpecifier": "lld",
-              "variations": {
-                "plural": {
-                  "one": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg second"
-                    }
-                  },
-                  "other": {
-                    "stringUnit": {
-                      "state": "translated",
-                      "value": "%arg seconds"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "Noch %lld geplante Sätze offen. %lld von %lld absolviert.": {
       "localizations": {
         "de": {
@@ -10685,6 +10586,23 @@
         }
       }
     },
+    "Pausentimer beenden": {
+      "comment": "Button that dismisses a running rest timer. Not \"Beenden\" = finish the workout.",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
     "Pausentimer für %@ beenden": {
       "localizations": {
         "de": {
@@ -10745,22 +10663,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan"
-          }
-        }
-      }
-    },
-    "Plan   %@ × %lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan   %@ × %lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plan   %@ × %lld"
           }
         }
       }
@@ -16916,6 +16818,23 @@
         }
       }
     },
+    "Übung (Anzahl)": {
+      "comment": "Unit under the exercise count on the completion screen, like \"min\" and \"kg\" (count is 1).",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übung"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exercise"
+          }
+        }
+      }
+    },
     "Übung bearbeiten": {
       "localizations": {
         "de": {
@@ -17024,6 +16943,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exercises (%lld)"
+          }
+        }
+      }
+    },
+    "Übungen (Anzahl)": {
+      "comment": "Unit under the exercise count on the completion screen, like \"min\" and \"kg\" (count is not 1).",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übungen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "exercises"
           }
         }
       }

@@ -466,7 +466,7 @@ struct IOSWorkoutGlassPauseScreen: View {
                 .liquidGlass(.strong, in: Circle())
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Pause")
-                .accessibilityValue("Noch \(seconds / 60) Minuten \(seconds % 60) Sekunden")
+                .accessibilityValue("Noch \(Duration.seconds(seconds).formatted(.units(allowed: [.minutes, .seconds], width: .wide)))")
 
                 if timer.isCountdown {
                     HStack(spacing: 12) {

@@ -47,8 +47,6 @@ struct IOSHistoryWeek: Identifiable, Equatable {
     }
 }
 
-private let historyGerman = Locale(identifier: "de_DE")
-
 private func historyGlassMinutes(_ minutes: Int) -> String {
     minutes >= 60 ? String(localized: "\(minutes / 60) h \(minutes % 60) min") : String(localized: "\(minutes) min")
 }
@@ -68,14 +66,13 @@ struct IOSHistoryGlassWeekHeader: View {
         return String(localized: "KW \(IOSHistoryWeek.calendar.component(.weekOfYear, from: week.weekStart))")
     }
 
+    /// First to last day of the week in the app locale ("12.–18. Okt." / "Oct 12 – 18").
     private var range: String {
         let end = IOSHistoryWeek.calendar.date(byAdding: .day, value: 6, to: week.weekStart) ?? week.weekStart
-        let dayMonth = Date.FormatStyle().day().month(.abbreviated).locale(historyGerman)
-        let sameMonth = IOSHistoryWeek.calendar.component(.month, from: week.weekStart) == IOSHistoryWeek.calendar.component(.month, from: end)
-        if sameMonth {
-            return "\(IOSHistoryWeek.calendar.component(.day, from: week.weekStart)).–\(end.formatted(dayMonth))"
-        }
-        return "\(week.weekStart.formatted(dayMonth)) – \(end.formatted(dayMonth))"
+        var style = Date.IntervalFormatStyle().day().month(.abbreviated)
+        style.calendar = IOSHistoryWeek.calendar
+        style.timeZone = IOSHistoryWeek.calendar.timeZone
+        return (week.weekStart..<end).formatted(style)
     }
 
     var body: some View {
@@ -176,7 +173,7 @@ struct IOSHistoryGlassRow: View {
             VStack(spacing: 0) {
                 Text("\(IOSHistoryWeek.calendar.component(.day, from: session.startDate))")
                     .font(.geist(size: 18, weight: .heavy).monospacedDigit())
-                Text(session.startDate.formatted(.dateTime.weekday(.abbreviated).locale(historyGerman)).replacingOccurrences(of: ".", with: "").uppercased())
+                Text(session.startDate.formatted(.dateTime.weekday(.abbreviated)).replacingOccurrences(of: ".", with: "").uppercased())
                     .font(.geist(size: 12, weight: .bold))
                     .thrymSecondaryText()
             }

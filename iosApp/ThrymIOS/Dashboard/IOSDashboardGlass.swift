@@ -44,7 +44,7 @@ struct IOSDashboardGlassHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: "de_DE"))).uppercased())
+                Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide)).uppercased())
                     .font(.geist(.caption, weight: .bold))
                     .tracking(0.8)
                     .thrymSecondaryText()
@@ -293,7 +293,7 @@ struct IOSDashboardGlassWeekStrip: View {
             HStack(spacing: 0) {
                 ForEach(days) { day in
                     VStack(spacing: 6) {
-                        Text(day.date.formatted(.dateTime.weekday(.abbreviated).locale(Locale(identifier: "de_DE"))).replacingOccurrences(of: ".", with: ""))
+                        Text(day.date.formatted(.dateTime.weekday(.abbreviated)).replacingOccurrences(of: ".", with: ""))
                             .font(.geist(size: 12, weight: .bold))
                             .thrymSecondaryText()
                         ZStack {
@@ -324,7 +324,7 @@ struct IOSDashboardGlassWeekStrip: View {
     }
 
     private func accessibilityText(_ day: IOSDashboardWeekDay) -> String {
-        let name = day.date.formatted(.dateTime.weekday(.wide).locale(Locale(identifier: "de_DE")))
+        let name = day.date.formatted(.dateTime.weekday(.wide))
         if day.trained { return String(localized: "\(name), trainiert") }
         if day.isToday { return String(localized: "\(name), heute") }
         return String(localized: "\(name), offen")
