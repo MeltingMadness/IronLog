@@ -25,13 +25,14 @@ targets:
     info:
       path: IronLogIOS/Info.plist
       properties:
-        CFBundleDisplayName: IronLog
+        CFBundleDisplayName: $(APP_DISPLAY_NAME)
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UILaunchScreen: {}
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ironlog.ios
+        APP_DISPLAY_NAME: IronLog # aus ../branding.properties, siehe generate_project.py
         INFOPLIST_FILE: IronLogIOS/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic

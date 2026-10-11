@@ -21,6 +21,18 @@ Android-App zum Protokollieren von Krafttraining. Offline, lokal, deutschsprachi
 
 Die Daten bleiben auf dem Gerät. Es gibt keinen Server und keine Cloud-Anbindung.
 
+## Name der App ändern
+
+Der sichtbare App-Name steht an genau einer Stelle: `appDisplayName` in [`branding.properties`](branding.properties). Android liest ihn beim Bauen, iOS über den Projektgenerator:
+
+```bash
+# 1. appDisplayName in branding.properties ändern
+python3 iosApp/generate_project.py   # 2. iOS-Projekt neu erzeugen
+./gradlew assembleDebug              # 3. Android bauen
+```
+
+Paketname (`com.ironlog.app`), Bundle-ID (`com.ironlog.ios`), Datenbank- und Dateinamen bleiben dabei absichtlich gleich, damit vorhandene Trainingsdaten erhalten bleiben. Eine neue Paket- oder Bundle-ID ist eine eigene Entscheidung vor der ersten Store-Veröffentlichung: Sie macht die App für Android und iOS zu einer neuen App, bestehende Installationen bekommen dann kein Update.
+
 ## Bauen und testen
 
 ```bash
@@ -58,3 +70,9 @@ Emulator-Tests (`connectedDebugAndroidTest`) laufen in der GitHub-CI. Lokal gehe
 ### Regel für die Doku
 
 Die Dateien oben beschreiben den **aktuellen Stand**. Pläne für laufende Vorhaben dürfen während der Arbeit in `docs/plans/` liegen. Sobald ein Vorhaben gemergt ist, wird das Ergebnis in die passende Datei oben übernommen und der Plan gelöscht. Alte Pläne bleiben über die Git-Historie auffindbar.
+
+## Lizenz
+
+Der Quellcode steht unter der [Apache License 2.0](LICENSE), Hinweise in [`NOTICE`](NOTICE). Die Schriftart Geist steht unter der [SIL Open Font License 1.1](docs/licenses/Geist-OFL.txt).
+
+Name, Logo und App-Icon sind von der Lizenz ausgenommen (Abschnitt 6 der Apache-Lizenz). Wer einen Fork veröffentlicht, nutzt bitte einen eigenen Namen und ein eigenes Icon.

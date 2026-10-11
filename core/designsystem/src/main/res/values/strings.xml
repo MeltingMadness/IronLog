@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">IronLog</string>
-
     <string name="nav_back">Zurück</string>
     <string name="nav_home">Home</string>
     <string name="nav_plans">Pläne</string>
@@ -20,7 +18,6 @@
 
     <string name="dashboard_start_workout">Training starten</string>
     <string name="dashboard_continue_workout">Training fortsetzen</string>
-    <string name="dashboard_welcome_title">Willkommen bei IronLog</string>
     <string name="dashboard_welcome_subtitle">Starte dein erstes Training und tracke deinen Fortschritt.</string>
     <string name="dashboard_command_title">Bereit für die nächste Session?</string>
     <string name="dashboard_command_subtitle_idle">Starte direkt mit einem neuen Workout und logge deinen ersten Satz in Sekunden.</string>
@@ -396,7 +393,7 @@
     <string name="reminder_notification_title">Zeit fürs Training</string>
     <string name="reminder_notification_body">Dein geplanter Trainingstag wartet auf dich.</string>
 
-    <string name="dashboard_onboarding_title">Willkommen bei IronLog!</string>
+    <string name="dashboard_onboarding_title">Willkommen bei %1$s!</string>
     <string name="dashboard_onboarding_body">Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, dein Wochenvolumen und Statistiken.</string>
     <string name="plan_selection_title">Training starten</string>
     <string name="plan_selection_free_workout">Freies Training</string>

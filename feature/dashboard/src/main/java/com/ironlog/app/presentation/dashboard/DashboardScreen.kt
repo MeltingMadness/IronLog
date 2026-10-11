@@ -896,7 +896,7 @@ private fun OnboardingCard() {
             verticalArrangement = Arrangement.spacedBy(dims.spacingMd)
         ) {
             Text(
-                text = stringResource(id = R.string.dashboard_onboarding_title),
+                text = stringResource(id = R.string.dashboard_onboarding_title, stringResource(id = R.string.app_name)),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
