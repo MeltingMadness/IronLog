@@ -14,6 +14,7 @@
 		0C8A93AF24DBC77CF800B81F /* IOSExerciseLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */; };
 		0CBA1C2ABF0D7495C137673E /* ThrymFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C24432BBA49DFDD9176238 /* ThrymFont.swift */; };
 		1079DDCBF80F6035B1474524 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6615F1684CAAE08BA07D3060 /* ShareSheet.swift */; };
+		11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */; };
 		12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */; };
 		152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */; };
 		15940760C4BFBEF6E77765E1 /* IOSWorkoutRestTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */; };
@@ -97,6 +98,7 @@
 		0AD65B83BB36D7689497F892 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
 		0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayName.swift; sourceTree = "<group>"; };
 		0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Bold.ttf; sourceTree = "<group>"; };
+		10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringCatalogTests.swift; sourceTree = "<group>"; };
 		128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryBridgeTests.swift; sourceTree = "<group>"; };
 		175CDFFC00E37243DD0A1389 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework"; sourceTree = SOURCE_ROOT; };
 		18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionDraftTests.swift; sourceTree = "<group>"; };
@@ -363,6 +365,7 @@
 			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
 			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
 			DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */,
+			10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */,
 			C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */,
 			C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */,
 			90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */,
@@ -574,6 +577,7 @@
 				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
 				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
 				468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */, 
+				11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */, 
 				12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */, 
 				EFEFDF4CFC853E1764F495EE /* ThrymIOSTests.swift in Sources */, 
 				152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */, 
