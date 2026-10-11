@@ -1,6 +1,6 @@
-# IronLog
+# Thrym
 
-Android-App zum Protokollieren von Krafttraining. Offline, lokal, deutschsprachige Oberfläche.
+Android-App zum Protokollieren von Krafttraining (früher IronLog). Offline, lokal, deutschsprachige Oberfläche.
 
 - **Package:** `com.ironlog.app`
 - **Plattform:** Android (minSdk 26, targetSdk 35, compileSdk 36). Dazu kommt eine native SwiftUI-App für iOS, die den gemeinsamen Kotlin-Kern nutzt, siehe [`iosApp/README.md`](iosApp/README.md) und [`docs/ios-feature-parity.md`](docs/ios-feature-parity.md).
