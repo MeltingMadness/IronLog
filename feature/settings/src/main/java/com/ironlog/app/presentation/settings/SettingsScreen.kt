@@ -144,7 +144,7 @@ fun SettingsScreen(
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "application/json"
                         putExtra(Intent.EXTRA_STREAM, event.report.uri)
-                        putExtra(Intent.EXTRA_SUBJECT, context.getString(UxR.string.settings_incident_subject, event.report.id))
+                        putExtra(Intent.EXTRA_SUBJECT, context.getString(UxR.string.settings_incident_subject, context.getString(R.string.app_name), event.report.id))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     context.startActivity(

@@ -647,7 +647,7 @@ private class IosReminderScheduler(
     private suspend fun scheduleReminder(weekday: Weekday, hour: Int, minute: Int) {
         suspendCancellableCoroutine<Unit> { continuation ->
             val content = UNMutableNotificationContent().apply {
-                setTitle("IronLog")
+                setTitle(appDisplayName())
                 setBody("Zeit für dein Training.")
                 setSound(UNNotificationSound.defaultSound())
             }
@@ -680,6 +680,11 @@ private class IosReminderScheduler(
             }
         }
     }
+
+    private fun appDisplayName(): String =
+        (NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleDisplayName") as? String)
+            ?: (NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleName") as? String)
+            ?: ""
 
     private fun identifierForWeekday(weekday: Weekday): String = "ironlog.reminder.${weekday.name.lowercase()}"
 }

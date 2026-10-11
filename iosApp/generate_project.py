@@ -24,6 +24,19 @@ DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.10"
 PROJECT_OBJECT_VERSION = "56"
 XCODE_UPGRADE_VERSION = "1600"
+BRANDING_FILE = Path(__file__).resolve().parent.parent / "branding.properties"
+
+
+def read_app_display_name() -> str:
+    """Read the shared display name so Android and iOS are renamed in one place."""
+
+    for raw_line in BRANDING_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if line.startswith("appDisplayName="):
+            name = line.split("=", 1)[1].strip()
+            if name:
+                return name
+    raise SystemExit(f"{BRANDING_FILE}: appDisplayName fehlt")
 
 
 @dataclass(frozen=True)
@@ -624,6 +637,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "SWIFT_VERSION": SWIFT_VERSION,
     }
     app_common = {
+        "APP_DISPLAY_NAME": read_app_display_name(),
         "CODE_SIGN_STYLE": "Automatic",
         "DEVELOPMENT_TEAM": "",
         "FRAMEWORK_SEARCH_PATHS": "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",

@@ -1,5 +1,11 @@
 # Änderungen
 
+## Unveröffentlicht
+
+- Open Source: Apache-2.0-Lizenz und NOTICE ergänzt. Name, Logo und Icon sind von der Lizenz ausgenommen.
+- Neuer App-Name: **Thrym** (vorher IronLog).
+- Der sichtbare App-Name steht jetzt nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen). Paketname, Bundle-ID und Datenpfade bleiben unverändert.
+
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
 
 - Startseite: „Training jetzt starten“ startet den vorgeschlagenen Plan direkt (nächster Meta-Teilplan, sonst nie oder am längsten nicht trainierter Plan); „Anderen Plan wählen“ als zweite Aktion.

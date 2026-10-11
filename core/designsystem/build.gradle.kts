@@ -1,6 +1,14 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+}
+
+val appDisplayName: String = Properties().run {
+    rootProject.file("branding.properties").reader(Charsets.UTF_8).use { load(it) }
+    getProperty("appDisplayName")?.trim()?.takeIf { it.isNotEmpty() }
+        ?: error("branding.properties: appDisplayName fehlt")
 }
 
 android {
@@ -9,6 +17,7 @@ android {
 
     defaultConfig {
         minSdk = 26
+        resValue("string", "app_name", appDisplayName)
     }
 
     compileOptions {
