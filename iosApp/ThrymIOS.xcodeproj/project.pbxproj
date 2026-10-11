@@ -102,6 +102,7 @@
 		2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
 		2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
 		2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocumentTests.swift; sourceTree = "<group>"; };
+		30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
 		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
 		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
@@ -299,11 +300,20 @@
 			path = Workout;
 			sourceTree = "<group>";
 		};
+		D35BDCF6803CCB1A9C4483A8 /* Config */ = {
+			isa = PBXGroup;
+		children = (
+			30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */,
+		);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		D60ADEB63C860AFBC2C3F9EF /* ThrymIOS */ = {
 			isa = PBXGroup;
 		children = (
 			CF8D0BD4B75E8C2C174692A5 /* ThrymIOS */,
 			EEFE21A1443933CA4DE017DA /* ThrymIOSTests */,
+			D35BDCF6803CCB1A9C4483A8 /* Config */,
 			00C45FD35CB0F9C5F764F070 /* Products */,
 			ED2F3B048716C9DC7573911C /* Frameworks */,
 		);
@@ -410,9 +420,10 @@
 			};
 			buildConfigurationList = FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "ThrymIOS" */;
 			compatibilityVersion = "Xcode 15.0";
-			developmentRegion = de;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				en,
 				de,
 				Base,
 			);
@@ -601,6 +612,7 @@
 		};
 		3CF6A4F2E05B3AAE7E2CBFEE /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = Thrym;
@@ -608,14 +620,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ThrymIOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
 				PRODUCT_NAME = ThrymIOS;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -627,6 +638,7 @@
 		};
 		23FB2CAEB38545C3793097DD /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = Thrym;
@@ -634,14 +646,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_TESTABILITY = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ThrymIOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
 				PRODUCT_NAME = ThrymIOS;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -653,17 +664,17 @@
 		};
 		E2657B9FA91DD4A55652006F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
 				PRODUCT_NAME = ThrymIOSTests;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -676,17 +687,17 @@
 		};
 		B4343C19535B18410503AED7 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.thrym.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
 				PRODUCT_NAME = ThrymIOSTests;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
