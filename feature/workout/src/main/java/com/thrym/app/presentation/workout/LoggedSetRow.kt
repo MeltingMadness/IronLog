@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -43,6 +44,7 @@ import com.thrym.app.domain.model.IntensitySystem
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.HapticFeedbackHelper
+import com.thrym.app.presentation.common.label
 import com.thrym.shared.readinessdata.SetIntention
 import androidx.compose.material3.Surface
 import com.thrym.app.presentation.theme.AthleticNumber
@@ -169,9 +171,9 @@ internal fun LoggedSetRow(
                     ) {
                         Text(
                             text = if (set.weightKg == 0.0) {
-                                stringResource(UxR.string.workout_bodyweight_set_value, stringResource(R.string.weight_bodyweight), set.reps, stringResource(R.string.common_reps_short))
+                                stringResource(UxR.string.workout_bodyweight_set_value, stringResource(R.string.weight_bodyweight), set.reps, pluralStringResource(R.plurals.common_reps_unit, set.reps))
                             } else {
-                                stringResource(UxR.string.workout_weighted_set_value, weightText, WeightFormatting.unitLabel(unitSystem), set.reps, stringResource(R.string.common_reps_short))
+                                stringResource(UxR.string.workout_weighted_set_value, weightText, WeightFormatting.unitLabel(unitSystem), set.reps, pluralStringResource(R.plurals.common_reps_unit, set.reps))
                             },
                             style = AthleticNumber,
                             color = MaterialTheme.colorScheme.onSurface
@@ -217,7 +219,7 @@ internal fun LoggedSetRow(
                         border = BorderStroke(1.dp, accentColor.copy(alpha = 0.3f))
                     ) {
                         Text(
-                            text = stringResource(UxR.string.workout_intensity_value, intensitySystem.displayName, intensityText),
+                            text = stringResource(UxR.string.workout_intensity_value, intensitySystem.label(), intensityText),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = rpeTextColor(set.rpe) ?: MaterialTheme.accentText,

@@ -457,7 +457,7 @@ class PlanEditorViewModelTest {
         assertEquals(0, fakePlanRepo.saveCallCount)
         assertFalse(viewModel.uiState.value.isSaved)
         assertEquals(
-            "Progression für ${mockExercise1.name} ist unvollständig",
+            com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.plans.R.string.plan_progression_incomplete, mockExercise1.name),
             viewModel.uiState.value.error
         )
     }
@@ -636,7 +636,7 @@ class PlanEditorViewModelTest {
 
         assertEquals(0, fakePlanRepo.saveCallCount)
         assertFalse(viewModel.uiState.value.isSaved)
-        assertEquals("Bitte füge mindestens eine Übung hinzu.", viewModel.uiState.value.error)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.plans.R.string.plan_exercise_required), viewModel.uiState.value.error)
     }
 
     @Test

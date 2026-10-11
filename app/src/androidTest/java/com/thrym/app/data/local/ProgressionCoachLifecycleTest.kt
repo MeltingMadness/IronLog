@@ -200,10 +200,10 @@ class ProgressionCoachLifecycleTest {
         workoutRepository.finishWorkout(sessionId)
         workoutRepository.updateSessionNotes(sessionId, "100% gegeben")
 
-        suspend fun search(query: String): List<Long> {
+        suspend fun search(query: String, exerciseNames: List<String> = emptyList()): List<Long> {
             val pattern = com.thrym.app.data.repository.historySearchPattern(query)
             val result = database.workoutSessionDao()
-                .getPagedCompletedSessionsWithSetsFiltered(null, null, null, pattern)
+                .getPagedCompletedSessionsWithSetsFiltered(null, null, null, pattern, exerciseNames)
                 .load(androidx.paging.PagingSource.LoadParams.Refresh(null, 20, false))
             return (result as androidx.paging.PagingSource.LoadResult.Page).data.map { it.session.id }
         }
@@ -214,6 +214,12 @@ class ProgressionCoachLifecycleTest {
         assertEquals(emptyList<Long>(), search("50%"))
         assertEquals(emptyList<Long>(), search("Kreuzheben"))
         assertEquals(listOf(sessionId), search("   "))
+
+        // Built-ins are found by their localized name: the ViewModel translates the query
+        // into the stored canonical names and passes them along.
+        val storedName = requireNotNull(database.exerciseDao().getExerciseById(exerciseId)).name
+        assertEquals(listOf(sessionId), search("Hocke", listOf(storedName)))
+        assertEquals(emptyList<Long>(), search("Hocke", listOf("Kreuzheben")))
     }
 
     private fun linearPlan(weightKg: Double, stepKg: Double) = TrainingPlan(

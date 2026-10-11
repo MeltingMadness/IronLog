@@ -6,7 +6,7 @@
     and never a medical or recovery claim. No string promises a percentage when
     the evidence is missing.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="dashboard_trend_title">Training trend</string>
     <string name="dashboard_trend_subtitle">Multi-week comparison of your exercises</string>
     <string name="dashboard_trend_index_label">Training index</string>
@@ -17,7 +17,7 @@
     <string name="dashboard_trend_status_no_strain">No repeated decline detected</string>
     <string name="dashboard_trend_status_single">One exercise has repeatedly declined</string>
     <string name="dashboard_trend_status_multiple">Several exercises have repeatedly declined</string>
-    <string name="dashboard_trend_evidence">%1$d exercises analyzed · %2$d with enough history · %3$d comparable sessions</string>
+    <string name="dashboard_trend_evidence" tools:ignore="PluralsCandidate">%1$s · %2$d with enough history · %3$s</string>
     <string name="dashboard_trend_confidence">Data confidence: %1$s</string>
     <string name="dashboard_trend_confidence_none">none</string>
     <string name="dashboard_trend_confidence_low">low</string>
@@ -35,9 +35,6 @@
     <string name="dashboard_trend_exercise_line" translatable="false">%1$s · %2$s · %3$s</string>
     <string name="dashboard_trend_exercise_change">%1$s vs. your baseline</string>
     <string name="dashboard_trend_quality_title">Data quality</string>
-    <string name="dashboard_trend_quality_rpe">%1$d sets without RPE (counted as neutral)</string>
-    <string name="dashboard_trend_quality_intention">%1$d sets without a set intention (counted as neutral)</string>
-    <string name="dashboard_trend_quality_deload">%1$d deload sessions excluded</string>
     <string name="dashboard_trend_footer">Heuristic based on your training data · not a medical assessment</string>
 
     <string name="dashboard_trend_ex_status_improving">improving</string>
@@ -104,10 +101,39 @@
     <string name="dashboard_muscles_no_plan">No plan scheduled for today.</string>
     <string name="dashboard_muscles_last_trained">Last trained: %1$s</string>
     <string name="dashboard_muscles_trained_today">today</string>
-    <string name="dashboard_muscles_trained_days_ago">%1$d days ago</string>
     <string name="dashboard_muscles_never">No training logged</string>
-    <string name="dashboard_muscles_window">%1$s sets in 7 days</string>
-    <string name="dashboard_muscles_today">%1$s sets today</string>
     <string name="dashboard_muscles_soreness">Soreness %1$d/5</string>
     <string name="dashboard_muscles_no_recovery_note">No recovery percentage. MEV/MAV thresholds are planning targets, not measurements.</string>
+    <plurals name="dashboard_trend_evidence_exercises">
+        <item quantity="one">%1$d exercise analyzed</item>
+        <item quantity="other">%1$d exercises analyzed</item>
+    </plurals>
+    <plurals name="dashboard_trend_evidence_sessions">
+        <item quantity="one">%1$d comparable session</item>
+        <item quantity="other">%1$d comparable sessions</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_rpe">
+        <item quantity="one">%1$d set without RPE (counted as neutral)</item>
+        <item quantity="other">%1$d sets without RPE (counted as neutral)</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_intention">
+        <item quantity="one">%1$d set without a set intention (counted as neutral)</item>
+        <item quantity="other">%1$d sets without a set intention (counted as neutral)</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_deload">
+        <item quantity="one">%1$d deload session excluded</item>
+        <item quantity="other">%1$d deload sessions excluded</item>
+    </plurals>
+    <plurals name="dashboard_muscles_trained_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="dashboard_muscles_window">
+        <item quantity="one">%1$s set in 7 days</item>
+        <item quantity="other">%1$s sets in 7 days</item>
+    </plurals>
+    <plurals name="dashboard_muscles_today">
+        <item quantity="one">%1$s set today</item>
+        <item quantity="other">%1$s sets today</item>
+    </plurals>
 </resources>

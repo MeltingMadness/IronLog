@@ -56,9 +56,9 @@ fun WorkoutTimer(
     val seconds = elapsed % 60
 
     val timeText = if (hours > 0) {
-        String.format(Locale.GERMAN, "%d:%02d:%02d", hours, minutes, seconds)
+        String.format(Locale.ROOT, "%d:%02d:%02d", hours, minutes, seconds)
     } else {
-        String.format(Locale.GERMAN, "%02d:%02d", minutes, seconds)
+        String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
     }
 
     val fraction = (elapsed / WORKOUT_TARGET_SECONDS).coerceIn(0f, 1f)

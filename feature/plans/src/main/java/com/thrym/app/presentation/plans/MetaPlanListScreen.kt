@@ -255,7 +255,7 @@ private fun MetaPlanListCard(
                     null -> stringResource(id = PlansR.string.meta_plans_last_done_never)
                     0L -> stringResource(id = PlansR.string.meta_plans_last_done_today)
                     1L -> stringResource(id = PlansR.string.meta_plans_last_done_yesterday)
-                    else -> stringResource(id = PlansR.string.meta_plans_last_done_days, daysAgo)
+                    else -> pluralStringResource(id = PlansR.plurals.meta_plans_last_done_days, count = daysAgo.toInt(), daysAgo.toInt())
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -38,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -51,6 +52,7 @@ import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.localizedExerciseName
 import com.thrym.core.designsystem.R
 import com.thrym.feature.progression.R as ProgressionR
 import java.time.Instant
@@ -209,7 +211,7 @@ private fun ProgressionReviewCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = item.exerciseName
+                text = item.exerciseName?.let { localizedExerciseName(it) }
                     ?: stringResource(R.string.progression_review_exercise, item.exerciseId),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
@@ -492,14 +494,17 @@ private fun ProgressionEvidenceExplanation(item: ProgressionReviewItemUi, unitSy
     val args = item.reasonArguments
     fun count(key: String): Int? = args[key]?.takeIf { it.isFinite() && it >= 0 && it <= Int.MAX_VALUE && it % 1.0 == 0.0 }?.toInt()
     val counted = count("countedWorkSets") ?: return
-    Text(stringResource(ProgressionR.string.review_evidence_roles, counted,
-        count("failureMarkedSets") ?: 0, count("ignoredWarmupSets") ?: 0,
-        count("ignoredDropSets") ?: 0, count("ignoredBackoffSets") ?: 0, count("ignoredExtraSets") ?: 0),
-        style = MaterialTheme.typography.bodySmall)
+    val extra = count("ignoredExtraSets") ?: 0
+    Text(
+        pluralStringResource(ProgressionR.plurals.review_evidence_counted, counted, counted, count("failureMarkedSets") ?: 0) + " " +
+            pluralStringResource(ProgressionR.plurals.review_evidence_excluded, extra,
+                count("ignoredWarmupSets") ?: 0, count("ignoredDropSets") ?: 0, count("ignoredBackoffSets") ?: 0, extra),
+        style = MaterialTheme.typography.bodySmall
+    )
     val successes = count("successfulSessions")
     val required = count("requiredSuccesses")
     if (successes != null && required != null && item.reasonCode != com.thrym.app.domain.model.ProgressionReasonCode.SUCCESS_CONFIRMATION_REQUIRED) {
-        Text(stringResource(ProgressionR.string.review_success_count, successes, required), style = MaterialTheme.typography.bodySmall)
+        Text(pluralStringResource(ProgressionR.plurals.review_success_count, required, successes, required), style = MaterialTheme.typography.bodySmall)
     }
     val failures = count("failedSessions")
     val threshold = count("failureThreshold")

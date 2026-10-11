@@ -1,7 +1,8 @@
 package com.thrym.app.domain.model
 
-enum class IntensitySystem(val displayName: String) {
-    OFF("Aus"),
-    RPE("RPE"),
-    RIR("RIR")
+/** Persisted code; UI labels come from `labelRes()` in core/designsystem. */
+enum class IntensitySystem {
+    OFF,
+    RPE,
+    RIR
 }

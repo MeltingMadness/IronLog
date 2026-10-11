@@ -57,7 +57,10 @@ import com.thrym.app.presentation.common.LoadingScreen
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.localizedExerciseName
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.thrymSharedElement
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.progression.ProgressionReasonText
@@ -215,7 +218,7 @@ fun WorkoutDetailScreen(
                                 color = MaterialTheme.accentText
                             )
                             Text(
-                                text = session.startTime.format(DateFormatting.DATE_FULL),
+                                text = session.startTime.format(DateFormatting.dateFull(currentLocale())),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -278,7 +281,7 @@ fun WorkoutDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = exerciseDetail.exercise.name,
+                                    text = exerciseDetail.exercise.localizedName(),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -428,7 +431,7 @@ private fun ProgressionOutcomeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = outcome.exerciseName
+                    text = outcome.exerciseName?.let { localizedExerciseName(it) }
                         ?: stringResource(R.string.progression_review_exercise, outcome.exerciseId),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,

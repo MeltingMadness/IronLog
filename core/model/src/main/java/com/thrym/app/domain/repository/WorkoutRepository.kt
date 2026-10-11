@@ -69,12 +69,16 @@ interface WorkoutRepository {
      *
      * [searchQuery] matches the session name, its notes, the plan name and the names or
      * notes of exercises trained in the session; blank means no text filter.
+     * [matchingExerciseNames] are stored exercise names that count as a match as well, so a
+     * built-in exercise is also found by its localized name (the database only stores the
+     * German canonical name). They are only used together with a non-blank [searchQuery].
      */
     fun getPagedCompletedWorkoutSummaries(
         planId: Long?,
         fromEpochMillis: Long?,
         toEpochMillis: Long?,
-        searchQuery: String? = null
+        searchQuery: String? = null,
+        matchingExerciseNames: List<String> = emptyList()
     ): Flow<PagingData<CompletedWorkoutSummary>>
     suspend fun getSessionById(id: Long): WorkoutSession?
     fun observeSessionById(id: Long): Flow<WorkoutSession?>

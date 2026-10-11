@@ -72,6 +72,9 @@ import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.rememberIs24HourFormat
+import com.thrym.app.presentation.common.rememberDateTimeFormatter
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.DarkCyanPrimary
 import com.thrym.app.presentation.theme.DarkPrimary
 import com.thrym.app.presentation.theme.DarkRedPrimary
@@ -96,6 +99,8 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val locale = currentLocale()
+    val use24Hour = rememberIs24HourFormat()
     val snackbarHostState = remember { SnackbarHostState() }
     val dims = thrymDimens
     val recoveryBackup = state.recoveryBackup
@@ -582,12 +587,12 @@ fun SettingsScreen(
                                     },
                                     reminder.hour,
                                     reminder.minute,
-                                    true
+                                    use24Hour
                                 ).show()
                             },
                             colors = ThrymInteractiveColors.textButton()
                         ) {
-                            Text(DateFormatting.formatClock(reminder.hour, reminder.minute))
+                            Text(DateFormatting.formatClock(reminder.hour, reminder.minute, locale, use24Hour))
                         }
                     }
 
@@ -610,7 +615,7 @@ fun SettingsScreen(
                                     }
                                     viewModel.updateReminderConfig(reminder.copy(daysOfWeek = updated))
                                 },
-                                label = { Text(DateFormatting.dayShort(day)) },
+                                label = { Text(DateFormatting.dayShort(day, locale)) },
                                 colors = ThrymInteractiveColors.filterChip()
                             )
                         }
@@ -870,10 +875,11 @@ fun SettingsScreen(
     }
 }
 
+@Composable
 private fun formatEpochMillis(millis: Long): String =
     Instant.ofEpochMilli(millis)
         .atZone(ZoneId.systemDefault())
-        .format(DateFormatting.DATE_TIME)
+        .format(rememberDateTimeFormatter())
 
 private val REST_TIME_OPTIONS_SECONDS = listOf(30, 60, 90, 120, 180, 300, 600)
 

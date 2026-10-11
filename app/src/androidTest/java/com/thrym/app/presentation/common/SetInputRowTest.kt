@@ -14,6 +14,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.thrym.app.presentation.theme.ThrymTheme
+import com.thrym.core.designsystem.R
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -49,8 +50,10 @@ class SetInputRowTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Loggen").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Loggen").performClick()
+        // Expected copy comes from the resources, so the test passes in every device language.
+        val logLabel = composeRule.activity.getString(R.string.common_log)
+        composeRule.onNodeWithContentDescription(logLabel).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(logLabel).performClick()
 
         composeRule.runOnIdle {
             assertEquals(1, logClicks)

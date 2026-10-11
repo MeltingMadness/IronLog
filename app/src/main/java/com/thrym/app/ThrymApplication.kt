@@ -17,4 +17,10 @@ class ThrymApplication : android.app.Application() {
 
         TrainingReminderNotifier.ensureChannel(this)
     }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Keeps the channel name in the system settings in the current app language.
+        TrainingReminderNotifier.ensureChannel(this)
+    }
 }

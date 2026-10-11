@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="workout_audit_plan_target_with_weight">Plan target: %1$d × %2$d @ %3$s</string>
     <string name="workout_audit_plan_target_no_weight">Plan target: %1$d × %2$d</string>
     <string name="workout_audit_previous_session_title">Previous session (%1$s)</string>
@@ -31,7 +31,7 @@
     <string name="workout_glass_pause_of_total">of %1$s</string>
     <string name="workout_glass_pause_skip">Skip rest</string>
     <string name="workout_glass_pause_skip_short">Skip</string>
-    <string name="workout_glass_pause_remaining_cd">%1$d minutes %2$d seconds of rest remaining</string>
+    <string name="workout_glass_pause_remaining_cd">%1$s %2$s of rest remaining</string>
     <string name="workout_glass_done_headline">All done.</string>
     <string name="workout_glass_unit_minutes" translatable="false">min</string>
     <string name="workout_glass_exercises_label">Exercises</string>
@@ -44,9 +44,8 @@
         <item quantity="other">New personal records</item>
     </plurals>
     <string name="workout_glass_rail_upcoming">up next</string>
-    <string name="workout_picker_selected_count">%1$d selected</string>
+    <string name="workout_picker_selected_count" tools:ignore="PluralsCandidate">%1$d selected</string>
     <string name="workout_picker_clear_selection">Clear selection</string>
-    <string name="workout_picker_add_selected">Add exercises (%1$d)</string>
     <string name="workout_reps_short">Reps</string>
     <string name="workout_set_save_failed">Couldn\'t save set: %1$s</string>
     <string name="workout_set_delete_failed">Couldn\'t delete set: %1$s</string>
@@ -66,4 +65,21 @@
     <string name="workout_weighted_set_value" translatable="false">%1$s %2$s × %3$d %4$s</string>
     <string name="workout_number_unit_suffix" translatable="false">" %1$s"</string>
     <string name="workout_completion_metric_cd" translatable="false">%1$s: %2$s %3$s</string>
+    <!-- Set badges: type letter + set number (warm-up, drop set, failure, back-off). -->
+    <string name="workout_set_badge_warmup">W%1$d</string>
+    <string name="workout_set_badge_drop_set">D%1$d</string>
+    <string name="workout_set_badge_failure">F%1$d</string>
+    <string name="workout_set_badge_backoff">B%1$d</string>
+    <plurals name="workout_glass_pause_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="workout_glass_pause_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <plurals name="workout_picker_add_selected">
+        <item quantity="one">Add %1$d exercise</item>
+        <item quantity="other">Add %1$d exercises</item>
+    </plurals>
 </resources>

@@ -2,6 +2,8 @@ package com.thrym.app.data.repository
 
 import com.thrym.app.data.local.dao.ExerciseDao
 import com.thrym.app.data.local.entity.ExerciseEntity
+import com.thrym.app.domain.error.ExerciseValidationException
+import com.thrym.app.domain.error.ExerciseValidationException.Reason
 import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
@@ -9,7 +11,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class ExerciseRepositoryImpl(
-    private val exerciseDao: ExerciseDao
+    private val exerciseDao: ExerciseDao,
+    /**
+     * Built-in exercise names in the current UI language. Built-ins are stored under their
+     * German canonical name, so the DAO check alone would let a custom exercise reuse a
+     * translated built-in name (e.g. "Deadlift") and show up twice in the list.
+     */
+    private val localizedBuiltInNames: () -> Collection<String> = { emptyList() }
 ) : ExerciseRepository {
 
     override fun getAllExercises(): Flow<List<Exercise>> =
@@ -36,10 +44,10 @@ class ExerciseRepositoryImpl(
     }
 
     override suspend fun updateCustomExercise(exercise: Exercise) {
-        require(exercise.id > 0L) { "Nur gespeicherte Uebungen koennen bearbeitet werden" }
+        if (exercise.id <= 0L) fail(Reason.NOT_SAVED, "Only saved exercises can be edited")
         val existing = exerciseDao.getExerciseById(exercise.id)
-            ?: throw IllegalArgumentException("Uebung wurde nicht gefunden")
-        require(existing.isCustom) { "Nur eigene Uebungen koennen bearbeitet werden" }
+            ?: fail(Reason.NOT_FOUND, "Exercise ${exercise.id} not found")
+        if (!existing.isCustom) fail(Reason.NOT_CUSTOM_EDIT, "Only custom exercises can be edited")
 
         val sanitized = sanitizeAndValidate(
             exercise.copy(
@@ -47,14 +55,14 @@ class ExerciseRepositoryImpl(
                 isArchived = existing.isArchived
             )
         )
-        validateUniqueName(name = sanitized.name, excludeId = sanitized.id)
+        validateUniqueName(name = sanitized.name, excludeId = sanitized.id, previousName = existing.name)
         exerciseDao.updateExercise(ExerciseEntity.fromDomain(sanitized))
     }
 
     override suspend fun deleteCustomExercise(id: Long) {
         val existing = exerciseDao.getExerciseById(id)
-            ?: throw IllegalArgumentException("Uebung wurde nicht gefunden")
-        require(existing.isCustom) { "Nur eigene Uebungen koennen geloescht werden" }
+            ?: fail(Reason.NOT_FOUND, "Exercise $id not found")
+        if (!existing.isCustom) fail(Reason.NOT_CUSTOM_DELETE, "Only custom exercises can be deleted")
 
         if (exerciseDao.isExerciseReferenced(id)) {
             exerciseDao.archiveCustomExercise(id)
@@ -63,27 +71,36 @@ class ExerciseRepositoryImpl(
         }
     }
 
-    private suspend fun validateUniqueName(name: String, excludeId: Long?) {
+    private suspend fun validateUniqueName(name: String, excludeId: Long?, previousName: String? = null) {
         // SQLite lower()/NOCASE fold only ASCII, so umlaut variants like
         // "BANKDRÜCKEN" vs "Bankdrücken" are compared unicode-aware in Kotlin.
         // The DAO therefore returns all active candidate names for comparison.
         val normalized = name.trim().lowercase()
-        val hasDuplicate = exerciseDao.getActiveExerciseNames(excludeId = excludeId)
+        // A custom exercise created before its name became a translated built-in name
+        // (or in another language) keeps working as long as it is not renamed.
+        val reservedNames = if (previousName?.trim()?.lowercase() == normalized) emptyList() else localizedBuiltInNames()
+        val hasDuplicate = (exerciseDao.getActiveExerciseNames(excludeId = excludeId) + reservedNames)
             .any { it.trim().lowercase() == normalized }
-        require(!hasDuplicate) { "Eine aktive Uebung mit diesem Namen existiert bereits" }
+        if (hasDuplicate) fail(Reason.DUPLICATE_NAME, "An active exercise with this name already exists")
     }
 
     private fun sanitizeAndValidate(exercise: Exercise): Exercise {
         val name = exercise.name.trim()
-        require(name.length in 3..60) { "Name muss zwischen 3 und 60 Zeichen haben" }
+        if (name.length !in ExerciseValidationException.NAME_MIN_LENGTH..ExerciseValidationException.NAME_MAX_LENGTH) {
+            fail(Reason.NAME_LENGTH, "Name must have 3 to 60 characters")
+        }
 
         val notes = exercise.notes.trim()
-        require(notes.length <= 240) { "Notiz darf maximal 240 Zeichen enthalten" }
+        if (notes.length > ExerciseValidationException.NOTES_MAX_LENGTH) {
+            fail(Reason.NOTES_TOO_LONG, "Notes must not exceed 240 characters")
+        }
 
         val secondary = exercise.secondaryMuscleGroups.distinct()
-        require(secondary.size <= 3) { "Maximal drei sekundaere Muskelgruppen erlaubt" }
-        require(exercise.primaryMuscleGroup !in secondary) {
-            "Primaere Muskelgruppe darf nicht gleichzeitig sekundaer sein"
+        if (secondary.size > ExerciseValidationException.MAX_SECONDARY_GROUPS) {
+            fail(Reason.TOO_MANY_SECONDARY_GROUPS, "At most three secondary muscle groups are allowed")
+        }
+        if (exercise.primaryMuscleGroup in secondary) {
+            fail(Reason.PRIMARY_ALSO_SECONDARY, "Primary muscle group must not also be secondary")
         }
 
         return exercise.copy(
@@ -92,4 +109,7 @@ class ExerciseRepositoryImpl(
             secondaryMuscleGroups = secondary
         )
     }
+
+    private fun fail(reason: Reason, message: String): Nothing =
+        throw ExerciseValidationException(reason, message)
 }

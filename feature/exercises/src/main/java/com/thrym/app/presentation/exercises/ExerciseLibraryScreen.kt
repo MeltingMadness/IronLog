@@ -66,6 +66,9 @@ import com.thrym.app.domain.model.ExerciseTrainingSummary
 import com.thrym.app.presentation.common.EmptyStateScreen
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.LoadingScreen
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
@@ -155,7 +158,7 @@ fun ExerciseLibraryScreen(
                     FilterChip(
                         selected = state.selectedMuscleGroup == group,
                         onClick = { viewModel.onMuscleGroupSelected(group) },
-                        label = { Text(group.displayName) },
+                        label = { Text(group.label()) },
                         colors = ThrymInteractiveColors.filterChip()
                     )
                 }
@@ -193,7 +196,7 @@ fun ExerciseLibraryScreen(
                             )
                         } else {
                             ListItem(
-                                headlineContent = { ExerciseName(exercise.name) },
+                                headlineContent = { ExerciseName(exercise.localizedName()) },
                                 supportingContent = { ExerciseSupportingText(exercise, summary) },
                                 colors = exerciseRowColors(),
                                 modifier = Modifier
@@ -305,7 +308,7 @@ private fun SwipeToDeleteExerciseItem(
         }
     ) {
         ListItem(
-            headlineContent = { ExerciseName(exercise.name) },
+            headlineContent = { ExerciseName(exercise.localizedName()) },
             supportingContent = { ExerciseSupportingText(exercise, summary) },
             colors = exerciseRowColors(),
             trailingContent = {
@@ -377,7 +380,7 @@ internal fun CustomExerciseDialog(
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
-                        value = selectedPrimary.displayName,
+                        value = selectedPrimary.label(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
@@ -397,7 +400,7 @@ internal fun CustomExerciseDialog(
                     ) {
                         MuscleGroup.entries.forEach { group ->
                             DropdownMenuItem(
-                                text = { Text(group.displayName) },
+                                text = { Text(group.label()) },
                                 onClick = {
                                     selectedPrimary = group
                                     selectedSecondary = selectedSecondary - group
@@ -430,7 +433,7 @@ internal fun CustomExerciseDialog(
                                             else -> selectedSecondary
                                         }
                                     },
-                                    label = { Text(group.displayName) },
+                                    label = { Text(group.label()) },
                                     colors = ThrymInteractiveColors.filterChip()
                                 )
                             }
@@ -444,7 +447,7 @@ internal fun CustomExerciseDialog(
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
-                        value = selectedCategory.displayName,
+                        value = selectedCategory.label(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_category_label)) },
@@ -464,7 +467,7 @@ internal fun CustomExerciseDialog(
                     ) {
                         ExerciseCategory.entries.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category.displayName) },
+                                text = { Text(category.label()) },
                                 onClick = {
                                     selectedCategory = category
                                     categoryExpanded = false
@@ -524,8 +527,8 @@ private fun ExerciseSupportingText(exercise: Exercise, summary: ExerciseTraining
     Column {
         Text(
             listOfNotNull(
-                exercise.primaryMuscleGroup.displayName,
-                exercise.category.displayName,
+                exercise.primaryMuscleGroup.label(),
+                exercise.category.label(),
                 exercise.notes.takeIf { exercise.isCustom && it.isNotBlank() }
             ).joinToString(" · ")
         )
@@ -535,7 +538,7 @@ private fun ExerciseSupportingText(exercise: Exercise, summary: ExerciseTraining
                     R.plurals.exercises_training_summary,
                     summary.sessionCount,
                     summary.sessionCount,
-                    summary.lastCompletedAt.format(DateFormatting.DATE_SHORT)
+                    summary.lastCompletedAt.format(DateFormatting.dayMonth(currentLocale()))
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.accentText

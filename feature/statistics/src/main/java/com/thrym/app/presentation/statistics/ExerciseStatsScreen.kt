@@ -40,7 +40,7 @@ import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.repository.AppPreferencesRepository
-import com.thrym.app.domain.util.DateFormatting
+import com.thrym.app.presentation.common.rememberDateTimeFormatter
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
@@ -48,6 +48,8 @@ import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.common.LoadingScreen
 import com.thrym.app.presentation.common.StatCard
 import com.thrym.app.presentation.common.WeeklyMuscleVolumeCard
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.semantic
@@ -106,7 +108,7 @@ fun ExerciseStatsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
                 title = {
                     Text(
-                        state.exercise?.name ?: stringResource(id = R.string.stats_title_fallback)
+                        state.exercise?.localizedName() ?: stringResource(id = R.string.stats_title_fallback)
                     )
                 },
                 navigationIcon = {
@@ -132,13 +134,13 @@ fun ExerciseStatsScreen(
             ) {
                 item {
                     GlassStatsHeader(
-                        subtitle = state.exercise?.let { stringResource(UxR.string.stats_exercise_details, it.primaryMuscleGroup.displayName, it.category.displayName) },
+                        subtitle = state.exercise?.let { stringResource(UxR.string.stats_exercise_details, it.primaryMuscleGroup.label(), it.category.label()) },
                         onBack = onBack
                     )
                 }
                 item {
                     Text(
-                        text = state.exercise?.name ?: stringResource(id = R.string.stats_title_fallback),
+                        text = state.exercise?.localizedName() ?: stringResource(id = R.string.stats_title_fallback),
                         fontSize = 40.sp,
                         lineHeight = 42.sp,
                         fontWeight = FontWeight.Bold,
@@ -194,7 +196,7 @@ fun ExerciseStatsScreen(
                 item {
                     state.exercise?.let { exercise ->
                         Text(
-                            text = stringResource(UxR.string.stats_exercise_details, exercise.primaryMuscleGroup.displayName, exercise.category.displayName),
+                            text = stringResource(UxR.string.stats_exercise_details, exercise.primaryMuscleGroup.label(), exercise.category.label()),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -526,13 +528,14 @@ private fun RecentSetsCard(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
+            val dateTimeFormat = rememberDateTimeFormatter()
             sets.take(12).forEach { set ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = set.completedAt.format(DateFormatting.DATE_TIME),
+                        text = set.completedAt.format(dateTimeFormat),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -565,8 +568,11 @@ private fun recentSetTypeLabel(type: SetType): String = stringResource(
     }
 )
 
-private fun chartPointDate(point: ChartDataPoint): String =
-    point.timestamp?.format(DateFormatting.DATE_TIME) ?: point.dateLabel
+@Composable
+private fun chartPointDate(point: ChartDataPoint): String {
+    val dateTimeFormat = rememberDateTimeFormatter()
+    return point.timestamp?.format(dateTimeFormat) ?: point.dateLabel
+}
 
 private fun formatMetricValue(
     value: Float,

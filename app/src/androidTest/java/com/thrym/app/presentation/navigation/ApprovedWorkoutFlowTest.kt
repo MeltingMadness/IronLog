@@ -13,6 +13,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.thrym.app.domain.model.*
 import com.thrym.app.domain.repository.*
 import com.thrym.app.presentation.theme.ThrymTheme
+import com.thrym.core.designsystem.R
+import com.thrym.feature.plans.R as PlansR
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import android.content.Context
@@ -31,6 +33,8 @@ import java.io.File
 class ApprovedWorkoutFlowTest {
     @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
     private fun awaitText(text: String) = ui.waitUntil(20000) { ui.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    // Erwartete Texte kommen aus den Ressourcen, damit der Test in jeder Geraetesprache laeuft.
+    private fun text(id: Int, vararg args: Any): String = ui.activity.getString(id, *args)
     // Nach dem Loggen bleiben Log-Button, Eingaben und Abschlussdialog gesperrt, bis der
     // Speichervorgang ganz abgeschlossen ist. Auf langsamen Emulatoren wuerde ein Klick
     // davor ignoriert, daher erst auf den aktivierten Knoten warten.
@@ -66,24 +70,29 @@ class ApprovedWorkoutFlowTest {
         val sessionId = runBlocking { workouts.startWorkout("Designprüfung 15.09.", planId) }
         lateinit var nav: NavHostController
         ui.setContent { ThrymTheme { nav=rememberNavController(); ThrymNavHost(navController=nav, startDestination=Screen.ActiveWorkout.createRoute(sessionId,planId)) } }
-        ui.waitUntil(20000) { ui.onAllNodes(hasText("Satz 1 loggen",substring=true)).fetchSemanticsNodes().isNotEmpty() }
-        ui.onAllNodes(hasText("Satz 1 loggen",substring=true))[0].performScrollTo().performClick()
+        val logSet1 = text(R.string.workout_log_set_button_short, 1)
+        val logSet2 = text(R.string.workout_log_set_button_short, 2)
+        val finish = text(R.string.workout_finish_action)
+        ui.waitUntil(20000) { ui.onAllNodes(hasText(logSet1,substring=true)).fetchSemanticsNodes().isNotEmpty() }
+        ui.onAllNodes(hasText(logSet1,substring=true))[0].performScrollTo().performClick()
         ui.waitUntil(20000) { runBlocking { workouts.getSetsForSessionList(sessionId).size == 1 } }
-        awaitEnabled(hasText("Satz 2 loggen",substring=true))
+        awaitEnabled(hasText(logSet2,substring=true))
         ui.onAllNodes(hasSetTextAction())[1].performTextReplacement("9")
         capture("android-logging")
-        ui.onNode(hasText("Satz 2 loggen",substring=true)).performScrollTo().performClick()
+        ui.onNode(hasText(logSet2,substring=true)).performScrollTo().performClick()
         waitOrDump(20000) { runBlocking { workouts.getSetsForSessionList(sessionId).size == 2 } }
-        ui.onNodeWithText("Beenden").performClick()
-        awaitText("Training beenden?")
-        ui.onNodeWithText("Noch 7 geplante Sätze offen. 2 von 9 absolviert.").assertExists()
+        ui.onNodeWithText(finish).performClick()
+        awaitText(text(R.string.workout_finish_dialog_title))
+        ui.onNodeWithText(ui.activity.resources.getQuantityString(R.plurals.workout_finish_remaining, 7, 7, 2, 9)).assertExists()
         capture("android-partial-finish")
-        awaitEnabled(hasText("Weitertrainieren"))
-        ui.onNodeWithText("Weitertrainieren").performClick()
-        ui.onNodeWithText("Beenden").performClick()
-        awaitEnabled(hasText("Trotzdem beenden"))
-        ui.onNodeWithText("Trotzdem beenden").performClick()
-        awaitText("Teiltraining gespeichert")
+        val keepTraining = text(R.string.workout_finish_dialog_cancel)
+        awaitEnabled(hasText(keepTraining))
+        ui.onNodeWithText(keepTraining).performClick()
+        ui.onNodeWithText(finish).performClick()
+        val finishAnyway = text(R.string.workout_finish_confirm_partial)
+        awaitEnabled(hasText(finishAnyway))
+        ui.onNodeWithText(finishAnyway).performClick()
+        awaitText(text(R.string.workout_summary_headline_partial))
         capture("android-summary")
         runBlocking {
             assertNotNull(workouts.getSessionById(sessionId)?.endTime)
@@ -91,22 +100,24 @@ class ApprovedWorkoutFlowTest {
             assertEquals(1140.0,workouts.getSetsForSessionList(sessionId).sumOf { it.reps*it.weightKg },0.0)
             assertTrue(plans.getPlanById(planId)!!.exercises.all { it.setTargets.isEmpty() })
         }
-        ui.onNodeWithText("Planänderungen prüfen").performScrollTo().performClick()
-        awaitText("Plan unverändert lassen")
+        val reviewPlanChanges = text(R.string.workout_summary_review_plan_changes)
+        val keepPlan = text(R.string.workout_plan_changes_confirm_keep)
+        ui.onNodeWithText(reviewPlanChanges).performScrollTo().performClick()
+        awaitText(keepPlan)
         capture("android-plan-changes")
-        ui.onAllNodesWithText("Plan unverändert lassen").filterToOne(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
+        ui.onAllNodesWithText(keepPlan).filterToOne(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
         runBlocking { assertTrue(plans.getPlanById(planId)!!.exercises.all { it.setTargets.isEmpty() }) }
-        ui.onNodeWithText("Planänderungen prüfen").performScrollTo().performClick()
-        ui.onNodeWithText("Satzwerte übernehmen").performScrollTo().performClick()
-        ui.onAllNodesWithText("Satzwerte übernehmen").filterToOne(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
-        awaitText("Satzwerte übernommen")
+        ui.onNodeWithText(reviewPlanChanges).performScrollTo().performClick()
+        ui.onNodeWithText(text(R.string.workout_plan_changes_option_apply)).performScrollTo().performClick()
+        ui.onAllNodesWithText(text(R.string.workout_plan_changes_confirm_apply)).filterToOne(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
+        awaitText(text(R.string.workout_summary_plan_changes_applied))
         runBlocking {
             val updated=plans.getPlanById(planId)!!.exercises
             assertEquals(listOf(10,9,10),updated[0].setTargets.map { it.reps })
             assertTrue(updated.drop(1).all { it.setTargets.isEmpty() })
         }
         ui.runOnIdle { nav.navigate(Screen.PlanEditor.createRoute(planId)) }
-        awaitText("Einzelne Sätze")
+        awaitText(text(PlansR.string.plan_targets_individual))
         capture("android-plan-editor")
     }
 }

@@ -1,6 +1,8 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.exerciseName
+import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.plans.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -196,7 +198,7 @@ class PlanEditorViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = strings.get(UxR.string.plan_load_failed, e.message.toString())
+                    error = strings.get(UxR.string.plan_load_failed, e.toUserDetail(strings))
                 )
             }
         }
@@ -464,7 +466,7 @@ class PlanEditorViewModel(
             _uiState.value = _uiState.value.copy(
                 progressionEditor = draft.copy(errors = fieldErrors),
                 error = if (fieldErrors.isEmpty()) {
-                    strings.get(UxR.string.plan_progression_incomplete, item.exercise.name)
+                    strings.get(UxR.string.plan_progression_incomplete, strings.exerciseName(item.exercise))
                 } else {
                     _uiState.value.error
                 }
@@ -573,7 +575,7 @@ class PlanEditorViewModel(
         }
         if (invalidExercise != null) {
             _uiState.value = _uiState.value.copy(
-                error = strings.get(UxR.string.plan_progression_incomplete, invalidExercise.exercise.name)
+                error = strings.get(UxR.string.plan_progression_incomplete, strings.exerciseName(invalidExercise.exercise))
             )
             return
         }
@@ -607,7 +609,7 @@ class PlanEditorViewModel(
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = strings.get(UxR.string.plan_save_failed, e.message.toString()),
+                    error = strings.get(UxR.string.plan_save_failed, e.toUserDetail(strings)),
                     isSaving = false
                 )
             }

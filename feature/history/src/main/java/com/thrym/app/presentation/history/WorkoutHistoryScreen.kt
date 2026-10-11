@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,6 +80,7 @@ import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
 import com.thrym.app.presentation.common.thrymSharedElement
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.semanticText
 import com.thrym.app.presentation.theme.staggeredEntrance
@@ -526,7 +528,7 @@ private fun WorkoutCard(
                 Spacer(modifier = Modifier.height(dims.spacingXs))
 
                 Text(
-                    text = item.session.startTime.format(DateFormatting.DATE_FULL),
+                    text = item.session.startTime.format(DateFormatting.dateFull(currentLocale())),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.accentText,
                     fontWeight = FontWeight.SemiBold
@@ -537,7 +539,7 @@ private fun WorkoutCard(
                 val durationMin = item.session.durationSeconds / 60
                 val statsList = mutableListOf<String>()
                 statsList.add(stringResource(UxR.string.history_duration_minutes, durationMin))
-                statsList.add(stringResource(UxR.string.history_exercise_count, item.exerciseCount))
+                statsList.add(pluralStringResource(UxR.plurals.history_glass_exercises, item.exerciseCount, item.exerciseCount))
                 if (item.totalVolume > 0) {
                     statsList.add(WeightFormatting.formatVolume(item.totalVolume, unitSystem))
                 }

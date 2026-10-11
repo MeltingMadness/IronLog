@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -94,7 +95,7 @@ class MetaPlanListViewModel(
                     _uiState.value = MetaPlanListUiState(
                         items = emptyList(),
                         isLoading = false,
-                        error = strings.get(UxR.string.meta_plans_load_failed, error.message.toString())
+                        error = strings.get(UxR.string.meta_plans_load_failed, error.toUserDetail(strings))
                     )
                 }
                 .collect { items ->
@@ -113,7 +114,7 @@ class MetaPlanListViewModel(
                 metaTrainingPlanRepository.deleteMetaPlan(metaPlanId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = strings.get(UxR.string.meta_plan_delete_failed, e.message.toString())
+                    error = strings.get(UxR.string.meta_plan_delete_failed, e.toUserDetail(strings))
                 )
             }
         }

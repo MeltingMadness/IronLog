@@ -12,7 +12,6 @@
     <string name="meta_plan_editor_discard_confirm">Discard</string>
     <string name="meta_plan_editor_discard_cancel">Keep editing</string>
     <string name="meta_plans_last_done_today">Last completed: today</string>
-    <string name="meta_plans_last_done_days">Last completed: %1$d days ago</string>
     <string name="meta_plans_last_done_yesterday">Last completed: yesterday</string>
     <string name="meta_plans_last_done_never">No workouts in this rotation yet</string>
     <string name="plan_editor_progression_choice_hint">Tap to apply the selection. Then save the plan at the top.</string>
@@ -21,7 +20,6 @@
     <string name="plan_targets_individual">Individual sets</string>
     <string name="plan_targets_edit">Edit set targets</string>
     <string name="plan_targets_manual_hint">Individual set targets are increased manually.</string>
-    <string name="plan_target_summary">%1$d · %2$s · %3$s · %4$d reps</string>
     <string name="plan_set_warmup">Warm-up</string>
     <string name="plan_set_backoff">Back-off</string>
     <string name="plan_set_work">Work set</string>
@@ -54,4 +52,12 @@
     <string name="plan_action_delete">Deleting plan</string>
     <string name="plan_action_start">Starting workout</string>
     <string name="plan_workout_already_active">Another workout is already active. Resume or finish it first.</string>
+    <plurals name="meta_plans_last_done_days">
+        <item quantity="one">Last completed: %1$d day ago</item>
+        <item quantity="other">Last completed: %1$d days ago</item>
+    </plurals>
+    <plurals name="plan_target_summary">
+        <item quantity="one">%1$d · %2$s · %3$s · %4$d rep</item>
+        <item quantity="other">%1$d · %2$s · %3$s · %4$d reps</item>
+    </plurals>
 </resources>

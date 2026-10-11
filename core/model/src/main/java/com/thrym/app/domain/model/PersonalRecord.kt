@@ -10,11 +10,12 @@ data class PersonalRecord(
     val achievedAt: LocalDateTime
 )
 
-enum class RecordType(val displayName: String) {
-    MAX_WEIGHT("Max Gewicht"),
-    MAX_REPS("Max Wiederholungen"),
-    MAX_VOLUME("Max Volumen"),
-    MAX_E1RM("Bester geschätzter 1RM");
+/** Persisted code; UI labels come from `labelRes()` in core/designsystem. */
+enum class RecordType {
+    MAX_WEIGHT,
+    MAX_REPS,
+    MAX_VOLUME,
+    MAX_E1RM;
 
     companion object {
         fun safeValueOf(name: String, fallback: RecordType = MAX_WEIGHT): RecordType =

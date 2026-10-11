@@ -36,7 +36,7 @@ data class VolumeThresholds(
 ) {
     init {
         require(mev >= 0.0 && mav >= mev && mrv >= mav) {
-            "Schwellenwerte müssen MEV <= MAV <= MRV erfüllen (gegeben: $mev / $mav / $mrv)"
+            "Thresholds must satisfy MEV <= MAV <= MRV (got $mev / $mav / $mrv)"
         }
     }
 }

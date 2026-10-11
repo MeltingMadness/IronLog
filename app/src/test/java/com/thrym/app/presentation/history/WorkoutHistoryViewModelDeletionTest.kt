@@ -87,7 +87,7 @@ class WorkoutHistoryViewModelDeletionTest {
         // error state must be set (toAppError: IllegalStateException -> Conflict)
         assertTrue(
             "delete failure must surface an error",
-            vm.uiState.value.error?.contains("Training löschen") == true
+            vm.uiState.value.error?.contains(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.history.R.string.history_action_delete_workout)) == true
         )
     }
 

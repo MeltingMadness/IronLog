@@ -1,5 +1,6 @@
 package com.thrym.app.domain.util
 
+import com.thrym.app.domain.error.IntensityRangeException
 import com.thrym.app.domain.model.IntensitySystem
 import com.thrym.app.domain.model.WorkoutSet
 
@@ -35,27 +36,33 @@ object WorkoutNumericValidation {
     fun storedRpe(rawValue: Double, intensitySystem: IntensitySystem): Double? = when (intensitySystem) {
         IntensitySystem.OFF -> null
         IntensitySystem.RPE -> rawValue.also {
-            require(it.isFinite() && it in MIN_RPE..MAX_RPE) {
-                "RPE muss zwischen $MIN_RPE und $MAX_RPE liegen"
+            if (!(it.isFinite() && it in MIN_RPE..MAX_RPE)) {
+                throw IntensityRangeException(
+                    IntensityRangeException.Reason.RPE_OUT_OF_RANGE,
+                    "RPE must be between $MIN_RPE and $MAX_RPE"
+                )
             }
         }
         IntensitySystem.RIR -> {
-            require(isValidRir(rawValue)) {
-                "RIR muss zwischen $MIN_RIR und $MAX_RIR liegen"
+            if (!isValidRir(rawValue)) {
+                throw IntensityRangeException(
+                    IntensityRangeException.Reason.RIR_OUT_OF_RANGE,
+                    "RIR must be between $MIN_RIR and $MAX_RIR"
+                )
             }
             (10.0 - rawValue).also {
                 // Keep the conversion guarded as well so an unusual future
                 // scale cannot emit an invalid canonical value.
-                require(isValidRpe(it)) { "RIR ergibt kein gültiges RPE" }
+                require(isValidRpe(it)) { "RIR does not convert to a valid RPE" }
             }
         }
     }
 
     /** Throws before a repository mutation can persist malformed set values. */
     fun requireValidWorkoutSet(set: WorkoutSet) {
-        require(set.setNumber > 0) { "Satznummer muss größer als 0 sein" }
-        require(isValidReps(set.reps)) { "Wiederholungen müssen größer als 0 sein" }
-        require(isValidWeightKg(set.weightKg)) { "Gewicht muss endlich und nicht negativ sein" }
-        require(isValidRpe(set.rpe)) { "RPE muss zwischen $MIN_RPE und $MAX_RPE liegen" }
+        require(set.setNumber > 0) { "Set number must be greater than 0" }
+        require(isValidReps(set.reps)) { "Reps must be greater than 0" }
+        require(isValidWeightKg(set.weightKg)) { "Weight must be finite and not negative" }
+        require(isValidRpe(set.rpe)) { "RPE must be between $MIN_RPE and $MAX_RPE" }
     }
 }

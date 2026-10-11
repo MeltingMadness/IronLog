@@ -45,13 +45,13 @@ import com.thrym.app.domain.model.AppearanceStyle
 import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.LocalAppearanceStyle
 import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.statistics.R as StatisticsR
-import java.util.Locale
 import kotlin.math.roundToInt
 
 private val StatsInk = Color(0xFF0B0D12)
@@ -76,7 +76,7 @@ internal fun GlassStatsHeader(subtitle: String?, onBack: () -> Unit) {
         }
         if (subtitle != null) {
             Text(
-                subtitle.uppercase(Locale.GERMAN),
+                subtitle.uppercase(currentLocale()),
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -111,7 +111,7 @@ internal fun GlassStatsHero(
         Row(verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    stringResource(metric.labelRes).uppercase(Locale.GERMAN),
+                    stringResource(metric.labelRes).uppercase(currentLocale()),
                     style = AthleticLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -280,7 +280,7 @@ internal fun GlassRecordTiles(records: Map<RecordType, Double>, unitSystem: Unit
                             .semantics(mergeDescendants = true) {},
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(label.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                        Text(label.uppercase(currentLocale()), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                         Text(
                             value ?: "–",
                             fontSize = 24.sp,

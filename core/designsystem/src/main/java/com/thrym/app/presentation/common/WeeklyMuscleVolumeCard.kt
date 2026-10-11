@@ -25,8 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,10 +52,7 @@ import com.thrym.app.presentation.theme.semanticText
 import com.thrym.core.designsystem.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-
-private val WEEK_DATE_FORMAT: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY)
+import java.time.format.FormatStyle
 
 /**
  * Wöchentliches Volumen je Muskelgruppe mit Fortschrittsbalken Richtung MRV,
@@ -251,6 +250,9 @@ private fun WeeklyVolumeWeekHeader(
     val isNextEnabled = onNextWeek != null &&
         currentWeekStart != null &&
         weekStart.isBefore(currentWeekStart)
+    // "Feb 10, 2026" (en) / "10.02.2026" (de)
+    val locale = currentLocale()
+    val weekDateFormat = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -264,8 +266,8 @@ private fun WeeklyVolumeWeekHeader(
             Text(
                 text = stringResource(
                     id = R.string.stats_weekly_volume_week_range,
-                    weekStart.format(WEEK_DATE_FORMAT),
-                    weekStart.plusDays(6).format(WEEK_DATE_FORMAT)
+                    weekStart.format(weekDateFormat),
+                    weekStart.plusDays(6).format(weekDateFormat)
                 ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold
@@ -330,7 +332,7 @@ private fun MuscleVolumeRow(volume: MuscleVolume) {
 
     Column(verticalArrangement = Arrangement.spacedBy(dims.spacingXs)) {
         Text(
-            text = volume.muscleGroup.displayName,
+            text = volume.muscleGroup.label(),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold
         )
@@ -450,11 +452,13 @@ private fun VolumeStatus.orientingStatusLabelRes(): Int = when (this) {
     VolumeStatus.HIGH -> R.string.stats_volume_status_above_mrv
 }
 
+@Composable
+@ReadOnlyComposable
 private fun formatSets(value: Double): String =
     if (value % 1.0 == 0.0) {
         value.toInt().toString()
     } else {
-        String.format(Locale.GERMANY, "%.1f", value)
+        String.format(currentLocale(), "%.1f", value)
     }
 
 private fun MuscleVolume.mevFraction(): Float =

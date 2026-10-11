@@ -48,4 +48,36 @@
         <item quantity="one">zuletzt vor %1$d Tag</item>
         <item quantity="other">zuletzt vor %1$d Tagen</item>
     </plurals>
+    <plurals name="workout_summary_set_line">
+        <item quantity="one">Satz %1$d · %2$s × %3$d Wdh</item>
+        <item quantity="other">Satz %1$d · %2$s × %3$d Wdh</item>
+    </plurals>
+    <plurals name="common_record_reps">
+        <item quantity="one">%1$d Wdh</item>
+        <item quantity="other">%1$d Wdh</item>
+    </plurals>
+    <plurals name="workout_log_set_button">
+        <item quantity="one">Satz %1$d loggen — %2$s %3$s × %4$d Wdh</item>
+        <item quantity="other">Satz %1$d loggen — %2$s %3$s × %4$d Wdh</item>
+    </plurals>
+    <plurals name="workout_log_set_button_bodyweight">
+        <item quantity="one">Satz %1$d loggen — %2$s × %3$d Wdh</item>
+        <item quantity="other">Satz %1$d loggen — %2$s × %3$d Wdh</item>
+    </plurals>
+    <plurals name="workout_header_progress_planned">
+        <item quantity="one">%1$d / %2$d Satz</item>
+        <item quantity="other">%1$d / %2$d Sätze</item>
+    </plurals>
+    <plurals name="progression_review_reason_too_few_sets">
+        <item quantity="one">Für die Auswertung war %1$d Arbeitssatz nötig, vorhanden waren %2$d.</item>
+        <item quantity="other">Für die Auswertung waren %1$d Arbeitssätze nötig, vorhanden waren %2$d.</item>
+    </plurals>
+    <plurals name="progression_review_reason_repeat_reps">
+        <item quantity="one">Mindestens %1$d Wiederholung war erwartet, erreicht wurden %2$d. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</item>
+        <item quantity="other">Mindestens %1$d Wiederholungen waren erwartet, erreicht wurden %2$d. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</item>
+    </plurals>
+    <plurals name="common_reps_unit">
+        <item quantity="one">Wdh</item>
+        <item quantity="other">Wdh</item>
+    </plurals>
 </resources>

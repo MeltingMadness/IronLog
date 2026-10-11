@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.thrym.app.data.local.entity.PlanExerciseEntity
 import com.thrym.app.data.local.entity.TrainingPlanEntity
+import com.thrym.app.domain.error.PlanApplyException
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -27,19 +28,31 @@ interface TrainingPlanDao {
 
     @Transaction
     suspend fun applyPerformedSetTargets(sessionId: Long) {
-        val session = sessionForApply(sessionId) ?: error("Training nicht gefunden")
-        check(session.endTime != null) { "Bitte Training zuerst beenden" }
+        val session = sessionForApply(sessionId)
+            ?: throw PlanApplyException(PlanApplyException.Reason.SESSION_NOT_FOUND, "Session $sessionId not found")
+        if (session.endTime == null) {
+            throw PlanApplyException(PlanApplyException.Reason.SESSION_NOT_FINISHED, "Session $sessionId is not finished")
+        }
         val sets = setsForApply(sessionId).filter { it.reps > 0 }
         val targets = targetsForApply(sessionId)
-        check(targets.isNotEmpty()) { "Kein Plan für dieses Training vorhanden" }
+        if (targets.isEmpty()) {
+            throw PlanApplyException(PlanApplyException.Reason.NO_PLAN, "Session $sessionId has no plan targets")
+        }
         val updates = targets.mapNotNull { target ->
             val recorded = sets.filter { it.planTargetSnapshotId == target.id }
             if (recorded.isEmpty()) return@mapNotNull null
-            val plan = getPlanExerciseAt(target.planId, target.exerciseId, target.orderIndex) ?: error("Plan wurde geändert. Bitte im Editor prüfen.")
-            check(plan.targetSets == target.target.sets && plan.targetReps == target.target.reps &&
+            val plan = getPlanExerciseAt(target.planId, target.exerciseId, target.orderIndex)
+                ?: throw PlanApplyException(
+                    PlanApplyException.Reason.PLAN_EXERCISE_MISSING,
+                    "Plan exercise for target ${target.id} no longer exists"
+                )
+            if (!(plan.targetSets == target.target.sets && plan.targetReps == target.target.reps &&
                 plan.targetWeightKg == target.target.weightKg && plan.setTargetsJson == target.setTargetsJson &&
-                plan.progression == target.progression && plan.supersetGroupId == target.supersetGroupId) {
-                "Plan wurde seit dem Training geändert. Bitte im Editor prüfen."
+                plan.progression == target.progression && plan.supersetGroupId == target.supersetGroupId)) {
+                throw PlanApplyException(
+                    PlanApplyException.Reason.PLAN_CHANGED,
+                    "Plan exercise for target ${target.id} changed since the workout"
+                )
             }
             val original = com.thrym.shared.plans.PlannedSets.decode(target.setTargetsJson).ifEmpty {
                 List(target.target.sets) { com.thrym.shared.plans.PlannedSet(reps = target.target.reps, weightKg = target.target.weightKg) }

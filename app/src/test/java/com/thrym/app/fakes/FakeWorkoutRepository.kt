@@ -250,7 +250,8 @@ class FakeWorkoutRepository : WorkoutRepository {
         planId: Long?,
         fromEpochMillis: Long?,
         toEpochMillis: Long?,
-        searchQuery: String?
+        searchQuery: String?,
+        matchingExerciseNames: List<String>
     ): Flow<PagingData<CompletedWorkoutSummary>> {
         getPagedCompletedWorkoutSummariesFilteredCallCount++
         lastPagedCompletedWorkoutSummariesFilter = Triple(planId, fromEpochMillis, toEpochMillis)

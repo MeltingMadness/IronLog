@@ -1,6 +1,8 @@
 package com.thrym.app.presentation.dashboard
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.toUserDetail
+import com.thrym.app.presentation.common.exerciseName
 import com.thrym.feature.dashboard.R as UxR
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
@@ -576,7 +578,7 @@ class DashboardViewModel(
             ) { plans, lastPlanSessions ->
                 val exerciseIds = plans.flatMap { plan -> plan.exercises.map { it.exerciseId } }.distinct()
                 val names = runCatching {
-                    exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to it.name }
+                    exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to strings.exerciseName(it) }
                 }.getOrDefault(emptyMap())
                 buildPlanOptions(
                     plans = plans,
@@ -698,7 +700,7 @@ class DashboardViewModel(
                 val recordExerciseMap = exerciseRepository.getExercisesByIds(records.map { it.exerciseId })
                     .associateBy { it.id }
                 val recordsWithNames = records.map { record ->
-                    Pair(record, recordExerciseMap[record.exerciseId]?.name ?: strings.get(UxR.string.dashboard_unknown_exercise))
+                    Pair(record, recordExerciseMap[record.exerciseId]?.let { strings.exerciseName(it) } ?: strings.get(UxR.string.dashboard_unknown_exercise))
                 }
 
                 val lastWorkout = workoutRepository.getLastCompletedSessionBefore(nowEpochMillis)
@@ -731,7 +733,7 @@ class DashboardViewModel(
                                 !completedAt.isAfter(nowDateTime)
                         }
                         .sumOf { it.weightKg * it.reps }
-                    DateFormatting.DATE_SHORT.format(weekStart) to volume
+                    DateFormatting.dayMonth(strings.locale).format(weekStart) to volume
                 }
 
                 val deload = runCatching { deloadRepository.assess() }
@@ -741,7 +743,7 @@ class DashboardViewModel(
                     .getOrNull()
                 val deloadExerciseName = deload?.strongestExerciseId
                     ?.let { id ->
-                        runCatching { exerciseRepository.getExerciseById(id)?.name }.getOrNull()
+                        runCatching { exerciseRepository.getExerciseById(id)?.let { strings.exerciseName(it) } }.getOrNull()
                     }
 
                 val weeklyMuscleVolume = weeklyRequestId?.let {
@@ -850,7 +852,7 @@ class DashboardViewModel(
         if (exercises.map { it.id }.toSet() != exerciseIds.toSet()) {
             // Do not silently turn an incomplete exercise mapping into ten
             // apparently valid zero rows.
-            throw IllegalStateException("Exercise-Zuordnung für Wochenvolumen unvollständig")
+            throw IllegalStateException("Incomplete exercise mapping for weekly volume")
         }
         val aggregated = MuscleVolumeCalculator
             .aggregateByMuscleGroup(weekSets, exercises, weekStart)
@@ -1036,7 +1038,7 @@ class DashboardViewModel(
                 }
             } catch (error: Exception) {
                 _uiState.update {
-                    it.copy(error = strings.get(UxR.string.dashboard_skip_failed, error.message.toString()))
+                    it.copy(error = strings.get(UxR.string.dashboard_skip_failed, error.toUserDetail(strings)))
                 }
             } finally {
                 _uiState.update { it.copy(skippingMetaPlanId = null) }
@@ -1080,7 +1082,7 @@ class DashboardViewModel(
                 onSessionCreated(sessionId, nextPlan.id, option.metaPlanId)
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(error = strings.get(UxR.string.dashboard_meta_start_failed, e.message.toString()))
+                    it.copy(error = strings.get(UxR.string.dashboard_meta_start_failed, e.toUserDetail(strings)))
                 }
             }
         }
@@ -1095,7 +1097,11 @@ class DashboardViewModel(
                     return@launch
                 }
 
-                val autoName = strings.get(UxR.string.dashboard_workout_auto_name, LocalDate.now().format(DateFormatting.DATE_SHORT))
+                // Persisted as the session name: "Workout 2/10" (en-US) / "Training 10.02." (de), as before in German.
+                val autoName = strings.get(
+                    UxR.string.dashboard_workout_auto_name,
+                    LocalDate.now().format(DateFormatting.dayMonth(strings.locale))
+                )
                 val sessionId = workoutRepository.startWorkout(
                     name = autoName,
                     planId = null,
@@ -1103,7 +1109,7 @@ class DashboardViewModel(
                 )
                 onSessionCreated(sessionId, null)
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = strings.get(UxR.string.dashboard_start_failed, e.message.toString())) }
+                _uiState.update { it.copy(error = strings.get(UxR.string.dashboard_start_failed, e.toUserDetail(strings))) }
             }
         }
     }
@@ -1131,7 +1137,7 @@ class DashboardViewModel(
                 onSessionCreated(sessionId, plan.id)
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(error = strings.get(UxR.string.dashboard_plan_start_failed, e.message.toString()))
+                    it.copy(error = strings.get(UxR.string.dashboard_plan_start_failed, e.toUserDetail(strings)))
                 }
             }
         }

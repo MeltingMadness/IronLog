@@ -67,7 +67,7 @@ class MetaTrainingPlanRepositoryImpl(
             )
         } else {
             val existing = metaTrainingPlanDao.getMetaPlanById(plan.id)
-                ?: throw IllegalStateException("Meta-Plan ${plan.id} existiert nicht")
+                ?: throw IllegalStateException("Meta plan ${plan.id} does not exist")
             MetaTrainingPlanEntity(
                 id = plan.id,
                 name = plan.name,

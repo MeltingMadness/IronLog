@@ -2,6 +2,8 @@ package com.thrym.app.presentation.navigation
 
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -51,6 +53,8 @@ import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
 import com.thrym.app.presentation.theme.ThrymTheme
+import com.thrym.core.designsystem.R
+import com.thrym.feature.workout.R as WorkoutR
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -108,6 +112,12 @@ class NavigationSmokeTest {
                 .appPreferencesDataStore.edit { it.clear() }
         }
     }
+
+    /** UI-Text aus den Ressourcen, wie die App ihn aufloest: der Test laeuft in jeder Geraetesprache. */
+    private fun text(@StringRes id: Int, vararg args: Any): String = composeRule.activity.getString(id, *args)
+
+    private fun quantityText(@PluralsRes id: Int, quantity: Int, vararg args: Any): String =
+        composeRule.activity.resources.getQuantityString(id, quantity, *args)
 
     /** Wie waitUntil, schreibt bei einem Timeout aber den Semantik-Baum in die Fehlermeldung. */
     private fun waitOrDump(timeoutMillis: Long, condition: () -> Boolean) {
@@ -200,7 +210,7 @@ class NavigationSmokeTest {
         }
         composeRule.waitForIdle()
         assertTrue(
-            composeRule.onAllNodesWithText("Trainingsverlauf").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.history_title)).fetchSemanticsNodes().isNotEmpty()
         )
         composeRule.runOnIdle {
             assertEquals(Screen.WorkoutHistory.route, navController.currentBackStackEntry?.destination?.route)
@@ -211,7 +221,7 @@ class NavigationSmokeTest {
         }
         composeRule.waitForIdle()
         assertTrue(
-            composeRule.onAllNodesWithText("Trainingsdetails").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.workout_detail_title)).fetchSemanticsNodes().isNotEmpty()
         )
         composeRule.runOnIdle {
             assertEquals(Screen.WorkoutDetail.route, navController.currentBackStackEntry?.destination?.route)
@@ -259,17 +269,18 @@ class NavigationSmokeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Einstellungen").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(text(R.string.settings_title)).assertIsDisplayed()
 
         // Die Isolation (DB + DataStore werden vor jedem Test geleert) garantiert:
         // es gibt keine aktive Session, also MUSS "Training starten" erscheinen.
         // Ein schreibender Test darf hier kein "Training fortsetzen" hinterlassen.
+        val start = text(R.string.dashboard_hero_start)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(start).fetchSemanticsNodes().isNotEmpty()
         }
 
         val hasContinue =
-            composeRule.onAllNodesWithText("Training fortsetzen").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.dashboard_hero_continue)).fetchSemanticsNodes().isNotEmpty()
         assertFalse("Nach dem Leeren der App-DB darf keine aktive Session existieren", hasContinue)
     }
 
@@ -289,9 +300,9 @@ class NavigationSmokeTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Theme-Modus").assertIsDisplayed()
-        composeRule.onNodeWithText("Dynamic Color").assertIsDisplayed()
-        composeRule.onNodeWithText("Reduzierte Animationen").assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_theme_mode_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_dynamic_color_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(text(R.string.settings_reduced_motion_title)).assertIsDisplayed()
     }
 
     @Test
@@ -321,24 +332,27 @@ class NavigationSmokeTest {
 
         // 1) Dashboard: Training starten (dank Isolation garantiert "starten",
         //    nicht "fortsetzen").
+        val start = text(R.string.dashboard_hero_start)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(start).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Training jetzt starten").performClick()
+        composeRule.onNodeWithText(start).performClick()
         composeRule.waitForIdle()
 
         // 2) Plan-Auswahl-Sheet: Freies Training waehlen -> Session startet.
+        val freeWorkout = text(R.string.plan_selection_free_workout)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Freies Training").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(freeWorkout).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Freies Training").performClick()
+        composeRule.onNodeWithText(freeWorkout).performClick()
         composeRule.waitForIdle()
 
         // 3) Workout-Screen: Uebung hinzufuegen -> Picker oeffnet.
+        val addExercise = text(R.string.workout_add_exercise)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Übung hinzufügen").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(addExercise).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Übung hinzufügen").performClick()
+        composeRule.onNodeWithText(addExercise).performClick()
         composeRule.waitForIdle()
 
         // 4) Picker: angelegte Uebung waehlen.
@@ -348,7 +362,7 @@ class NavigationSmokeTest {
         composeRule.onNodeWithText("Kniebeuge").performClick()
         composeRule.waitForIdle()
         // Der Picker ist eine Mehrfachauswahl: Auswahl explizit uebernehmen.
-        composeRule.onNodeWithText("1 Übungen hinzufügen").performClick()
+        composeRule.onNodeWithText(quantityText(WorkoutR.plurals.workout_picker_add_selected, 1, 1)).performClick()
         composeRule.waitForIdle()
 
         // 5) Satz loggen: exakt 2 Eingabefelder (Gewicht, Wdh) - RPE/RIR steckt
@@ -361,41 +375,44 @@ class NavigationSmokeTest {
         setInputs[0].performTextInput("100") // Gewicht in kg
         setInputs[1].performTextInput("10") // Wiederholungen
         // Der Log-Button ist erst aktiv, wenn beide Eingaben uebernommen sind.
+        val logFirstSet = text(R.string.workout_log_set_button_short, 1)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodes(hasText("Satz 1 loggen", substring = true) and isEnabled())
+            composeRule.onAllNodes(hasText(logFirstSet, substring = true) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
         // Die Tastatur aus der Eingabe verschiebt das Layout; erst nach dem Idle in den
         // sichtbaren Bereich scrollen und klicken, dann auf den gespeicherten Satz warten
         // (eine Session ohne Satz wuerde beim Beenden still verworfen).
         composeRule.waitForIdle()
-        composeRule.onNode(hasText("Satz 1 loggen", substring = true)).performScrollTo().performClick()
+        composeRule.onNode(hasText(logFirstSet, substring = true)).performScrollTo().performClick()
+        val oneSetLogged = quantityText(R.plurals.workout_header_progress_free, 1, 1)
         waitOrDump(30_000L) {
-            composeRule.onAllNodesWithText("1 Satz").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(oneSetLogged).fetchSemanticsNodes().isNotEmpty()
         }
 
         // 6) Beenden: Top-Bar-Aktion, dann im Dialog "Training beenden" bestaetigen
         //    und die Zusammenfassung ueber "Fertig" schliessen.
-        composeRule.onNodeWithText("Beenden").performClick()
+        composeRule.onNodeWithText(text(R.string.workout_finish_action)).performClick()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training beenden?").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.workout_finish_dialog_title)).fetchSemanticsNodes().isNotEmpty()
         }
         // Der Dialog bleibt gesperrt ("Speichert …"), bis der geloggte Satz ganz
         // gespeichert ist; erst dann erscheint der aktive Bestaetigen-Button.
+        val finishConfirm = text(R.string.workout_finish_confirm)
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodes(hasText("Training beenden") and isEnabled())
+            composeRule.onAllNodes(hasText(finishConfirm) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Training beenden").performClick()
+        composeRule.onNodeWithText(finishConfirm).performClick()
         waitOrDump(30_000L) {
-            composeRule.onAllNodesWithText("Training geschafft").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.workout_summary_headline_complete)).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Fertig").performClick()
+        composeRule.onNodeWithText(text(R.string.workout_summary_done)).performClick()
         composeRule.waitForIdle()
 
         // 7) Zurueck auf dem Dashboard (Finish poppt zum Dashboard zurueck).
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Training jetzt starten").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(start).fetchSemanticsNodes().isNotEmpty()
         }
 
         // 8) Verlauf pruefen: die Test-Komposition zeichnet wie alle Smoke-Tests
@@ -407,16 +424,17 @@ class NavigationSmokeTest {
         }
         composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 30_000L) {
-            composeRule.onAllNodesWithText("Trainingsverlauf").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(text(R.string.history_title)).fetchSemanticsNodes().isNotEmpty()
         }
-        val expectedDate = LocalDateTime.now().format(DateFormatting.DATE_FULL)
+        val locale = composeRule.activity.resources.configuration.locales[0]
+        val expectedDate = LocalDateTime.now().format(DateFormatting.dateFull(locale))
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText(expectedDate).fetchSemanticsNodes().isNotEmpty()
         }
         assertEquals(
             "Der Verlauf darf nach dem Workout nicht leer sein",
             0,
-            composeRule.onAllNodesWithText("Noch keine Trainings").fetchSemanticsNodes().size
+            composeRule.onAllNodesWithText(text(R.string.history_empty_title)).fetchSemanticsNodes().size
         )
     }
 

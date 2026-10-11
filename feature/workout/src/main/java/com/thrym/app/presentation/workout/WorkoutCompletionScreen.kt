@@ -14,6 +14,10 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.rememberUiStrings
+import com.thrym.app.presentation.common.userMessageOrNull
 import com.thrym.app.presentation.theme.accentText
 import com.thrym.app.presentation.theme.semanticText
 import com.thrym.core.designsystem.R
@@ -51,7 +55,7 @@ internal fun WorkoutFinishSheet(rows: List<ExerciseWithSets>, busy: Boolean, err
             Column(Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 rows.filter { it.openSlotCount() > 0 }.forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(row.exercise.name, Modifier.weight(1f)); Text(stringResource(R.string.workout_finish_open_count, row.openSlotCount()))
+                        Text(row.exercise.localizedName(), Modifier.weight(1f)); Text(stringResource(R.string.workout_finish_open_count, row.openSlotCount()))
                     }
                 }
             }
@@ -157,7 +161,7 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
                                 stringResource(
                                     R.string.workout_summary_record_line,
                                     record.exerciseName,
-                                    record.types.joinToString(", ") { it.displayName }
+                                    record.types.map { it.label() }.joinToString(", ")
                                 ),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -167,8 +171,8 @@ internal fun WorkoutCompletionScreen(session: WorkoutSession, rows: List<Exercis
             }
             rows.filter { it.sets.any { set -> set.reps > 0 } }.forEach { row ->
                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(row.exercise.name, style = MaterialTheme.typography.titleMedium)
-                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(stringResource(R.string.workout_summary_set_line, set.setNumber, if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
+                    Text(row.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)
+                    row.sets.filter { it.reps > 0 }.forEach { set -> Text(pluralStringResource(R.plurals.workout_summary_set_line, set.reps, set.setNumber, if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem), set.reps)) }
                 } }
             }
             followUps()
@@ -194,6 +198,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val planChangeFailedText = stringResource(R.string.workout_plan_changes_error)
+    val strings = rememberUiStrings()
     ModalBottomSheet(onDismissRequest = { if (!busy) onDismiss() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(stringResource(R.string.workout_plan_changes_title), style = MaterialTheme.typography.headlineSmall)
@@ -206,7 +211,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                         val today = match?.let { recorded[it] }
                         if (today != null && (today.reps != slots[index].reps || today.weightKg != slots[index].weightKg)) {
                             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
-                                Text(stringResource(R.string.workout_plan_changes_set_title, row.exercise.name, index + 1), style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(R.string.workout_plan_changes_set_title, row.exercise.localizedName(), index + 1), style = MaterialTheme.typography.titleSmall)
                                 Text(stringResource(R.string.workout_plan_changes_plan_line, formatTargetWeight(slots[index].weightKg, unitSystem), slots[index].reps))
                                 Text(stringResource(R.string.workout_plan_changes_today_line, formatTargetWeight(today.weightKg, unitSystem), today.reps), color = MaterialTheme.accentText)
                             } }
@@ -239,7 +244,7 @@ private fun WorkoutPlanChangesSheet(sessionId: Long, rows: List<ExerciseWithSets
                     else -> scope.launch {
                         busy = true
                         try { repository.applyPerformedSetTargets(sessionId); onApplied() }
-                        catch (e: Exception) { if (e is CancellationException) throw e; error = e.message ?: planChangeFailedText }
+                        catch (e: Exception) { if (e is CancellationException) throw e; error = e.userMessageOrNull(strings) ?: planChangeFailedText }
                         finally { busy = false }
                     }
                 }

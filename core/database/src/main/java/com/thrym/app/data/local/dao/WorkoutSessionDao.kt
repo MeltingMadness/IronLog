@@ -62,7 +62,11 @@ interface WorkoutSessionDao {
             OR EXISTS (
               SELECT 1 FROM workout_sets s JOIN exercises e ON e.id = s.exerciseId
               WHERE s.sessionId = workout_sessions.id
-                AND (e.name LIKE :searchPattern ESCAPE '\' OR e.notes LIKE :searchPattern ESCAPE '\')
+                AND (
+                  e.name LIKE :searchPattern ESCAPE '\'
+                  OR e.notes LIKE :searchPattern ESCAPE '\'
+                  OR e.name IN (:exerciseNames)
+                )
             )
           )
         ORDER BY startTime DESC
@@ -72,7 +76,9 @@ interface WorkoutSessionDao {
         planId: Long?,
         fromEpochMillis: Long?,
         toEpochMillis: Long?,
-        searchPattern: String?
+        searchPattern: String?,
+        /** Stored exercise names that also match (built-ins found by their localized name). */
+        exerciseNames: List<String> = emptyList()
     ): PagingSource<Int, SessionWithSets>
 
     @Query("SELECT * FROM workout_sessions ORDER BY id ASC")

@@ -1,11 +1,12 @@
 package com.thrym.app.domain.model
 
-enum class ExerciseCategory(val displayName: String) {
-    LANGHANTEL("Langhantel"),
-    KURZHANTEL("Kurzhantel"),
-    MASCHINE("Maschine"),
-    KABEL("Kabel"),
-    EIGENGEWICHT("Eigengewicht");
+/** Persisted code; UI labels come from `labelRes()` in core/designsystem. */
+enum class ExerciseCategory {
+    LANGHANTEL,
+    KURZHANTEL,
+    MASCHINE,
+    KABEL,
+    EIGENGEWICHT;
 
     companion object {
         fun safeValueOf(name: String, fallback: ExerciseCategory = LANGHANTEL): ExerciseCategory =

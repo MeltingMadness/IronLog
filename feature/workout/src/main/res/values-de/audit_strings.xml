@@ -28,7 +28,7 @@
     <string name="workout_glass_pause_of_total">von %1$s</string>
     <string name="workout_glass_pause_skip">Pause überspringen</string>
     <string name="workout_glass_pause_skip_short">Überspringen</string>
-    <string name="workout_glass_pause_remaining_cd">Noch %1$d Minuten %2$d Sekunden Pause</string>
+    <string name="workout_glass_pause_remaining_cd">Noch %1$s %2$s Pause</string>
     <string name="workout_glass_done_headline">Geschafft.</string>
     <string name="workout_glass_exercises_label">Übungen</string>
     <plurals name="workout_glass_exercise_unit">
@@ -42,7 +42,6 @@
     <string name="workout_glass_rail_upcoming">Als Nächstes</string>
     <string name="workout_picker_selected_count">%1$d ausgewählt</string>
     <string name="workout_picker_clear_selection">Auswahl leeren</string>
-    <string name="workout_picker_add_selected">%1$d Übungen hinzufügen</string>
     <string name="workout_reps_short">Wdh.</string>
     <string name="workout_set_save_failed">Satz konnte nicht gespeichert werden: %1$s</string>
     <string name="workout_set_delete_failed">Satz konnte nicht gelöscht werden: %1$s</string>
@@ -55,4 +54,20 @@
     <string name="workout_picker_load_failed">Übungen konnten nicht geladen werden: %1$s</string>
     <string name="workout_picker_unknown_error">Unbekannter Fehler</string>
     <string name="workout_picker_create_failed">Übung konnte nicht erstellt werden</string>
+    <string name="workout_set_badge_warmup">W%1$d</string>
+    <string name="workout_set_badge_drop_set">D%1$d</string>
+    <string name="workout_set_badge_failure">F%1$d</string>
+    <string name="workout_set_badge_backoff">B%1$d</string>
+    <plurals name="workout_glass_pause_minutes">
+        <item quantity="one">%1$d Minute</item>
+        <item quantity="other">%1$d Minuten</item>
+    </plurals>
+    <plurals name="workout_glass_pause_seconds">
+        <item quantity="one">%1$d Sekunde</item>
+        <item quantity="other">%1$d Sekunden</item>
+    </plurals>
+    <plurals name="workout_picker_add_selected">
+        <item quantity="one">%1$d Übung hinzufügen</item>
+        <item quantity="other">%1$d Übungen hinzufügen</item>
+    </plurals>
 </resources>

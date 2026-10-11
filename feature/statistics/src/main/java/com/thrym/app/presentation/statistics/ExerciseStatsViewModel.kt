@@ -21,6 +21,7 @@ import com.thrym.app.domain.util.MuscleVolumeCalculator
 import com.thrym.app.domain.util.WorkoutCalculations
 import com.thrym.app.domain.util.catchAndLog
 import com.thrym.app.presentation.common.toUserMessage
+import com.thrym.app.domain.util.DateFormatting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -216,7 +217,7 @@ class ExerciseStatsViewModel(
         val chartData = ordered.map { agg ->
             val date = agg.latestTime
             ChartDataPoint(
-                dateLabel = "${date.dayOfMonth}.${date.monthValue}",
+                dateLabel = date.format(DateFormatting.dayMonth(strings.locale)),
                 value = when (metric) {
                     ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
                     ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()

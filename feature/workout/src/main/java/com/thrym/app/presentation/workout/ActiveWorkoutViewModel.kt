@@ -1,6 +1,10 @@
 package com.thrym.app.presentation.workout
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.UserMessageException
+import com.thrym.app.presentation.common.exerciseName
+import com.thrym.app.presentation.common.labelRes
+import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.workout.R as UxR
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -43,6 +47,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.text.Collator
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -501,7 +506,7 @@ class ActiveWorkoutViewModel(
                 }
             } catch (e: Exception) {
                 setError(
-                    message = strings.get(UxR.string.workout_set_save_failed, e.message.toString()),
+                    message = strings.get(UxR.string.workout_set_save_failed, e.toUserDetail(strings)),
                     retry = WorkoutRetryDescriptor.LogSet(
                         key = key,
                         exerciseId = exerciseId,
@@ -573,16 +578,16 @@ class ActiveWorkoutViewModel(
     private fun computeIntensity(intensity: String, intensitySystem: IntensitySystem): Double? {
         if (intensity.isBlank()) return null
         val rawVal = parseDecimal(intensity)
-            ?: throw IllegalArgumentException(strings.get(UxR.string.workout_intensity_invalid, intensitySystem.displayName))
+            ?: throw UserMessageException(strings.get(UxR.string.workout_intensity_invalid, strings.get(intensitySystem.labelRes())))
         return WorkoutNumericValidation.storedRpe(rawVal, intensitySystem)
     }
 
     private fun requireValidSetInput(reps: Int, weightKg: Double) {
-        require(WorkoutNumericValidation.isValidReps(reps)) {
-            strings.get(UxR.string.workout_reps_invalid)
+        if (!WorkoutNumericValidation.isValidReps(reps)) {
+            throw UserMessageException(strings.get(UxR.string.workout_reps_invalid))
         }
-        require(WorkoutNumericValidation.isValidWeightKg(weightKg)) {
-            strings.get(UxR.string.workout_weight_invalid)
+        if (!WorkoutNumericValidation.isValidWeightKg(weightKg)) {
+            throw UserMessageException(strings.get(UxR.string.workout_weight_invalid))
         }
     }
 
@@ -605,7 +610,7 @@ class ActiveWorkoutViewModel(
                 previous == null || current > previous
             }
             if (improved.isNotEmpty()) {
-                _events.emit(WorkoutEvent.NewRecords(exercise.name, improved))
+                _events.emit(WorkoutEvent.NewRecords(strings.exerciseName(exercise), improved))
             }
         } catch (e: Exception) {
             AppLogger.w("ActiveWorkoutVM", "PR-Pruefung nach Mutation fehlgeschlagen: ${e.message}", e)
@@ -643,7 +648,7 @@ class ActiveWorkoutViewModel(
                     }
                 } catch (e: Exception) {
                     setError(
-                        message = strings.get(UxR.string.workout_set_delete_failed, e.message.toString()),
+                        message = strings.get(UxR.string.workout_set_delete_failed, e.toUserDetail(strings)),
                         retry = WorkoutRetryDescriptor.DeleteSet(setId = setId)
                     )
                 }
@@ -665,7 +670,7 @@ class ActiveWorkoutViewModel(
                     .map { it.exerciseId }
                     .distinct()
                 if (exerciseIds.isEmpty()) return@launch
-                val names = exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to it.name }
+                val names = exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to strings.exerciseName(it) }
                 _completionRecords.value = statisticsRepository.getRecordsForExercisesList(exerciseIds)
                     .filter { !it.achievedAt.isBefore(session.startTime) && !it.achievedAt.isAfter(end) }
                     .groupBy { it.exerciseId }
@@ -675,7 +680,7 @@ class ActiveWorkoutViewModel(
                             types = records.map { it.type }.distinct().sortedBy { it.ordinal }
                         )
                     }
-                    .sortedBy { it.exerciseName }
+                    .sortedWith(compareBy(Collator.getInstance(strings.locale)) { it.exerciseName })
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AppLogger.w("ActiveWorkoutVM", "Rekorde fuer die Zusammenfassung nicht geladen: ${e.message}", e)
@@ -693,7 +698,7 @@ class ActiveWorkoutViewModel(
                 try {
                     workoutRepository.addSet(set.copy(id = 0), intention)
                 } catch (e: Exception) {
-                    setError(message = strings.get(UxR.string.workout_set_restore_failed, e.message.toString()))
+                    setError(message = strings.get(UxR.string.workout_set_restore_failed, e.toUserDetail(strings)))
                 }
             }
         }
@@ -758,7 +763,7 @@ class ActiveWorkoutViewModel(
                 }
             } catch (e: Exception) {
                 setError(
-                    message = strings.get(UxR.string.workout_set_update_failed, e.message.toString()),
+                    message = strings.get(UxR.string.workout_set_update_failed, e.toUserDetail(strings)),
                     retry = WorkoutRetryDescriptor.UpdateSet(
                         setId = setId,
                         reps = reps,
@@ -830,7 +835,7 @@ class ActiveWorkoutViewModel(
                     }
                 } catch (e: Exception) {
                     setError(
-                        message = strings.get(UxR.string.workout_finish_failed, e.message.toString()),
+                        message = strings.get(UxR.string.workout_finish_failed, e.toUserDetail(strings)),
                         retry = WorkoutRetryDescriptor.FinishWorkout(
                             discardEmptySession = discardEmptySession
                         )

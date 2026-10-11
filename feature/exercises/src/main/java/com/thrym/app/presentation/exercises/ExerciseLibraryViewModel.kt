@@ -1,6 +1,9 @@
 package com.thrym.app.presentation.exercises
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.exerciseName
+import com.thrym.app.presentation.common.filterAndSortByDisplayName
+import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.exercises.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,13 +14,11 @@ import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.StatisticsRepository
 import com.thrym.app.domain.util.AppLogger
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -57,7 +58,6 @@ data class ExerciseLibraryUiState(
     val showExerciseDialog: Boolean get() = editor != null
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class ExerciseLibraryViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val statisticsRepository: StatisticsRepository,
@@ -69,23 +69,23 @@ class ExerciseLibraryViewModel(
     private val editor = MutableStateFlow<ExerciseEditorState?>(null)
     private val error = MutableStateFlow<String?>(null)
 
-    private val exercises = combine(searchQuery, selectedMuscleGroup) { query, group ->
-        Pair(query, group)
-    }.flatMapLatest { (query, group) ->
-        when {
-            query.isNotBlank() -> exerciseRepository.searchExercises(query)
-            group != null -> exerciseRepository.getExercisesByMuscleGroup(group)
-            else -> exerciseRepository.getAllExercises()
-        }
-    }.map { list ->
+    // Filtering and sorting run in memory on the localized display name: the database
+    // only knows the stored (German canonical) names of the built-in exercises.
+    private val exercises = combine(
+        exerciseRepository.getAllExercises(),
+        searchQuery,
+        selectedMuscleGroup
+    ) { list, query, group ->
         list.filterNot { it.isArchived }
+            .filter { query.isNotBlank() || group == null || it.primaryMuscleGroup == group }
+            .filterAndSortByDisplayName(query, displayName = { strings.exerciseName(it) }, locale = strings.locale)
     }.catch { e ->
         // Unlike catchAndLog, this must keep the combine() below alive with a value so
         // isLoading doesn't stay stuck at its initial `true` forever (see History pattern).
         // Logging is best-effort: it must never prevent the error/isLoading state below
         // from being applied (e.g. android.util.Log is unavailable in plain JVM unit tests).
         runCatching { AppLogger.e("ExerciseLibraryVM", "Flow-Fehler: ${e.message}", e) }
-        error.value = strings.get(UxR.string.exercises_load_failed, e.message.toString())
+        error.value = strings.get(UxR.string.exercises_load_failed, e.toUserDetail(strings))
         emit(emptyList())
     }
 
@@ -164,7 +164,7 @@ class ExerciseLibraryViewModel(
                 }
                 editor.value = null
             } catch (e: Exception) {
-                error.value = strings.get(UxR.string.exercises_save_failed, e.message.toString())
+                error.value = strings.get(UxR.string.exercises_save_failed, e.toUserDetail(strings))
             }
         }
     }
@@ -174,7 +174,7 @@ class ExerciseLibraryViewModel(
             try {
                 exerciseRepository.deleteCustomExercise(id)
             } catch (e: Exception) {
-                error.value = strings.get(UxR.string.exercises_delete_failed, e.message.toString())
+                error.value = strings.get(UxR.string.exercises_delete_failed, e.toUserDetail(strings))
             }
         }
     }

@@ -15,20 +15,25 @@ import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.shared.readinessdata.SetIntention
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
+import com.thrym.feature.workout.R as WorkoutR
+import java.util.Locale
 
 /**
  * Formats a weight stored in kg as a plain number in the user's preferred unit system,
- * e.g. "82,5". No thousands separator, because the value also prefills input fields.
+ * e.g. "82.5" (en) / "82,5" (de). No thousands separator, because the value also prefills
+ * input fields.
  */
-internal fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem): String {
+internal fun formatWeightValue(weightKg: Double, unitSystem: UnitSystem, locale: Locale = Locale.getDefault()): String {
     val displayValue = WeightFormatting.convertToDisplay(weightKg, unitSystem)
     return WeightFormatting.formatInputNumber(
         displayValue,
-        maxFractionDigits = WeightFormatting.weightDecimals(displayValue, unitSystem)
+        maxFractionDigits = WeightFormatting.weightDecimals(displayValue, unitSystem),
+        locale = locale
     )
 }
 
-internal fun formatRpeValue(value: Double): String = WeightFormatting.formatNumber(value)
+internal fun formatRpeValue(value: Double, locale: Locale = Locale.getDefault()): String =
+    WeightFormatting.formatNumber(value, locale = locale)
 
 /**
  * Weight hint for plan-based workout rows: the current plan target weight
@@ -39,22 +44,28 @@ internal fun formatRpeValue(value: Double): String = WeightFormatting.formatNumb
 internal fun targetWeightHint(
     planTarget: WorkoutPlanTarget?,
     unitSystem: UnitSystem,
-    previousWeightHint: String?
+    previousWeightHint: String?,
+    locale: Locale = Locale.getDefault()
 ): String? = planTarget
     ?.takeIf { it.target.weightKg > 0 }
-    ?.let { formatWeightValue(it.target.weightKg, unitSystem) }
+    ?.let { formatWeightValue(it.target.weightKg, unitSystem, locale) }
     ?: previousWeightHint
 
-/** Formats a plan target weight stored in kg for display in the user's preferred unit system, e.g. "100 kg" or "220,5 lb". */
-fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem): String =
-    WeightFormatting.formatWeight(weightKg, unitSystem)
+/**
+ * Formats a plan target weight stored in kg for display in the user's preferred unit system,
+ * e.g. "100 kg" or "220.5 lb" (en) / "220,5 lb" (de).
+ */
+fun formatTargetWeight(weightKg: Double, unitSystem: UnitSystem, locale: Locale = Locale.getDefault()): String =
+    WeightFormatting.formatWeight(weightKg, unitSystem, locale)
 
+/** Compact set badge: the number for normal sets, a type letter plus number otherwise (e.g. "W1"). */
+@Composable
 internal fun setTypeLabel(setNumber: Int, setType: SetType): String = when (setType) {
     SetType.NORMAL -> setNumber.toString()
-    SetType.WARMUP -> "W$setNumber"
-    SetType.DROP_SET -> "D$setNumber"
-    SetType.FAILURE -> "F$setNumber"
-    SetType.BACKOFF -> "B$setNumber"
+    SetType.WARMUP -> stringResource(WorkoutR.string.workout_set_badge_warmup, setNumber)
+    SetType.DROP_SET -> stringResource(WorkoutR.string.workout_set_badge_drop_set, setNumber)
+    SetType.FAILURE -> stringResource(WorkoutR.string.workout_set_badge_failure, setNumber)
+    SetType.BACKOFF -> stringResource(WorkoutR.string.workout_set_badge_backoff, setNumber)
 }
 
 internal fun SetType.labelRes(): Int = when (this) {
@@ -81,14 +92,14 @@ internal fun progressionSchemeLabel(config: ProgressionConfig): String = when (c
     is ProgressionConfig.Invalid -> stringResource(R.string.workout_progression_invalid)
 }
 
-internal fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem): String {
+internal fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem, locale: Locale = Locale.getDefault()): String {
     if (rpe == null || intensitySystem == IntensitySystem.OFF) return ""
     val displayValue = if (intensitySystem == IntensitySystem.RIR) {
         10.0 - rpe
     } else {
         rpe
     }
-    return WeightFormatting.formatNumber(displayValue)
+    return WeightFormatting.formatNumber(displayValue, locale = locale)
 }
 
 /** RPE labels use opaque ink; [rpeColor] is reserved for fills and borders. */

@@ -33,12 +33,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedExerciseName
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
 import com.thrym.feature.dashboard.R
@@ -185,9 +188,17 @@ private fun TrainingTrendHeader(trend: TrainingTrendAssessment) {
             Text(
                 text = stringResource(
                     R.string.dashboard_trend_evidence,
-                    trend.analyzedExerciseCount,
+                    pluralStringResource(
+                        R.plurals.dashboard_trend_evidence_exercises,
+                        trend.analyzedExerciseCount,
+                        trend.analyzedExerciseCount
+                    ),
                     trend.exercisesWithSufficientHistory,
-                    trend.dataQuality.comparableUnitCount
+                    pluralStringResource(
+                        R.plurals.dashboard_trend_evidence_sessions,
+                        trend.dataQuality.comparableUnitCount,
+                        trend.dataQuality.comparableUnitCount
+                    )
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -269,8 +280,9 @@ private fun TrainingTrendDetails(trend: TrainingTrendAssessment) {
             )
             if (quality.missingRpeSetCount > 0) {
                 Text(
-                    text = stringResource(
-                        R.string.dashboard_trend_quality_rpe,
+                    text = pluralStringResource(
+                        R.plurals.dashboard_trend_quality_rpe,
+                        quality.missingRpeSetCount,
                         quality.missingRpeSetCount
                     ),
                     style = MaterialTheme.typography.bodySmall,
@@ -279,8 +291,9 @@ private fun TrainingTrendDetails(trend: TrainingTrendAssessment) {
             }
             if (quality.unknownIntentionSetCount > 0) {
                 Text(
-                    text = stringResource(
-                        R.string.dashboard_trend_quality_intention,
+                    text = pluralStringResource(
+                        R.plurals.dashboard_trend_quality_intention,
+                        quality.unknownIntentionSetCount,
                         quality.unknownIntentionSetCount
                     ),
                     style = MaterialTheme.typography.bodySmall,
@@ -289,8 +302,9 @@ private fun TrainingTrendDetails(trend: TrainingTrendAssessment) {
             }
             if (quality.excludedDeloadUnitCount > 0) {
                 Text(
-                    text = stringResource(
-                        R.string.dashboard_trend_quality_deload,
+                    text = pluralStringResource(
+                        R.plurals.dashboard_trend_quality_deload,
+                        quality.excludedDeloadUnitCount,
                         quality.excludedDeloadUnitCount
                     ),
                     style = MaterialTheme.typography.bodySmall,
@@ -354,7 +368,7 @@ private fun ExerciseTrendRow(exercise: ExerciseTrend) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = exercise.exerciseName.ifBlank { "?" },
+            text = localizedExerciseName(exercise.exerciseName).ifBlank { "?" },
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
@@ -482,8 +496,8 @@ fun DailyCheckInCard(
                             )
                         ) {
                             Text(
-                                text = value?.let { stringResource(UxR.string.dashboard_checkin_scale_value, muscle.displayName, it) }
-                                    ?: muscle.displayName,
+                                text = value?.let { stringResource(UxR.string.dashboard_checkin_scale_value, muscle.label(), it) }
+                                    ?: muscle.label(),
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -577,7 +591,7 @@ private fun StoredCheckInSummary(stored: DashboardStoredCheckIn) {
                 .sortedBy { it.key.ordinal }
                 .forEach { (muscle, value) ->
                     Text(
-                        text = stringResource(UxR.string.dashboard_checkin_scale_value, muscle.displayName, value),
+                        text = stringResource(UxR.string.dashboard_checkin_scale_value, muscle.label(), value),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -679,7 +693,7 @@ fun MuscleContextCard(
                 } else {
                     stringResource(
                         R.string.dashboard_muscles_planned,
-                        planned.joinToString { it.muscleGroup.label() }
+                        planned.map { it.muscleGroup.label() }.joinToString()
                     )
                 },
                 style = MaterialTheme.typography.bodySmall,
@@ -754,8 +768,9 @@ private fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) 
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = stringResource(
-                R.string.dashboard_muscles_window,
+            text = pluralStringResource(
+                R.plurals.dashboard_muscles_window,
+                setCountQuantity(context.setsInWindow),
                 formatSets(context.setsInWindow)
             ),
             style = MaterialTheme.typography.labelSmall,
@@ -763,8 +778,9 @@ private fun MuscleContextRow(context: MuscleGroupContext, nowEpochMillis: Long) 
         )
         if (context.setsToday > 0.0) {
             Text(
-                text = stringResource(
-                    R.string.dashboard_muscles_today,
+                text = pluralStringResource(
+                    R.plurals.dashboard_muscles_today,
+                    setCountQuantity(context.setsToday),
                     formatSets(context.setsToday)
                 ),
                 style = MaterialTheme.typography.labelSmall,
@@ -794,16 +810,20 @@ private fun relativeDaysLabel(epochMillis: Long, nowEpochMillis: Long): String {
     return if (days <= 0) {
         stringResource(R.string.dashboard_muscles_trained_today)
     } else {
-        stringResource(R.string.dashboard_muscles_trained_days_ago, days)
+        pluralStringResource(R.plurals.dashboard_muscles_trained_days_ago, days, days)
     }
 }
 
 /** Muskelgruppe aus dem geteilten Code; unbekannte Codes bleiben als Code sichtbar. */
+@Composable
 private fun String.label(): String =
-    DashboardReadinessText.muscleGroupFor(this)?.displayName ?: this
+    DashboardReadinessText.muscleGroupFor(this)?.label() ?: this
 
 /** Ganze Sätze ohne Nachkommastelle, halbe Sätze mit einer. */
 private fun formatSets(value: Double): String = WeightFormatting.formatNumber(value)
+
+/** Plural quantity for a set count that may be fractional (0.5 for secondary muscles): only exactly 1 is singular. */
+private fun setCountQuantity(value: Double): Int = if (value == 1.0) 1 else 0
 
 private fun MuscleGroupFlag.labelRes(): Int = when (this) {
     MuscleGroupFlag.TRAINED_TODAY -> R.string.dashboard_reason_muscle_trained_today

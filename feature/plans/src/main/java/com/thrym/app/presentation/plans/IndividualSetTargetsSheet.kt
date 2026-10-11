@@ -15,6 +15,7 @@ import com.thrym.shared.plans.PlannedSet
 import com.thrym.shared.plans.PlannedSets
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.semanticText
 
 @Composable
@@ -38,14 +39,14 @@ internal fun IndividualSetTargetsSheet(item: PlanExerciseUi, onDismiss: () -> Un
                     weightKg = item.targetWeightInput.replace(',', '.').toDoubleOrNull()?.let { WeightFormatting.convertToKg(it, unit) } ?: item.planExercise.targetWeightKg)
             }
         }
-        mutableStateOf(targets.map { SetDraft(it.kind, WeightFormatting.convertToDisplay(it.weightKg, unit).toString(), it.reps.toString()) })
+        mutableStateOf(targets.map { SetDraft(it.kind, WeightFormatting.formatInputNumber(WeightFormatting.convertToDisplay(it.weightKg, unit)), it.reps.toString()) })
     }
     val invalidTargetsMessage = stringResource(UxR.string.plan_targets_invalid)
     var error by remember { mutableStateOf<String?>(null) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding().padding(20.dp)) {
             Text(stringResource(UxR.string.plan_targets_title), style = MaterialTheme.typography.headlineSmall)
-            Text(item.exercise.name, style = MaterialTheme.typography.titleMedium)
+            Text(item.exercise.localizedName(), style = MaterialTheme.typography.titleMedium)
             Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(UxR.string.plan_targets_set_type), Modifier.weight(1.3f)); Text(WeightFormatting.unitLabel(unit), Modifier.weight(1f)); Text(stringResource(UxR.string.plan_targets_reps_header), Modifier.weight(1f))
             }

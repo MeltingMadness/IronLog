@@ -1,16 +1,17 @@
 package com.thrym.app.domain.model
 
-enum class MuscleGroup(val displayName: String) {
-    BRUST("Brust"),
-    RUECKEN("Rücken"),
-    BEINE("Beine"),
-    SCHULTERN("Schultern"),
-    BIZEPS("Bizeps"),
-    TRIZEPS("Trizeps"),
-    GESAESS("Gesäß"),
-    CORE("Core"),
-    UNTERARME("Unterarme"),
-    WADEN("Waden");
+/** Persisted code; UI labels come from `labelRes()` in core/designsystem. */
+enum class MuscleGroup {
+    BRUST,
+    RUECKEN,
+    BEINE,
+    SCHULTERN,
+    BIZEPS,
+    TRIZEPS,
+    GESAESS,
+    CORE,
+    UNTERARME,
+    WADEN;
 
     companion object {
         fun safeValueOf(name: String, fallback: MuscleGroup = BRUST): MuscleGroup =

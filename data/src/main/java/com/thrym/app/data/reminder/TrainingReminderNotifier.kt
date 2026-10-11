@@ -15,22 +15,22 @@ import com.thrym.core.designsystem.R
 
 object TrainingReminderNotifier {
     const val CHANNEL_ID = "training_reminders"
-    private const val CHANNEL_NAME = "Trainingserinnerungen"
-    private const val CHANNEL_DESCRIPTION = "Erinnerungen fuer geplante Trainingstage"
 
+    /**
+     * Creates the channel or, if it exists, updates its name and description to the current
+     * app language (createNotificationChannel keeps the user's importance and sound settings).
+     * Called at app start, on configuration changes and before each reminder.
+     */
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val existing = notificationManager.getNotificationChannel(CHANNEL_ID)
-        if (existing != null) return
-
         val channel = NotificationChannel(
             CHANNEL_ID,
-            CHANNEL_NAME,
+            context.getString(R.string.reminder_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = CHANNEL_DESCRIPTION
+            description = context.getString(R.string.reminder_channel_description)
         }
         notificationManager.createNotificationChannel(channel)
     }

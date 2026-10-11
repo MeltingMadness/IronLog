@@ -79,7 +79,13 @@ class MetaPlanEditorViewModelTest {
         advanceUntilIdle()
 
         assertEquals(false, vm.uiState.value.isLoading)
-        assertTrue(vm.uiState.value.error?.contains("Unterpläne konnten nicht geladen werden") == true)
+        assertEquals(
+            com.thrym.app.fakes.TestUiStrings.get(
+                com.thrym.feature.plans.R.string.meta_plan_children_load_failed,
+                com.thrym.app.fakes.TestUiStrings.get(com.thrym.core.designsystem.R.string.common_error_unknown)
+            ),
+            vm.uiState.value.error
+        )
     }
 
     @Test

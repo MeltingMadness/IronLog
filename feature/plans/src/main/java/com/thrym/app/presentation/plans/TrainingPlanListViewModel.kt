@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.exerciseName
 import com.thrym.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -64,7 +65,7 @@ class TrainingPlanListViewModel(
                 workoutRepository.observeLastSessionPerPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
             ) { plans, exercises, lastSessions, metaPlans ->
-                val exerciseNameById = exercises.associateBy({ it.id }, { it.name })
+                val exerciseNameById = exercises.associateBy({ it.id }, { strings.exerciseName(it) })
                 val lastStartByPlanId = lastSessions.associateBy({ it.planId }, { it.lastStartTime })
                 val today = LocalDate.now()
                 val items = plans.map { plan ->

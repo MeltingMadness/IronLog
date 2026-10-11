@@ -1,6 +1,5 @@
 package com.thrym.app.presentation.workout
 
-import androidx.compose.ui.platform.LocalResources
 import com.thrym.feature.workout.R as UxR
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +39,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -55,15 +55,18 @@ import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.exerciseName
+import com.thrym.app.presentation.common.filterAndSortByDisplayName
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.rememberUiStrings
+import com.thrym.app.presentation.common.toUserDetail
+import com.thrym.app.presentation.common.userMessageOrNull
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.semantic
 import com.thrym.core.designsystem.R
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -76,7 +79,7 @@ private data class ExerciseCreateState(
     val notes: String = ""
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisePickerSheet(
     onDismiss: () -> Unit,
@@ -85,7 +88,6 @@ fun ExercisePickerSheet(
     onCreationError: ((String) -> Unit)? = null,
     exerciseRepository: ExerciseRepository = koinInject()
 ) {
-    val resources = LocalResources.current
     val dims = thrymDimens
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -95,35 +97,28 @@ fun ExercisePickerSheet(
     var showCreateDialog by remember { mutableStateOf(false) }
     var createState by remember { mutableStateOf(ExerciseCreateState()) }
 
-    val queryFlow = remember { MutableStateFlow("") }
-    val groupFlow = remember { MutableStateFlow<MuscleGroup?>(null) }
+    val strings = rememberUiStrings()
+    val locale = LocalConfiguration.current.locales[0]
 
-    LaunchedEffect(searchQuery) {
-        queryFlow.emit(searchQuery)
-    }
-    LaunchedEffect(selectedGroup) {
-        groupFlow.emit(selectedGroup)
-    }
-
-    val exercisesFlow = remember(resources, exerciseRepository, queryFlow, groupFlow, onCreationError) {
-        combine(queryFlow, groupFlow) { query, group -> query to group }
-            .flatMapLatest { (query, group) ->
-                when {
-                    query.isNotBlank() -> exerciseRepository.searchExercises(query)
-                    group != null -> exerciseRepository.getExercisesByMuscleGroup(group)
-                    else -> exerciseRepository.getAllExercises()
-                }
-            }.map { exercises ->
-                exercises.filterNot { it.isArchived }.filter { selectedGroup == null || it.primaryMuscleGroup == selectedGroup }
-            }.catch { throwable ->
+    val activeExercisesFlow = remember(strings, exerciseRepository, onCreationError) {
+        exerciseRepository.getAllExercises()
+            .map { exercises -> exercises.filterNot { it.isArchived } }
+            .catch { throwable ->
                 if (throwable is CancellationException) throw throwable
                 onCreationError?.invoke(
-                    resources.getString(UxR.string.workout_picker_load_failed, throwable.message ?: resources.getString(UxR.string.workout_picker_unknown_error))
+                    strings.get(UxR.string.workout_picker_load_failed, throwable.toUserDetail(strings))
                 )
                 emit(emptyList())
             }
     }
-    val exercises by exercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val activeExercises by activeExercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    // Search and sort on the localized name; the database only knows the stored
+    // (German canonical) names of the built-in exercises.
+    val exercises = remember(activeExercises, searchQuery, selectedGroup, strings, locale) {
+        activeExercises
+            .filter { selectedGroup == null || it.primaryMuscleGroup == selectedGroup }
+            .filterAndSortByDisplayName(searchQuery, displayName = { strings.exerciseName(it) }, locale = locale)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -188,7 +183,7 @@ fun ExercisePickerSheet(
                     FilterChip(
                         selected = selectedGroup == group,
                         onClick = { selectedGroup = group },
-                        label = { Text(group.displayName) },
+                        label = { Text(group.label()) },
                         colors = ThrymInteractiveColors.filterChip()
                     )
                 }
@@ -216,10 +211,10 @@ fun ExercisePickerSheet(
                         )
                     ) {
                         ListItem(
-                            headlineContent = { Text(exercise.name) },
+                            headlineContent = { Text(exercise.localizedName()) },
                             trailingContent = { androidx.compose.material3.Checkbox(checked = selectedExercises.any { it.id == exercise.id }, onCheckedChange = null) },
                             supportingContent = {
-                                Text(stringResource(UxR.string.workout_picker_exercise_details, exercise.primaryMuscleGroup.displayName, exercise.category.displayName))
+                                Text(stringResource(UxR.string.workout_picker_exercise_details, exercise.primaryMuscleGroup.label(), exercise.category.label()))
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                         )
@@ -230,7 +225,7 @@ fun ExercisePickerSheet(
                 onClick = { selectedExercises.forEach(onExerciseSelected); onDismiss() },
                 enabled = selectedExercises.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = dims.spacingMd)
-            ) { Text(stringResource(UxR.string.workout_picker_add_selected, selectedExercises.size)) }
+            ) { Text(pluralStringResource(UxR.plurals.workout_picker_add_selected, selectedExercises.size, selectedExercises.size)) }
         }
     }
 
@@ -265,8 +260,9 @@ fun ExercisePickerSheet(
                         showCreateDialog = false
                         selectedExercises = selectedExercises + exercise
                     }.onFailure { throwable ->
+                        if (throwable is CancellationException) throw throwable
                         onCreationError?.invoke(
-                            throwable.message ?: resources.getString(UxR.string.workout_picker_create_failed)
+                            throwable.userMessageOrNull(strings) ?: strings.get(UxR.string.workout_picker_create_failed)
                         )
                     }
                 }
@@ -303,7 +299,7 @@ private fun CreateExerciseDialog(
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
-                        value = state.primaryMuscleGroup.displayName,
+                        value = state.primaryMuscleGroup.label(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_muscle_group_label)) },
@@ -323,7 +319,7 @@ private fun CreateExerciseDialog(
                     ) {
                         MuscleGroup.entries.forEach { group ->
                             DropdownMenuItem(
-                                text = { Text(group.displayName) },
+                                text = { Text(group.label()) },
                                 onClick = {
                                     onStateChange(
                                         state.copy(
@@ -360,7 +356,7 @@ private fun CreateExerciseDialog(
                                         }
                                         onStateChange(state.copy(secondaryMuscleGroups = next))
                                     },
-                                    label = { Text(group.displayName) },
+                                    label = { Text(group.label()) },
                                     colors = ThrymInteractiveColors.filterChip()
                                 )
                             }
@@ -374,7 +370,7 @@ private fun CreateExerciseDialog(
 
                 Box {
                     com.thrym.app.presentation.common.ThrymTextField(
-                        value = state.category.displayName,
+                        value = state.category.label(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(id = R.string.exercises_category_label)) },
@@ -394,7 +390,7 @@ private fun CreateExerciseDialog(
                     ) {
                         ExerciseCategory.entries.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category.displayName) },
+                                text = { Text(category.label()) },
                                 onClick = {
                                     onStateChange(state.copy(category = category))
                                     categoryExpanded = false

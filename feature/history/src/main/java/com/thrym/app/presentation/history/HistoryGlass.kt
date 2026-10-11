@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -35,6 +36,8 @@ import com.thrym.app.domain.model.AppearanceStyle
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.GlassSearchField
+import com.thrym.app.presentation.common.currentLocale
+import com.thrym.app.presentation.common.formatDayMonthRange
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.LocalAppearanceStyle
@@ -43,14 +46,8 @@ import com.thrym.core.designsystem.R
 import com.thrym.feature.history.R as HistoryR
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
-import java.util.Locale
-
-private val GERMAN = Locale.GERMAN
-private val DayMonthFormat = DateTimeFormatter.ofPattern("d. MMM", GERMAN)
-private val DayFormat = DateTimeFormatter.ofPattern("d.", GERMAN)
 
 @Composable
 internal fun isLiquidGlass(): Boolean = LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS
@@ -98,12 +95,9 @@ internal fun GlassWeekHeader(
         currentWeek.minusWeeks(1) -> stringResource(HistoryR.string.history_glass_week_last)
         else -> stringResource(HistoryR.string.history_glass_week_number, weekStart.get(WeekFields.ISO.weekOfWeekBasedYear()))
     }
-    val weekEnd = weekStart.plusDays(6)
-    val range = if (weekStart.month == weekEnd.month) {
-        "${weekStart.format(DayFormat)}–${weekEnd.format(DayMonthFormat)}"
-    } else {
-        "${weekStart.format(DayMonthFormat)} – ${weekEnd.format(DayMonthFormat)}"
-    }
+    val locale = currentLocale()
+    // "Feb 10 – 16" (en) / "10.–16. Feb." (de)
+    val range = remember(weekStart, locale) { formatDayMonthRange(weekStart, weekStart.plusDays(6), locale) }
     val count = summary?.workoutCount ?: 0
     val minutes = summary?.totalMinutes ?: 0
 
@@ -118,7 +112,7 @@ internal fun GlassWeekHeader(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(weekName.uppercase(GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(weekName.uppercase(locale), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 pluralStringResource(HistoryR.plurals.history_glass_week_workouts, count, count),
                 fontSize = 22.sp,
@@ -156,7 +150,7 @@ private fun WeekMiniBars(minutesPerDay: List<Int>, today: LocalDate, weekStart: 
                     }
                 }
                 Text(
-                    day.getDisplayName(TextStyle.NARROW, GERMAN),
+                    day.getDisplayName(TextStyle.NARROW, currentLocale()),
                     fontSize = 12.sp,
                     fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
                     color = if (isToday) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -201,7 +195,7 @@ internal fun GlassHistoryRow(
         ) {
             Text(start.dayOfMonth.toString(), fontSize = 18.sp, lineHeight = 20.sp, fontWeight = FontWeight.ExtraBold)
             Text(
-                start.dayOfWeek.getDisplayName(TextStyle.SHORT, GERMAN).removeSuffix(".").uppercase(GERMAN),
+                start.dayOfWeek.getDisplayName(TextStyle.SHORT, currentLocale()).removeSuffix(".").uppercase(currentLocale()),
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 fontWeight = FontWeight.Bold,

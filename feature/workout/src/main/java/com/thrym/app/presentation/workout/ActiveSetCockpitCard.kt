@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextRange
@@ -57,6 +58,8 @@ import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.HapticFeedbackHelper
 import com.thrym.app.presentation.common.PlateVisualizer
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.shared.readinessdata.SetIntention
 import kotlin.math.roundToInt
 import androidx.compose.material3.ButtonDefaults
@@ -274,14 +277,15 @@ internal fun ActiveSetCockpitCard(
                 if (tracksIntensity) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = stringResource(WorkoutR.string.workout_glass_intensity_label, intensitySystem.displayName).uppercase(),
+                            text = stringResource(WorkoutR.string.workout_glass_intensity_label, intensitySystem.label()).uppercase(),
                             style = AthleticLabel,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        val locale = currentLocale()
                         val options = if (intensitySystem == IntensitySystem.RPE) {
                             listOf(7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0).map { rpe ->
                                 val value = if (rpe % 1.0 == 0.0) rpe.toInt().toString() else rpe.toString()
-                                value to value.replace('.', ',')
+                                value to formatRpeValue(rpe, locale)
                             }
                         } else {
                             (0..4).map { it.toString() to it.toString() }
@@ -367,15 +371,18 @@ internal fun ActiveSetCockpitCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = intensitySystem.displayName.uppercase(),
+                            text = intensitySystem.label().uppercase(),
                             style = AthleticLabel,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
                         if (intensityInput.text.isNotEmpty()) {
                             val rpeVal = intensityInput.text.toDoubleOrNull()
                             val accent = rpeTextColor(rpeVal) ?: MaterialTheme.accentText
+                            // Chips store "8.5"; show it with the UI decimal separator ("8,5" in German).
+                            val shownValue = parseDecimal(intensityInput.text)?.let { formatRpeValue(it, currentLocale()) }
+                                ?: intensityInput.text
                             Text(
-                                text = stringResource(UxR.string.workout_intensity_value, intensitySystem.displayName, intensityInput.text),
+                                text = stringResource(UxR.string.workout_intensity_value, intensitySystem.label(), shownValue),
                                 style = AthleticLabel,
                                 color = accent,
                                 fontWeight = FontWeight.Bold
@@ -415,7 +422,7 @@ internal fun ActiveSetCockpitCard(
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Text(
-                                            text = rpeStr.replace('.', ','),
+                                            text = formatRpeValue(rpe, currentLocale()),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isSelected) {
@@ -592,15 +599,16 @@ internal fun ActiveSetCockpitCard(
                 isEditMode -> stringResource(R.string.workout_update_set_button, setNumber)
                 enteredWeight != null && enteredReps != null -> {
                     if (enteredWeight == 0.0) {
-                        stringResource(
-                            R.string.workout_log_set_button_bodyweight,
+                        pluralStringResource(
+                            R.plurals.workout_log_set_button_bodyweight,
+                            enteredReps,
                             setNumber,
                             stringResource(R.string.weight_bodyweight),
                             enteredReps
                         )
                     } else {
                         val wStr = WeightFormatting.formatNumber(enteredWeight, maxFractionDigits = 2)
-                        stringResource(R.string.workout_log_set_button, setNumber, wStr, weightSuffix, enteredReps)
+                        pluralStringResource(R.plurals.workout_log_set_button, enteredReps, setNumber, wStr, weightSuffix, enteredReps)
                     }
                 }
                 else -> stringResource(R.string.workout_log_set_button_short, setNumber)

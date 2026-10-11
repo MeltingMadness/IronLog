@@ -58,8 +58,15 @@ import org.koin.dsl.module
 val appModule = module {
     single<com.thrym.app.presentation.common.UiStrings> {
         val context = androidContext().applicationContext
-        com.thrym.app.presentation.common.UiStrings { resourceId, args ->
-            context.getString(resourceId, *args)
+        object : com.thrym.app.presentation.common.UiStrings {
+            override fun get(resourceId: Int, vararg args: Any): String =
+                context.getString(resourceId, *args)
+
+            override fun getQuantity(resourceId: Int, quantity: Int, vararg args: Any): String =
+                context.resources.getQuantityString(resourceId, quantity, *args)
+
+            override val locale: java.util.Locale
+                get() = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
         }
     }
     single { BuildInfo(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
@@ -78,7 +85,12 @@ val appModule = module {
     }
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
-    single<ExerciseRepository> { ExerciseRepositoryImpl(get()) }
+    single<ExerciseRepository> {
+        val strings = get<com.thrym.app.presentation.common.UiStrings>()
+        ExerciseRepositoryImpl(get()) {
+            com.thrym.app.presentation.common.BuiltInExerciseNames.localizedNames(strings)
+        }
+    }
     single<WorkoutRepository> {
         val appPreferencesRepository = get<AppPreferencesRepository>()
         WorkoutRepositoryImpl(

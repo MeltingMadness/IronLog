@@ -4,20 +4,17 @@
     <string name="dashboard_audit_analysis_unavailable">Analysis unavailable</string>
     <string name="dashboard_audit_analysis_unavailable_detail">The training data heuristic couldn\'t be loaded.</string>
     <string name="dashboard_audit_analysis_insufficient">Not enough data yet</string>
-    <string name="dashboard_audit_analysis_insufficient_detail">At least %1$d sessions needed in the %2$d-week window.</string>
     <string name="dashboard_audit_analysis_no_notable_strain">No notable trend or strain signal</string>
     <string name="dashboard_audit_analysis_signals_present">Notable strain signals</string>
     <string name="dashboard_audit_analysis_score">Heuristic strain score: %1$d/100</string>
     <string name="dashboard_audit_analysis_no_score" translatable="false">—</string>
     <string name="dashboard_audit_analysis_window">Window: %1$s – %2$s</string>
-    <string name="dashboard_audit_analysis_evidence">Evidence: %1$d sessions · %2$d compound exercises</string>
     <string name="dashboard_audit_analysis_heuristic">Heuristic based on training data, not a medical assessment.</string>
 
     <string name="dashboard_audit_deload_title_recommended">Deload option based on training data</string>
     <string name="dashboard_audit_deload_title_active">Deload week active</string>
     <string name="dashboard_audit_deload_body">Notable strain signals were found in the analysis window. This recommendation is a training heuristic, not a medical assessment.</string>
     <string name="dashboard_audit_deload_score">Heuristic strain score: %1$d/100</string>
-    <string name="dashboard_audit_deload_window">Window: %1$s – %2$s · %3$d sessions</string>
     <string name="dashboard_welcome_back">WELCOME BACK</string>
     <string name="dashboard_weekly_volume_failed">The weekly summary couldn\'t be loaded.</string>
     <string name="dashboard_readiness_failed">The training trend couldn\'t be calculated.</string>

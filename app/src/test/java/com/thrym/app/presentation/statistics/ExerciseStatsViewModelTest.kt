@@ -186,7 +186,8 @@ class ExerciseStatsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val labels = vm.uiState.value.chartData.map { it.dateLabel }
-        assertEquals(listOf("31.12", "2.1"), labels)
+        // TestUiStrings formats like an en-US device: month/day without the year.
+        assertEquals(listOf("12/31", "1/2"), labels)
     }
 
     @Test

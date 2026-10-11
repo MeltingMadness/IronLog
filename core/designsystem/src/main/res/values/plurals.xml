@@ -48,4 +48,37 @@
         <item quantity="one">last done %1$d day ago</item>
         <item quantity="other">last done %1$d days ago</item>
     </plurals>
+    <plurals name="workout_summary_set_line">
+        <item quantity="one">Set %1$d · %2$s × %3$d rep</item>
+        <item quantity="other">Set %1$d · %2$s × %3$d reps</item>
+    </plurals>
+    <plurals name="common_record_reps">
+        <item quantity="one">%1$d rep</item>
+        <item quantity="other">%1$d reps</item>
+    </plurals>
+    <plurals name="workout_log_set_button">
+        <item quantity="one">Log set %1$d — %2$s %3$s × %4$d rep</item>
+        <item quantity="other">Log set %1$d — %2$s %3$s × %4$d reps</item>
+    </plurals>
+    <plurals name="workout_log_set_button_bodyweight">
+        <item quantity="one">Log set %1$d — %2$s × %3$d rep</item>
+        <item quantity="other">Log set %1$d — %2$s × %3$d reps</item>
+    </plurals>
+    <plurals name="workout_header_progress_planned">
+        <item quantity="one">%1$d / %2$d set</item>
+        <item quantity="other">%1$d / %2$d sets</item>
+    </plurals>
+    <plurals name="progression_review_reason_too_few_sets">
+        <item quantity="one">The evaluation needed %1$d work set, but only %2$d were available.</item>
+        <item quantity="other">The evaluation needed %1$d work sets, but only %2$d were available.</item>
+    </plurals>
+    <plurals name="progression_review_reason_repeat_reps">
+        <item quantity="one">At least %1$d rep was expected; you reached %2$d. The rep target stays the same; the weight you used is kept.</item>
+        <item quantity="other">At least %1$d reps were expected; you reached %2$d. The rep target stays the same; the weight you used is kept.</item>
+    </plurals>
+    <!-- Unit after a rep count, e.g. "8 reps"; common_reps_short is the field label. -->
+    <plurals name="common_reps_unit">
+        <item quantity="one">rep</item>
+        <item quantity="other">reps</item>
+    </plurals>
 </resources>

@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.progression
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.thrym.app.domain.model.ProgressionReasonCode
 import com.thrym.app.domain.model.UnitSystem
@@ -65,11 +66,12 @@ fun ProgressionReasonText(
         ProgressionReasonCode.TOO_FEW_WORK_SETS -> {
             val target = arguments.validWholeNumber("targetSets")
             val actual = arguments.validWholeNumber("actualWorkSets")
-            if (target != null && target > 0L && actual != null && actual >= 0L) {
-                stringResource(
-                    R.string.progression_review_reason_too_few_sets,
-                    target.toString(),
-                    actual.toString()
+            if (target != null && target in 1L..Int.MAX_VALUE && actual != null && actual in 0L..Int.MAX_VALUE) {
+                pluralStringResource(
+                    R.plurals.progression_review_reason_too_few_sets,
+                    target.toInt(),
+                    target.toInt(),
+                    actual.toInt()
                 )
             } else {
                 unavailableReason()
@@ -170,11 +172,12 @@ private fun repeatTargetText(arguments: Map<String, Double>): String {
 
     val targetReps = arguments.validWholeNumber("targetReps")
     val actualReps = arguments.validWholeNumber("actualReps")
-    if (targetReps != null && targetReps > 0L && actualReps != null && actualReps >= 0L) {
-        return stringResource(
-            R.string.progression_review_reason_repeat_reps,
-            targetReps.toString(),
-            actualReps.toString()
+    if (targetReps != null && targetReps in 1L..Int.MAX_VALUE && actualReps != null && actualReps in 0L..Int.MAX_VALUE) {
+        return pluralStringResource(
+            R.plurals.progression_review_reason_repeat_reps,
+            targetReps.toInt(),
+            targetReps.toInt(),
+            actualReps.toInt()
         )
     }
 

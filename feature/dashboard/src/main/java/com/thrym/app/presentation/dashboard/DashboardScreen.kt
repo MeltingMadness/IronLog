@@ -70,7 +70,6 @@ import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalDateTime
 import com.thrym.core.designsystem.R
-import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.model.DeloadMode
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
@@ -81,6 +80,8 @@ import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
 import com.thrym.app.presentation.theme.staggeredEntrance
 import com.thrym.app.presentation.common.WeeklyMuscleVolumeCard
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.rememberDateTimeFormatter
 import com.thrym.feature.dashboard.R as DashboardR
 import org.koin.androidx.compose.koinViewModel
 
@@ -358,7 +359,7 @@ fun DashboardScreen(
                                 }
                                 RecordCard(
                                     exerciseName = exerciseName,
-                                    recordType = record.type.displayName,
+                                    recordType = record.type.label(),
                                     recordValue = formatRecordValue(record.type.name, record.value),
                                     modifier = Modifier.staggeredEntrance(index)
                                 )
@@ -377,7 +378,7 @@ fun DashboardScreen(
                     }
                     item {
                         LastWorkoutCard(
-                            dateTime = workout.startTime.format(DateFormatting.DATE_TIME),
+                            dateTime = workout.startTime.format(rememberDateTimeFormatter()),
                             durationMin = (workout.durationSeconds / 60).toInt(),
                             exerciseCount = state.lastWorkoutExerciseCount
                         )
@@ -874,7 +875,7 @@ private fun SectionTitle(text: String) {
 private fun formatRecordValue(type: String, value: Double): String {
     return when (type) {
         "MAX_WEIGHT" -> stringResource(id = R.string.common_record_weight, value)
-        "MAX_REPS" -> stringResource(id = R.string.common_record_reps, value.toInt())
+        "MAX_REPS" -> pluralStringResource(id = R.plurals.common_record_reps, count = value.toInt(), value.toInt())
         "MAX_VOLUME" -> stringResource(id = R.string.common_record_volume, value.toInt())
         "MAX_E1RM" -> stringResource(id = R.string.common_record_e1rm, value)
         else -> "$value"

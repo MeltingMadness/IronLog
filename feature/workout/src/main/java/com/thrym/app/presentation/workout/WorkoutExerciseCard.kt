@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontStyle
@@ -54,6 +55,9 @@ import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.HapticFeedbackHelper
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.shared.readinessdata.SetIntention
 import androidx.compose.material3.Surface
 import androidx.compose.animation.expandVertically
@@ -135,7 +139,7 @@ internal fun ExerciseCard(
         alpha = 1f
     ) {
         Column(modifier = Modifier.padding(dims.spacingMd)) {
-            val exerciseName = exerciseWithSets.exercise.name
+            val exerciseName = exerciseWithSets.exercise.localizedName()
             val openSlots = exerciseWithSets.openSlotCount()
             val isDone = planTarget != null && targetSetCount > 0 && openSlots == 0
             Row(
@@ -468,7 +472,7 @@ internal fun PreviousSessionMiniHistory(
     modifier: Modifier = Modifier
 ) {
     val dims = thrymDimens
-    val dateLabel = previousSession.sessionStart.format(DateFormatting.DATE_SHORT)
+    val dateLabel = previousSession.sessionStart.format(DateFormatting.dayMonth(currentLocale()))
 
     Column(
         modifier = modifier
@@ -555,7 +559,7 @@ internal fun PreviousSessionSetRow(
 
             LoggedSetBox(
                 value = intensityText,
-                suffix = intensitySystem.displayName,
+                suffix = intensitySystem.label(),
                 isWarmup = set.isWarmup,
                 modifier = Modifier.weight(1f).alpha(0.7f),
                 overrideContainerColor = accentColor?.copy(alpha = 0.15f),
@@ -764,7 +768,10 @@ internal fun PlannedSetPreviewRow(
                     if (isNotEmpty()) append(" × ")
                     append(targetReps)
                     append(" ")
-                    append(stringResource(R.string.common_reps_short))
+                    append(
+                        targetReps.toIntOrNull()?.let { pluralStringResource(R.plurals.common_reps_unit, it) }
+                            ?: stringResource(R.string.common_reps_short)
+                    )
                 }
             }
 

@@ -47,6 +47,8 @@ import com.thrym.app.domain.model.AppearanceStyle
 import com.thrym.app.domain.model.PlanExercise
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.currentLocale
+import com.thrym.app.presentation.common.skeletonDateFormatter
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
@@ -55,12 +57,7 @@ import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.dashboard.R as DashboardR
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
-
-private val GERMAN = Locale.GERMAN
-private val HeaderDateFormat = DateTimeFormatter.ofPattern("EEEE · d. MMMM", GERMAN)
 
 @Composable
 internal fun isLiquidGlass(): Boolean = LocalAppearanceStyle.current == AppearanceStyle.LIQUID_GLASS
@@ -102,8 +99,12 @@ internal fun GlassGreetingHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // "MONDAY · FEBRUARY 10" (en) / "MONTAG · 10. FEBRUAR" (de)
+            val locale = currentLocale()
             Text(
-                text = remember(today) { today.format(HeaderDateFormat) }.uppercase(GERMAN),
+                text = remember(today, locale) {
+                    today.format(skeletonDateFormatter(locale, skeleton = "MMMMd", prefix = "EEEE · "))
+                }.uppercase(locale),
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -170,7 +171,7 @@ internal fun GlassCommandCenterCard(
                 else -> stringResource(DashboardR.string.dashboard_glass_up_next)
             }
             Text(
-                text = tag.uppercase(GERMAN),
+                text = tag.uppercase(currentLocale()),
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
                 maxLines = 1,
@@ -354,7 +355,7 @@ internal fun GlassWeekStrip(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(DashboardR.string.dashboard_ui_this_week).uppercase(GERMAN),
+                text = stringResource(DashboardR.string.dashboard_ui_this_week).uppercase(currentLocale()),
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
@@ -368,16 +369,17 @@ internal fun GlassWeekStrip(
                 fontWeight = FontWeight.Bold
             )
         }
+        val locale = currentLocale()
         Row(modifier = Modifier.fillMaxWidth()) {
             days.forEach { day ->
                 val weekday = day.date.dayOfWeek
-                val short = weekday.getDisplayName(TextStyle.SHORT, GERMAN).removeSuffix(".")
+                val short = weekday.getDisplayName(TextStyle.SHORT, locale).removeSuffix(".")
                 val state = when {
                     day.trained -> trainedLabel
                     day.isToday -> todayLabel
                     else -> openLabel
                 }
-                val description = "${weekday.getDisplayName(TextStyle.FULL, GERMAN)}, $state"
+                val description = "${weekday.getDisplayName(TextStyle.FULL, locale)}, $state"
                 Column(
                     modifier = Modifier
                         .weight(1f)

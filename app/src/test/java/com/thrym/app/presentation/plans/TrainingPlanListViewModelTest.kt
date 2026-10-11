@@ -123,7 +123,7 @@ class TrainingPlanListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(callbackCalled)
-        assertTrue(vm.uiState.value.error?.contains("anderes Training aktiv") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.plans.R.string.plan_workout_already_active), vm.uiState.value.error)
         assertEquals(7L, workoutRepo.getActiveSession()?.id)
     }
 

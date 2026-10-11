@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.common.rememberHapticFeedback
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
@@ -170,7 +171,7 @@ internal fun GlassRestDock(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(pauseLabel.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(pauseLabel.uppercase(currentLocale()), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 text = info.exerciseName,
                 fontSize = 15.sp,
@@ -233,7 +234,7 @@ internal fun GlassPauseScreen(
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = progressText.uppercase(Locale.GERMAN),
+                    text = progressText.uppercase(currentLocale()),
                     style = AthleticLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
@@ -299,7 +300,7 @@ internal fun GlassPauseScreen(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        texts.pause.uppercase(Locale.GERMAN),
+                        texts.pause.uppercase(currentLocale()),
                         style = AthleticLabel,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.semantics { heading() }
@@ -340,7 +341,7 @@ internal fun GlassPauseScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(texts.next.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(texts.next.uppercase(currentLocale()), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = texts.nextSet(info.exerciseName, info.nextSetNumber),
                         fontSize = 18.sp,

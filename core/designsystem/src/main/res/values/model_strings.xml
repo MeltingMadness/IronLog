@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Labels for persisted enum codes (MuscleGroup, ExerciseCategory, RecordType, IntensitySystem).
+     The codes themselves (BRUST, LANGHANTEL, MAX_WEIGHT, ...) are stored and never translated;
+     see ModelLabels.kt for the mapping. -->
+<resources>
+    <string name="muscle_group_brust">Chest</string>
+    <string name="muscle_group_ruecken">Back</string>
+    <string name="muscle_group_beine">Legs</string>
+    <string name="muscle_group_schultern">Shoulders</string>
+    <string name="muscle_group_bizeps">Biceps</string>
+    <string name="muscle_group_trizeps">Triceps</string>
+    <string name="muscle_group_gesaess">Glutes</string>
+    <string name="muscle_group_core">Core</string>
+    <string name="muscle_group_unterarme">Forearms</string>
+    <string name="muscle_group_waden">Calves</string>
+
+    <string name="exercise_category_langhantel">Barbell</string>
+    <string name="exercise_category_kurzhantel">Dumbbell</string>
+    <string name="exercise_category_maschine">Machine</string>
+    <string name="exercise_category_kabel">Cable</string>
+    <string name="exercise_category_eigengewicht">Bodyweight</string>
+
+    <string name="record_type_max_weight">Max weight</string>
+    <string name="record_type_max_reps">Max reps</string>
+    <string name="record_type_max_volume">Max volume</string>
+    <string name="record_type_max_e1rm">Best e1RM</string>
+
+    <string name="intensity_system_rpe" translatable="false">RPE</string>
+    <string name="intensity_system_rir" translatable="false">RIR</string>
+</resources>

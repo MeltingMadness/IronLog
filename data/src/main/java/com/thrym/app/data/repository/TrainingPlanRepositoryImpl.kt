@@ -40,7 +40,7 @@ class TrainingPlanRepositoryImpl(
 
     override suspend fun savePlan(plan: TrainingPlan): Long {
         require(plan.exercises.all { com.thrym.shared.plans.PlannedSets.valid(it.setTargets) &&
-            (it.setTargets.isEmpty() || (it.progressionConfig is com.thrym.app.domain.model.ProgressionConfig.Manual && it.targetSets == it.setTargets.count { slot -> slot.kind != "WARMUP" })) }) { "Ungültige individuelle Satzvorgaben" }
+            (it.setTargets.isEmpty() || (it.progressionConfig is com.thrym.app.domain.model.ProgressionConfig.Manual && it.targetSets == it.setTargets.count { slot -> slot.kind != "WARMUP" })) }) { "Invalid per-set targets" }
         val nowEpochMillis = EpochConverter.toLong(LocalDateTime.now())
 
         val entity = if (plan.id == 0L) {
@@ -51,7 +51,7 @@ class TrainingPlanRepositoryImpl(
             )
         } else {
             val existing = trainingPlanDao.getPlanById(plan.id)
-                ?: throw IllegalStateException("Plan ${plan.id} existiert nicht")
+                ?: throw IllegalStateException("Plan ${plan.id} does not exist")
             TrainingPlanEntity(
                 id = plan.id,
                 name = plan.name,

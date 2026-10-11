@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.history
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.BuiltInExerciseNames
 import com.thrym.feature.history.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -108,7 +109,10 @@ class WorkoutHistoryViewModel(
                 planId = selected.planId,
                 fromEpochMillis = selected.fromEpochMillis(),
                 toEpochMillis = null,
-                searchQuery = selected.query.ifBlank { null }
+                searchQuery = selected.query.ifBlank { null },
+                // Built-ins are stored under their German canonical name; also find them
+                // by the localized name shown in the UI.
+                matchingExerciseNames = BuiltInExerciseNames.canonicalNamesMatching(selected.query, strings)
             )
         }
         .map { pagingData ->

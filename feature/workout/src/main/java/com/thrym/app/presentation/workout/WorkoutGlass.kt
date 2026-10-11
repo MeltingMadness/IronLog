@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thrym.app.domain.model.AppearanceStyle
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.LocalAppearanceStyle
@@ -103,7 +104,7 @@ internal fun GlassWorkoutHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = label.uppercase(Locale.GERMAN),
+                text = label.uppercase(currentLocale()),
                 style = AthleticLabel,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -146,9 +147,9 @@ private fun ElapsedTimeText(startTime: LocalDateTime) {
     val minutes = (elapsed % 3600) / 60
     val seconds = elapsed % 60
     val text = if (hours > 0) {
-        String.format(Locale.GERMAN, "%d:%02d:%02d", hours, minutes, seconds)
+        String.format(Locale.ROOT, "%d:%02d:%02d", hours, minutes, seconds)
     } else {
-        String.format(Locale.GERMAN, "%02d:%02d", minutes, seconds)
+        String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
     }
     Text(
         text = text,
@@ -267,7 +268,7 @@ internal fun GlassStepper(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = label.uppercase(Locale.GERMAN),
+            text = label.uppercase(currentLocale()),
             style = AthleticLabel,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1

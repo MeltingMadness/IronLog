@@ -18,8 +18,18 @@
     <string name="review_legacy_weight_comparison">Diese ältere Auswertung verglich das damalige Planziel %1$s mit der trainierten Last %2$s. Das ist kein Beleg für unterschiedliche Satzgewichte.</string>
     <string name="review_success_confirmation">%1$d von %2$d vergleichbaren Erfolgen erreicht. Das Ziel bleibt bis zur Bestätigung unverändert.</string>
     <string name="review_mixed_loads">Die Arbeitssätze wurden mit unterschiedlichen Gewichten ausgeführt und bestätigen das Ziel noch nicht gemeinsam. Ziel beibehalten; diese Einheit zählt nicht als vergleichbarer Fehlversuch.</string>
-    <string name="review_evidence_roles">Gewertet: %1$d Arbeitssätze, davon %2$d bis zum Versagen. Ausgelassen: %3$d Aufwärm-, %4$d Drop-, %5$d Backoff- und %6$d zusätzliche Arbeitssätze.</string>
-    <string name="review_success_count">Bestätigung: %1$d von %2$d vergleichbaren Erfolgen.</string>
     <string name="review_failure_count">Vergleichbare Fehlversuche: %1$d von %2$d bis zum Backoff.</string>
     <string name="review_mixed_confirmed">Alle gewerteten Sätze bestätigen mindestens %1$s. Dieses Gewicht ist die Grundlage des Vorschlags.</string>
+    <plurals name="review_evidence_counted">
+        <item quantity="one">Gewertet: %1$d Arbeitssatz, davon %2$d bis zum Versagen.</item>
+        <item quantity="other">Gewertet: %1$d Arbeitssätze, davon %2$d bis zum Versagen.</item>
+    </plurals>
+    <plurals name="review_evidence_excluded">
+        <item quantity="one">Ausgelassen: %1$d Aufwärm-, %2$d Drop-, %3$d Backoff- und %4$d zusätzlicher Arbeitssatz.</item>
+        <item quantity="other">Ausgelassen: %1$d Aufwärm-, %2$d Drop-, %3$d Backoff- und %4$d zusätzliche Arbeitssätze.</item>
+    </plurals>
+    <plurals name="review_success_count">
+        <item quantity="one">Bestätigung: %1$d von %2$d vergleichbaren Erfolg.</item>
+        <item quantity="other">Bestätigung: %1$d von %2$d vergleichbaren Erfolgen.</item>
+    </plurals>
 </resources>

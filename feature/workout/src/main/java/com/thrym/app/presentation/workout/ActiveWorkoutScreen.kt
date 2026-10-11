@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -72,6 +73,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.spring
 import com.thrym.app.presentation.common.RestTimer
 import com.thrym.app.presentation.common.WorkoutTimer
+import com.thrym.app.presentation.common.labelRes
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberHapticFeedback
 import com.thrym.app.presentation.theme.thrymDimens
 import org.koin.androidx.compose.koinViewModel
@@ -114,7 +117,7 @@ fun ActiveWorkoutScreen(
                 when (event) {
                     is WorkoutEvent.NewRecords -> {
                         haptic.confirm()
-                        val types = event.types.joinToString(", ") { it.displayName }
+                        val types = event.types.joinToString(", ") { context.getString(it.labelRes()) }
                         recordSnackbarHostState.showSnackbar(
                             message = if (event.types.size == 1) {
                                 context.getString(R.string.workout_new_record_message, event.exerciseName, types)
@@ -258,8 +261,9 @@ fun ActiveWorkoutScreen(
                             startTime = session.startTime,
                             progressText = listOf(
                                 if (plannedSetCount > 0) {
-                                    stringResource(
-                                        R.string.workout_header_progress_planned,
+                                    pluralStringResource(
+                                        R.plurals.workout_header_progress_planned,
+                                        plannedSetCount,
                                         plannedSetCount - openPlannedSetCount,
                                         plannedSetCount
                                     )
@@ -279,7 +283,7 @@ fun ActiveWorkoutScreen(
                                     }
                                     RailItem(
                                         key = group.key,
-                                        name = group.exercises.joinToString(" + ") { it.exercise.name },
+                                        name = group.exercises.map { it.exercise.localizedName() }.joinToString(" + "),
                                         status = when {
                                             index == focusGroupIndex -> RailStatus.CURRENT
                                             done -> RailStatus.DONE
@@ -320,7 +324,7 @@ fun ActiveWorkoutScreen(
                                 durationSeconds = timer.durationSeconds.toLong(),
                                 onDismiss = { viewModel.dismissRestTimer(exerciseKey) },
                                 onComplete = { viewModel.dismissRestTimer(exerciseKey) },
-                                titleText = exerciseWithSets?.exercise?.name,
+                                titleText = exerciseWithSets?.exercise?.localizedName(),
                                 baseColor = supersetTintColor(group?.supersetGroupId, indexInSuperset),
                                 textColor = supersetTintTextColor(group?.supersetGroupId, indexInSuperset)
                             )
@@ -349,9 +353,9 @@ fun ActiveWorkoutScreen(
                                 SupersetHeader(
                                     groupId = supersetGroupId,
                                     exerciseCount = group.exercises.size,
-                                    exerciseNames = group.exercises.joinToString(separator = " • ") {
-                                        it.exercise.name
-                                    }
+                                    exerciseNames = group.exercises
+                                        .map { it.exercise.localizedName() }
+                                        .joinToString(separator = " • ")
                                 )
                             }
                             group.exercises.forEachIndexed { indexInSuperset, exerciseWithSets ->
@@ -427,7 +431,7 @@ fun ActiveWorkoutScreen(
                 val restRow = state.exercisesWithSets.find { it.key == restKey }
                 val pauseInfo = GlassPauseInfo(
                     timer = restTimer,
-                    exerciseName = restRow?.exercise?.name.orEmpty(),
+                    exerciseName = restRow?.exercise?.localizedName().orEmpty(),
                     nextSetNumber = (restRow?.sets?.count { it.reps > 0 } ?: 0) + 1
                 )
                 var pauseShownFor by rememberSaveable(restKey.stableListKey()) { mutableStateOf<Long?>(null) }
@@ -453,11 +457,13 @@ fun ActiveWorkoutScreen(
                     val openPlannedSetCount = state.exercisesWithSets.sumOf { it.openSlotCount() }
                     val loggedSetCount = state.exercisesWithSets.sumOf { it.sets.count { set -> set.reps > 0 } }
                     val context = LocalContext.current
+                    val resources = LocalResources.current
                     GlassPauseScreen(
                         info = pauseInfo,
                         progressText = if (plannedSetCount > 0) {
-                            stringResource(
-                                R.string.workout_header_progress_planned,
+                            pluralStringResource(
+                                R.plurals.workout_header_progress_planned,
+                                plannedSetCount,
                                 plannedSetCount - openPlannedSetCount,
                                 plannedSetCount
                             )
@@ -476,7 +482,13 @@ fun ActiveWorkoutScreen(
                             ofTotal = { total -> context.getString(WorkoutR.string.workout_glass_pause_of_total, total) },
                             nextSet = { name, number -> context.getString(WorkoutR.string.workout_glass_pause_next_set, name, number) },
                             remainingDescription = { seconds ->
-                                context.getString(WorkoutR.string.workout_glass_pause_remaining_cd, seconds / 60, seconds % 60)
+                                val minutes = (seconds / 60).toInt()
+                                val rest = (seconds % 60).toInt()
+                                context.getString(
+                                    WorkoutR.string.workout_glass_pause_remaining_cd,
+                                    resources.getQuantityString(WorkoutR.plurals.workout_glass_pause_minutes, minutes, minutes),
+                                    resources.getQuantityString(WorkoutR.plurals.workout_glass_pause_seconds, rest, rest)
+                                )
                             }
                         ),
                         onMinus = { viewModel.adjustRestTimer(restKey, -15) },

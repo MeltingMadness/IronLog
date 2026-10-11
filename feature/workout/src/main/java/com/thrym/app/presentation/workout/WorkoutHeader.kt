@@ -60,8 +60,9 @@ internal fun WorkoutHeader(
             )
             Text(
                 text = if (plannedSetCount > 0) {
-                    stringResource(
-                        R.string.workout_header_progress_planned,
+                    pluralStringResource(
+                        R.plurals.workout_header_progress_planned,
+                        plannedSetCount,
                         completedPlannedSetCount,
                         plannedSetCount
                     )

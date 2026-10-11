@@ -42,17 +42,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.model.WorkoutSession
+import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
+import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.GlassLevel
 import com.thrym.app.presentation.theme.liquidGlass
 import com.thrym.core.designsystem.R
 import com.thrym.feature.workout.R as WorkoutR
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-
-private val CompletionDateFormat = DateTimeFormatter.ofPattern("EEEE, dd.MM.", Locale.GERMAN)
-
 /**
  * Workout summary in Liquid Glass: "Geschafft.", three lenses (duration, volume, exercises),
  * records on tinted glass, the logged sets, and "Fertig" as the bright main action. The
@@ -98,9 +97,9 @@ internal fun GlassWorkoutCompletion(
             ) {
                 Text(
                     text = listOfNotNull(
-                        session.startTime.format(CompletionDateFormat),
+                        session.startTime.format(DateFormatting.weekdayDayMonth(currentLocale())),
                         session.name.takeIf { it.isNotBlank() }
-                    ).joinToString(" · ").uppercase(Locale.GERMAN),
+                    ).joinToString(" · ").uppercase(currentLocale()),
                     style = AthleticLabel,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -171,7 +170,7 @@ internal fun GlassWorkoutCompletion(
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            pluralStringResource(WorkoutR.plurals.workout_glass_new_records, records.size).uppercase(Locale.GERMAN),
+                            pluralStringResource(WorkoutR.plurals.workout_glass_new_records, records.size).uppercase(currentLocale()),
                             style = AthleticLabel
                         )
                         records.forEach { record ->
@@ -179,7 +178,7 @@ internal fun GlassWorkoutCompletion(
                                 stringResource(
                                     R.string.workout_summary_record_line,
                                     record.exerciseName,
-                                    record.types.joinToString(", ") { it.displayName }
+                                    record.types.map { it.label() }.joinToString(", ")
                                 ),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.ExtraBold
@@ -197,11 +196,12 @@ internal fun GlassWorkoutCompletion(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(row.exercise.name, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(row.exercise.localizedName(), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                     row.sets.filter { it.reps > 0 }.forEach { set ->
                         Text(
-                            stringResource(
-                                R.string.workout_summary_set_line,
+                            pluralStringResource(
+                                R.plurals.workout_summary_set_line,
+                                set.reps,
                                 set.setNumber,
                                 if (set.weightKg == 0.0) stringResource(R.string.weight_bodyweight) else formatTargetWeight(set.weightKg, unitSystem),
                                 set.reps
@@ -263,6 +263,6 @@ private fun CompletionLens(value: String, unit: String, label: String, modifier:
             )
             Text(unit, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
-        Text(label.uppercase(Locale.GERMAN), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label.uppercase(currentLocale()), style = AthleticLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

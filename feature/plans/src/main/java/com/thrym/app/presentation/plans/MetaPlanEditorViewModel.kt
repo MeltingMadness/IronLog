@@ -1,6 +1,7 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.toUserDetail
 import com.thrym.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -101,7 +102,7 @@ class MetaPlanEditorViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = strings.get(UxR.string.meta_plan_load_failed_detail, e.message.toString())
+                        error = strings.get(UxR.string.meta_plan_load_failed_detail, e.toUserDetail(strings))
                     )
                 }
             }
@@ -115,7 +116,7 @@ class MetaPlanEditorViewModel(
                     _uiState.update { current ->
                         current.copy(
                             isLoading = false,
-                            error = strings.get(UxR.string.meta_plan_children_load_failed, error.message.toString())
+                            error = strings.get(UxR.string.meta_plan_children_load_failed, error.toUserDetail(strings))
                         )
                     }
                 }
@@ -269,7 +270,7 @@ class MetaPlanEditorViewModel(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        error = strings.get(UxR.string.meta_plan_save_failed, e.message.toString()),
+                        error = strings.get(UxR.string.meta_plan_save_failed, e.toUserDetail(strings)),
                         isSaving = false
                     )
                 }

@@ -16,7 +16,7 @@
     <string name="dashboard_trend_status_no_strain">Keine wiederholte Verschlechterung erkannt</string>
     <string name="dashboard_trend_status_single">Eine Übung ist wiederholt zurückgegangen</string>
     <string name="dashboard_trend_status_multiple">Mehrere Übungen sind wiederholt zurückgegangen</string>
-    <string name="dashboard_trend_evidence">%1$d Übungen analysiert · %2$d mit ausreichender Historie · %3$d vergleichbare Einheiten</string>
+    <string name="dashboard_trend_evidence">%1$s · %2$d mit ausreichender Historie · %3$s</string>
     <string name="dashboard_trend_confidence">Aussagekraft der Daten: %1$s</string>
     <string name="dashboard_trend_confidence_none">keine</string>
     <string name="dashboard_trend_confidence_low">gering</string>
@@ -33,9 +33,6 @@
     <string name="dashboard_trend_no_exercise_decline">Keine Übung mit wiederholtem Rückgang.</string>
     <string name="dashboard_trend_exercise_change">%1$s ggü. eigener Basis</string>
     <string name="dashboard_trend_quality_title">Datenqualität</string>
-    <string name="dashboard_trend_quality_rpe">%1$d Sätze ohne RPE (neutral gewertet)</string>
-    <string name="dashboard_trend_quality_intention">%1$d Sätze ohne Angabe zur Absicht (neutral gewertet)</string>
-    <string name="dashboard_trend_quality_deload">%1$d Deload-Einheiten ausgeschlossen</string>
     <string name="dashboard_trend_footer">Heuristik aus deinen Trainingsdaten · keine medizinische Einschätzung</string>
 
     <string name="dashboard_trend_ex_status_improving">verbessert</string>
@@ -101,10 +98,39 @@
     <string name="dashboard_muscles_no_plan">Für heute ist kein Trainingsplan hinterlegt.</string>
     <string name="dashboard_muscles_last_trained">Letzte Belastung: %1$s</string>
     <string name="dashboard_muscles_trained_today">heute</string>
-    <string name="dashboard_muscles_trained_days_ago">vor %1$d Tagen</string>
     <string name="dashboard_muscles_never">keine Belastung erfasst</string>
-    <string name="dashboard_muscles_window">%1$s Sätze in 7 Tagen</string>
-    <string name="dashboard_muscles_today">%1$s Sätze heute</string>
     <string name="dashboard_muscles_soreness">Muskelkater %1$d/5</string>
     <string name="dashboard_muscles_no_recovery_note">Keine Erholung in Prozent. MEV/MAV-Schwellen sind Planungsziele, keine Messwerte.</string>
+    <plurals name="dashboard_trend_evidence_exercises">
+        <item quantity="one">%1$d Übung analysiert</item>
+        <item quantity="other">%1$d Übungen analysiert</item>
+    </plurals>
+    <plurals name="dashboard_trend_evidence_sessions">
+        <item quantity="one">%1$d vergleichbare Einheit</item>
+        <item quantity="other">%1$d vergleichbare Einheiten</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_rpe">
+        <item quantity="one">%1$d Satz ohne RPE (neutral gewertet)</item>
+        <item quantity="other">%1$d Sätze ohne RPE (neutral gewertet)</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_intention">
+        <item quantity="one">%1$d Satz ohne Angabe zur Absicht (neutral gewertet)</item>
+        <item quantity="other">%1$d Sätze ohne Angabe zur Absicht (neutral gewertet)</item>
+    </plurals>
+    <plurals name="dashboard_trend_quality_deload">
+        <item quantity="one">%1$d Deload-Einheit ausgeschlossen</item>
+        <item quantity="other">%1$d Deload-Einheiten ausgeschlossen</item>
+    </plurals>
+    <plurals name="dashboard_muscles_trained_days_ago">
+        <item quantity="one">vor %1$d Tag</item>
+        <item quantity="other">vor %1$d Tagen</item>
+    </plurals>
+    <plurals name="dashboard_muscles_window">
+        <item quantity="one">%1$s Satz in 7 Tagen</item>
+        <item quantity="other">%1$s Sätze in 7 Tagen</item>
+    </plurals>
+    <plurals name="dashboard_muscles_today">
+        <item quantity="one">%1$s Satz heute</item>
+        <item quantity="other">%1$s Sätze heute</item>
+    </plurals>
 </resources>

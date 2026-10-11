@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -68,6 +69,7 @@ import com.thrym.app.presentation.common.EmptyStateScreen
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.semanticText
@@ -315,7 +317,7 @@ private fun PlanExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.plan_editor_exercise_indexed, index + 1, item.exercise.name),
+                    text = stringResource(id = R.string.plan_editor_exercise_indexed, index + 1, item.exercise.localizedName()),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -447,7 +449,7 @@ private fun PlanExerciseCard(
 
             } else {
                 item.planExercise.setTargets.forEachIndexed { i, target ->
-                    Text(stringResource(UxR.string.plan_target_summary, i + 1, plannedSetLabel(target.kind), WeightFormatting.convertToDisplay(target.weightKg, item.targetWeightInputUnit).toString(), target.reps), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
+                    Text(pluralStringResource(UxR.plurals.plan_target_summary, target.reps, i + 1, plannedSetLabel(target.kind), WeightFormatting.formatWeight(target.weightKg, item.targetWeightInputUnit), target.reps), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 6.dp))
                 }
                 TextButton(onClick = { showSetTargets = true }, colors = ThrymInteractiveColors.textButton()) { Text(stringResource(UxR.string.plan_targets_edit)) }
                 Text(stringResource(UxR.string.plan_targets_manual_hint), style = MaterialTheme.typography.bodySmall)

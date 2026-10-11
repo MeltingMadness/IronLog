@@ -3,6 +3,7 @@ package com.thrym.app.domain.util
 import com.thrym.app.domain.model.UnitSystem
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 class WorkoutCalculationsTest {
 
@@ -75,50 +76,85 @@ class WorkoutCalculationsTest {
         )
     }
 
-    // --- Delta-Formatierung ---
+    // --- Delta-Formatierung (Locale explizit, unabhaengig von der JVM-Default-Locale) ---
 
     @Test
     fun `formatWeightDelta formatiert mit Vorzeichen in kg`() {
-        assertEquals("+8,5 kg", WeightFormatting.formatWeightDelta(8.5, UnitSystem.METRIC))
-        assertEquals("-8,5 kg", WeightFormatting.formatWeightDelta(-8.5, UnitSystem.METRIC))
-        assertEquals("0 kg", WeightFormatting.formatWeightDelta(0.0, UnitSystem.METRIC))
-        assertEquals("+10 kg", WeightFormatting.formatWeightDelta(10.0, UnitSystem.METRIC))
+        assertEquals("+8,5 kg", WeightFormatting.formatWeightDelta(8.5, UnitSystem.METRIC, DE))
+        assertEquals("-8,5 kg", WeightFormatting.formatWeightDelta(-8.5, UnitSystem.METRIC, DE))
+        assertEquals("0 kg", WeightFormatting.formatWeightDelta(0.0, UnitSystem.METRIC, DE))
+        assertEquals("+10 kg", WeightFormatting.formatWeightDelta(10.0, UnitSystem.METRIC, DE))
+        assertEquals("+8.5 kg", WeightFormatting.formatWeightDelta(8.5, UnitSystem.METRIC, EN))
+        assertEquals("-8.5 kg", WeightFormatting.formatWeightDelta(-8.5, UnitSystem.METRIC, EN))
     }
 
     @Test
     fun `formatWeightDelta rechnet in Pfund um`() {
-        assertEquals("+2,2 lb", WeightFormatting.formatWeightDelta(1.0, UnitSystem.IMPERIAL))
-        assertEquals("-2,2 lb", WeightFormatting.formatWeightDelta(-1.0, UnitSystem.IMPERIAL))
+        assertEquals("+2,2 lb", WeightFormatting.formatWeightDelta(1.0, UnitSystem.IMPERIAL, DE))
+        assertEquals("-2,2 lb", WeightFormatting.formatWeightDelta(-1.0, UnitSystem.IMPERIAL, DE))
+        assertEquals("+2.2 lb", WeightFormatting.formatWeightDelta(1.0, UnitSystem.IMPERIAL, EN))
     }
 
-    // --- Deutsches Zahlenformat ---
+    // --- Zahlenformat je Locale ---
 
     @Test
     fun `formatWeight nutzt Dezimalkomma und laesst Nullen weg`() {
-        assertEquals("82,5 kg", WeightFormatting.formatWeight(82.5, UnitSystem.METRIC))
-        assertEquals("80 kg", WeightFormatting.formatWeight(80.0, UnitSystem.METRIC))
-        assertEquals("1,25 kg", WeightFormatting.formatWeight(1.25, UnitSystem.METRIC))
-        assertEquals("176,4 lb", WeightFormatting.formatWeight(80.0, UnitSystem.IMPERIAL))
+        assertEquals("82,5 kg", WeightFormatting.formatWeight(82.5, UnitSystem.METRIC, DE))
+        assertEquals("80 kg", WeightFormatting.formatWeight(80.0, UnitSystem.METRIC, DE))
+        assertEquals("1,25 kg", WeightFormatting.formatWeight(1.25, UnitSystem.METRIC, DE))
+        assertEquals("176,4 lb", WeightFormatting.formatWeight(80.0, UnitSystem.IMPERIAL, DE))
         // Berechnete Werte (z. B. geschaetztes 1RM) mit einer Nachkommastelle.
-        assertEquals("88,7 kg", WeightFormatting.formatWeight(88.666, UnitSystem.METRIC))
-        assertEquals("+15,8 kg", WeightFormatting.formatWeightDelta(15.833, UnitSystem.METRIC))
-        assertEquals("11,75 kg", WeightFormatting.formatWeight(11.75, UnitSystem.METRIC))
+        assertEquals("88,7 kg", WeightFormatting.formatWeight(88.666, UnitSystem.METRIC, DE))
+        assertEquals("+15,8 kg", WeightFormatting.formatWeightDelta(15.833, UnitSystem.METRIC, DE))
+        assertEquals("11,75 kg", WeightFormatting.formatWeight(11.75, UnitSystem.METRIC, DE))
     }
 
     @Test
-    fun `formatVolume nutzt Tausenderpunkt ohne Nachkommastellen`() {
-        assertEquals("12.305 kg", WeightFormatting.formatVolume(12305.0, UnitSystem.METRIC))
-        assertEquals("1.280 kg", WeightFormatting.formatVolume(1280.0, UnitSystem.METRIC))
-        assertEquals("640 kg", WeightFormatting.formatVolume(640.4, UnitSystem.METRIC))
+    fun `formatWeight nutzt im Englischen den Dezimalpunkt`() {
+        assertEquals("82.5 kg", WeightFormatting.formatWeight(82.5, UnitSystem.METRIC, EN))
+        assertEquals("80 kg", WeightFormatting.formatWeight(80.0, UnitSystem.METRIC, EN))
+        assertEquals("1.25 kg", WeightFormatting.formatWeight(1.25, UnitSystem.METRIC, EN))
+        assertEquals("176.4 lb", WeightFormatting.formatWeight(80.0, UnitSystem.IMPERIAL, EN))
+        assertEquals("88.7 kg", WeightFormatting.formatWeight(88.666, UnitSystem.METRIC, EN))
+    }
+
+    @Test
+    fun `formatVolume gruppiert Tausender je Locale ohne Nachkommastellen`() {
+        assertEquals("12.305 kg", WeightFormatting.formatVolume(12305.0, UnitSystem.METRIC, DE))
+        assertEquals("1.280 kg", WeightFormatting.formatVolume(1280.0, UnitSystem.METRIC, DE))
+        assertEquals("640 kg", WeightFormatting.formatVolume(640.4, UnitSystem.METRIC, DE))
+        assertEquals("12,305 kg", WeightFormatting.formatVolume(12305.0, UnitSystem.METRIC, EN))
+        assertEquals("640 kg", WeightFormatting.formatVolume(640.4, UnitSystem.METRIC, EN))
     }
 
     @Test
     fun `formatNumber und formatInputNumber`() {
-        assertEquals("25.000", WeightFormatting.formatNumber(25000.0, 0))
-        assertEquals("8,5", WeightFormatting.formatNumber(8.5))
-        assertEquals("0", WeightFormatting.formatNumber(-0.0))
-        // Eingabefelder ohne Tausenderpunkt, damit der Parser "1250" nicht als 1,25 liest.
-        assertEquals("1250", WeightFormatting.formatInputNumber(1250.0))
-        assertEquals("82,5", WeightFormatting.formatInputNumber(82.5))
+        assertEquals("25.000", WeightFormatting.formatNumber(25000.0, 0, DE))
+        assertEquals("8,5", WeightFormatting.formatNumber(8.5, locale = DE))
+        assertEquals("0", WeightFormatting.formatNumber(-0.0, locale = DE))
+        assertEquals("25,000", WeightFormatting.formatNumber(25000.0, 0, EN))
+        assertEquals("8.5", WeightFormatting.formatNumber(8.5, locale = EN))
+        // Eingabefelder ohne Tausendertrenner, damit der Parser "1250" nicht als 1,25 liest.
+        assertEquals("1250", WeightFormatting.formatInputNumber(1250.0, locale = DE))
+        assertEquals("82,5", WeightFormatting.formatInputNumber(82.5, locale = DE))
+        assertEquals("1250", WeightFormatting.formatInputNumber(1250.0, locale = EN))
+        assertEquals("1234.5", WeightFormatting.formatInputNumber(1234.5, locale = EN))
+        assertEquals("1234,5", WeightFormatting.formatInputNumber(1234.5, locale = DE))
+    }
+
+    @Test
+    fun `formatInputNumber ist in beiden Sprachen wieder einlesbar`() {
+        for (locale in listOf(EN, DE)) {
+            for (value in listOf(0.5, 82.5, 1234.5, 12305.25)) {
+                val text = WeightFormatting.formatInputNumber(value, locale = locale)
+                // Gleiche Regel wie parseDecimal in den Eingabefeldern: Komma oder Punkt als Dezimaltrenner.
+                assertEquals(text, value, text.replace(',', '.').toDouble(), 1e-9)
+            }
+        }
+    }
+
+    private companion object {
+        val EN: Locale = Locale.US
+        val DE: Locale = Locale.GERMANY
     }
 }

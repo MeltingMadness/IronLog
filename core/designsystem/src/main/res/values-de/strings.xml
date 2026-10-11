@@ -82,7 +82,6 @@
     <string name="workout_summary_sets">Sätze</string>
     <string name="workout_summary_volume">Volumen</string>
     <string name="workout_summary_records_title">🏆 Neue Rekorde</string>
-    <string name="workout_summary_set_line">Satz %1$d · %2$s × %3$d Wdh</string>
     <string name="workout_summary_review_plan_changes">Planänderungen prüfen</string>
     <string name="workout_summary_plan_changes_applied">Satzwerte übernommen</string>
     <string name="workout_summary_review_progression">Progressionsvorschläge prüfen</string>
@@ -121,7 +120,6 @@
     <string name="workout_set_deleted">Satz %1$d gelöscht</string>
     <string name="common_undo">Rückgängig</string>
     <string name="workout_header_progress_label">Satzfortschritt</string>
-    <string name="workout_header_progress_planned">%1$d / %2$d Sätze</string>
     <string name="workout_header_volume">%1$s Volumen</string>
     <string name="workout_exercise_expand_cd">%1$s aufklappen</string>
     <string name="workout_exercise_collapse_cd">%1$s zuklappen</string>
@@ -374,6 +372,8 @@
 
     <string name="reminder_notification_title">Zeit fürs Training</string>
     <string name="reminder_notification_body">Dein geplanter Trainingstag wartet auf dich.</string>
+    <string name="reminder_channel_name">Trainingserinnerungen</string>
+    <string name="reminder_channel_description">Erinnerungen für geplante Trainingstage</string>
 
     <string name="dashboard_onboarding_title">Willkommen bei %1$s!</string>
     <string name="dashboard_onboarding_body">Dein Trainingsverlauf ist noch leer. Starte dein erstes Workout über den Button oben. Sobald du Sätze loggst, findest du hier deine persönlichen Rekorde, dein Wochenvolumen und Statistiken.</string>
@@ -418,7 +418,6 @@
     <string name="settings_intensity_off">Aus</string>
     <string name="common_unknown">Unbekannt</string>
     <string name="common_calendar_week">KW%1$d</string>
-    <string name="common_record_reps">%1$d Wdh</string>
     <string name="settings_msg_backup_exported">Verifiziertes Backup wurde exportiert.</string>
     <string name="settings_msg_backup_imported">Backup wurde erfolgreich importiert.</string>
     <string name="settings_msg_backup_source_changed">Die Backup-Datei hat sich seit der Vorschau geändert. Bitte wähle die Datei erneut aus.</string>
@@ -480,12 +479,10 @@
     <string name="progression_review_reason_weight_basis"> — Basis: trainierte %1$s statt Ziel %2$s</string>
     <string name="progression_review_reason_total_completed">%1$s von %2$s Zielwiederholungen wurden erreicht; das Gewicht steigt um %3$s %4$s.</string>
     <string name="progression_review_reason_rpe_within_target">Die höchste RPE war %1$s bei Ziel %2$s ± %3$s; das Gewicht steigt um %4$s %5$s.</string>
-    <string name="progression_review_reason_repeat_reps">Mindestens %1$s Wiederholungen waren erwartet, erreicht wurden %2$s. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
     <string name="progression_review_reason_repeat_total">%1$s von %2$s Zielwiederholungen wurden erreicht. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
     <string name="progression_review_reason_repeat_rpe">Die höchste RPE war %1$s. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</string>
     <string name="progression_review_reason_stall_backoff">Nach wiederholten Fehlversuchen sinkt das Gewicht um %1$s Prozent.</string>
     <string name="progression_review_reason_weight_deviation">Die gewerteten Sätze haben unterschiedliche Gewichte (%1$s und %2$s); deshalb wird nichts automatisch geändert.</string>
-    <string name="progression_review_reason_too_few_sets">Für die Auswertung waren %1$s Arbeitssätze nötig, vorhanden waren %2$s.</string>
     <string name="progression_review_reason_rpe_missing">Mindestens einem gewerteten Satz fehlt die RPE.</string>
     <string name="progression_review_reason_rpe_invalid">Mindestens eine RPE liegt außerhalb des gültigen Bereichs.</string>
     <string name="progression_review_reason_config_invalid">Die gespeicherte Progressionskonfiguration ist ungültig.</string>
@@ -498,8 +495,6 @@
     <string name="workout_active_set_badge">⚡ AKTIVER SATZ %1$d</string>
     <string name="workout_active_set_edit_badge">⚡ SATZ %1$d BEARBEITEN</string>
     <string name="workout_planned_set_preview">Satz %1$d: %2$s (geplant)</string>
-    <string name="workout_log_set_button">Satz %1$d loggen — %2$s %3$s × %4$d Wdh</string>
-    <string name="workout_log_set_button_bodyweight">Satz %1$d loggen — %2$s × %3$d Wdh</string>
     <string name="workout_log_set_button_short">Satz %1$d loggen</string>
     <string name="workout_update_set_button">Satz %1$d aktualisieren</string>
     <string name="workout_weight_label">Gewicht</string>

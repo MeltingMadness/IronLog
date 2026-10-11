@@ -7,6 +7,7 @@ import com.thrym.app.domain.model.WorkoutPlanTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.util.Locale
 
 /**
  * Unit tests for the pending-set weight placeholder in ActiveWorkoutScreen:
@@ -32,10 +33,15 @@ class ActiveWorkoutWeightHintTest {
         val hint = targetWeightHint(
             planTarget = planTarget(weightKg = 102.5),
             unitSystem = UnitSystem.METRIC,
-            previousWeightHint = "100"
+            previousWeightHint = "100",
+            locale = Locale.GERMANY
         )
 
         assertEquals("102,5", hint)
+        assertEquals(
+            "102.5",
+            targetWeightHint(planTarget(weightKg = 102.5), UnitSystem.METRIC, "100", Locale.US)
+        )
     }
 
     @Test
@@ -43,10 +49,11 @@ class ActiveWorkoutWeightHintTest {
         val hint = targetWeightHint(
             planTarget = planTarget(weightKg = 50.0),
             unitSystem = UnitSystem.IMPERIAL,
-            previousWeightHint = "100"
+            previousWeightHint = "100",
+            locale = Locale.US
         )
 
-        assertEquals("110,2", hint)
+        assertEquals("110.2", hint)
     }
 
     @Test

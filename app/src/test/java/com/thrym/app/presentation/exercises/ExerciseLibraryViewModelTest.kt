@@ -124,6 +124,36 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
+    fun `list is sorted and searched by the localized name of built-ins`() = runTest {
+        listOf("Kreuzheben", "Beinpresse", "Ab-Roller").forEachIndexed { index, canonical ->
+            exerciseRepository.addExercise(
+                Exercise(
+                    id = index + 1L,
+                    name = canonical,
+                    primaryMuscleGroup = MuscleGroup.BEINE,
+                    category = ExerciseCategory.LANGHANTEL,
+                    isCustom = false
+                )
+            )
+        }
+
+        val viewModel = ExerciseLibraryViewModel(exerciseRepository, com.thrym.app.fakes.FakeStatisticsRepository(), strings = com.thrym.app.fakes.TestUiStrings)
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        // English UI: Ab Wheel, Deadlift, Leg Press (the stored German names would sort differently).
+        assertEquals(listOf(3L, 1L, 2L), viewModel.uiState.value.exercises.map { it.id })
+
+        viewModel.onSearchQueryChange("leg press")
+        advanceUntilIdle()
+        assertEquals(listOf(2L), viewModel.uiState.value.exercises.map { it.id })
+
+        viewModel.onSearchQueryChange("kreuz")
+        advanceUntilIdle()
+        assertEquals(listOf(1L), viewModel.uiState.value.exercises.map { it.id })
+    }
+
+    @Test
     fun `error while loading exercises clears isLoading and surfaces an error message`() = runTest {
         exerciseRepository.errorToThrow = RuntimeException("DB kaputt")
 
@@ -158,7 +188,10 @@ class ExerciseLibraryViewModelTest {
 
         assertTrue(
             "delete failure must surface an error",
-            viewModel.uiState.value.error?.contains("Übung konnte nicht gelöscht werden") == true
+            viewModel.uiState.value.error == com.thrym.app.fakes.TestUiStrings.get(
+                com.thrym.feature.exercises.R.string.exercises_delete_failed,
+                com.thrym.app.fakes.TestUiStrings.get(com.thrym.core.designsystem.R.string.common_error_unknown)
+            )
         )
         assertNotNull("exercise must survive a failed delete", exerciseRepository.getExerciseById(5L))
     }

@@ -369,9 +369,11 @@ class WorkoutRepositoryImpl(
         planId: Long?,
         fromEpochMillis: Long?,
         toEpochMillis: Long?,
-        searchQuery: String?
+        searchQuery: String?,
+        matchingExerciseNames: List<String>
     ): Flow<PagingData<CompletedWorkoutSummary>> {
         val searchPattern = historySearchPattern(searchQuery)
+        val exerciseNames = if (searchPattern == null) emptyList() else matchingExerciseNames
         return Pager(
             config = PagingConfig(pageSize = 20, enablePlaceholders = false),
             pagingSourceFactory = {
@@ -379,7 +381,8 @@ class WorkoutRepositoryImpl(
                     planId = planId,
                     fromEpochMillis = fromEpochMillis,
                     toEpochMillis = toEpochMillis,
-                    searchPattern = searchPattern
+                    searchPattern = searchPattern,
+                    exerciseNames = exerciseNames
                 )
             }
         ).flow.map { pagingData ->

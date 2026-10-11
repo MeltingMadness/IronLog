@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="muscle_group_brust">Brust</string>
+    <string name="muscle_group_ruecken">Rücken</string>
+    <string name="muscle_group_beine">Beine</string>
+    <string name="muscle_group_schultern">Schultern</string>
+    <string name="muscle_group_bizeps">Bizeps</string>
+    <string name="muscle_group_trizeps">Trizeps</string>
+    <string name="muscle_group_gesaess">Gesäß</string>
+    <string name="muscle_group_core">Core</string>
+    <string name="muscle_group_unterarme">Unterarme</string>
+    <string name="muscle_group_waden">Waden</string>
+
+    <string name="exercise_category_langhantel">Langhantel</string>
+    <string name="exercise_category_kurzhantel">Kurzhantel</string>
+    <string name="exercise_category_maschine">Maschine</string>
+    <string name="exercise_category_kabel">Kabel</string>
+    <string name="exercise_category_eigengewicht">Eigengewicht</string>
+
+    <string name="record_type_max_weight">Max Gewicht</string>
+    <string name="record_type_max_reps">Max Wiederholungen</string>
+    <string name="record_type_max_volume">Max Volumen</string>
+    <string name="record_type_max_e1rm">Bester geschätzter 1RM</string>
+</resources>

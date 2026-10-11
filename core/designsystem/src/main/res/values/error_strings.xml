@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Localized copy for typed domain errors (see ErrorText.kt). Exception messages are
+     English developer text and are never shown in the UI. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="common_error_unknown">unexpected error</string>
+
+    <string name="error_exercise_not_saved">Only saved exercises can be edited</string>
+    <string name="error_exercise_not_found">Exercise not found</string>
+    <string name="error_exercise_not_custom_edit">Only custom exercises can be edited</string>
+    <string name="error_exercise_not_custom_delete">Only custom exercises can be deleted</string>
+    <string name="error_exercise_duplicate_name">An exercise with this name already exists</string>
+    <string name="error_exercise_name_length" tools:ignore="PluralsCandidate">The name must be %1$d to %2$d characters long</string>
+    <string name="error_exercise_notes_too_long" tools:ignore="PluralsCandidate">The note can be at most %1$d characters long</string>
+    <string name="error_exercise_too_many_secondary">At most three secondary muscle groups are allowed</string>
+    <string name="error_exercise_primary_also_secondary">The primary muscle group can\'t also be secondary</string>
+
+    <string name="error_intensity_rpe_range" tools:ignore="PluralsCandidate">RPE must be between %1$d and %2$d</string>
+    <string name="error_intensity_rir_range" tools:ignore="PluralsCandidate">RIR must be between %1$d and %2$d</string>
+
+    <string name="error_plan_apply_session_not_found">Workout not found</string>
+    <string name="error_plan_apply_session_not_finished">Please finish the workout first</string>
+    <string name="error_plan_apply_no_plan">This workout has no plan</string>
+    <string name="error_plan_apply_plan_exercise_missing">The plan has changed. Please check it in the editor.</string>
+    <string name="error_plan_apply_plan_changed">The plan has changed since this workout. Please check it in the editor.</string>
+</resources>

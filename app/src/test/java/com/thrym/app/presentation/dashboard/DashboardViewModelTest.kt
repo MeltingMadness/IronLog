@@ -35,6 +35,7 @@ import com.thrym.app.fakes.FakeMetaTrainingPlanRepository
 import com.thrym.app.fakes.FakeStatisticsRepository
 import com.thrym.app.fakes.FakeTrainingPlanRepository
 import com.thrym.app.fakes.FakeWorkoutRepository
+import com.thrym.app.fakes.TestUiStrings
 import com.thrym.shared.backup.BackupPayloadV1
 import com.thrym.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import com.thrym.shared.readinessdata.ReadinessCheckIn
@@ -105,7 +106,10 @@ class DashboardViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(statistics: StatisticsRepository = statsRepo) = DashboardViewModel(
+    private fun createViewModel(
+        statistics: StatisticsRepository = statsRepo,
+        strings: com.thrym.app.presentation.common.UiStrings = TestUiStrings
+    ) = DashboardViewModel(
         workoutRepo,
         statistics,
         exerciseRepo,
@@ -116,8 +120,31 @@ class DashboardViewModelTest {
         FakeDeloadRepository(),
         readinessSource,
         readinessRepo,
-        strings = com.thrym.app.fakes.TestUiStrings
+        strings = strings
     )
+
+    @Test
+    fun `free workout gets a dated name in the UI language`() = runTest {
+        val today = LocalDate.now()
+        for ((strings, datePattern) in listOf(TestUiStrings to "M/d", TestUiStrings.german to "dd.MM.")) {
+            workoutRepo = FakeWorkoutRepository()
+            val vm = createViewModel(strings = strings)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            var startedId: Long? = null
+            vm.startNewWorkout { sessionId, _ -> startedId = sessionId }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val expected = strings.get(
+                com.thrym.feature.dashboard.R.string.dashboard_workout_auto_name,
+                today.format(java.time.format.DateTimeFormatter.ofPattern(datePattern))
+            )
+            assertEquals(expected, workoutRepo.getActiveSession()?.name)
+            assertEquals(startedId, workoutRepo.getActiveSession()?.id)
+        }
+        // German keeps the name format of earlier versions ("Training 10.02.").
+        assertTrue(workoutRepo.getActiveSession()!!.name.startsWith("Training "))
+    }
 
     @Test
     fun `loadDashboard nutzt Batch-Query statt N einzelne getExerciseById Calls`() = runTest {
@@ -334,7 +361,7 @@ class DashboardViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(callbackCalled)
-        assertTrue(vm.uiState.value.error?.contains("Meta-Plan ist unvollständig") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.dashboard.R.string.dashboard_meta_plan_invalid), vm.uiState.value.error)
         assertNull(workoutRepo.getActiveSession())
     }
 
@@ -492,7 +519,7 @@ class DashboardViewModelTest {
         val entries = vm.uiState.value.weeklyVolume
         val expectedStarts = (0L until 8L).map { windowStart.plusWeeks(it) }
         assertEquals(8, entries.size)
-        assertEquals(expectedStarts.map { DateFormatting.DATE_SHORT.format(it) }, entries.map { it.first })
+        assertEquals(expectedStarts.map { DateFormatting.dayMonth(TestUiStrings.locale).format(it) }, entries.map { it.first })
         assertEquals(1000.0, entries[expectedStarts.indexOf(populatedWeek)].second, 0.0001)
         assertEquals(500.0, entries[expectedStarts.indexOf(earlierWeek)].second, 0.0001)
         assertTrue(entries.filterIndexed { index, _ ->
@@ -517,7 +544,7 @@ class DashboardViewModelTest {
         val entries = vm.uiState.value.weeklyVolume
         assertEquals(8, entries.size)
         assertEquals(
-            (0L until 8L).map { DateFormatting.DATE_SHORT.format(windowStart.plusWeeks(it)) },
+            (0L until 8L).map { DateFormatting.dayMonth(TestUiStrings.locale).format(windowStart.plusWeeks(it)) },
             entries.map { it.first }
         )
         assertEquals(500.0, entries[6].second, 0.0001)
@@ -691,7 +718,7 @@ class DashboardViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(555L, workoutRepo.getActiveSession()?.id)
-        assertTrue(vm.uiState.value.error?.contains("anderes Training aktiv") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.dashboard.R.string.dashboard_workout_already_active), vm.uiState.value.error)
         assertTrue(metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first().isEmpty())
     }
 
@@ -778,7 +805,7 @@ class DashboardViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(planAId, vm.uiState.value.metaPlanOptions.single().nextPlan?.id)
-        assertTrue(vm.uiState.value.error?.contains("hat sich geändert") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.dashboard.R.string.dashboard_plan_changed), vm.uiState.value.error)
         assertTrue(metaPlanRepo.observeLastRotationEventPerMetaPlanSubPlan().first().isEmpty())
         assertNull(workoutRepo.getActiveSession())
     }
@@ -952,7 +979,7 @@ class DashboardViewModelTest {
 
         assertNull(vm.uiState.value.deloadMode)
         assertFalse(vm.uiState.value.isDeloadModeUpdating)
-        assertTrue(vm.uiState.value.error?.contains("aktiviert") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.dashboard.R.string.dashboard_deload_start_failed), vm.uiState.value.error)
     }
 
     @Test
@@ -982,7 +1009,7 @@ class DashboardViewModelTest {
 
         assertEquals(DeloadMode.HALVE_SET_VOLUME, vm.uiState.value.deloadMode)
         assertFalse(vm.uiState.value.isDeloadModeUpdating)
-        assertTrue(vm.uiState.value.error?.contains("beendet") == true)
+        assertEquals(com.thrym.app.fakes.TestUiStrings.get(com.thrym.feature.dashboard.R.string.dashboard_deload_end_failed), vm.uiState.value.error)
     }
 
     @Test

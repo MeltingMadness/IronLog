@@ -28,7 +28,6 @@
         <item quantity="other">%d exercises</item>
     </plurals>
     <string name="history_duration_minutes" translatable="false">%1$d min</string>
-    <string name="history_exercise_count">%1$d exercises</string>
     <string name="history_intentions_load_failed">Couldn\'t load set intentions.</string>
     <string name="history_set_save_failed">Couldn\'t save set</string>
     <string name="history_set_delete_failed">Couldn\'t delete set</string>

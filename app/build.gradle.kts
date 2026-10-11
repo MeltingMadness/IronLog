@@ -63,6 +63,20 @@ android {
         compose = true
         buildConfig = true
     }
+
+    androidResources {
+        // UI languages: English (values/, default) and German (values-de/). Drops the other
+        // translations of AndroidX/Material so the UI never mixes languages. Keep in sync with
+        // res/xml/locales_config.xml.
+        localeFilters += listOf("en", "de")
+    }
+
+    // Leave out the dependency metadata blob that AGP encrypts for Google Play: F-Droid rejects it
+    // and it gets in the way of reproducible builds.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 ksp {
