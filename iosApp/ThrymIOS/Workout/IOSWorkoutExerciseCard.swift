@@ -322,10 +322,10 @@ private struct IOSWorkoutInlineSetEntry: View {
                         .font(.geist(.caption, weight: .bold))
                         .tracking(0.8)
                         .thrymSecondaryText()
+                    // Input strings in the locale's format ("7.5" / "7,5"); the parser takes both.
                     IOSWorkoutGlassIntensityBar(
-                        options: intensityScale == "RIR"
-                            ? ["0", "1", "2", "3", "4"]
-                            : ["7", "7,5", "8", "8,5", "9", "9,5", "10"],
+                        options: (intensityScale == "RIR" ? [0, 1, 2, 3, 4] : [7, 7.5, 8, 8.5, 9, 9.5, 10])
+                            .map { IOSNumber.format($0, fractionDigits: 1) },
                         selection: $intensity
                     )
                 }

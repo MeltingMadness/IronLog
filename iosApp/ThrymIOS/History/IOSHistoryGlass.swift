@@ -66,13 +66,17 @@ struct IOSHistoryGlassWeekHeader: View {
         return String(localized: "KW \(IOSHistoryWeek.calendar.component(.weekOfYear, from: week.weekStart))")
     }
 
+    private var range: String { Self.rangeText(weekStart: week.weekStart) }
+
     /// First to last day of the week in the app locale ("12.–18. Okt." / "Oct 12 – 18").
-    private var range: String {
-        let end = IOSHistoryWeek.calendar.date(byAdding: .day, value: 6, to: week.weekStart) ?? week.weekStart
+    /// The style keeps the locale's own calendar: with the ISO 8601 calendar of
+    /// `IOSHistoryWeek` the interval patterns fall back to the root locale
+    /// ("Okt. 12–18").
+    static func rangeText(weekStart: Date, locale: Locale = .autoupdatingCurrent) -> String {
+        let end = IOSHistoryWeek.calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
         var style = Date.IntervalFormatStyle().day().month(.abbreviated)
-        style.calendar = IOSHistoryWeek.calendar
-        style.timeZone = IOSHistoryWeek.calendar.timeZone
-        return (week.weekStart..<end).formatted(style)
+        style.locale = locale
+        return (weekStart..<end).formatted(style)
     }
 
     var body: some View {

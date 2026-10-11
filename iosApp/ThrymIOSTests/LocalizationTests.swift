@@ -79,6 +79,21 @@ final class LocalizationTests: XCTestCase {
         XCTAssertTrue(german.contains("1 Minute") && german.contains("1 Sekunde"), german)
     }
 
+    func testHistoryWeekRangeUsesTheLocalePattern() throws {
+        var calendar = IOSHistoryWeek.calendar
+        calendar.locale = .current
+        // 5.10.2026 is a Monday.
+        let monday = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
+        let start = IOSHistoryWeek.weekStart(of: monday)
+        // Day first in German, month first in English; the exact spacing is ICU's.
+        let german = IOSHistoryGlassWeekHeader.rangeText(weekStart: start, locale: Locale(identifier: "de_DE"))
+        XCTAssertTrue(german.hasPrefix("5."), german)
+        XCTAssertTrue(german.contains("11. Okt"), german)
+        let english = IOSHistoryGlassWeekHeader.rangeText(weekStart: start, locale: Locale(identifier: "en_US"))
+        XCTAssertTrue(english.hasPrefix("Oct"), english)
+        XCTAssertTrue(english.contains("11"), english)
+    }
+
     func testHistoryDayLettersFollowTheDate() throws {
         var calendar = IOSHistoryWeek.calendar
         calendar.locale = .current
