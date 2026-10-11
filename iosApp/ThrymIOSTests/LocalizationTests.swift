@@ -50,6 +50,21 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(try text("\(3) Sätze × \(1) Wdh · \("80 kg")", "de"), "3 Sätze × 1 Wdh · 80 kg")
     }
 
+    func testSharedMessagesAreTranslatedAtTheBridge() throws {
+        // A fixed message from the Kotlin core is a catalog key with a real translation.
+        let key = "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst."
+        let german = try languageBundle("de").localizedString(forKey: key, value: nil, table: nil)
+        let english = try languageBundle("en").localizedString(forKey: key, value: nil, table: nil)
+        XCTAssertEqual(german, key)
+        XCTAssertNotEqual(english, key)
+        XCTAssertFalse(english.isEmpty)
+        XCTAssertEqual(ilSharedMessage(key), Bundle.main.localizedString(forKey: key, value: nil, table: nil))
+
+        // English diagnostics have no catalog entry and pass through unchanged.
+        let diagnostic = "Unknown training command: plan.archive"
+        XCTAssertEqual(ilSharedMessage(diagnostic), diagnostic)
+    }
+
     func testHistoryDayLettersFollowTheDate() throws {
         var calendar = IOSHistoryWeek.calendar
         calendar.locale = .current

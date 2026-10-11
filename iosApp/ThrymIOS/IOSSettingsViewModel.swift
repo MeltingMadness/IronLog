@@ -193,7 +193,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Backup fehlgeschlagen"),
-                        message: error ?? String(localized: "Backup konnte nicht exportiert werden.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht exportiert werden.")
                     )
                 }
             }
@@ -241,7 +241,7 @@ final class IOSSettingsViewModel: ObservableObject {
                         } else {
                             self.activeAlert = SettingsAlert(
                                 title: String(localized: "Import abgebrochen"),
-                                message: error ?? String(localized: "Backup konnte nicht geprüft werden.")
+                                message: error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht geprüft werden.")
                             )
                         }
                     }
@@ -273,7 +273,7 @@ final class IOSSettingsViewModel: ObservableObject {
                     title: didImport ? String(localized: "Backup importiert") : String(localized: "Import fehlgeschlagen"),
                     message: didImport
                         ? String(localized: "Die lokalen Trainingsdaten wurden wiederhergestellt.")
-                        : (error ?? String(localized: "Backup konnte nicht importiert werden."))
+                        : (error.map(ilSharedMessage) ?? String(localized: "Backup konnte nicht importiert werden."))
                 )
                 if didImport {
                     self.refreshRecoveryBackup()
@@ -294,7 +294,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 if let error, recovery == nil {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Wiederherstellungspunkt nicht verfügbar"),
-                        message: error
+                        message: ilSharedMessage(error)
                     )
                 } else {
                     self.recoveryBackup = recovery
@@ -325,7 +325,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Wiederherstellung fehlgeschlagen"),
-                        message: error ?? String(localized: "Kein Wiederherstellungspunkt ist verfügbar.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Kein Wiederherstellungspunkt ist verfügbar.")
                     )
                     self.refreshRecoveryBackup()
                 }
@@ -362,7 +362,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 self.isBusy = false
                 self.activeAlert = SettingsAlert(
                     title: success.boolValue ? String(localized: "Daten zurückgesetzt") : String(localized: "Reset fehlgeschlagen"),
-                    message: success.boolValue ? String(localized: "Lokale Trainingsdaten wurden zurückgesetzt.") : (error ?? String(localized: "Daten konnten nicht zurückgesetzt werden."))
+                    message: success.boolValue ? String(localized: "Lokale Trainingsdaten wurden zurückgesetzt.") : (error.map(ilSharedMessage) ?? String(localized: "Daten konnten nicht zurückgesetzt werden."))
                 )
             }
         }
@@ -396,7 +396,7 @@ final class IOSSettingsViewModel: ObservableObject {
                 } else {
                     self.activeAlert = SettingsAlert(
                         title: String(localized: "Report fehlgeschlagen"),
-                        message: error ?? String(localized: "Incident-Report konnte nicht erstellt werden.")
+                        message: error.map(ilSharedMessage) ?? String(localized: "Incident-Report konnte nicht erstellt werden.")
                     )
                 }
             }

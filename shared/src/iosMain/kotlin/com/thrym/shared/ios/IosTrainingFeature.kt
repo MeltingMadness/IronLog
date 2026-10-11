@@ -54,6 +54,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSLog
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDomainMask
@@ -69,6 +70,12 @@ import platform.Foundation.writeToFile
  * only sends small JSON commands and receives a complete, durably persisted snapshot. A store
  * that could not be loaded is reported through [currentError] and never represented as an empty
  * workout history.
+ *
+ * Error messages that users can see are fixed German texts. They double as keys of the iOS
+ * string catalog (`Localizable.xcstrings`, extraction state "manual"), and Swift translates
+ * them at the bridge, so they must not carry dynamic values. Messages that only point at a
+ * programming error in the bridge (malformed command JSON, unknown operations) are English
+ * diagnostics and reach the UI unchanged.
  */
 class IosTrainingFeature {
     private val scope: CoroutineScope = MainScope()
@@ -331,9 +338,7 @@ class IosTrainingFeature {
             ) {
                 is ProgressionDecisionResult.Accepted,
                 is ProgressionDecisionResult.Rejected -> Unit
-                is ProgressionDecisionResult.Stale -> throw IllegalStateException(
-                    "Progressionsvorschlag ist veraltet: ${result.suggestionIds.sorted().joinToString(", ")}",
-                )
+                is ProgressionDecisionResult.Stale -> throw staleProgression(result.suggestionIds)
                 is ProgressionDecisionResult.Invalid -> throw IllegalArgumentException(result.message)
             }
 
@@ -343,9 +348,7 @@ class IosTrainingFeature {
                 )
             ) {
                 is ProgressionDecisionResult.Rejected -> Unit
-                is ProgressionDecisionResult.Stale -> throw IllegalStateException(
-                    "Progressionsvorschlag ist veraltet: ${result.suggestionIds.sorted().joinToString(", ")}",
-                )
+                is ProgressionDecisionResult.Stale -> throw staleProgression(result.suggestionIds)
                 is ProgressionDecisionResult.Invalid -> throw IllegalArgumentException(result.message)
                 is ProgressionDecisionResult.Accepted -> error("Unexpected accepted progression decision")
             }
@@ -354,10 +357,16 @@ class IosTrainingFeature {
 
             "data.reset" -> activeStore.resetUserData()
 
-            else -> throw IllegalArgumentException("Unbekannter Trainingsbefehl: $op")
+            else -> throw IllegalArgumentException("Unknown training command: $op")
         }
 
         return snapshotEncoder.encodeToString(activeStore.snapshot())
+    }
+
+    /** The user sees a fixed, translatable text; the affected suggestion ids go to the log. */
+    private fun staleProgression(suggestionIds: Collection<Long>): IllegalStateException {
+        NSLog("Thrym: stale progression suggestions %@", suggestionIds.sorted().joinToString(", "))
+        return IllegalStateException("Progressionsvorschlag ist veraltet.")
     }
 
     private suspend fun runProgressionCatchUp(
@@ -376,45 +385,45 @@ class IosTrainingFeature {
     private fun String.parseCommand(): JsonObject = commandJson.parseToJsonElement(this).jsonObject
 
     private fun JsonObject.requiredObject(key: String): JsonObject =
-        get(key)?.jsonObject ?: throw IllegalArgumentException("Feld '$key' fehlt oder ist kein Objekt")
+        get(key)?.jsonObject ?: throw IllegalArgumentException("Field '$key' is missing or not an object")
 
     private fun JsonObject.requiredArray(key: String): JsonArray =
         get(key)?.jsonArray
-            ?: throw IllegalArgumentException("Feld '$key' fehlt oder ist kein Array")
+            ?: throw IllegalArgumentException("Field '$key' is missing or not an array")
 
     private fun JsonObject.requiredString(key: String): String =
         get(key)?.jsonPrimitive?.contentOrNull
-            ?: throw IllegalArgumentException("Feld '$key' fehlt oder ist keine Zeichenkette")
+            ?: throw IllegalArgumentException("Field '$key' is missing or not a string")
 
     private fun JsonObject.optionalString(key: String): String? =
         get(key)?.takeUnless { it is JsonNull }?.jsonPrimitive?.contentOrNull
 
     private fun JsonObject.requiredLong(key: String): Long =
         get(key)?.jsonPrimitive?.longOrNull
-            ?: throw IllegalArgumentException("Feld '$key' fehlt oder ist keine Zahl")
+            ?: throw IllegalArgumentException("Field '$key' is missing or not a number")
 
     private fun JsonObject.requiredInt(key: String): Int {
         val value = requiredLong(key)
         require(value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
-            "Feld '$key' liegt außerhalb des zulässigen Ganzzahlbereichs"
+            "Field '$key' is outside the supported integer range"
         }
         return value.toInt()
     }
 
     private fun JsonObject.requiredDouble(key: String): Double =
         get(key)?.jsonPrimitive?.doubleOrNull
-            ?: throw IllegalArgumentException("Feld '$key' fehlt oder ist keine Zahl")
+            ?: throw IllegalArgumentException("Field '$key' is missing or not a number")
 
     /** Accepts the documented array form and a single-target object for one-item callers. */
     private fun JsonObject.requiredProgressionTargets(): Map<Long, BackupProgressionTarget> {
         val element = get("targets") ?: get("target")
-            ?: throw IllegalArgumentException("Feld 'targets' fehlt")
+            ?: throw IllegalArgumentException("Field 'targets' is missing")
         val targetObjects = when {
             element is JsonNull -> emptyList()
             element is JsonArray -> element.map { it.jsonObject }
             else -> listOf(element.jsonObject)
         }
-        require(targetObjects.isNotEmpty()) { "Mindestens ein Progressionsziel ist erforderlich" }
+        require(targetObjects.isNotEmpty()) { "At least one progression target is required" }
         val targets = targetObjects.associate { target ->
             val id = target.requiredLong("id")
             id to BackupProgressionTarget(
@@ -423,7 +432,7 @@ class IosTrainingFeature {
                 weightKg = target.requiredDouble("weightKg"),
             )
         }
-        require(targets.size == targetObjects.size) { "Doppelte Progressionsvorschlags-ID" }
+        require(targets.size == targetObjects.size) { "Duplicate progression suggestion id" }
         return targets
     }
 
@@ -431,27 +440,27 @@ class IosTrainingFeature {
         val element = get(key) ?: return null
         if (element is JsonNull) return null
         return element.jsonPrimitive.longOrNull
-            ?: throw IllegalArgumentException("Feld '$key' ist keine Zahl")
+            ?: throw IllegalArgumentException("Field '$key' is not a number")
     }
 
     private fun JsonObject.optionalInt(key: String): Int? {
         val element = get(key) ?: return null
         if (element is JsonNull) return null
         return element.jsonPrimitive.intOrNull
-            ?: throw IllegalArgumentException("Feld '$key' ist keine Ganzzahl")
+            ?: throw IllegalArgumentException("Field '$key' is not an integer")
     }
 
     private fun JsonObject.optionalBool(key: String): Boolean? {
         val element = get(key) ?: return null
         if (element is JsonNull) return null
         return element.jsonPrimitive.booleanOrNull
-            ?: throw IllegalArgumentException("Feld '$key' ist kein Wahrheitswert")
+            ?: throw IllegalArgumentException("Field '$key' is not a boolean")
     }
 
     /** Parses an explicit ISO-8601 calendar day; an invalid or missing date is refused. */
     private fun JsonObject.requiredLocalDate(key: String): LocalDate =
         runCatching { LocalDate.parse(requiredString(key)) }.getOrElse {
-            throw IllegalArgumentException("Feld '$key' muss ein ISO-Datum (yyyy-MM-dd) sein")
+            throw IllegalArgumentException("Field '$key' must be an ISO date (yyyy-MM-dd)")
         }
 
     /**
@@ -463,16 +472,16 @@ class IosTrainingFeature {
     private fun JsonObject.requiredIntention(key: String): SetIntention {
         val raw = requiredString(key)
         return SetIntention.entries.firstOrNull { it.name == raw }
-            ?: throw IllegalArgumentException("Unbekannte Satzintention: $raw")
+            ?: throw IllegalArgumentException("Unknown set intention: $raw")
     }
 
     private fun JsonObject.optionalIntention(key: String): SetIntention? {
         val element = get(key) ?: return null
         if (element is JsonNull) return null
         val raw = element.jsonPrimitive.contentOrNull
-            ?: throw IllegalArgumentException("Feld '$key' ist keine Zeichenkette")
+            ?: throw IllegalArgumentException("Field '$key' is not a string")
         return SetIntention.entries.firstOrNull { it.name == raw }
-            ?: throw IllegalArgumentException("Unbekannte Satzintention: $raw")
+            ?: throw IllegalArgumentException("Unknown set intention: $raw")
     }
 
     /**
@@ -490,9 +499,9 @@ class IosTrainingFeature {
             ?.jsonObject
             ?.map { (groupName, value) ->
                 val muscle = MuscleGroup.entries.firstOrNull { it.name == groupName }
-                    ?: throw IllegalArgumentException("Unbekannte Muskelgruppe: $groupName")
+                    ?: throw IllegalArgumentException("Unknown muscle group: $groupName")
                 val scale = value.jsonPrimitive.intOrNull
-                    ?: throw IllegalArgumentException("Muskelkater für $groupName ist keine Ganzzahl")
+                    ?: throw IllegalArgumentException("Soreness for $groupName is not an integer")
                 muscle to scale
             }
             ?.toMap()
@@ -573,7 +582,7 @@ object IosTrainingStore {
 
     /** Validates an explicit import in memory before replacing an unreadable on-disk payload. */
     suspend fun recoverFromImport(serialized: String) = recoveryMutex.withLock {
-        check(store == null) { "Trainingsdaten sind bereits geladen; importiere in den vorhandenen Store." }
+        check(store == null) { "Training data is already loaded; import into the existing store." }
         val staging = MemoryPersistence()
         val candidate = SharedStateStore(staging)
         candidate.importJson(serialized)
@@ -650,7 +659,7 @@ private class IosRecoveryPersistence {
             NSUserDomainMask,
             true,
         ).firstOrNull() as? String
-            ?: error("Application-Support-Verzeichnis ist nicht verfügbar")
+            ?: error("Application Support directory is not available")
         "$basePath/Thrym/recovery-backups.json"
     }
     private val directoryPath: String by lazy { filePath.substringBeforeLast('/') }
@@ -770,7 +779,7 @@ private class IosRecoveryPersistence {
                 error = null,
             ) && !fileManager.fileExistsAtPath(directoryPath)
         ) {
-            error("Application-Support-Verzeichnis für Wiederherstellungspunkte kann nicht angelegt werden")
+            error("Cannot create the Application Support directory for restore points")
         }
         val serialized = json.encodeToString(envelope)
         val success = NSString.create(string = serialized).writeToFile(
@@ -807,7 +816,7 @@ private class IosApplicationSupportPersistence : SharedStatePersistence {
             NSUserDomainMask,
             true,
         ).firstOrNull() as? String
-            ?: error("Application-Support-Verzeichnis ist nicht verfügbar")
+            ?: error("Application Support directory is not available")
         "$basePath/Thrym/training-state.json"
     }
     private val directoryPath: String by lazy {
@@ -832,7 +841,7 @@ private class IosApplicationSupportPersistence : SharedStatePersistence {
                 error = null,
             ) && !fileManager.fileExistsAtPath(directoryPath)
         ) {
-            error("Application-Support-Verzeichnis kann nicht angelegt werden")
+            error("Cannot create the Application Support directory")
         }
         val success = NSString.create(string = serialized).writeToFile(
             filePath,

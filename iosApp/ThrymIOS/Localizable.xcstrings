@@ -3710,6 +3710,24 @@
         }
       }
     },
+    "Bitte Training zuerst beenden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitte Training zuerst beenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please finish the workout first"
+          }
+        }
+      }
+    },
     "Bitte erlaube Mitteilungen in den iPhone-Einstellungen.": {
       "localizations": {
         "de": {
@@ -5065,6 +5083,24 @@
         }
       }
     },
+    "Die Rotation hat sich geändert oder ein Training ist aktiv. Bitte erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Rotation hat sich geändert oder ein Training ist aktiv. Bitte erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rotation has changed or a workout is in progress. Please check again."
+          }
+        }
+      }
+    },
     "Die Rotation wird entfernt. Die enthaltenen Trainingspläne bleiben erhalten.": {
       "localizations": {
         "de": {
@@ -6049,6 +6085,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not enough comparable sessions for a reliable trend."
+          }
+        }
+      }
+    },
+    "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es ist bereits ein anderes Training aktiv. Bitte setze es fort oder beende es zuerst."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another workout is already in progress. Resume or finish it first."
           }
         }
       }
@@ -7693,6 +7747,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "No deload needed"
+          }
+        }
+      }
+    },
+    "Kein Plan für dieses Training vorhanden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Plan für dieses Training vorhanden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This workout has no plan"
           }
         }
       }
@@ -10852,6 +10924,42 @@
         }
       }
     },
+    "Plan wurde geändert. Bitte im Editor prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan wurde geändert. Bitte im Editor prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plan was changed. Please check it in the editor."
+          }
+        }
+      }
+    },
+    "Plan wurde seit dem Training geändert. Bitte im Editor prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan wurde seit dem Training geändert. Bitte im Editor prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The plan changed after the workout. Please check it in the editor."
+          }
+        }
+      }
+    },
     "Plan wählen": {
       "localizations": {
         "de": {
@@ -11156,6 +11264,24 @@
         }
       }
     },
+    "Progressionsvorschlag ist veraltet.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progressionsvorschlag ist veraltet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This progression suggestion is out of date."
+          }
+        }
+      }
+    },
     "Prozent": {
       "localizations": {
         "de": {
@@ -11410,6 +11536,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rate of Perceived Exertion"
+          }
+        }
+      }
+    },
+    "Recovery-Snapshot ist inkonsistent oder wurde verändert.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovery-Snapshot ist inkonsistent oder wurde verändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The recovery snapshot is inconsistent or was modified."
           }
         }
       }
@@ -13366,6 +13510,7 @@
       }
     },
     "Training nicht gefunden": {
+      "comment": "Also emitted by the shared Kotlin core; see ilSharedMessage(_:).",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -13557,7 +13702,26 @@
         }
       }
     },
+    "Trainingsdaten konnten nicht atomar gespeichert werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht atomar gespeichert werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be saved atomically"
+          }
+        }
+      }
+    },
     "Trainingsdaten konnten nicht geladen werden.": {
+      "comment": "Also emitted by the shared Kotlin core; see ilSharedMessage(_:).",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -13569,6 +13733,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't load training data."
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be read."
           }
         }
       }
@@ -13585,6 +13767,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't read training data: %@"
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten nicht gespeichert werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be saved."
+          }
+        }
+      }
+    },
+    "Trainingsdaten konnten zwischen Vorschau und Import nicht geladen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten konnten zwischen Vorschau und Import nicht geladen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data couldn't be loaded between preview and import."
           }
         }
       }
@@ -13637,6 +13855,60 @@
         }
       }
     },
+    "Trainingsdaten wurden seit der Recovery-Vorschau geändert. Bitte erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden seit der Recovery-Vorschau geändert. Bitte erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data changed since the recovery preview. Please check again."
+          }
+        }
+      }
+    },
+    "Trainingsdaten wurden zwischen Vorschau und Import geladen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden zwischen Vorschau und Import geladen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data was loaded between preview and import."
+          }
+        }
+      }
+    },
+    "Trainingsdaten wurden zwischen Vorschau und Import geändert. Bitte Backup erneut prüfen.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten wurden zwischen Vorschau und Import geändert. Bitte Backup erneut prüfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training data changed between preview and import. Please check the backup again."
+          }
+        }
+      }
+    },
     "Trainingsdaten zurücksetzen": {
       "localizations": {
         "de": {
@@ -13649,6 +13921,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset training data"
+          }
+        }
+      }
+    },
+    "Trainingsdaten-Datei kann nicht gelesen werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trainingsdaten-Datei kann nicht gelesen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The training data file can't be read"
           }
         }
       }
@@ -14781,6 +15071,132 @@
         }
       }
     },
+    "Wiederherstellungspunkt enthält ein ungültiges Datum.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt enthält ein ungültiges Datum."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point contains an invalid date."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt enthält eine ungültige Dateigröße.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt enthält eine ungültige Dateigröße."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point contains an invalid file size."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt ist inkonsistent oder wurde verändert.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt ist inkonsistent oder wurde verändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point is inconsistent or was modified."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht atomar gespeichert werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht atomar gespeichert werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be saved atomically"
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht geladen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht geladen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be loaded."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be read."
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkt konnte nicht verifiziert werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkt konnte nicht verifiziert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The restore point couldn't be verified."
+          }
+        }
+      }
+    },
     "Wiederherstellungspunkt nicht verfügbar": {
       "localizations": {
         "de": {
@@ -14809,6 +15225,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restore point: %@"
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkte können nicht gelesen werden": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkte können nicht gelesen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore points can't be read"
+          }
+        }
+      }
+    },
+    "Wiederherstellungspunkte sind beschädigt und können nicht gelesen werden.": {
+      "comment": "Message from the shared Kotlin core, translated in Swift by ilSharedMessage(_:).",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederherstellungspunkte sind beschädigt und können nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore points are damaged and can't be read."
           }
         }
       }
@@ -15161,6 +15613,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Time"
+          }
+        }
+      }
+    },
+    "Zeit für dein Training.": {
+      "comment": "Body of the workout reminder notification (IosSettingsFeature.kt), localized on delivery.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeit für dein Training."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time for your workout."
           }
         }
       }

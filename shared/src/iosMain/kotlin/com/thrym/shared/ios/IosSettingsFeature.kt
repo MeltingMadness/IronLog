@@ -46,6 +46,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import platform.Foundation.NSBundle
 import platform.Foundation.NSDateComponents
+import platform.Foundation.NSString
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.setObject
 import platform.UIKit.UIDevice
@@ -57,6 +58,7 @@ import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.UserNotifications.localizedUserNotificationStringForKey
 import platform.posix.memcpy
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -190,7 +192,7 @@ class IosSettingsFeature {
             }.onSuccess { payload ->
                 onResult(payload, null)
             }.onFailure { error ->
-                onResult(null, error.message ?: "Backup konnte nicht exportiert werden.")
+                onResult(null, error.message)
             }
         }
     }
@@ -222,7 +224,7 @@ class IosSettingsFeature {
             }.onSuccess { preview ->
                 onResult(preview, null)
             }.onFailure { error ->
-                onResult(null, error.message ?: "Backup konnte nicht geprüft werden.")
+                onResult(null, error.message)
             }
         }
     }
@@ -273,7 +275,7 @@ class IosSettingsFeature {
             }.onSuccess {
                 onResult(true, null)
             }.onFailure { error ->
-                onResult(false, error.message ?: "Backup konnte nicht importiert werden.")
+                onResult(false, error.message)
             }
         }
     }
@@ -285,7 +287,7 @@ class IosSettingsFeature {
             }.onSuccess {
                 onResult(true, null)
             }.onFailure { error ->
-                onResult(false, error.message ?: "Daten konnten nicht zurückgesetzt werden.")
+                onResult(false, error.message)
             }
         }
     }
@@ -308,7 +310,7 @@ class IosSettingsFeature {
             }.onSuccess { payload ->
                 onResult(payload, null)
             }.onFailure { error ->
-                onResult(null, error.message ?: "Incident-Report konnte nicht erstellt werden.")
+                onResult(null, error.message)
             }
         }
     }
@@ -648,7 +650,8 @@ private class IosReminderScheduler(
         suspendCancellableCoroutine<Unit> { continuation ->
             val content = UNMutableNotificationContent().apply {
                 setTitle(appDisplayName())
-                setBody("Zeit für dein Training.")
+                // Localized from the app's string catalog when the notification is delivered.
+                setBody(NSString.localizedUserNotificationStringForKey("Zeit für dein Training.", arguments = null))
                 setSound(UNNotificationSound.defaultSound())
             }
 
