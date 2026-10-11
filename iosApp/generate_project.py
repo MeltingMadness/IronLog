@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the native IronLog iOS Xcode project without third-party tools.
+"""Generate the native Thrym iOS Xcode project without third-party tools.
 
 The repository keeps ``project.yml`` as the human-readable XcodeGen-shaped
 description.  This script mirrors its current options in a deterministic
@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Iterable
 
 
-PROJECT_NAME = "IronLogIOS"
-APP_BUNDLE_IDENTIFIER = "com.ironlog.ios"
-TEST_BUNDLE_IDENTIFIER = "com.ironlog.ios.tests"
+PROJECT_NAME = "ThrymIOS"
+APP_BUNDLE_IDENTIFIER = "com.thrym.ios"
+TEST_BUNDLE_IDENTIFIER = "com.thrym.ios.tests"
 DEPLOYMENT_TARGET = "17.0"
 SWIFT_VERSION = "5.10"
 PROJECT_OBJECT_VERSION = "56"
@@ -236,8 +236,8 @@ def collect_group(
 
 def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, str]]:
     inventory = ProjectInventory()
-    app_root = project_root / "IronLogIOS"
-    tests_root = project_root / "IronLogIOSTests"
+    app_root = project_root / "ThrymIOS"
+    tests_root = project_root / "ThrymIOSTests"
 
     app_group_id = collect_group(
         inventory,
@@ -245,7 +245,7 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         directory=app_root,
         target="app",
         group_key="app",
-        group_name="IronLogIOS",
+        group_name="ThrymIOS",
         include_info_plist=True,
     )
     tests_group_id = collect_group(
@@ -254,7 +254,7 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         directory=tests_root,
         target="tests",
         group_key="tests",
-        group_name="IronLogIOSTests",
+        group_name="ThrymIOSTests",
     )
 
     products_group_id = stable_id("group", "products")
@@ -280,25 +280,25 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
     )
     inventory.groups[frameworks_group_id]["children"] = [(shared_reference_id, "Shared.framework")]
 
-    app_product_reference_id = stable_id("file", "product:IronLogIOS.app")
-    tests_product_reference_id = stable_id("file", "product:IronLogIOSTests.xctest")
+    app_product_reference_id = stable_id("file", "product:ThrymIOS.app")
+    tests_product_reference_id = stable_id("file", "product:ThrymIOSTests.xctest")
     inventory.file_references[app_product_reference_id] = InventoryFile(
         target="product",
-        relative_path="IronLogIOS.app",
+        relative_path="ThrymIOS.app",
         reference_id=app_product_reference_id,
         build_file_id=None,
         file_type="wrapper.application",
     )
     inventory.file_references[tests_product_reference_id] = InventoryFile(
         target="product",
-        relative_path="IronLogIOSTests.xctest",
+        relative_path="ThrymIOSTests.xctest",
         reference_id=tests_product_reference_id,
         build_file_id=None,
         file_type="wrapper.cfbundle",
     )
     inventory.groups[products_group_id]["children"] = [
-        (app_product_reference_id, "IronLogIOS.app"),
-        (tests_product_reference_id, "IronLogIOSTests.xctest"),
+        (app_product_reference_id, "ThrymIOS.app"),
+        (tests_product_reference_id, "ThrymIOSTests.xctest"),
     ]
 
     project_group_id = stable_id("group", "project")
@@ -306,8 +306,8 @@ def collect_inventory(project_root: Path) -> tuple[ProjectInventory, dict[str, s
         "name": None,
         "path": None,
         "children": [
-            (app_group_id, "IronLogIOS"),
-            (tests_group_id, "IronLogIOSTests"),
+            (app_group_id, "ThrymIOS"),
+            (tests_group_id, "ThrymIOSTests"),
             (products_group_id, "Products"),
             (frameworks_group_id, "Frameworks"),
         ],
@@ -475,9 +475,9 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             f"\t\t\tproductReference = {groups['app_product']} /* {PROJECT_NAME}.app */;",
             "\t\t\tproductType = \"com.apple.product-type.application\";",
             "\t\t};",
-            f"\t\t{tests_target_id} /* IronLogIOSTests */ = {{",
+            f"\t\t{tests_target_id} /* ThrymIOSTests */ = {{",
             "\t\t\tisa = PBXNativeTarget;",
-            f"\t\t\tbuildConfigurationList = {config_lists['tests']} /* Build configuration list for PBXNativeTarget \"IronLogIOSTests\" */;",
+            f"\t\t\tbuildConfigurationList = {config_lists['tests']} /* Build configuration list for PBXNativeTarget \"ThrymIOSTests\" */;",
             "\t\t\tbuildPhases = (",
             f"\t\t\t\t{phase_ids['tests_sources']} /* Sources */,",
             f"\t\t\t\t{phase_ids['tests_frameworks']} /* Frameworks */,",
@@ -488,9 +488,9 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\tdependencies = (",
             f"\t\t\t\t{dependency_id} /* PBXTargetDependency */,",
             "\t\t\t);",
-            "\t\t\tname = IronLogIOSTests;",
-            "\t\t\tproductName = IronLogIOSTests;",
-            f"\t\t\tproductReference = {groups['tests_product']} /* IronLogIOSTests.xctest */;",
+            "\t\t\tname = ThrymIOSTests;",
+            "\t\t\tproductName = ThrymIOSTests;",
+            f"\t\t\tproductReference = {groups['tests_product']} /* ThrymIOSTests.xctest */;",
             "\t\t\tproductType = \"com.apple.product-type.bundle.unit-test\";",
             "\t\t};",
             "/* End PBXNativeTarget section */",
@@ -519,7 +519,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
             "\t\t\tprojectRoot = \"\";",
             "\t\t\ttargets = (",
             f"\t\t\t\t{app_target_id} /* {PROJECT_NAME} */,",
-            f"\t\t\t\t{tests_target_id} /* IronLogIOSTests */,",
+            f"\t\t\t\t{tests_target_id} /* ThrymIOSTests */,",
             "\t\t\t);",
             "\t\t};",
             "/* End PBXProject section */",
@@ -641,7 +641,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "CODE_SIGN_STYLE": "Automatic",
         "DEVELOPMENT_TEAM": "",
         "FRAMEWORK_SEARCH_PATHS": "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
-        "INFOPLIST_FILE": "IronLogIOS/Info.plist",
+        "INFOPLIST_FILE": "ThrymIOS/Info.plist",
         "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @executable_path/Frameworks",
         "PRODUCT_BUNDLE_IDENTIFIER": APP_BUNDLE_IDENTIFIER,
@@ -655,9 +655,9 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "GENERATE_INFOPLIST_FILE": "YES",
         "LD_RUNPATH_SEARCH_PATHS": "$(inherited) @loader_path/Frameworks @executable_path/Frameworks",
         "PRODUCT_BUNDLE_IDENTIFIER": TEST_BUNDLE_IDENTIFIER,
-        "PRODUCT_NAME": "IronLogIOSTests",
+        "PRODUCT_NAME": "ThrymIOSTests",
         "TARGETED_DEVICE_FAMILY": "1",
-        "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/IronLogIOS.app/IronLogIOS",
+        "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/ThrymIOS.app/ThrymIOS",
     }
 
     def render_config(config_id: str, name: str, settings: dict[str, str]) -> None:
@@ -703,7 +703,7 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
     for owner in ("project", "app", "tests"):
         lines.extend(
             [
-                f"\t\t{config_lists[owner]} /* Build configuration list for {('PBXProject' if owner == 'project' else 'PBXNativeTarget')} \"{PROJECT_NAME if owner != 'tests' else 'IronLogIOSTests'}\" */ = {{",
+                f"\t\t{config_lists[owner]} /* Build configuration list for {('PBXProject' if owner == 'project' else 'PBXNativeTarget')} \"{PROJECT_NAME if owner != 'tests' else 'ThrymIOSTests'}\" */ = {{",
                 "\t\t\tisa = XCConfigurationList;",
                 "\t\t\tbuildConfigurations = (",
                 f"\t\t\t\t{config_ids[owner]['Debug']} /* Debug */,",
@@ -727,8 +727,8 @@ def render_pbxproj(project_root: Path) -> tuple[str, dict[str, str]]:
         "project": project_id,
         "app_target": app_target_id,
         "tests_target": tests_target_id,
-        "app_product_name": "IronLogIOS.app",
-        "tests_product_name": "IronLogIOSTests.xctest",
+        "app_product_name": "ThrymIOS.app",
+        "tests_product_name": "ThrymIOSTests.xctest",
     }
 
 
@@ -741,7 +741,7 @@ def render_scheme(ids: dict[str, str]) -> str:
     )
     tests_ref = (
         f'<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{ids["tests_target"]}" '
-        f'BuildableName="{ids["tests_product_name"]}" BlueprintName="IronLogIOSTests" '
+        f'BuildableName="{ids["tests_product_name"]}" BlueprintName="ThrymIOSTests" '
         f'ReferencedContainer="{container}" />'
     )
     return "\n".join(
@@ -786,10 +786,10 @@ def render_scheme(ids: dict[str, str]) -> str:
 def main() -> None:
     script_path = Path(__file__).resolve()
     ios_root = script_path.parent
-    app_root = ios_root / "IronLogIOS"
-    tests_root = ios_root / "IronLogIOSTests"
+    app_root = ios_root / "ThrymIOS"
+    tests_root = ios_root / "ThrymIOSTests"
     if not app_root.is_dir() or not tests_root.is_dir():
-        raise SystemExit("IronLogIOS and IronLogIOSTests source directories are required")
+        raise SystemExit("ThrymIOS and ThrymIOSTests source directories are required")
 
     pbxproj, ids = render_pbxproj(ios_root)
     project_dir = ios_root / f"{PROJECT_NAME}.xcodeproj"

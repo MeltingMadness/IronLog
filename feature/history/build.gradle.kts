@@ -4,7 +4,7 @@
 }
 
 android {
-    namespace = "com.ironlog.feature.history"
+    namespace = "com.thrym.feature.history"
     compileSdk = 36
 
     defaultConfig {

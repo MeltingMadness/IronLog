@@ -16,11 +16,11 @@ if (hasReleaseSigning) {
 }
 
 android {
-    namespace = "com.ironlog.app"
+    namespace = "com.thrym.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.ironlog.app"
+        applicationId = "com.thrym.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 9

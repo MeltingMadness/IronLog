@@ -2,7 +2,7 @@
 
 Hinweise für KI-Agenten (Claude Code, Cursor u. a.). Überblick über das Projekt: [`README.md`](README.md). Architektur: [`docs/architektur.md`](docs/architektur.md).
 
-IronLog ist eine Android-App (Kotlin, Jetpack Compose, Package `com.ironlog.app`). Das Modul `:shared` ist Kotlin Multiplatform und zielt zusätzlich auf iOS. Gebaut wird mit Gradle 9.1.0, AGP 9.0.0, Kotlin 2.3.10 und **JDK 17**.
+Thrym ist eine Android-App (Kotlin, Jetpack Compose, Package `com.thrym.app`). Das Modul `:shared` ist Kotlin Multiplatform und zielt zusätzlich auf iOS. Gebaut wird mit Gradle 9.1.0, AGP 9.0.0, Kotlin 2.3.10 und **JDK 17**.
 
 ## Umgebung
 
@@ -29,7 +29,7 @@ Siehe `.github/workflows/android-ci.yml` und [`docs/quality-gates.md`](docs/qual
 - Manche Testnamen sind deutsch (z. B. `logSet erstellt Satz korrekt`). Das ist gewollt.
 - UI-Texte gehören in `core/designsystem/src/main/res/values/strings.xml` oder in die `res/values/*_strings.xml` des Feature-Moduls.
 - Logging nur über `AppLogger` (siehe [`docs/logging-guideline.md`](docs/logging-guideline.md)).
-- Room-Schemaänderungen brauchen: Entity, Migration, exportiertes Schema in `core/database/schemas/`, Migrationstest und ggf. Backup-Format (`:shared`, `CURRENT_BACKUP_SCHEMA_VERSION`). Die Migrationstests in `IronLogDatabaseMigrationTest` und `BackupLifecycleRoundTripTest` prüfen die aktuelle Version und den Identity-Hash explizit und müssen bei jedem Versionssprung mitgezogen werden.
+- Room-Schemaänderungen brauchen: Entity, Migration, exportiertes Schema in `core/database/schemas/`, Migrationstest und ggf. Backup-Format (`:shared`, `CURRENT_BACKUP_SCHEMA_VERSION`). Die Migrationstests in `ThrymDatabaseMigrationTest` und `BackupLifecycleRoundTripTest` prüfen die aktuelle Version und den Identity-Hash explizit und müssen bei jedem Versionssprung mitgezogen werden.
 
 ## Dokumentation pflegen
 

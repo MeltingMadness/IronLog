@@ -9,7 +9,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/../.." && pwd)
 
 die() {
-    printf 'IronLog iOS shared framework: %s\n' "$1" >&2
+    printf 'Thrym iOS shared framework: %s\n' "$1" >&2
     exit 1
 }
 

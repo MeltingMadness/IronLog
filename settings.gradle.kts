@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "IronLog"
+rootProject.name = "Thrym"
 
 include(":app")
 include(":shared")

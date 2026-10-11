@@ -1,7 +1,7 @@
-# IronLog iOS
+# Thrym iOS
 
-Dieses Verzeichnis enthält die native SwiftUI-iPhone-App für IronLog. Die
-Swift-Dateien werden direkt aus `IronLogIOS/` und `IronLogIOSTests/` inventarisiert;
+Dieses Verzeichnis enthält die native SwiftUI-iPhone-App für Thrym. Die
+Swift-Dateien werden direkt aus `ThrymIOS/` und `ThrymIOSTests/` inventarisiert;
 neue Swift-Dateien müssen deshalb nicht in einer zweiten Liste gepflegt werden.
 
 ## Projekt generieren
@@ -11,16 +11,16 @@ Die reproduzierbare Generierung benötigt nur Python 3 aus macOS:
 ```sh
 cd iosApp
 ./generate_project.py
-open IronLogIOS.xcodeproj
+open ThrymIOS.xcodeproj
 ```
 
 `project.yml` bleibt als lesbare XcodeGen-Projektbeschreibung erhalten. Die
 dependency-freie Generierung spiegelt daraus die aktuellen Optionen
 (iOS 17, Swift 5.10, Bundle-ID und Shared-Framework-Pfad) in
-`IronLogIOS.xcodeproj/project.pbxproj`. Sie erzeugt keine Abhängigkeiten und
+`ThrymIOS.xcodeproj/project.pbxproj`. Sie erzeugt keine Abhängigkeiten und
 führt keinen Build aus. Nach neuen Swift-Dateien genügt ein erneuter Aufruf.
 
-Sichtbare UI-Texte stehen im String-Katalog `IronLogIOS/Localizable.xcstrings`.
+Sichtbare UI-Texte stehen im String-Katalog `ThrymIOS/Localizable.xcstrings`.
 Quellsprache und Entwicklungssprache sind Deutsch (`de`); als Schlüssel dient
 der bestehende UI-Text. SwiftUI-Literale nutzen die automatische Lokalisierung,
 String-basierte Beschriftungen und Meldungen verwenden `String(localized:)`.
@@ -49,8 +49,8 @@ Projekt generieren und einen signierungsfreien Simulator-Build starten:
 cd iosApp
 ./generate_project.py
 xcodebuild \
-  -project IronLogIOS.xcodeproj \
-  -scheme IronLogIOS \
+  -project ThrymIOS.xcodeproj \
+  -scheme ThrymIOS \
   -configuration Debug \
   -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' \
@@ -65,11 +65,11 @@ und die für die Änderung relevante Testklasse auswählen, zum Beispiel:
 SIMULATOR_UDID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
 test -n "$SIMULATOR_UDID"
 xcodebuild \
-  -project IronLogIOS.xcodeproj \
-  -scheme IronLogIOS \
+  -project ThrymIOS.xcodeproj \
+  -scheme ThrymIOS \
   -destination "id=$SIMULATOR_UDID" \
   CODE_SIGNING_ALLOWED=NO \
-  -only-testing:IronLogIOSTests/BackupBridgeTests \
+  -only-testing:ThrymIOSTests/BackupBridgeTests \
   test
 ```
 

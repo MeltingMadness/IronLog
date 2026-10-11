@@ -6,7 +6,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.ironlog.shared"
+        namespace = "com.thrym.shared"
         compileSdk = 36
         minSdk = 26
         withHostTestBuilder {}

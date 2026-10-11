@@ -1,6 +1,6 @@
 # Design-System
 
-Stand des Codes in `core/designsystem` (Android) und `iosApp/IronLogIOS/Design` (iOS). Es gibt zwei Darstellungen, wählbar unter Einstellungen → Darstellung: **Liquid Glass** (Standard) und **Ember**. Beide nutzen dieselben Farbschemata, Typografie und Tokens; Liquid Glass legt darüber einen farbigen Hintergrund und Glasflächen. Die Designkonzepte Forge, Raster, Tide und Pulse sind als zusätzliche Farbschemata eingeflossen. Diese Datei beschreibt, was **jetzt** gilt, nicht den Weg dorthin.
+Stand des Codes in `core/designsystem` (Android) und `iosApp/ThrymIOS/Design` (iOS). Es gibt zwei Darstellungen, wählbar unter Einstellungen → Darstellung: **Liquid Glass** (Standard) und **Ember**. Beide nutzen dieselben Farbschemata, Typografie und Tokens; Liquid Glass legt darüber einen farbigen Hintergrund und Glasflächen. Die Designkonzepte Forge, Raster, Tide und Pulse sind als zusätzliche Farbschemata eingeflossen. Diese Datei beschreibt, was **jetzt** gilt, nicht den Weg dorthin.
 
 ## Farbschemata
 
@@ -18,7 +18,7 @@ In den Einstellungen wählbar (`ThemeScheme`). Dazu kommen Hell, Dunkel oder Sys
 
 Die Farben liegen in `theme/Color.kt`, die Zuordnung zu Material-3-Schemata in `theme/Theme.kt`. Die Systemleisten passen sich dem gewählten Design an.
 
-Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. Ungefüllte Text- und Outline-Buttons sowie unselektierte FilterChips verwenden sie über `IronLogInteractiveColors`; selektierte, gefüllte Chips verwenden die zum Container gehörige Gegenfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
+Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. Ungefüllte Text- und Outline-Buttons sowie unselektierte FilterChips verwenden sie über `ThrymInteractiveColors`; selektierte, gefüllte Chips verwenden die zum Container gehörige Gegenfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
 
 Statusbeschriftungen verwenden `MaterialTheme.semanticText` (Erfolg, Gefahr, Warnung, Rose, Himmelblau, Violett, Türkis) mit dunkler Tinte in Hell und heller Tinte in Dunkel. Die bisherigen `semantic`-Farben bleiben für Ringe, Balken, Icons, Rahmen und getönte Flächen. `LiquidGlassContrastTest` prüft die Textrollen gegen alle Glasstufen und Farbschemata mit mindestens 4,5:1.
 
@@ -33,7 +33,7 @@ Beispiel **RPE-Badge** im aktiven Workout: bis 7 grün, bis 8 amber, bis 9 rose,
 
 ## Typografie
 
-Eine Schriftfamilie auf beiden Plattformen: **Geist** von Vercel (SIL Open Font License, Lizenztext in `docs/licenses/Geist-OFL.txt`) in sieben statischen Schnitten von Regular bis Black plus Italic. Android bindet sie in `theme/Type.kt` ein (`res/font/geist_*.ttf`). Die Skala folgt dem Material-Standard: Fließtext 14 bis 16 sp, Labels mindestens 11 sp, alle Stile mit Tabellenziffern (`tnum`). iOS registriert dieselben Dateien über `UIAppFonts` in `Info.plist`; `Design/IronLogFont.swift` liefert `Font.geist(_:weight:)` für die Textstile und `Font.geist(size:weight:relativeTo:)` für feste Größen, beide skalieren mit Dynamic Type. Lesetext ist mindestens 12 pt groß. SF Symbols behalten die Systemschrift.
+Eine Schriftfamilie auf beiden Plattformen: **Geist** von Vercel (SIL Open Font License, Lizenztext in `docs/licenses/Geist-OFL.txt`) in sieben statischen Schnitten von Regular bis Black plus Italic. Android bindet sie in `theme/Type.kt` ein (`res/font/geist_*.ttf`). Die Skala folgt dem Material-Standard: Fließtext 14 bis 16 sp, Labels mindestens 11 sp, alle Stile mit Tabellenziffern (`tnum`). iOS registriert dieselben Dateien über `UIAppFonts` in `Info.plist`; `Design/ThrymFont.swift` liefert `Font.geist(_:weight:)` für die Textstile und `Font.geist(size:weight:relativeTo:)` für feste Größen, beide skalieren mit Dynamic Type. Lesetext ist mindestens 12 pt groß. SF Symbols behalten die Systemschrift.
 
 Für Kennzahlen gibt es zusätzlich `AthleticHero`, `AthleticNumber` (beide mit Tabellenziffern `tnum`) und `AthleticLabel`, genutzt auf dem Dashboard und im aktiven Workout.
 
@@ -42,26 +42,26 @@ Für Kennzahlen gibt es zusätzlich `AthleticHero`, `AthleticNumber` (beide mit 
 In `theme/DesignTokens.kt` und `theme/ThemeTokens.kt`:
 
 - `Radius` (xs 6 dp … xxl 28 dp, `pill`), `IconSize`, `ButtonSize`
-- `MaterialTheme.ironLogDimens`, `.ironLogMotion`, `.ironLogSurfaceRoles`
-- Wer „reduzierte Animationen“ einschaltet, bekommt kürzere bzw. keine Bewegungen (`ironLogMotion`).
+- `MaterialTheme.thrymDimens`, `.thrymMotion`, `.thrymSurfaceRoles`
+- Wer „reduzierte Animationen“ einschaltet, bekommt kürzere bzw. keine Bewegungen (`thrymMotion`).
 
 Neue Abstände und Größen gehören in die Tokens, nicht als feste `dp`-Werte in die Screens.
 
 ## Oberflächen
 
 - `Modifier.glassmorphism()` (`theme/Glassmorphism.kt`): halbtransparente Karte mit Tönung in der Primärfarbe des aktiven Schemas und Glanzkante. Dazu `Modifier.glow()`.
-- `IronLogSurfaceCard` mit den Tönen `ELEVATED`, `MUTED`, `ACCENT`, `COLORED`
+- `ThrymSurfaceCard` mit den Tönen `ELEVATED`, `MUTED`, `ACCENT`, `COLORED`
 - `StatCard` mit den Varianten `PRIMARY`, `SECONDARY`, `TERTIARY`. Kacheln einer Gruppe nutzen dieselbe Variante und gleiche Höhe (Übungsstatistik: Standardvariante in `IntrinsicSize.Min`-Zeilen).
-- `IronLogScreenScaffold`: gemeinsames Gerüst für alle Screens
+- `ThrymScreenScaffold`: gemeinsames Gerüst für alle Screens
 
 ## Liquid Glass
 
-Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `IronLogAppearance.liquidGlass`). Wer Ember ausdrücklich gewählt hat, behält es; Ember-Screens bleiben unverändert erhalten. Die Umschaltung liegt je Screen in einer eigenen Glas-Variante (`*Glass.kt` bzw. `*Glass.swift`), Logik und gespeicherte Daten sind in beiden Darstellungen gleich.
+Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `ThrymAppearance.liquidGlass`). Wer Ember ausdrücklich gewählt hat, behält es; Ember-Screens bleiben unverändert erhalten. Die Umschaltung liegt je Screen in einer eigenen Glas-Variante (`*Glass.kt` bzw. `*Glass.swift`), Logik und gespeicherte Daten sind in beiden Darstellungen gleich.
 
-- Glasstufen: `GlassLevel.STANDARD`, `STRONG`, `TINT` (Android, `theme/LiquidGlass.kt`, `Modifier.liquidGlass`) bzw. `IronLogGlassLevel` (iOS, `Design/IronLogLiquidGlass.swift`, `.liquidGlass(_:in:)`).
+- Glasstufen: `GlassLevel.STANDARD`, `STRONG`, `TINT` (Android, `theme/LiquidGlass.kt`, `Modifier.liquidGlass`) bzw. `ThrymGlassLevel` (iOS, `Design/ThrymLiquidGlass.swift`, `.liquidGlass(_:in:)`).
 - Nur `STRONG` weichzeichnet den Hintergrund: Android über Haze ab Android 12, iOS über `.ultraThinMaterial`. Darunter, bei reduzierten Animationen und bei „Transparenz reduzieren“ (iOS) gibt es eine fast deckende Tönung.
-- Der farbige Hintergrund (`LiquidBackground` / `IronLogLiquidBackground`) besteht aus radialen Verläufen in der Akzentfarbe, Türkis und Violett und wird einmal hinter der App gezeichnet (Android: `LiquidGlassHost` in `MainActivity`).
-- `IronLogSurfaceCard`, `Modifier.glassmorphism()` und `IronLogCard` schalten automatisch um; Ember-Karten bleiben unverändert.
+- Der farbige Hintergrund (`LiquidBackground` / `ThrymLiquidBackground`) besteht aus radialen Verläufen in der Akzentfarbe, Türkis und Violett und wird einmal hinter der App gezeichnet (Android: `LiquidGlassHost` in `MainActivity`).
+- `ThrymSurfaceCard`, `Modifier.glassmorphism()` und `ThrymCard` schalten automatisch um; Ember-Karten bleiben unverändert.
 - Navigation: Android zeigt statt der `NavigationBar` eine schwebende Glas-Pille (`BottomNavBar`, Stufe `STRONG`); der aktive Tab ist ein heller Chip mit Icon und Text, die übrigen Tabs zeigen nur das Icon. iOS behält die System-Tableiste, auf iOS 26 ist sie selbst Liquid Glass.
 - Startseite: Kopf mit Datum, Begrüßung und rundem Glasknopf (Android Einstellungen, iOS Statistiken) statt der Titelleiste. Die Hauptkarte (`GlassCommandCenterCard` / `IOSDashboardGlassCommandCenter`, Stufe `STRONG`) zeigt den vorgeschlagenen Plan mit den ersten drei Übungen samt Ziel („3 × 8 · 80 kg“) und einen Start-Knopf als helle Pille mit farbigem Play-Kreis. Die Wochenleiste (`GlassWeekStrip` / `IOSDashboardGlassWeekStrip`) ersetzt die Wochen- und Monatskachel: je Tag eine Linse (trainiert, heute, offen), dazu Trainings und Volumen der Woche. Die übrigen Karten werden zu Glas (Android über `DashboardPanel`); Inhalt und Verhalten bleiben gleich.
 - Training: Kopf mit Plan und „Übung x von n“, der Trainingszeit als große Zahl, Sätzen und Volumen sowie „Beenden“ als Glaspille (iOS zusätzlich ein Menü für Notiz und Verwerfen). Darunter eine Übungsleiste (erledigt, aktuell, kommend); ein Tipp scrollt zur Übung. Die offene Übung liegt auf Glasstufe `STRONG`. Die Satzeingabe zeigt Gewicht und Wiederholungen als große Zahlen mit runden −/+-Knöpfen (2,5 kg bzw. 5 lb, 1 Wdh), RPE/RIR als Auswahlleiste und „Satz loggen“ als helle Pille (`WorkoutGlass.kt` / `IOSWorkoutGlass.swift`). Eingabelogik und gespeicherte Werte sind dieselben wie in Ember.
@@ -69,10 +69,10 @@ Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `IronLogAppearance.liq
 - Abschluss: Datum und Plan, „Geschafft.“ (bzw. „Teiltraining gespeichert“), drei Glas-Linsen für Dauer, Volumen und Übungen, neue Rekorde auf getöntem Glas (`TINT`), die geloggten Sätze je Übung als Glaskarte und „Fertig“ als helle Pille (`WorkoutCompletionGlass.kt` / `IOSWorkoutCompletionScreen.glassBody`). Die Folgeaktionen (Plan anpassen, Progression) sind dieselben wie in Ember.
 - Verlauf: großer Titel und Suche als Glaspille statt Titelleiste; Filter bleiben. Je Woche (Montag bis Sonntag) eine Glaskarte mit „Diese Woche“, „Letzte Woche“ oder Kalenderwoche, der Zahl der Trainings, Zeitraum und Gesamtzeit sowie Mini-Balken Mo–So (Höhe = Trainingsminuten des Tages). Die Balken zählen alle Trainings der Woche, auch wenn ein Filter einzelne ausblendet. Darunter die Trainings als Glaszeilen mit Datums-Linse; Wischen zum Löschen bleibt. Android fügt die Wochenkarten als Trennelemente ins Paging ein (`HistoryListEntry`, `historyWeekSeparator`, `summarizeHistoryWeeks` in `HistoryWeeks.kt`), iOS gruppiert über `IOSHistoryWeek.group` (`IOSHistoryGlass.swift`).
 - Übungsstatistik: eigener Kopf statt Titelleiste, darunter eine Glaskarte mit dem letzten Wert der gewählten Kennzahl, der Veränderung als getöntem Chip, einer Verlaufskurve und einer Auswahlleiste für Gewicht, e1RM und Volumen. Die Rekorde stehen als 2×2-Kacheln darunter (`ExerciseStatsGlass.kt` / `IOSExerciseStatisticsGlass.swift`); die übrigen Karten bleiben wie in Ember, nur auf Glas.
-- Übrige Screens (Pläne, Plan-Editor, Meta-Pläne, Übungen, Einstellungen, Trainingsdetails, Progression): Android nutzt `IronLogTopBar` (`common/IronLogTopBar.kt`); in Liquid Glass hat sie einen größeren Titel, der Zurück-Knopf ist ein runder Glasknopf und die Aktionen liegen gemeinsam in einer Glaspille. Plankarten zeigen „Training starten“ als helle Pille mit farbigem Play-Kreis. In der Übungsbibliothek ist jede Übung eine eigene Glaszeile; die Suche ist dort wie im Verlauf eine Glaspille (`GlassSearchField` in `common/GlassSearchField.kt`). iOS legt die Zeilen aller Listen und Formulare über `.ironLogListRows()` auf durchscheinendes Glas; auch aufgerufene Screens und Sheets setzen `.ironLogScreenBackground()`.
+- Übrige Screens (Pläne, Plan-Editor, Meta-Pläne, Übungen, Einstellungen, Trainingsdetails, Progression): Android nutzt `ThrymTopBar` (`common/ThrymTopBar.kt`); in Liquid Glass hat sie einen größeren Titel, der Zurück-Knopf ist ein runder Glasknopf und die Aktionen liegen gemeinsam in einer Glaspille. Plankarten zeigen „Training starten“ als helle Pille mit farbigem Play-Kreis. In der Übungsbibliothek ist jede Übung eine eigene Glaszeile; die Suche ist dort wie im Verlauf eine Glaspille (`GlassSearchField` in `common/GlassSearchField.kt`). iOS legt die Zeilen aller Listen und Formulare über `.thrymListRows()` auf durchscheinendes Glas; auch aufgerufene Screens und Sheets setzen `.thrymScreenBackground()`.
 - Sheets, Dialoge und Menüs (Android) nutzen in Liquid Glass die neutralen Glastöne des Themes (`withLiquidGlassContainers` in `theme/Theme.kt`). Ausgewählte Chips, Segmente und Tonal-Buttons sind dort weiß auf dunklem bzw. fast schwarz auf hellem Glas. Lade-Platzhalter nutzen eine schwache neutrale Tönung statt der Ember-Fläche.
 - Hell: Liquid Glass folgt der Einstellung Hell/Dunkel/System. Auf hellem Grund ist das Glas Milchglas, aktive Elemente (Tab, Start-Knopf, Auswahl) sind dunkel.
-- iOS-Screens setzen ihren Hintergrund über `.ironLogScreenBackground(ember:emberNavigationBar:)` innerhalb des obersten `NavigationStack`. In Liquid Glass blendet der Modifier die System-Hintergründe von Listen und Formularen aus, zeichnet `IronLogLiquidBackground` und macht Navigations- und Tableiste zu Material; in Ember bleiben die bisherigen Farben.
+- iOS-Screens setzen ihren Hintergrund über `.thrymScreenBackground(ember:emberNavigationBar:)` innerhalb des obersten `NavigationStack`. In Liquid Glass blendet der Modifier die System-Hintergründe von Listen und Formularen aus, zeichnet `ThrymLiquidBackground` und macht Navigations- und Tableiste zu Material; in Ember bleiben die bisherigen Farben.
 
 ## Zahlen und Texte
 
@@ -86,13 +86,13 @@ Gilt für Android und iOS gleich:
 
 ## Gemeinsame Komponenten (`presentation/common`)
 
-`SetInputRow`, `CompactTextField`, `IronLogTextField`, `RestTimer`, `WorkoutTimer`, `PlateVisualizer`, `WeeklyMuscleVolumeCard`, `EmptyStateScreen`, `LoadingScreen`, `ShimmerSkeleton`, `SharedTransition`, `HapticFeedback`, `ErrorUiMapper`.
+`SetInputRow`, `CompactTextField`, `ThrymTextField`, `RestTimer`, `WorkoutTimer`, `PlateVisualizer`, `WeeklyMuscleVolumeCard`, `EmptyStateScreen`, `LoadingScreen`, `ShimmerSkeleton`, `SharedTransition`, `HapticFeedback`, `ErrorUiMapper`.
 
 **Scheibenfarben:** `PlateColors` in `theme/Color.kt` folgt der üblichen Kodierung (25 kg rot, 20 kg blau, 15 kg gelb, 10 kg grün, 5 kg weiß, kleinere Scheiben grau/silber).
 
 ## App-Hülle
 
-- Splash-Screen (`Theme.IronLog.Splash`): Hintergrund `#0C0806`, Icon-Hintergrund `#FF6B00`. Er bleibt sichtbar, bis die Design-Einstellungen geladen sind. So gibt es keinen weißen Blitz.
+- Splash-Screen (`Theme.Thrym.Splash`): Hintergrund `#0C0806`, Icon-Hintergrund `#FF6B00`. Er bleibt sichtbar, bis die Design-Einstellungen geladen sind. So gibt es keinen weißen Blitz.
 - App-Icon „Level Up“: eine Pixel-Langhantel (dunkle und weiße Scheiben, schwarze Kontur) über einer Erfahrungsleiste mit zehn Segmenten, sieben davon voll, auf Amber-Verlauf `#FF8A2A` → `#E85500`. Android: adaptives Icon mit monochromer Variante (`app/src/main/res/drawable/ic_launcher_*`), der Inhalt liegt in der sicheren Zone. iOS: `Assets.xcassets/AppIcon.appiconset` (1024-px-PNG ohne Transparenz, `AppIcon.svg` als Quelle). Beide Plattformen nutzen dasselbe Pixelraster; wer das Icon ändert, ändert beide.
 
 ## Texte

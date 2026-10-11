@@ -1,4 +1,4 @@
-# IronLog iOS: Funktionsstand und Abnahme
+# Thrym iOS: Funktionsstand und Abnahme
 
 Stand: 9. September 2026. Android bleibt die fachliche Referenz. Diese Liste unterscheidet implementierte Funktionen von tatsächlich geprüften Abläufen; sie ist keine Releasefreigabe.
 
@@ -6,7 +6,7 @@ Stand: 9. September 2026. Android bleibt die fachliche Referenz. Diese Liste unt
 
 Die native SwiftUI-App baut mit Xcode 26.6 und läuft im iPhone-17-Simulator mit iOS 26.5. Dashboard, Training, Verlauf, Pläne und Einstellungen sind echte Screens. Statistik, Progressionsreview, Übungsbibliothek und Editoren sind angebunden. Die früheren Swift-Compiler- und Simulator-Installationsblocker sind behoben.
 
-Der gemeinsame Kotlin-Kern besitzt den kanonischen Trainingsgraphen, Progressionsregeln, Bestleistungen und Auswertungen. iOS speichert den validierten Graphen atomar unter `Application Support/IronLog/training-state.json`. Änderungen werden erst nach erfolgreicher Speicherung veröffentlicht. Einstellungen liegen in NSUserDefaults. Die ältere Repository-Abstraktion ist nicht der direkte UI-Zugriff: Swift verwendet `IosTrainingFeature` und `IosSettingsFeature` als Plattformbrücken zum gemeinsamen Kern.
+Der gemeinsame Kotlin-Kern besitzt den kanonischen Trainingsgraphen, Progressionsregeln, Bestleistungen und Auswertungen. iOS speichert den validierten Graphen atomar unter `Application Support/Thrym/training-state.json`. Änderungen werden erst nach erfolgreicher Speicherung veröffentlicht. Einstellungen liegen in NSUserDefaults. Die ältere Repository-Abstraktion ist nicht der direkte UI-Zugriff: Swift verwendet `IosTrainingFeature` und `IosSettingsFeature` als Plattformbrücken zum gemeinsamen Kern.
 
 ## Bereits nachgewiesen
 
@@ -49,10 +49,10 @@ Gezielte Kotlin-Tests laufen mit JDK 17, zum Beispiel:
 JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew --offline --no-daemon :shared:testAndroidHostTest --tests '*DeloadTargetAdjustmentTest' --tests '*SharedTrainingAnalyticsTest'
 ```
 
-Dieser Aufruf war am 9. September erfolgreich (`/tmp/ironlog-ios-deload-week-test.log`). Frühere gezielte Nachweise liegen in `/tmp/ironlog-ios-framework-import-test.log`, `/tmp/ironlog-ios-focused-retest.log` und `/tmp/ironlog-ios-plates-test.log`. Temporäre Logs sind lokale Prüfevidenz, keine dauerhaften CI-Artefakte.
+Dieser Aufruf war am 9. September erfolgreich (`/tmp/thrym-ios-deload-week-test.log`). Frühere gezielte Nachweise liegen in `/tmp/thrym-ios-framework-import-test.log`, `/tmp/thrym-ios-focused-retest.log` und `/tmp/thrym-ios-plates-test.log`. Temporäre Logs sind lokale Prüfevidenz, keine dauerhaften CI-Artefakte.
 
 Die beim Android-/iOS-Abgleich gefundenen Funktionslücken sind implementiert und in den integrierten nativen Build aufgenommen. Die kritischen Trainings-, Progressions- und Datenübernahmeabläufe sind gezielt geprüft; dies ist keine exhaustive UI- oder Release-Abnahme. Signierung, TestFlight/App-Store-Verteilung und ein Test auf einem physischen iPhone sind separat zu bewerten.
 
-Weitere Prüfevidenz: `/tmp/ironlog-ios-history-edit-test.log` (Store/Validator gezielt grün), `/tmp/ironlog-ios-android-compat-build.log` (Android-Debug-APK erfolgreich), XcodeBuildMCP `test_sim_2026-09-09T21-13-07-886Z` (2 BackupBridgeTests, 0 Fehler).
+Weitere Prüfevidenz: `/tmp/thrym-ios-history-edit-test.log` (Store/Validator gezielt grün), `/tmp/thrym-ios-android-compat-build.log` (Android-Debug-APK erfolgreich), XcodeBuildMCP `test_sim_2026-09-09T21-13-07-886Z` (2 BackupBridgeTests, 0 Fehler).
 
-Aktuelle Integrationsevidenz: `/tmp/ironlog-ios-parity-critical-test.log` (40 Tests: Store 17, Analytics 8, NextSetCoach 5, Android-RPE-Adapter 10; 0 Fehler), XcodeBuildMCP `test_sim_2026-09-09T21-40-23-677Z` (4 native Recovery-/Timer-Tests; 0 Fehler), `build_run_sim_2026-09-09T21-42-50-715Z` (integrierter Build/Installation/Start erfolgreich). Das originale Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.
+Aktuelle Integrationsevidenz: `/tmp/thrym-ios-parity-critical-test.log` (40 Tests: Store 17, Analytics 8, NextSetCoach 5, Android-RPE-Adapter 10; 0 Fehler), XcodeBuildMCP `test_sim_2026-09-09T21-40-23-677Z` (4 native Recovery-/Timer-Tests; 0 Fehler), `build_run_sim_2026-09-09T21-42-50-715Z` (integrierter Build/Installation/Start erfolgreich). Das originale Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.

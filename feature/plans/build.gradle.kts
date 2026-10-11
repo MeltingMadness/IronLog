@@ -4,7 +4,7 @@
 }
 
 android {
-    namespace = "com.ironlog.feature.plans"
+    namespace = "com.thrym.feature.plans"
     compileSdk = 36
 
     defaultConfig {

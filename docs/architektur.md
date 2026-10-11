@@ -1,6 +1,6 @@
 # Architektur
 
-MVVM mit Clean-Architecture-Schichten, aufgeteilt in Gradle-Module. Die Pakete heißen durchgehend `com.ironlog.app.*`, auch wenn die Module anders aufgeteilt sind.
+MVVM mit Clean-Architecture-Schichten, aufgeteilt in Gradle-Module. Die Pakete heißen durchgehend `com.thrym.app.*`, auch wenn die Module anders aufgeteilt sind.
 
 ## Module
 
@@ -34,7 +34,7 @@ iosApp/                 Native SwiftUI-App, siehe iosApp/README.md
 
 ## Datenbank (Room, Version 15)
 
-Das exportierte Schema liegt in `core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/15.json`. Es gibt durchgehende Migrationen von 1 bis 15. Migration 14→15 ergänzt die Erfolgsbestätigung und stellt aktive Planregeln auf Revision 2 um; historische Snapshots behalten ihre Revision. Tests dazu: `app/src/androidTest/.../IronLogDatabaseMigrationTest.kt`.
+Das exportierte Schema liegt in `core/database/schemas/com.thrym.app.data.local.ThrymDatabase/15.json`. Es gibt durchgehende Migrationen von 1 bis 15. Migration 14→15 ergänzt die Erfolgsbestätigung und stellt aktive Planregeln auf Revision 2 um; historische Snapshots behalten ihre Revision. Tests dazu: `app/src/androidTest/.../ThrymDatabaseMigrationTest.kt`.
 
 | Tabelle | Zweck | Wichtige Beziehungen |
 |---|---|---|
@@ -62,7 +62,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Backup
 
-- Format: JSON, `BackupPayloadV1` mit `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.ironlog.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
+- Format: JSON, `BackupPayloadV1` mit `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.thrym.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
 - Ältere Backups ohne neuere Felder (Meta-Plan-Skips, Progression, Readiness, Satzvorgaben) lassen sich weiter importieren. Backups aus einer neueren App-Version werden mit einer klaren Meldung abgelehnt. Fehlende Felder bekommen sichere Standardwerte.
 - Vor jedem Import und jeder Wiederherstellung legt die App ein **internes Sicherheitsbackup** an und prüft es per SHA-256 (`FileRecoveryBackupStore`).
 - Einstellungen und Erinnerungen sind **nicht** Teil des Backups.
@@ -73,7 +73,7 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Kotlin Multiplatform (`:shared`)
 
-Enthält den plattformneutralen Kern (`com.ironlog.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
+Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
 
 Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App speichert den Trainingsgraphen aus `store` als JSON-Datei und greift über `IosTrainingFeature` und `IosSettingsFeature` auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md).
 

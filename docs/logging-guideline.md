@@ -1,4 +1,4 @@
-# Logging-Richtlinie (IronLog)
+# Logging-Richtlinie (Thrym)
 
 ## Ziel
 - Nutzerdaten sicher loggen, ohne personenbezogene oder sensible Trainingsdaten offenzulegen.

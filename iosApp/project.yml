@@ -1,4 +1,4 @@
-name: IronLogIOS
+name: ThrymIOS
 options:
   developmentLanguage: de
   createIntermediateGroups: true
@@ -7,23 +7,23 @@ configs:
   Release: release
 settings:
   base:
-    PRODUCT_NAME: IronLogIOS
+    PRODUCT_NAME: ThrymIOS
     SWIFT_VERSION: 5.10
     DEVELOPMENT_TEAM: ""
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
 targets:
-  IronLogIOS:
+  ThrymIOS:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: IronLogIOS
+      - path: ThrymIOS
     dependencies:
       - framework: ../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework
         embed: false
         codeSign: false
     info:
-      path: IronLogIOS/Info.plist
+      path: ThrymIOS/Info.plist
       properties:
         CFBundleDisplayName: $(APP_DISPLAY_NAME)
         UIApplicationSceneManifest:
@@ -31,9 +31,9 @@ targets:
         UILaunchScreen: {}
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ironlog.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.thrym.ios
         APP_DISPLAY_NAME: Thrym # aus ../branding.properties, siehe generate_project.py
-        INFOPLIST_FILE: IronLogIOS/Info.plist
+        INFOPLIST_FILE: ThrymIOS/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         FRAMEWORK_SEARCH_PATHS: $(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
@@ -41,24 +41,24 @@ targets:
       - name: Build Shared Framework
         script: |
           "$SRCROOT/scripts/build-shared.sh"
-  IronLogIOSTests:
+  ThrymIOSTests:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: IronLogIOSTests
+      - path: ThrymIOSTests
     dependencies:
-      - target: IronLogIOS
+      - target: ThrymIOS
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ironlog.ios.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.thrym.ios.tests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
-  IronLogIOS:
+  ThrymIOS:
     build:
       targets:
-        IronLogIOS: all
-        IronLogIOSTests: [test]
+        ThrymIOS: all
+        ThrymIOSTests: [test]
     test:
       targets:
-        - IronLogIOSTests
+        - ThrymIOSTests

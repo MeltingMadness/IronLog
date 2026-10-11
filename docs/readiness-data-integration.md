@@ -20,17 +20,17 @@ HealthKit/Cloud, ein zeitloser "heute"-Check-in sowie jede Neuinterpretation von
 
 ## Abgrenzung zu vorhandenen Konzepten
 
-- `com.ironlog.shared.analytics.TrainingReadiness` / `TrainingReadinessScore` ist eine
+- `com.thrym.shared.analytics.TrainingReadiness` / `TrainingReadinessScore` ist eine
   **abgeleitete Trainingsbereitschaft** aus Trainingsdaten (Fatigue-Score, Deload-Hinweis).
   Der neue Check-in ist eine **subjektive Nutzerangabe pro Tag** und unabhängig davon. Beide
   können nebeneinander existieren; die Tagesform ersetzt keine abgeleitete Kennzahl.
-- Android `com.ironlog.app.domain.model.SetType.FAILURE` beschreibt, **wie** ein Satz geloggt
+- Android `com.thrym.app.domain.model.SetType.FAILURE` beschreibt, **wie** ein Satz geloggt
   wurde (bis zum Versagen ausgeführt). Die neue `SetIntention` beschreibt, **warum** er so
   endete. Beide Achsen sind orthogonal und werden nicht ineinander übersetzt.
 
 ## Neue portable Dateien (commonMain)
 
-Alle unter `shared/src/commonMain/kotlin/com/ironlog/shared/readinessdata/`:
+Alle unter `shared/src/commonMain/kotlin/com/thrym/shared/readinessdata/`:
 
 | Datei | Inhalt |
 |---|---|
@@ -57,8 +57,8 @@ Schicht direkt in `commonMain` testbar und für beide Clients identisch.
   Default "heute".
 - Alle Einschätzungen sind optional. `null` heißt "nicht beantwortet"; ein fehlender
   Muskelgruppen-Key heißt "nicht gemeldet". Beide Zustände bleiben nach Export/Import erhalten.
-- Muskelkater nutzt die bestehenden zehn `com.ironlog.shared.model.MuscleGroup`-Werte
-  (`BRUST` ... `WADEN`), sodass Android (`com.ironlog.app.domain.model.MuscleGroup`) und iOS
+- Muskelkater nutzt die bestehenden zehn `com.thrym.shared.model.MuscleGroup`-Werte
+  (`BRUST` ... `WADEN`), sodass Android (`com.thrym.app.domain.model.MuscleGroup`) und iOS
   denselben Wortschatz teilen.
 
 ### Satzintention
@@ -116,7 +116,7 @@ Trainingsgraphen oder dessen Backup-Schema zu berühren.
 ### Warnung: Satzintention ist an die SetID des Graphen gebunden
 
 Satzintentionen referenzieren die rohe `setId` der Trainingsdatenbank. `setId`s sind **nur
-innerhalb desselben Graphen** vergleichbar. Der Haupt-Backup-Import in IronLog **ersetzt den
+innerhalb desselben Graphen** vergleichbar. Der Haupt-Backup-Import in Thrym **ersetzt den
 gesamten Trainingsgraphen** (Room-Transaktion, kein freies Merge einzelner Records). Deshalb:
 
 - `ReadinessDataMerger` darf **nicht** blind für den Haupt-Backup-Import oder zum Zusammenführen
@@ -137,7 +137,7 @@ Die portable Schicht ist absichtlich nicht verdrahtet. Vorgesehene, getrennte Ad
 - **Ablage (Entscheidung)**: eine Room-Single-Row-Tabelle mit dem kanonischen JSON-String
   (`ReadinessDataCodec.encode`) plus separater Import/Export in einer **atomaren Transaktion**.
   Kein Aufsplitten in mehrere Tabellen; der validierte JSON-String ist die Quelle der Wahrheit,
-  Room speichert ihn nur. Neue Tabelle in `core/database` (`IronLogDatabase`, aktuell
+  Room speichert ihn nur. Neue Tabelle in `core/database` (`ThrymDatabase`, aktuell
   `version = 12`), Migration 12 -> 13 additiv mit `CREATE TABLE IF NOT EXISTS`.
 - **Repository**: neues `ReadinessRepository` in `core/model` + Implementierung in `data`
   (analog `AppPreferencesRepositoryImpl`), das `ReadinessDataCodec`/`-Validator` nutzt.
@@ -151,7 +151,7 @@ Die portable Schicht ist absichtlich nicht verdrahtet. Vorgesehene, getrennte Ad
 
 - **Ablage**: eigener versionierter JSON-String über den vorhandenen Musterpfad
   (`IOSSettingsViewModel`/`NSUserDefaults` oder eine eigene Datei unter
-  `Application Support/IronLog/`, analog `training-state.json`).
+  `Application Support/Thrym/`, analog `training-state.json`).
 - **Brücke**: neue Methode(n) in `IosTrainingFeature` oder ein eigenes `IosReadinessFeature`
   (`shared/src/iosMain`), die `ReadinessDataCodec`/`-Merger` exponieren.
 - **Backup (Entscheidung)**: iOS setzt **BackupPayload-Schema 13 mit `readinessData`** und nutzt
@@ -181,7 +181,7 @@ Die portable Schicht ist absichtlich nicht verdrahtet. Vorgesehene, getrennte Ad
 
 ## Tests
 
-`shared/src/commonTest/kotlin/com/ironlog/shared/readinessdata/`:
+`shared/src/commonTest/kotlin/com/thrym/shared/readinessdata/`:
 
 - `ReadinessDataCodecTest`: Roundtrip, ISO-Datum, Altbestand ohne Intention -> `UNKNOWN`,
   fail-closed bei Skalenwerten außerhalb 1..5, unbekannten Keys, kaputtem JSON, unparsbarem

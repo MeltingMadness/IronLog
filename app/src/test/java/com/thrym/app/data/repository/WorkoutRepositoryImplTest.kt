@@ -1,0 +1,1190 @@
+package com.thrym.app.data.repository
+
+import com.thrym.app.data.db.TransactionRunner
+import com.thrym.app.data.local.dao.PersonalRecordDao
+import com.thrym.app.data.local.dao.ProgressionDao
+import com.thrym.app.data.local.dao.TrainingPlanDao
+import com.thrym.app.data.local.dao.WorkoutSessionDao
+import com.thrym.app.data.local.dao.WorkoutSetDao
+import com.thrym.app.data.local.entity.PlanExerciseEntity
+import com.thrym.app.data.local.entity.PersonalRecordEntity
+import com.thrym.app.data.local.entity.TrainingPlanEntity
+import com.thrym.app.data.local.entity.WorkoutPlanTargetEntity
+import com.thrym.app.data.local.entity.WorkoutSessionEntity
+import com.thrym.app.data.local.entity.WorkoutSetEntity
+import com.thrym.app.data.local.entity.ProgressionConfigColumns
+import com.thrym.app.data.local.entity.ProgressionTargetColumns
+import com.thrym.app.domain.model.PreviousSessionScope
+import com.thrym.app.domain.model.DeloadMode
+import com.thrym.app.domain.model.RecordType
+import com.thrym.app.domain.model.SetType
+import com.thrym.app.domain.model.WorkoutSet
+import com.thrym.app.domain.repository.ReadinessRepository
+import com.thrym.app.domain.util.WorkoutCalculations
+import com.thrym.shared.readinessdata.SetIntention
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
+import io.mockk.mockk
+import io.mockk.slot
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Before
+import org.junit.Test
+import java.time.LocalDateTime
+
+class WorkoutRepositoryImplTest {
+
+    private val sessionDao: WorkoutSessionDao = mockk()
+    private val setDao: WorkoutSetDao = mockk(relaxed = true)
+    private val personalRecordDao: PersonalRecordDao = mockk(relaxed = true)
+    private val trainingPlanDao: TrainingPlanDao = mockk(relaxed = true)
+    private val progressionDao: ProgressionDao = mockk(relaxed = true)
+    private val transactionRunner = object : TransactionRunner {
+        override suspend fun <T> runInTransaction(block: suspend () -> T): T = block()
+    }
+    private val repository = WorkoutRepositoryImpl(
+        sessionDao,
+        setDao,
+        personalRecordDao,
+        trainingPlanDao,
+        progressionDao,
+        transactionRunner
+    )
+
+    @Test
+    fun `startWorkout returns existing active session id and does not insert`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns WorkoutSessionEntity(
+            id = 42L,
+            startTime = 1_700_000_000_000,
+            name = "Laufendes Training"
+        )
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        val result = repository.startWorkout("Neues Training")
+
+        assertEquals(42L, result)
+        coVerify(exactly = 0) { sessionDao.insert(any()) }
+    }
+
+    @Test
+    fun `startWorkout inserts new session when no active session exists`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        val result = repository.startWorkout("Neues Training")
+
+        assertEquals(99L, result)
+        coVerify(exactly = 1) {
+            sessionDao.insert(match { entity -> entity.name == "Neues Training" })
+        }
+    }
+
+    @Test
+    fun `startWorkout captures an active deload mode as the session context`() = runTest {
+        val deloadRepository = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            transactionRunner
+        ) { DeloadMode.HALVE_SET_VOLUME }
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        deloadRepository.startWorkout("Deload")
+
+        coVerify(exactly = 1) { sessionDao.insert(match { it.isDeload == true }) }
+    }
+
+    @Test
+    fun `startWorkout records an explicit non-deload session without an active deload mode`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        repository.startWorkout("Normal")
+
+        coVerify(exactly = 1) { sessionDao.insert(match { it.isDeload == false }) }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises returns empty map for empty exercise ids`() = runTest {
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = 1L,
+            exerciseIds = emptyList(),
+            scope = PreviousSessionScope.Global
+        )
+
+        assertEquals(emptyMap<Long, com.thrym.app.domain.model.PreviousExerciseSession>(), result)
+        coVerify(exactly = 0) { setDao.getMostRecentCompletedSetsForExercises(any(), any()) }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises maps session and last work set`() = runTest {
+        val currentSessionId = 1L
+        val exerciseId = 11L
+        val previousSessionId = 42L
+
+        coEvery {
+            setDao.getMostRecentCompletedSetsForExercises(currentSessionId, listOf(exerciseId))
+        } returns listOf(
+            WorkoutSetEntity(
+                id = 100L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 30.0,
+                setType = "WARMUP",
+                completedAt = 1_000L
+            ),
+            WorkoutSetEntity(
+                id = 101L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 2,
+                reps = 6,
+                weightKg = 80.0,
+                setType = "NORMAL",
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(previousSessionId)) } returns listOf(
+            WorkoutSessionEntity(
+                id = previousSessionId,
+                startTime = 1_700_000_000_000,
+                endTime = 1_700_000_300_000
+            )
+        )
+
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = currentSessionId,
+            exerciseIds = listOf(exerciseId),
+            scope = PreviousSessionScope.Global
+        )
+
+        val previous = result[exerciseId]
+        assertEquals(1, result.size)
+        assertEquals(previousSessionId, previous?.sessionId)
+        assertEquals(80.0, previous?.lastWorkSetWeightKg ?: 0.0, 0.01)
+        assertEquals(2, previous?.sets?.size)
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises uses plan scoped query when plan id is provided`() = runTest {
+        val currentSessionId = 1L
+        val exerciseId = 11L
+        val planId = 55L
+        val previousSessionId = 42L
+
+        coEvery {
+            setDao.getMostRecentCompletedSetsForPlanExercises(currentSessionId, listOf(exerciseId), planId)
+        } returns listOf(
+            WorkoutSetEntity(
+                id = 101L,
+                sessionId = previousSessionId,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 6,
+                weightKg = 80.0,
+                setType = "NORMAL",
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(previousSessionId)) } returns listOf(
+            WorkoutSessionEntity(
+                id = previousSessionId,
+                startTime = 1_700_000_000_000,
+                endTime = 1_700_000_300_000,
+                planId = planId
+            )
+        )
+
+        val result = repository.getPreviousSessionDataForExercises(
+            currentSessionId = currentSessionId,
+            exerciseIds = listOf(exerciseId),
+            scope = PreviousSessionScope.SharedPlan(planId)
+        )
+
+        assertEquals(previousSessionId, result[exerciseId]?.sessionId)
+        coVerify(exactly = 1) {
+            setDao.getMostRecentCompletedSetsForPlanExercises(currentSessionId, listOf(exerciseId), planId)
+        }
+        coVerify(exactly = 0) {
+            setDao.getMostRecentCompletedSetsForExercises(any(), any())
+        }
+    }
+
+    @Test
+    fun `planned workout snapshots every plan position including duplicate exercises`() = runTest {
+        val insertedTargets = slot<List<WorkoutPlanTargetEntity>>()
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+        coEvery { trainingPlanDao.getPlanById(3L) } returns TrainingPlanEntity(
+            id = 3L,
+            name = "Two squats",
+            createdAt = 1_700_000_000_000
+        )
+        coEvery { trainingPlanDao.getExercisesForPlan(3L) } returns listOf(
+            PlanExerciseEntity(
+                id = 11L,
+                planId = 3L,
+                exerciseId = 7L,
+                orderIndex = 0,
+                targetWeightKg = 100.0
+            ),
+            PlanExerciseEntity(
+                id = 12L,
+                planId = 3L,
+                exerciseId = 7L,
+                orderIndex = 1,
+                targetWeightKg = 80.0
+            )
+        )
+        coEvery { progressionDao.insertTargets(capture(insertedTargets)) } returns listOf(101L, 102L)
+
+        val sessionId = repository.startWorkout("Two squats", planId = 3L, metaPlanId = null)
+
+        assertEquals(2, insertedTargets.captured.size)
+        assertEquals(listOf(0, 1), insertedTargets.captured.map { it.orderIndex })
+        assertEquals(listOf(100.0, 80.0), insertedTargets.captured.map { it.target.weightKg })
+        assertTrue(insertedTargets.captured.all { it.sessionId == sessionId && it.planId == 3L })
+    }
+
+    @Test
+    fun `free workout creates no plan target snapshots`() = runTest {
+        coEvery { sessionDao.getActiveSession() } returns null
+        coEvery { sessionDao.insert(any()) } returns 99L
+
+        repository.startWorkout("Free", planId = null, metaPlanId = null)
+
+        coVerify(exactly = 0) { progressionDao.insertTargets(any()) }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches normal plan scope to context query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.NormalPlan(3L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForNormalPlanExercises(99L, listOf(7L), 3L)
+        }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches meta plan scope to context query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.MetaPlan(3L, 8L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForMetaPlanExercises(99L, listOf(7L), 3L, 8L)
+        }
+    }
+
+    @Test
+    fun `getPreviousSessionDataForExercises dispatches shared plan scope to plan query`() = runTest {
+        repository.getPreviousSessionDataForExercises(
+            currentSessionId = 99L,
+            exerciseIds = listOf(7L),
+            scope = PreviousSessionScope.SharedPlan(3L)
+        )
+
+        coVerify {
+            setDao.getMostRecentCompletedSetsForPlanExercises(99L, listOf(7L), 3L)
+        }
+    }
+
+    @Test
+    fun `deleteSession lowers personal record to remaining set after deletion`() = runTest {
+        val sessionId = 5L
+        val exerciseId = 1L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+        // After the session (and its 120kg PR set) is deleted, only an 80kg set remains.
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            )
+        )
+        // The remaining set belongs to a completed session and therefore counts for records.
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_WEIGHT.name) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_REPS.name) } returns null
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_E1RM.name) } returns null
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_VOLUME.name) } returns null
+
+        repository.deleteSession(sessionId)
+
+        // The stale 120kg MAX_WEIGHT record (id 9) is updated in place to the new 80kg max.
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.id == 9L && it.type == RecordType.MAX_WEIGHT.name && it.value == 80.0 }
+            )
+        }
+    }
+
+    @Test
+    fun `deleteSession removes personal record when no sets remain for exercise`() = runTest {
+        val sessionId = 5L
+        val exerciseId = 1L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns emptyList()
+        coEvery { personalRecordDao.getRecord(exerciseId, any()) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+
+        repository.deleteSession(sessionId)
+
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_WEIGHT.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_REPS.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_E1RM.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_VOLUME.name) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `deleteSession does not touch personal records for unaffected exercises`() = runTest {
+        val sessionId = 5L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns emptyList()
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+
+        repository.deleteSession(sessionId)
+
+        coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `updateSet lowers MAX_WEIGHT personal record after lowering the set`() = runTest {
+        val set = WorkoutSetEntity(
+            id = 10L,
+            sessionId = 2L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 5,
+            weightKg = 60.0,
+            setType = "NORMAL",
+            completedAt = 1_000L
+        )
+        coEvery { setDao.getSetById(10L) } returns set
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(set)
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+        coEvery { personalRecordDao.getRecord(1L, RecordType.MAX_WEIGHT.name) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = 1L, type = RecordType.MAX_WEIGHT.name, value = 100.0, achievedAt = 500L)
+
+        repository.updateSet(set.toDomain())
+
+        coVerify(exactly = 1) { setDao.update(match { it.weightKg == 60.0 }) }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.id == 9L && it.type == RecordType.MAX_WEIGHT.name && it.value == 60.0 }
+            )
+        }
+    }
+
+    @Test
+    fun `deleteSet rebuilds MAX_WEIGHT personal record from remaining sets after delete`() = runTest {
+        val setId = 10L
+        val exerciseId = 1L
+        coEvery { setDao.getSetById(setId) } returns storedSet().copy(
+            id = setId,
+            exerciseId = exerciseId,
+            planTargetSnapshotId = null
+        )
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns listOf(
+            WorkoutSetEntity(
+                id = 11L,
+                sessionId = 2L,
+                exerciseId = exerciseId,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+        coEvery { personalRecordDao.getRecord(exerciseId, RecordType.MAX_WEIGHT.name) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+
+        repository.deleteSet(setId)
+
+        coVerifyOrder {
+            setDao.getSetById(setId)
+            setDao.deleteSet(setId)
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.id == 9L && it.type == RecordType.MAX_WEIGHT.name && it.value == 80.0 }
+            )
+        }
+    }
+
+    @Test
+    fun `deleteSet removes personal records when it was the only work set`() = runTest {
+        val setId = 10L
+        val exerciseId = 1L
+        coEvery { setDao.getSetById(setId) } returns storedSet().copy(
+            id = setId,
+            exerciseId = exerciseId,
+            planTargetSnapshotId = null
+        )
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns emptyList()
+        coEvery { personalRecordDao.getRecord(exerciseId, any()) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+
+        repository.deleteSet(setId)
+
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_WEIGHT.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_REPS.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_E1RM.name) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_VOLUME.name) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `deleteSet does nothing when the set no longer exists`() = runTest {
+        coEvery { setDao.getSetById(10L) } returns null
+
+        repository.deleteSet(10L)
+
+        coVerify(exactly = 0) { setDao.deleteSet(10L) }
+        coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
+    }
+
+    @Test
+    fun `updateSet runs update and record rebuild through one transaction`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+        val set = WorkoutSetEntity(
+            id = 10L,
+            sessionId = 2L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 5,
+            weightKg = 60.0,
+            setType = "NORMAL",
+            completedAt = 1_000L
+        )
+        coEvery { setDao.getSetById(10L) } returns set
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(set)
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+
+        repo.updateSet(set.toDomain())
+
+        assertEquals(1, runner.invocations)
+        coVerify(exactly = 1) { setDao.update(any()) }
+        coVerify(atLeast = 1) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `deleteSession runs session delete and record rebuild through one transaction`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+        val sessionId = 5L
+        val exerciseId = 1L
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(exerciseId)
+        coEvery { sessionDao.deleteSession(sessionId) } returns Unit
+        coEvery { setDao.getSetsForExerciseList(exerciseId) } returns emptyList()
+        coEvery { personalRecordDao.getRecord(exerciseId, any()) } returns
+            PersonalRecordEntity(id = 9L, exerciseId = exerciseId, type = RecordType.MAX_WEIGHT.name, value = 120.0, achievedAt = 500L)
+
+        repo.deleteSession(sessionId)
+
+        assertEquals(1, runner.invocations)
+        coVerify(exactly = 1) { sessionDao.deleteSession(sessionId) }
+        coVerify { personalRecordDao.deleteRecord(exerciseId, RecordType.MAX_WEIGHT.name) }
+    }
+
+    @Test
+    fun `updateSet propagates errors thrown inside the transaction block`() = runTest {
+        val boom = IllegalStateException("DB boom")
+        val set = WorkoutSetEntity(
+            id = 10L,
+            sessionId = 2L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 5,
+            weightKg = 60.0,
+            setType = "NORMAL",
+            completedAt = 1_000L
+        )
+        coEvery { setDao.getSetById(10L) } returns set
+        coEvery { setDao.update(any()) } throws boom
+
+        try {
+            repository.updateSet(set.toDomain())
+            fail("Expected updateSet to propagate the DAO failure")
+        } catch (e: IllegalStateException) {
+            assertEquals(boom, e)
+        }
+
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `addSet rekalkuliert alle vier PR-Typen exakt in einer Transaktion`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+        val newSet = WorkoutSet(
+            sessionId = 3L,
+            exerciseId = 1L,
+            setNumber = 1,
+            reps = 8,
+            weightKg = 100.0,
+            setType = SetType.NORMAL,
+            completedAt = LocalDateTime.of(2026, 8, 6, 12, 0)
+        )
+        // After the insert, the rebuild reads exactly these sets (existing 80x5 + the new 100x8).
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 80.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            ),
+            WorkoutSetEntity(
+                id = 2L,
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 100.0,
+                setType = "NORMAL",
+                completedAt = 2_000L
+            )
+        )
+        // Both sessions are completed, so all sets are eligible for personal records.
+        coEvery { sessionDao.getSessionsByIds(listOf(2L, 3L)) } returns listOf(
+            completedSession(2L),
+            completedSession(3L)
+        )
+
+        repo.addSet(newSet)
+
+        assertEquals(1, runner.invocations)
+        coVerify(exactly = 1) {
+            setDao.insert(match { !it.isWarmup && it.weightKg == 100.0 && it.exerciseId == 1L })
+        }
+        coVerifyOrder {
+            setDao.insert(any())
+            setDao.getSetsForExerciseList(1L)
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_WEIGHT.name &&
+                        it.value == 100.0 &&
+                        it.achievedAt == 2_000L
+                }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_REPS.name &&
+                        it.value == 8.0 &&
+                        it.achievedAt == 2_000L
+                }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_E1RM.name &&
+                        it.value == WorkoutCalculations.calculateE1RM(100.0, 8) &&
+                        it.achievedAt == 2_000L
+                }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_VOLUME.name &&
+                        it.value == 800.0 &&
+                        it.achievedAt == 2_000L
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `addSet setzt MAX_E1RM bei 1 Wiederholung auf das Gewicht`() = runTest {
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 1,
+                weightKg = 120.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 1,
+                weightKg = 120.0,
+                setType = SetType.NORMAL
+            )
+        )
+
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_E1RM.name && it.value == 120.0 }
+            )
+        }
+    }
+
+    @Test
+    fun `addSet behandelt Warmup-Satz ohne PR-Rekalkulation`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+
+        repo.addSet(
+            WorkoutSet(
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 50.0,
+                setType = SetType.WARMUP
+            )
+        )
+
+        assertEquals(1, runner.invocations)
+        coVerify(exactly = 1) { setDao.insert(match { it.isWarmup }) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `aktive Session zaehlt fuer Einzel-Rekorde aber nicht fuer MAX_VOLUME`() = runTest {
+        // Session 3L is still active (endTime null): its heavy set counts for the per-set
+        // records (weight/reps/E1RM are live achievements) but must never set the
+        // per-session MAX_VOLUME record.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 120.0,
+                setType = "NORMAL",
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(3L)) } returns listOf(activeSession(3L))
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 120.0,
+                setType = SetType.NORMAL
+            )
+        )
+
+        // Per-set records derive from the active session's set ...
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_WEIGHT.name && it.value == 120.0 }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_REPS.name && it.value == 10.0 }
+            )
+        }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match { it.type == RecordType.MAX_E1RM.name }
+            )
+        }
+        // ... but the volume record requires a completed session.
+        coVerify(exactly = 0) {
+            personalRecordDao.insert(match { it.type == RecordType.MAX_VOLUME.name })
+        }
+    }
+
+    @Test
+    fun `addSet uebernimmt MAX_VOLUME nur aus abgeschlossener Session`() = runTest {
+        // Completed session 2L holds 5x100 = 500 volume; active session 3L holds 10x100 = 1000.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 5,
+                weightKg = 100.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            ),
+            WorkoutSetEntity(
+                id = 2L,
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 100.0,
+                setType = "NORMAL",
+                completedAt = 2_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L, 3L)) } returns listOf(
+            completedSession(2L),
+            activeSession(3L)
+        )
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 3L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 100.0,
+                setType = SetType.NORMAL
+            )
+        )
+
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_VOLUME.name &&
+                        it.value == 500.0 &&
+                        it.achievedAt == 1_000L
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `Wert 0 wird als kein Rekord behandelt und raeumt bestehenden Rekord`() = runTest {
+        // A zero-weight work set produces 0.0 volume - must clear instead of "Rekord: 0,0 kg".
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 10,
+                weightKg = 0.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(2L)) } returns listOf(completedSession(2L))
+        coEvery { personalRecordDao.getRecord(1L, RecordType.MAX_VOLUME.name) } returns
+            PersonalRecordEntity(
+                id = 9L,
+                exerciseId = 1L,
+                type = RecordType.MAX_VOLUME.name,
+                value = 500.0,
+                achievedAt = 500L
+            )
+
+        repository.addSet(
+            WorkoutSet(
+                sessionId = 2L,
+                exerciseId = 1L,
+                setNumber = 2,
+                reps = 10,
+                weightKg = 0.0,
+                setType = SetType.NORMAL
+            )
+        )
+
+        coVerify { personalRecordDao.deleteRecord(1L, RecordType.MAX_VOLUME.name) }
+        coVerify(exactly = 0) {
+            personalRecordDao.insert(match { it.type == RecordType.MAX_VOLUME.name })
+        }
+    }
+
+    @Test
+    fun `finishWorkout rechnet Rekorde nach Session-Abschluss neu`() = runTest {
+        val finishedSessionId = 2L
+        coEvery { sessionDao.getSessionById(finishedSessionId) } returns activeSession(finishedSessionId)
+        coEvery { sessionDao.update(any()) } returns Unit
+        coEvery { setDao.getExerciseIdsForSession(finishedSessionId) } returns listOf(1L)
+        // After finishing, the session is completed: its sets become eligible for records.
+        coEvery { setDao.getSetsForExerciseList(1L) } returns listOf(
+            WorkoutSetEntity(
+                id = 1L,
+                sessionId = finishedSessionId,
+                exerciseId = 1L,
+                setNumber = 1,
+                reps = 8,
+                weightKg = 100.0,
+                setType = "NORMAL",
+                completedAt = 1_000L
+            )
+        )
+        coEvery { sessionDao.getSessionsByIds(listOf(finishedSessionId)) } returns
+            listOf(completedSession(finishedSessionId))
+
+        repository.finishWorkout(finishedSessionId)
+
+        coVerify(exactly = 1) { sessionDao.update(match { it.endTime != null }) }
+        coVerify(exactly = 1) {
+            personalRecordDao.insert(
+                match {
+                    it.type == RecordType.MAX_VOLUME.name &&
+                        it.value == 800.0 &&
+                        it.achievedAt == 1_000L
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `finishWorkout ist transaktional und idempotent`() = runTest {
+        val runner = TrackingTransactionRunner()
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            runner
+        )
+        val sessionId = 12L
+        val active = activeSession(sessionId)
+        val completed = completedSession(sessionId)
+        coEvery { sessionDao.getSessionById(sessionId) } returnsMany listOf(active, completed)
+        coEvery { sessionDao.update(any()) } returns Unit
+        coEvery { setDao.getExerciseIdsForSession(sessionId) } returns listOf(1L)
+        coEvery { setDao.getSetsForExerciseList(1L) } returns emptyList()
+
+        repo.finishWorkout(sessionId)
+        repo.finishWorkout(sessionId)
+
+        assertEquals(2, runner.invocations)
+        coVerify(exactly = 1) { sessionDao.update(any()) }
+        coVerify(exactly = 1) { setDao.getExerciseIdsForSession(sessionId) }
+        coVerify(exactly = 1) { setDao.getSetsForExerciseList(1L) }
+    }
+
+    @Test
+    fun `addSet weist nicht endliche oder ungueltige RPE-Werte vor Insert zurueck`() = runTest {
+        val invalidValues = listOf(Double.NaN, Double.POSITIVE_INFINITY, 0.0, 10.5)
+
+        invalidValues.forEach { rpe ->
+            try {
+                repository.addSet(
+                    WorkoutSet(
+                        sessionId = 3L,
+                        exerciseId = 1L,
+                        setNumber = 1,
+                        reps = 8,
+                        weightKg = 100.0,
+                        setType = SetType.NORMAL,
+                        rpe = rpe
+                    )
+                )
+                fail("Expected invalid RPE $rpe to be rejected")
+            } catch (_: IllegalArgumentException) {
+                // Expected fail-closed repository boundary.
+            }
+        }
+
+        coVerify(exactly = 0) { setDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `addSet propagates errors thrown by insert and skips record rebuild`() = runTest {
+        val boom = IllegalStateException("DB boom")
+        coEvery { setDao.insert(any()) } throws boom
+
+        try {
+            repository.addSet(
+                WorkoutSet(
+                    sessionId = 3L,
+                    exerciseId = 1L,
+                    setNumber = 1,
+                    reps = 8,
+                    weightKg = 100.0,
+                    setType = SetType.NORMAL
+                )
+            )
+            fail("Expected addSet to propagate the DAO failure")
+        } catch (e: IllegalStateException) {
+            assertEquals(boom, e)
+        }
+
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.getRecord(any(), any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+    }
+
+    @Test
+    fun `addSet rejects snapshot link from another session before mutations`() = runTest {
+        val requestedSet = linkedSet()
+        coEvery { sessionDao.getSessionById(requestedSet.sessionId) } returns activeSession(requestedSet.sessionId)
+        coEvery { progressionDao.getTargetById(41L) } returns targetEntity(
+            sessionId = requestedSet.sessionId + 1,
+            exerciseId = requestedSet.exerciseId
+        )
+
+        expectIllegalState { repository.addSet(requestedSet) }
+
+        coVerify(exactly = 0) { setDao.insert(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `addSet rejects snapshot link for another exercise before mutations`() = runTest {
+        val requestedSet = linkedSet()
+        coEvery { sessionDao.getSessionById(requestedSet.sessionId) } returns activeSession(requestedSet.sessionId)
+        coEvery { progressionDao.getTargetById(41L) } returns targetEntity(
+            sessionId = requestedSet.sessionId,
+            exerciseId = requestedSet.exerciseId + 1
+        )
+
+        expectIllegalState { repository.addSet(requestedSet) }
+
+        coVerify(exactly = 0) { setDao.insert(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `updateSet rejects every identity field change before mutations`() = runTest {
+        val stored = storedSet()
+        coEvery { setDao.getSetById(stored.id) } returns stored
+        coEvery { sessionDao.getSessionById(stored.sessionId) } returns activeSession(stored.sessionId)
+        val domain = stored.toDomain()
+        val identityMutations = listOf(
+            domain.copy(sessionId = domain.sessionId + 1),
+            domain.copy(exerciseId = domain.exerciseId + 1),
+            domain.copy(setNumber = domain.setNumber + 1),
+            domain.copy(setType = if (domain.isWarmup) SetType.NORMAL else SetType.WARMUP),
+            domain.copy(completedAt = domain.completedAt.plusSeconds(1)),
+            domain.copy(planTargetSnapshotId = null)
+        )
+
+        identityMutations.forEach { mutation ->
+            expectIllegalState { repository.updateSet(mutation) }
+        }
+
+        coVerify(exactly = 0) { setDao.update(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `addSet rejects completed session before set or record mutation`() = runTest {
+        val requestedSet = linkedSet().copy(planTargetSnapshotId = null)
+        coEvery { sessionDao.getSessionById(requestedSet.sessionId) } returns completedSession(requestedSet.sessionId)
+
+        expectIllegalState { repository.addSet(requestedSet) }
+
+        coVerify(exactly = 0) { progressionDao.getTargetById(any()) }
+        coVerify(exactly = 0) { setDao.insert(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `updateSet rejects completed owning session before set or record mutation`() = runTest {
+        val stored = storedSet()
+        coEvery { setDao.getSetById(stored.id) } returns stored
+        coEvery { sessionDao.getSessionById(stored.sessionId) } returns completedSession(stored.sessionId)
+
+        expectIllegalState {
+            repository.updateSet(stored.toDomain().copy(reps = 12, weightKg = 105.0, rpe = 8.5))
+        }
+
+        coVerify(exactly = 0) { setDao.update(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    @Test
+    fun `deleteSet rejects completed owning session before set or record mutation`() = runTest {
+        val stored = storedSet()
+        coEvery { setDao.getSetById(stored.id) } returns stored
+        coEvery { sessionDao.getSessionById(stored.sessionId) } returns completedSession(stored.sessionId)
+
+        expectIllegalState { repository.deleteSet(stored.id) }
+
+        coVerify(exactly = 0) { setDao.deleteSet(any()) }
+        coVerify(exactly = 0) { setDao.getSetsForExerciseList(any()) }
+        coVerify(exactly = 0) { personalRecordDao.insert(any()) }
+        coVerify(exactly = 0) { personalRecordDao.deleteRecord(any(), any()) }
+    }
+
+    /**
+     * The tri-state contract the Android UI relies on (mirrors SharedStateStore.updateSet
+     * on iOS): a plain reps/weight edit must not erase an intention it never touched, an
+     * explicit UNKNOWN clears it, and a concrete value replaces it.
+     */
+    @Test
+    fun `updateSet preserves, clears or replaces the stored intention`() = runTest {
+        val readiness = mockk<ReadinessRepository>(relaxed = true)
+        val repo = WorkoutRepositoryImpl(
+            sessionDao,
+            setDao,
+            personalRecordDao,
+            trainingPlanDao,
+            progressionDao,
+            transactionRunner,
+            readinessRepository = readiness
+        )
+        val stored = storedSet()
+        coEvery { setDao.getSetById(stored.id) } returns stored
+
+        // No intention argument: the previously stored answer must survive the edit.
+        repo.updateSet(stored.toDomain().copy(reps = 12, weightKg = 105.0))
+        coVerify(exactly = 0) { readiness.clearSetIntention(any()) }
+        coVerify(exactly = 0) { readiness.setSetIntention(any(), any(), any()) }
+
+        // Explicit UNKNOWN is the user clearing the answer.
+        repo.updateSet(
+            stored.toDomain().copy(reps = 12, weightKg = 105.0),
+            SetIntention.UNKNOWN
+        )
+        coVerify(exactly = 1) { readiness.clearSetIntention(stored.id) }
+
+        // A concrete value replaces whatever was stored.
+        repo.updateSet(
+            stored.toDomain().copy(reps = 12, weightKg = 105.0),
+            SetIntention.PLANNED_FAILURE
+        )
+        coVerify(exactly = 1) {
+            readiness.setSetIntention(stored.id, SetIntention.PLANNED_FAILURE, any())
+        }
+    }
+
+    private fun linkedSet() = WorkoutSet(
+        id = 0L,
+        sessionId = 2L,
+        exerciseId = 7L,
+        setNumber = 1,
+        reps = 8,
+        weightKg = 100.0,
+        planTargetSnapshotId = 41L
+    )
+
+    @Before
+    fun allowActiveSetMutationsByDefault() {
+        coEvery { sessionDao.getSessionById(any()) } returns activeSession(0L)
+    }
+
+    private fun storedSet() = WorkoutSetEntity(
+        id = 10L,
+        sessionId = 2L,
+        exerciseId = 7L,
+        setNumber = 1,
+        reps = 8,
+        weightKg = 100.0,
+        setType = "NORMAL",
+        completedAt = 1_000L,
+        rpe = 8.0,
+        planTargetSnapshotId = 41L
+    )
+
+    private fun targetEntity(sessionId: Long, exerciseId: Long) = WorkoutPlanTargetEntity(
+        id = 41L,
+        sessionId = sessionId,
+        planId = 3L,
+        exerciseId = exerciseId,
+        orderIndex = 0,
+        supersetGroupId = null,
+        target = ProgressionTargetColumns(sets = 3, reps = 8, weightKg = 100.0),
+        progression = ProgressionConfigColumns()
+    )
+
+    private fun activeSession(id: Long) = WorkoutSessionEntity(id = id, startTime = 500L)
+
+    private fun completedSession(id: Long) = WorkoutSessionEntity(
+        id = id,
+        startTime = 500L,
+        endTime = 2_000L
+    )
+
+    private suspend fun expectIllegalState(block: suspend () -> Unit) {
+        try {
+            block()
+            fail("Expected IllegalStateException")
+        } catch (_: IllegalStateException) {
+            // Expected fail-closed repository boundary.
+        }
+    }
+
+    private class TrackingTransactionRunner : TransactionRunner {
+        var invocations = 0
+
+        override suspend fun <T> runInTransaction(block: suspend () -> T): T {
+            invocations++
+            return block()
+        }
+    }
+}

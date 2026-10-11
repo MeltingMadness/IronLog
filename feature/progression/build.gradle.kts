@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ironlog.feature.progression"
+    namespace = "com.thrym.feature.progression"
     compileSdk = 36
 
     defaultConfig {

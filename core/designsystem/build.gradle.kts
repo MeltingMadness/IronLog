@@ -12,7 +12,7 @@ val appDisplayName: String = Properties().run {
 }
 
 android {
-    namespace = "com.ironlog.core.designsystem"
+    namespace = "com.thrym.core.designsystem"
     compileSdk = 36
 
     defaultConfig {
