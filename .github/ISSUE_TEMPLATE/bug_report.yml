@@ -1,0 +1,97 @@
+name: Bug report
+description: Something in Thrym does not work as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please write in English if you can.
+
+        **Security issues** must not be reported here. Please follow the [security policy](https://github.com/MeltingMadness/Thrym/security/policy) instead.
+
+        **Privacy:** Please do not attach backup files, incident reports or screenshots that show your real training data. If you need to show data, use made-up test data.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - iOS
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: The version is shown in the app's Settings.
+      placeholder: e.g. 1.4.0 (9)
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: e.g. Pixel 8, Android 15 / iPhone 15, iOS 18.2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: App language
+      options:
+        - English
+        - German
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, step by step?
+      placeholder: |
+        1. Open …
+        2. Tap …
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Error messages and screenshots (with test data only) help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: For example, whether it happens every time, or since which version.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the existing issues and this bug has not been reported yet.
+          required: true
+        - label: This report contains no personal training data and no backup files or incident reports from my own use of the app.
+          required: true

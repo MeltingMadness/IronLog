@@ -16,7 +16,7 @@ In den Einstellungen wählbar (`ThemeScheme`). Dazu kommen Hell, Dunkel oder Sys
 | **Tide** | Mint `#00F5A0` | Cyan `#06B6D4` | Indigo `#818CF8` | Recovery, dunkel Grünschwarz `#040908` |
 | **Pulse** | Rose `#FF3366` | Violett `#A855F7` | Cyan `#06B6D4` | dunkel `#0B080C` |
 
-Die Farben liegen in `theme/Color.kt`, die Zuordnung zu Material-3-Schemata in `theme/Theme.kt`. Die Systemleisten passen sich dem gewählten Design an.
+Die Farben liegen in `theme/Color.kt`, die Zuordnung zu Material-3-Schemata in `theme/Theme.kt` (`ThrymTheme`). iOS bildet dieselben Schemata in `Design/ThrymTheme.swift` ab. Die Systemleisten passen sich dem gewählten Design an.
 
 Auf Android liefert `MaterialTheme.accentText` für jedes feste Schema und jeden Modus eine eigene, auf Glas lesbare Akzent-Textfarbe. Ungefüllte Text- und Outline-Buttons sowie unselektierte FilterChips verwenden sie über `ThrymInteractiveColors`; selektierte, gefüllte Chips verwenden die zum Container gehörige Gegenfarbe. `primary` bleibt für Flächen, Ringe, Balken und Icons; Buttontext auf `primary` verwendet `onPrimary`. `onSurfaceVariant` ist in allen Schemata ein neutrales Grau (`#44484F` hell, `#BCC2CC` dunkel), damit Nebentext unabhängig vom Akzent lesbar bleibt. Bei dynamischen Systemfarben fällt `accentText` auf `onSurface` zurück.
 
@@ -24,7 +24,7 @@ Statusbeschriftungen verwenden `MaterialTheme.semanticText` (Erfolg, Gefahr, War
 
 ## Semantische Farben
 
-Über `MaterialTheme.semantic` (`EmberSemanticColors` in `theme/ThemeTokens.kt`). Sie sind in allen drei Schemata gleich:
+Über `MaterialTheme.semantic` (`EmberSemanticColors`, definiert in `theme/DesignTokens.kt`, bereitgestellt in `theme/ThemeTokens.kt`). In Hell sind sie in allen Schemata gleich. In Dunkel nutzen Amber, Deep Cyan und Neon Red die Standardwerte; Forge, Raster, Tide und Pulse übernehmen einzelne Rollen aus ihrer eigenen Palette (Zuordnung in `theme/Theme.kt`). Die Rollen:
 
 - `success` Grün, `warning` Amber, `danger` Rot
 - Akzente: `rose`, `sky`, `violet`, `teal` (jeweils mit hellerer Variante)
@@ -33,7 +33,7 @@ Beispiel **RPE-Badge** im aktiven Workout: bis 7 grün, bis 8 amber, bis 9 rose,
 
 ## Typografie
 
-Eine Schriftfamilie auf beiden Plattformen: **Geist** von Vercel (SIL Open Font License, Lizenztext in `docs/licenses/Geist-OFL.txt`) in sieben statischen Schnitten von Regular bis Black plus Italic. Android bindet sie in `theme/Type.kt` ein (`res/font/geist_*.ttf`). Die Skala folgt dem Material-Standard: Fließtext 14 bis 16 sp, Labels mindestens 11 sp, alle Stile mit Tabellenziffern (`tnum`). iOS registriert dieselben Dateien über `UIAppFonts` in `Info.plist`; `Design/ThrymFont.swift` liefert `Font.geist(_:weight:)` für die Textstile und `Font.geist(size:weight:relativeTo:)` für feste Größen, beide skalieren mit Dynamic Type. Lesetext ist mindestens 12 pt groß. SF Symbols behalten die Systemschrift.
+Eine Schriftfamilie auf beiden Plattformen: **Geist** von Vercel (SIL Open Font License, Lizenztext in `docs/licenses/Geist-OFL.txt`) in sieben statischen Schnitten: sechs Gewichte von Regular bis Black (Regular, Medium, SemiBold, Bold, ExtraBold, Black) plus Italic. Android bindet sie in `theme/Type.kt` ein (`res/font/geist_*.ttf`). Die Skala folgt dem Material-Standard: Fließtext 14 bis 16 sp, Labels mindestens 11 sp, alle Stile mit Tabellenziffern (`tnum`). iOS registriert dieselben Dateien über `UIAppFonts` in `Info.plist`; `Design/ThrymFont.swift` liefert `Font.geist(_:weight:)` für die Textstile und `Font.geist(size:weight:relativeTo:)` für feste Größen, beide skalieren mit Dynamic Type. Lesetext ist mindestens 12 pt groß. SF Symbols behalten die Systemschrift.
 
 Für Kennzahlen gibt es zusätzlich `AthleticHero`, `AthleticNumber` (beide mit Tabellenziffern `tnum`) und `AthleticLabel`, genutzt auf dem Dashboard und im aktiven Workout.
 
@@ -61,7 +61,7 @@ Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `ThrymAppearance.liqui
 - Glasstufen: `GlassLevel.STANDARD`, `STRONG`, `TINT` (Android, `theme/LiquidGlass.kt`, `Modifier.liquidGlass`) bzw. `ThrymGlassLevel` (iOS, `Design/ThrymLiquidGlass.swift`, `.liquidGlass(_:in:)`).
 - Nur `STRONG` weichzeichnet den Hintergrund: Android über Haze ab Android 12, iOS über `.ultraThinMaterial`. Darunter, bei reduzierten Animationen und bei „Transparenz reduzieren“ (iOS) gibt es eine fast deckende Tönung.
 - Der farbige Hintergrund (`LiquidBackground` / `ThrymLiquidBackground`) besteht aus radialen Verläufen in der Akzentfarbe, Türkis und Violett und wird einmal hinter der App gezeichnet (Android: `LiquidGlassHost` in `MainActivity`).
-- `ThrymSurfaceCard`, `Modifier.glassmorphism()` und `ThrymCard` schalten automatisch um; Ember-Karten bleiben unverändert.
+- `ThrymSurfaceCard` und `Modifier.glassmorphism()` (Android) sowie `ThrymCard` (iOS, `Design/ThrymCard.swift`) schalten automatisch um; Ember-Karten bleiben unverändert.
 - Navigation: Android zeigt statt der `NavigationBar` eine schwebende Glas-Pille (`BottomNavBar`, Stufe `STRONG`); der aktive Tab ist ein heller Chip mit Icon und Text, die übrigen Tabs zeigen nur das Icon. iOS behält die System-Tableiste, auf iOS 26 ist sie selbst Liquid Glass.
 - Startseite: Kopf mit Datum, Begrüßung und rundem Glasknopf (Android Einstellungen, iOS Statistiken) statt der Titelleiste. Die Hauptkarte (`GlassCommandCenterCard` / `IOSDashboardGlassCommandCenter`, Stufe `STRONG`) zeigt den vorgeschlagenen Plan mit den ersten drei Übungen samt Ziel („3 × 8 · 80 kg“) und einen Start-Knopf als helle Pille mit farbigem Play-Kreis. Die Wochenleiste (`GlassWeekStrip` / `IOSDashboardGlassWeekStrip`) ersetzt die Wochen- und Monatskachel: je Tag eine Linse (trainiert, heute, offen), dazu Trainings und Volumen der Woche. Die übrigen Karten werden zu Glas (Android über `DashboardPanel`); Inhalt und Verhalten bleiben gleich.
 - Training: Kopf mit Plan und „Übung x von n“, der Trainingszeit als große Zahl, Sätzen und Volumen sowie „Beenden“ als Glaspille (iOS zusätzlich ein Menü für Notiz und Verwerfen). Darunter eine Übungsleiste (erledigt, aktuell, kommend); ein Tipp scrollt zur Übung. Die offene Übung liegt auf Glasstufe `STRONG`. Die Satzeingabe zeigt Gewicht und Wiederholungen als große Zahlen mit runden −/+-Knöpfen (2,5 kg bzw. 5 lb, 1 Wdh), RPE/RIR als Auswahlleiste und „Satz loggen“ als helle Pille (`WorkoutGlass.kt` / `IOSWorkoutGlass.swift`). Eingabelogik und gespeicherte Werte sind dieselben wie in Ember.
@@ -78,10 +78,11 @@ Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `ThrymAppearance.liqui
 
 Gilt für Android und iOS gleich:
 
-- Deutsches Zahlenformat: „82,5 kg“, „12.305 kg“, nie „80.0“. Android: `WeightFormatting` (Eingabefelder ohne Tausenderpunkt über `formatInputNumber`). iOS: `iosWorkoutDecimal`, `IOSNumber.format`, `ilWeightText`.
-- Sätze einheitlich als „82,5 kg × 8 Wdh“. 0 kg wird als „Körpergewicht“ angezeigt.
-- Mengen mit passender Einzahl/Mehrzahl („1 Training“, „3 Trainings“). Android: `plurals`-Ressourcen. iOS: `ilCount(_:_:_:)`.
-- Umlaute in allen Anzeigenamen, keine zusätzlichen Häkchen oder Pfeile in Button-Texten. Unbekannte Werte (z. B. Satzabsicht „Nicht angegeben“) werden nicht als Daten angezeigt.
+- Zahlen und Datumsangaben folgen dem Gerätelocale: auf Deutsch „82,5 kg“ und „12.305 kg“, auf Englisch „82.5 kg“ und „12,305 kg“. Nie Rohwerte wie „80.0“ anzeigen und keine festen `Locale.GERMANY`- bzw. `de_DE`-Formatierer verwenden. Android: `WeightFormatting` in `core:common` (Eingabefelder ohne Tausendertrennzeichen über `formatInputNumber`). iOS: `iosWorkoutDecimal`, `IOSNumber`, `ilWeightText`. Gespeichert wird weiter in kg; lb ist nur Anzeige.
+- Sätze einheitlich als Gewicht × Wiederholungen, auf Deutsch „82,5 kg × 8 Wdh“. 0 kg wird als „Körpergewicht“ angezeigt.
+- Mengen mit passender Einzahl/Mehrzahl („1 Training“, „3 Trainings“) in beiden Sprachen. Android: `plurals`-Ressourcen in `values/` und `values-de/`. iOS: Plural-Varianten im String-Katalog.
+- Deutsche Texte mit echten Umlauten, keine zusätzlichen Häkchen oder Pfeile in Button-Texten. Unbekannte Werte (z. B. Satzabsicht „Nicht angegeben“) werden nicht als Daten angezeigt.
+- Enum-Werte und eingebaute Übungsnamen werden für die Anzeige übersetzt, nie im gespeicherten Wert (siehe [`architektur.md`](architektur.md), Abschnitt Lokalisierung).
 - Links unter Kartentext stehen bündig mit dem Text (`TextButton` um die Innenpolsterung versetzt).
 
 ## Gemeinsame Komponenten (`presentation/common`)
@@ -92,9 +93,13 @@ Gilt für Android und iOS gleich:
 
 ## App-Hülle
 
+- XML-Themes in `app/src/main/res/values/themes.xml`: `Theme.Thrym` für die App, `Theme.Thrym.Splash` für den Start.
 - Splash-Screen (`Theme.Thrym.Splash`): Hintergrund `#0C0806`, Icon-Hintergrund `#FF6B00`. Er bleibt sichtbar, bis die Design-Einstellungen geladen sind. So gibt es keinen weißen Blitz.
-- App-Icon „Level Up“: eine Pixel-Langhantel (dunkle und weiße Scheiben, schwarze Kontur) über einer Erfahrungsleiste mit zehn Segmenten, sieben davon voll, auf Amber-Verlauf `#FF8A2A` → `#E85500`. Android: adaptives Icon mit monochromer Variante (`app/src/main/res/drawable/ic_launcher_*`), der Inhalt liegt in der sicheren Zone. iOS: `Assets.xcassets/AppIcon.appiconset` (1024-px-PNG ohne Transparenz, `AppIcon.svg` als Quelle). Beide Plattformen nutzen dasselbe Pixelraster; wer das Icon ändert, ändert beide.
+- App-Icon „Level Up“: eine Pixel-Langhantel (dunkle und weiße Scheiben, schwarze Kontur) über einer Erfahrungsleiste mit zehn Segmenten, sieben davon voll, auf Amber-Verlauf `#FF8A2A` → `#E85500`. Android: adaptives Icon mit monochromer Variante (`app/src/main/res/drawable/ic_launcher_*`), der Inhalt liegt in der sicheren Zone. iOS: `Assets.xcassets/AppIcon.appiconset` (1024-px-PNG ohne Transparenz, `AppIcon.svg` als Quelle). Beide Plattformen nutzen dasselbe Pixelraster; wer das Icon ändert, ändert beide. Der Code steht unter Apache-2.0; Name, Logo und App-Icon sind dagegen nicht für Forks lizenziert (siehe `README.md`). Ein Fork braucht einen eigenen Namen und ein eigenes Icon.
 
 ## Texte
 
-UI-Texte gehören in `core/designsystem/src/main/res/values/strings.xml` (Deutsch) oder in die `res/values/*_strings.xml` des jeweiligen Feature-Moduls, nicht als Literal in Composables. Ausnahme bisher: `WorkoutCompletionScreen` enthält noch Literale.
+UI-Texte stehen nie als Literal in Composables oder Views:
+
+- **Android:** `core/designsystem/src/main/res/values/` (Englisch) und `values-de/` (Deutsch) für gemeinsame Texte, sonst `res/values/*_strings.xml` und `res/values-de/*_strings.xml` des Feature-Moduls. Jeder String steht in beiden Sprachen; Lint (`MissingTranslation`) und `.github/scripts/check-translations.py` prüfen das. Sprachneutrale Strings nur in `values/` mit `translatable="false"`.
+- **iOS:** `iosApp/ThrymIOS/Localizable.xcstrings` mit dem deutschen Text als Schlüssel und Lokalisierungen für `en` und `de`; ebenfalls von `check-translations.py` geprüft.

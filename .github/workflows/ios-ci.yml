@@ -1,0 +1,146 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'sprint/**'
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run per workflow and ref; a newer push supersedes the running one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded runs on branches/PRs are cancelled; main and tags always run to completion.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  simulator-build-test:
+    name: Build + unit tests (iOS Simulator)
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      # Pin the Xcode the project is verified with (see iosApp/README.md).
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Self-test translation check
+        run: python3 .github/scripts/check-translations.py --selftest
+
+      # Every key in iosApp/ThrymIOS/*.xcstrings needs "de" and "en" with
+      # matching format specifiers. Cheap, so it runs before the build.
+      - name: Check translations (string catalogs de/en)
+        run: python3 .github/scripts/check-translations.py --platform ios
+
+      # The Xcode project is generated; a stale committed project fails here.
+      - name: Check generated Xcode project is up to date
+        run: |
+          python3 iosApp/generate_project.py
+          if [ -n "$(git status --porcelain -- iosApp/ThrymIOS.xcodeproj)" ]; then
+            git --no-pager diff --stat -- iosApp/ThrymIOS.xcodeproj
+            git status --porcelain -- iosApp/ThrymIOS.xcodeproj
+            echo "::error::iosApp/ThrymIOS.xcodeproj is stale. Run 'python3 iosApp/generate_project.py' and commit the result (never edit project.pbxproj by hand)."
+            exit 1
+          fi
+
+      # The "Build Shared Framework" phase (iosApp/scripts/build-shared.sh)
+      # runs Gradle and requires JAVA_HOME to point to a JDK 17.
+      - name: Set up JDK 17
+        id: jdk
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Export JAVA_HOME (JDK 17) for xcodebuild
+        run: |
+          echo "JAVA_HOME=${{ steps.jdk.outputs.path }}" >> "$GITHUB_ENV"
+          "${{ steps.jdk.outputs.path }}/bin/java" -version
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Kotlin/Native toolchain and its LLVM/sysroot dependencies (~1 GB).
+      # The Kotlin version lives in gradle/libs.versions.toml.
+      - name: Cache Kotlin/Native toolchain (~/.konan)
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: |
+            konan-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Show Xcode and available iPhone simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | grep -E 'iPhone|^-- ' || true
+
+      # Simulator builds need no signing. JAVA_HOME is passed explicitly as a
+      # build setting as well, so the Gradle build phase sees the JDK 17.
+      - name: Build and test (iPhone 17 simulator)
+        run: |
+          mkdir -p build
+          xcodebuild test \
+            -project iosApp/ThrymIOS.xcodeproj \
+            -scheme ThrymIOS \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -resultBundlePath build/ThrymIOS.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            JAVA_HOME="$JAVA_HOME"
+
+      # Like the Android smoke gate: a green run with zero executed tests
+      # (broken scheme/test target) must not pass.
+      - name: Test summary and zero-test guard
+        if: always()
+        run: |
+          bundle=build/ThrymIOS.xcresult
+          if [ ! -d "$bundle" ]; then
+            echo "::error::No result bundle at $bundle - xcodebuild test did not run."
+            exit 1
+          fi
+          xcrun xcresulttool get test-results summary --path "$bundle" > build/test-summary.json
+          python3 - build/test-summary.json <<'EOF'
+          import json, os, sys
+
+          summary = json.load(open(sys.argv[1], encoding="utf-8"))
+          total = summary.get("totalTestCount")
+          line = (
+              f"iOS tests: {summary.get('result')} - total {total}, "
+              f"passed {summary.get('passedTests')}, failed {summary.get('failedTests')}, "
+              f"skipped {summary.get('skippedTests')}"
+          )
+          print(line)
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as handle:
+                  handle.write(f"- {line}\n")
+          if total is None:
+              print("::warning::xcresulttool summary has no totalTestCount; zero-test guard skipped")
+          elif total == 0:
+              print("::error::xcodebuild test executed 0 tests; the iOS gate must not pass")
+              sys.exit(1)
+          EOF
+
+      - name: Upload test results (xcresult)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: |
+            build/ThrymIOS.xcresult
+            build/test-summary.json
+          if-no-files-found: warn
+          retention-days: 14

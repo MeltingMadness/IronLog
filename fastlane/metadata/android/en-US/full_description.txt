@@ -1,0 +1,40 @@
+Thrym is a strength training log that works completely offline. Plan your training, log your sets quickly at the gym and follow your progress over time. Your data stays on your device: no account, no ads, no tracking, and the app does not request internet access.
+
+<b>Workouts</b>
+• Start a workout from a plan, from a meta-plan or as a free session
+• Sets are prefilled with weight and reps, so you only confirm or adjust them
+• Optional details per set: RPE or RIR, set type (warm-up, drop, failure), set intention and a plate calculator
+• Rest timer, supersets and adding several exercises at once
+• New personal records are detected while you train
+• Finish early with open sets and get a summary of what you actually did
+
+<b>Plans and meta-plans</b>
+• Plans with target sets, reps and weight, or individual targets for each set
+• Meta-plans rotate through several plans (for example Push, Pull, Legs) and suggest the next one; you can skip a suggestion
+• A progression scheme per exercise in a plan: linear, double progression, total reps or RPE/RIR
+
+<b>Progression coach</b>
+• After a workout the coach suggests new targets and shows the reason for each suggestion
+• Your plan only changes after you confirm: accept, edit or discard each suggestion
+• A missed target is repeated; repeated misses lead to a back-off suggestion
+
+<b>Recovery and volume</b>
+• Optional daily check-in for sleep, energy, stress and muscle soreness
+• Training readiness and deload hints based on your recent workouts
+• Deload mode with half the sets or 15 % less weight
+• Weekly volume per muscle group with MEV/MAV ranges and an 8-week trend
+
+<b>History and statistics</b>
+• All workouts with search and filters by time period and plan
+• Correct or delete single sets afterwards and add a workout note
+• Exercise library with search, muscle filter, custom exercises and archiving
+• Per exercise: personal records, estimated one-rep max (e1RM) and a progress chart
+
+<b>Settings and data</b>
+• kg or lb, first day of the week, two visual styles, seven color schemes, light, dark or system theme and dynamic color
+• Plates and bar weight for the plate calculator, rest timer and workout reminders
+• Export and import backups as a local file, with an optional backup reminder; an internal safety backup is created before every import
+
+Thrym is available in English and German. A native iOS version is built from the same source code. The source code is licensed under the Apache License 2.0.
+
+Thrym was previously called IronLog. To move your data, export a backup in IronLog and import it in Thrym.

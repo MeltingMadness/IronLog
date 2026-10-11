@@ -4,6 +4,14 @@ Stand: 11. September 2026. Dieses Dokument beschreibt die **portable Schicht** f
 optionalen Tagesform-Check-in und Satzintention sowie den Plan, wie Android und iOS sie
 später anbinden. Es ändert bewusst **kein** bestehendes Store-, Backup- oder DB-Schema.
 
+> **Heutiger Stand:** Die Anbindung ist umgesetzt. Android speichert das Dokument seit
+> Datenbankschema 13 in der Room-Tabelle `readiness_data` (`ReadinessRepository`), iOS im
+> gemeinsamen Store (`SharedStateStore`), und Backups enthalten es seit Backup-Schema 13 als
+> `readinessData`. Aktuell sind Datenbank- und Backup-Schema 15 (siehe
+> [`architektur.md`](architektur.md)). Die Abschnitte „Konkrete Integrationsstellen“ und
+> „Migrationssicherer Plan“ unten dokumentieren die damalige Planung; die Versionsnummern
+> darin beziehen sich auf den Stand vom September 2026.
+
 ## Zweck und Abgrenzung
 
 Neu: Nutzer können freiwillig ihre Tagesform und die Absicht einzelner Sätze festhalten.
@@ -20,7 +28,7 @@ HealthKit/Cloud, ein zeitloser "heute"-Check-in sowie jede Neuinterpretation von
 
 ## Abgrenzung zu vorhandenen Konzepten
 
-- `com.thrym.shared.analytics.TrainingReadiness` / `TrainingReadinessScore` ist eine
+- `com.thrym.shared.analytics.TrainingReadiness` (mit `fatigueScore` und `readinessScore`) ist eine
   **abgeleitete Trainingsbereitschaft** aus Trainingsdaten (Fatigue-Score, Deload-Hinweis).
   Der neue Check-in ist eine **subjektive Nutzerangabe pro Tag** und unabhängig davon. Beide
   können nebeneinander existieren; die Tagesform ersetzt keine abgeleitete Kennzahl.

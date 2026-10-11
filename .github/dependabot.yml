@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # Gradle dependencies, plugins and the wrapper (gradle/libs.versions.toml, build scripts).
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    ignore:
+      # Haze 1.7.3+ needs Compose 1.12 (see gradle/libs.versions.toml); drop this once Compose is upgraded.
+      - dependency-name: "dev.chrisbanes.haze:haze"
+        versions: [">=1.7.3"]
+    groups:
+      gradle-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions used in .github/workflows/.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
