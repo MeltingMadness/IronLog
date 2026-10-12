@@ -12,7 +12,7 @@ navigation-compose = "2.9.7"
 room = "2.8.4"
 paging = "3.3.6"
 koin = "4.1.1"
-vico = "2.4.3"
+vico = "3.3.1"
 # 1.7.2 is the newest Haze on Compose 1.10; 1.7.3+ needs Compose 1.12.
 haze = "1.7.2"
 core-ktx = "1.17.0"
