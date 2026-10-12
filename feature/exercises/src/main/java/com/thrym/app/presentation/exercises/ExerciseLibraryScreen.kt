@@ -85,6 +85,9 @@ fun ExerciseLibraryScreen(
     val dims = thrymDimens
     val glass = isLiquidGlass()
     val snackbarHostState = remember { SnackbarHostState() }
+    // The ViewModel outlives a language switch; re-sort by the names in the new language.
+    val locale = currentLocale()
+    LaunchedEffect(locale) { viewModel.onLocaleChanged(locale) }
 
     LaunchedEffect(state.error) {
         state.error?.let {

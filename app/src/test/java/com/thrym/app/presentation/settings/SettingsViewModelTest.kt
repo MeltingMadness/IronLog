@@ -2,6 +2,7 @@
 
 import android.net.Uri
 import com.thrym.app.data.backup.BackupHashMismatchException
+import com.thrym.app.data.backup.BackupSchemaTooNewException
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.IncidentReport
 import com.thrym.app.domain.model.ThemeMode
@@ -14,6 +15,7 @@ import com.thrym.app.domain.repository.ReminderScheduler
 import com.thrym.app.domain.util.BuildInfo
 import com.thrym.app.fakes.FakeAppPreferencesRepository
 import com.thrym.core.designsystem.R
+import com.thrym.feature.settings.R as SettingsR
 import com.thrym.shared.backup.BackupPayloadV1
 import com.thrym.shared.backup.CURRENT_BACKUP_SCHEMA_VERSION
 import io.mockk.mockk
@@ -255,7 +257,7 @@ class SettingsViewModelTest {
         assertNull(viewModel.uiState.value.importPreview)
         assertEquals(1, reminderScheduler.syncCalls)
         assertTrue(messages.contains(R.string.settings_msg_backup_imported))
-        assertFalse(messages.contains(R.string.common_error_action_failed))
+        assertFalse(messages.contains(SettingsR.string.settings_unknown_error))
     }
 
     @Test
@@ -298,7 +300,7 @@ class SettingsViewModelTest {
         assertTrue(viewModel.uiState.value.importConfirmationVisible)
         assertNotNull(viewModel.uiState.value.importPreview)
         assertEquals(recovery, viewModel.uiState.value.recoveryBackup)
-        assertTrue(messages.contains(R.string.common_error_action_failed))
+        assertTrue(messages.contains(SettingsR.string.settings_unknown_error))
         coVerify(exactly = 0) { progressionRepository.generateMissingOutcomes() }
         coVerify(exactly = 0) { progressionRepository.reconcileOutstandingSuggestions() }
 
@@ -329,7 +331,7 @@ class SettingsViewModelTest {
         assertFalse(viewModel.uiState.value.importConfirmationVisible)
         assertNull(viewModel.uiState.value.importPreview)
         assertTrue(messages.contains(R.string.settings_msg_backup_source_changed))
-        assertFalse(messages.contains(R.string.common_error_action_failed))
+        assertFalse(messages.contains(SettingsR.string.settings_unknown_error))
 
         backupRepository.importError = null
         viewModel.confirmImport()
@@ -399,7 +401,7 @@ class SettingsViewModelTest {
         assertEquals(1, backupRepository.importedCalls.size)
         assertTrue(messages.contains(R.string.settings_msg_backup_imported))
         assertTrue(messages.contains(R.string.settings_msg_reminder_sync_failed))
-        assertFalse(messages.contains(R.string.common_error_action_failed))
+        assertFalse(messages.contains(SettingsR.string.settings_unknown_error))
     }
 
     @Test
@@ -414,8 +416,39 @@ class SettingsViewModelTest {
         assertEquals(1, backupRepository.importedCalls.size)
         assertTrue(messages.contains(R.string.settings_msg_backup_imported))
         assertTrue(messages.contains(R.string.settings_msg_progression_recovery_failed))
-        assertFalse(messages.contains(R.string.common_error_action_failed))
+        assertFalse(messages.contains(SettingsR.string.settings_unknown_error))
         coVerify(exactly = 0) { progressionRepository.reconcileOutstandingSuggestions() }
+    }
+
+    @Test
+    fun `backup from a newer app version shows localized copy instead of the exception text`() = runTest {
+        val events = mutableListOf<SettingsEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(dispatcher.scheduler)) {
+            viewModel.events.collect { events += it }
+        }
+        backupRepository.previewError = BackupSchemaTooNewException(backupSchemaVersion = 3, appSchemaVersion = 2)
+
+        viewModel.onImportUriPicked(mockk())
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(SettingsEvent.Message(SettingsR.string.settings_error_backup_too_new, listOf(3, 2))),
+            events
+        )
+    }
+
+    @Test
+    fun `other failures never put the raw exception message into the snackbar`() = runTest {
+        val events = mutableListOf<SettingsEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(dispatcher.scheduler)) {
+            viewModel.events.collect { events += it }
+        }
+        backupRepository.previewError = IOException("Unexpected JSON token at offset 12")
+
+        viewModel.onImportUriPicked(mockk())
+        advanceUntilIdle()
+
+        assertEquals(listOf(SettingsEvent.Message(SettingsR.string.settings_unknown_error)), events)
     }
 
     private fun startUiStateCollector(scope: CoroutineScope) {

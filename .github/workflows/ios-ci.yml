@@ -15,17 +15,19 @@ on:
 permissions:
   contents: read
 
-# One run per workflow and ref; a newer push supersedes the running one.
+# Branches and PRs: one group per ref, a newer push cancels the running run.
+# A group keeps at most one pending run and drops older pending ones even
+# without cancel-in-progress, so every push to main gets its own group (by
+# commit) and keeps its own CI evidence. Tags are unique refs and never cancelled.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # Superseded runs on branches/PRs are cancelled; main and tags always run to completion.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   simulator-build-test:
     name: Build + unit tests (iOS Simulator)
     runs-on: macos-26
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       # Pin the Xcode the project is verified with (see iosApp/README.md).
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
@@ -87,6 +89,14 @@ jobs:
         run: |
           xcodebuild -version
           xcrun simctl list devices available | grep -E 'iPhone|^-- ' || true
+
+      # The iOS app runs :shared on Kotlin/Native, but the Android job tests
+      # :shared on the JVM only. Run the golden IronLog backup import tests
+      # natively (Kotlin picks an available simulator), so a Native-only
+      # regression in the IronLog import cannot pass CI. Only this class has
+      # been verified on Native; widen the filter after a local run.
+      - name: Shared golden-backup tests (Kotlin/Native, iOS simulator)
+        run: ./gradlew --no-daemon :shared:iosSimulatorArm64Test --tests 'com.thrym.shared.backup.IronLogBackupFixtureImportTest'
 
       # Simulator builds need no signing. JAVA_HOME is passed explicitly as a
       # build setting as well, so the Gradle build phase sees the JDK 17.

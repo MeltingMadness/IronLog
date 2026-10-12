@@ -4710,7 +4710,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The progression step must be greater than 0."
+            "value": "The increment must be greater than 0."
           }
         }
       }
@@ -6417,7 +6417,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Free session"
+            "value": "Free workout"
           }
         }
       }
@@ -6943,7 +6943,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gewertet: %#@counted@, davon %2$lld bis zum Versagen. Ausgelassen: %3$lld Aufwärm-, %4$lld Drop-, %5$lld Backoff- und %6$lld zusätzliche Arbeitssätze."
+            "value": "Gewertet: %#@counted@, davon %2$lld bis zum Versagen. Ausgelassen: %3$lld Aufwärm-, %4$lld Drop-, %5$lld Backoff- und %#@extra@."
           },
           "substitutions": {
             "counted": {
@@ -6965,13 +6965,33 @@
                   }
                 }
               }
+            },
+            "extra": {
+              "argNum": 6,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg zusätzlicher Arbeitssatz"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg zusätzliche Arbeitssätze"
+                    }
+                  }
+                }
+              }
             }
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Counted: %#@counted@, %2$lld of them to failure. Excluded: %3$lld warm-up, %4$lld drop, %5$lld back-off, and %6$lld extra work sets."
+            "value": "Counted: %#@counted@, %2$lld of them to failure. Excluded: %3$lld warm-up, %4$lld drop, %5$lld back-off, and %#@extra@."
           },
           "substitutions": {
             "counted": {
@@ -6989,6 +7009,26 @@
                     "stringUnit": {
                       "state": "translated",
                       "value": "%arg work sets"
+                    }
+                  }
+                }
+              }
+            },
+            "extra": {
+              "argNum": 6,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg extra work set"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg extra work sets"
                     }
                   }
                 }
@@ -7845,7 +7885,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No load recorded"
+            "value": "No training logged"
           }
         }
       }
@@ -7989,7 +8029,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No recent load"
+            "value": "Not trained recently"
           }
         }
       }
@@ -11162,7 +11202,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Loading progression …"
+            "value": "Loading progression…"
           }
         }
       }
@@ -16312,7 +16352,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "no recent load"
+            "value": "not trained recently"
           }
         }
       }

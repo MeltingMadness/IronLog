@@ -61,7 +61,8 @@ DE_VALUES_DIR = "values-de"
 DO_NOT_TRANSLATE_FILES = ("donottranslate.xml",)
 REQUIRED_PLURAL_QUANTITIES = ("one", "other")
 
-# iOS string catalogs.
+# iOS string catalogs. The languages checked here and DE_VALUES_DIR above
+# must cover every shipped language (see CONTRIBUTING.md, adding a language).
 IOS_CATALOG_DIR = pathlib.Path("iosApp") / "ThrymIOS"
 CATALOG_LANGUAGES = ("de", "en")
 # Source languages whose keys are the source text itself, so a missing

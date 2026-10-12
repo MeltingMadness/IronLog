@@ -39,7 +39,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -55,6 +54,7 @@ import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.common.exerciseName
 import com.thrym.app.presentation.common.filterAndSortByDisplayName
 import com.thrym.app.presentation.common.label
@@ -98,7 +98,7 @@ fun ExercisePickerSheet(
     var createState by remember { mutableStateOf(ExerciseCreateState()) }
 
     val strings = rememberUiStrings()
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = currentLocale()
 
     val activeExercisesFlow = remember(strings, exerciseRepository, onCreationError) {
         exerciseRepository.getAllExercises()

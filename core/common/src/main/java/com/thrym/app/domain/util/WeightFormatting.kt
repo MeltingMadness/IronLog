@@ -10,6 +10,8 @@ import kotlin.math.roundToLong
 
 object WeightFormatting {
     private const val KG_TO_LB = 2.2046226218
+    private const val ARABIC_DECIMAL_SEPARATOR = '\u066B'
+    private const val ARABIC_GROUPING_SEPARATOR = '\u066C'
 
     /**
      * Weight in the user's unit, formatted for [locale]: "82.5 kg" (en), "82,5 kg" (de),
@@ -46,12 +48,43 @@ object WeightFormatting {
         decimalFormat(maxFractionDigits, grouping = true, locale).format(normalizeZero(value))
 
     /**
-     * Like [formatNumber] but without grouping: "1234.5" (en) / "1234,5" (de). For prefilled
-     * input fields, whose parser reads both comma and dot as the decimal separator and would
-     * misread a grouping separator ("1,234" would become 1.234).
+     * Text for prefilled input fields: "1234.5" (en) / "1234,5" (de). Always ASCII digits and
+     * no grouping, so [parseInputNumber] reads it back (a grouping separator would be misread:
+     * "1,234" would become 1.234). Only the decimal separator follows [locale], and only as a
+     * comma or a dot; locales with native digits (ar, fa, bn …) get "1234.5". Same rule as iOS.
      */
-    fun formatInputNumber(value: Double, maxFractionDigits: Int = 2, locale: Locale = Locale.getDefault()): String =
-        decimalFormat(maxFractionDigits, grouping = false, locale).format(normalizeZero(value))
+    fun formatInputNumber(value: Double, maxFractionDigits: Int = 2, locale: Locale = Locale.getDefault()): String {
+        val symbols = DecimalFormatSymbols(Locale.ROOT).apply {
+            decimalSeparator = if (DecimalFormatSymbols.getInstance(locale).decimalSeparator == ',') ',' else '.'
+        }
+        return DecimalFormat("0", symbols).apply {
+            minimumFractionDigits = 0
+            maximumFractionDigits = maxFractionDigits
+            isGroupingUsed = false
+            roundingMode = RoundingMode.HALF_UP
+        }.format(normalizeZero(value))
+    }
+
+    /**
+     * Reads a number typed into (or prefilled in) an input field. Comma and dot both count as
+     * the decimal separator, and digits of any script ("٨٢٫٥", "۸۲٫۵", "৮২.৫") are accepted
+     * as well as ASCII ones, because a native-digit keyboard may type them. Returns null for
+     * anything else.
+     */
+    fun parseInputNumber(text: String): Double? {
+        val normalized = buildString {
+            for (char in text.trim()) {
+                val digit = Character.digit(char, 10)
+                when {
+                    digit >= 0 -> append('0' + digit)
+                    char == ',' || char == ARABIC_DECIMAL_SEPARATOR -> append('.')
+                    char == ARABIC_GROUPING_SEPARATOR -> Unit
+                    else -> append(char)
+                }
+            }
+        }
+        return normalized.toDoubleOrNull()
+    }
 
     /**
      * Two decimals only for real quarter steps in kg (1.25 kg plates), otherwise one:

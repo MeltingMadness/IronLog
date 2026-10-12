@@ -3,39 +3,57 @@ import Foundation
 /// Presentation-only helpers shared by the dashboard and statistics screens.
 /// Aggregation, thresholds, and exercise metrics stay in the shared analytics
 /// projection; these helpers only format already-computed values.
-func ilAnalyticsDate(_ value: String) -> Date? {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    formatter.dateFormat = "yyyy-MM-dd"
-    return formatter.date(from: value)
+
+/// The shared core sends calendar days as `yyyy-MM-dd` in the device's time zone.
+/// The result is the start of that day in `timeZone`, so date formatters and chart
+/// axes, which work in the current zone, show the same day west and east of UTC.
+func ilAnalyticsDate(_ value: String, timeZone: TimeZone = .current) -> Date? {
+    guard let day = ilAnalyticsDayKeyFormatter().date(from: value) else { return nil }
+    var local = Calendar(identifier: .gregorian)
+    local.timeZone = timeZone
+    return local.date(from: ilAnalyticsUTCCalendar.dateComponents([.year, .month, .day], from: day))
 }
 
 func ilAnalyticsShiftedWeekStart(_ value: String, weeks: Int) -> String? {
-    guard let date = ilAnalyticsDate(value) else { return nil }
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
-    guard let shifted = calendar.date(byAdding: .day, value: weeks * 7, to: date) else {
+    // Pure calendar-day arithmetic in UTC: no time zone or DST shift can move the day.
+    let formatter = ilAnalyticsDayKeyFormatter()
+    guard let date = formatter.date(from: value),
+          let shifted = ilAnalyticsUTCCalendar.date(byAdding: .day, value: weeks * 7, to: date) else {
         return nil
     }
-    let formatter = DateFormatter()
-    formatter.calendar = calendar
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = calendar.timeZone
-    formatter.dateFormat = "yyyy-MM-dd"
     return formatter.string(from: shifted)
 }
 
-func ilAnalyticsDateText(_ value: String?, dateStyle: DateFormatter.Style = .medium) -> String? {
-    guard let value, let date = ilAnalyticsDate(value) else { return nil }
+func ilAnalyticsDateText(
+    _ value: String?,
+    dateStyle: DateFormatter.Style = .medium,
+    timeZone: TimeZone = .current,
+    locale: Locale = .current
+) -> String? {
+    guard let value, let date = ilAnalyticsDate(value, timeZone: timeZone) else { return nil }
     let formatter = DateFormatter()
-    formatter.locale = .current
+    formatter.locale = locale
     formatter.calendar = .current
-    formatter.timeZone = .current
+    formatter.timeZone = timeZone
     formatter.dateStyle = dateStyle
     formatter.timeStyle = .none
     return formatter.string(from: date)
+}
+
+private let ilAnalyticsUTCCalendar: Calendar = {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+    return calendar
+}()
+
+/// Reads and writes `yyyy-MM-dd` day keys as UTC midnight, only for parsing and arithmetic.
+private func ilAnalyticsDayKeyFormatter() -> DateFormatter {
+    let formatter = DateFormatter()
+    formatter.calendar = ilAnalyticsUTCCalendar
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = ilAnalyticsUTCCalendar.timeZone
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
 }
 
 func ilAnalyticsDateTimeText(epochMillis: Int64) -> String {
@@ -56,6 +74,17 @@ func ilWeightText(_ kilograms: Double?, unitSystem: String, signed: Bool = false
     let value = ilWeightValue(kilograms, unitSystem: unitSystem)
     let sign = signed && value > 0 ? "+" : ""
     return sign + value.formatted(.number.precision(.fractionLength(0...1))) + " " + ilWeightUnit(unitSystem)
+}
+
+/// Signed change in percent points (5 = 5 %). The locale decides spacing and signs:
+/// "+5.0%" in English, "+5,0 %" in German.
+func ilPercentChangeText(_ percent: Double, fractionDigits: ClosedRange<Int> = 1...1, locale: Locale = .current) -> String {
+    (percent / 100).formatted(
+        .percent
+            .precision(.fractionLength(fractionDigits))
+            .sign(strategy: .always(includingZero: false))
+            .locale(locale)
+    )
 }
 
 func ilVolumeText(_ kilograms: Double?, unitSystem: String, signed: Bool = false) -> String {

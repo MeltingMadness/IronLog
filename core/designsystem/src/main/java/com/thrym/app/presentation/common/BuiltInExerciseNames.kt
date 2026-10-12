@@ -16,9 +16,9 @@ import java.util.Locale
  * `exercise_builtin_*` resource instead. The table is explicit (no `getIdentifier`) so that
  * resource shrinking keeps every entry. Custom exercises always show their raw name.
  *
- * A custom exercise cannot share an active built-in's name (see the repository's duplicate
- * check), so call sites that only know a name (e.g. analytics rows) may use the name-only
- * overloads with `isCustom = false`.
+ * A custom exercise cannot share an active built-in's name in any shipped UI language (see
+ * [reservedNames] and the repository's duplicate check), so call sites that only know a name
+ * (e.g. analytics rows) may use the name-only overloads with `isCustom = false`.
  */
 object BuiltInExerciseNames {
     private val resByCanonicalName: Map<String, Int> = mapOf(
@@ -111,8 +111,23 @@ object BuiltInExerciseNames {
     fun resIdFor(name: String, isCustom: Boolean = false): Int? =
         if (isCustom) null else resByCanonicalName[name]
 
-    /** Localized names of all built-ins in the current UI language. */
+    /**
+     * UI languages the app ships: `values/` (English) and `values-de/`. Keep in sync with
+     * `res/xml/locales_config.xml` and `localeFilters` in the app module.
+     */
+    val shippedLanguages: List<Locale> = listOf(Locale.ENGLISH, Locale.GERMAN)
+
+    /** Localized names of all built-ins in the language of [strings]. */
     fun localizedNames(strings: UiStrings): List<String> = resByCanonicalName.values.map { strings.get(it) }
+
+    /**
+     * Built-in names a custom exercise must not take: the localized names in every shipped
+     * language ([stringsPerLanguage], one per [shippedLanguages]), not only the current one.
+     * Otherwise a custom "Deadlift" created in the German UI would show up next to the
+     * built-in "Deadlift" after a switch to English.
+     */
+    fun reservedNames(stringsPerLanguage: Collection<UiStrings>): Set<String> =
+        stringsPerLanguage.flatMapTo(linkedSetOf()) { localizedNames(it) }
 
     /**
      * Canonical names of the built-ins whose localized name contains [query] (case-insensitive).

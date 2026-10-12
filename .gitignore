@@ -53,5 +53,6 @@ mockups/
 /output/
 __pycache__/
 
-# Competitor analysis (private, not for the public repo)
+# Competitor analysis: kept local and no longer tracked. Earlier commits still
+# contain it; untracking does not remove it from the published history.
 docs/validation/2026-09-13-competitor-audit/

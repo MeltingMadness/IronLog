@@ -26,7 +26,7 @@ class ResourcesUiStrings(private val resources: Resources) : UiStrings {
     override fun getQuantity(resourceId: Int, quantity: Int, vararg args: Any): String =
         resources.getQuantityString(resourceId, quantity, *args)
 
-    override val locale: Locale get() = resources.configuration.locales[0] ?: Locale.getDefault()
+    override val locale: Locale get() = resources.uiLocale()
 }
 
 @Composable

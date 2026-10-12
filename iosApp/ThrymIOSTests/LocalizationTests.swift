@@ -48,6 +48,50 @@ final class LocalizationTests: XCTestCase {
 
         XCTAssertEqual(try text("\(1) Sätze × \(8) Wdh · \("80 kg")", "en"), "1 set × 8 reps · 80 kg")
         XCTAssertEqual(try text("\(3) Sätze × \(1) Wdh · \("80 kg")", "de"), "3 Sätze × 1 Wdh · 80 kg")
+
+        // Counted and extra sets each pluralize their own argument (1 and 6).
+        XCTAssertEqual(
+            try text("Gewertet: \(1) Arbeitssätze, davon \(0) bis zum Versagen. Ausgelassen: \(2) Aufwärm-, \(0) Drop-, \(0) Backoff- und \(1) zusätzliche Arbeitssätze.", "en"),
+            "Counted: 1 work set, 0 of them to failure. Excluded: 2 warm-up, 0 drop, 0 back-off, and 1 extra work set."
+        )
+        XCTAssertEqual(
+            try text("Gewertet: \(3) Arbeitssätze, davon \(1) bis zum Versagen. Ausgelassen: \(0) Aufwärm-, \(1) Drop-, \(0) Backoff- und \(2) zusätzliche Arbeitssätze.", "en"),
+            "Counted: 3 work sets, 1 of them to failure. Excluded: 0 warm-up, 1 drop, 0 back-off, and 2 extra work sets."
+        )
+        XCTAssertEqual(
+            try text("Gewertet: \(3) Arbeitssätze, davon \(0) bis zum Versagen. Ausgelassen: \(0) Aufwärm-, \(0) Drop-, \(0) Backoff- und \(1) zusätzliche Arbeitssätze.", "de"),
+            "Gewertet: 3 Arbeitssätze, davon 0 bis zum Versagen. Ausgelassen: 0 Aufwärm-, 0 Drop-, 0 Backoff- und 1 zusätzlicher Arbeitssatz."
+        )
+    }
+
+    func testPercentChangesFollowTheLocale() {
+        XCTAssertEqual(ilPercentChangeText(5, locale: Locale(identifier: "en_US")), "+5.0%")
+        XCTAssertEqual(ilPercentChangeText(-12.34, locale: Locale(identifier: "en_US")), "-12.3%")
+        XCTAssertEqual(ilPercentChangeText(0, locale: Locale(identifier: "en_US")), "0.0%")
+        XCTAssertEqual(ilPercentChangeText(7, fractionDigits: 0...1, locale: Locale(identifier: "en_US")), "+7%")
+        // German keeps a (no-break) space before the percent sign; the exact space is ICU's.
+        let german = ilPercentChangeText(5, locale: Locale(identifier: "de_DE"))
+        XCTAssertTrue(german.hasPrefix("+5,0") && german.hasSuffix("%"), german)
+        XCTAssertTrue(german.dropLast().last?.isWhitespace == true, german)
+    }
+
+    func testAnalyticsDatesKeepTheCalendarDayInEveryTimeZone() throws {
+        // The shared core sends local calendar days; west of UTC they must not slip back a day.
+        let english = Locale(identifier: "en_US")
+        for identifier in ["America/New_York", "America/Los_Angeles", "UTC", "Europe/Berlin", "Asia/Tokyo", "Pacific/Kiritimati"] {
+            let zone = try XCTUnwrap(TimeZone(identifier: identifier))
+            let text = try XCTUnwrap(ilAnalyticsDateText("2026-10-11", timeZone: zone, locale: english))
+            XCTAssertEqual(text, "Oct 11, 2026", identifier)
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = zone
+            let date = try XCTUnwrap(ilAnalyticsDate("2026-10-11", timeZone: zone))
+            let day = calendar.dateComponents([.year, .month, .day, .hour], from: date)
+            XCTAssertEqual([day.year, day.month, day.day, day.hour], [2026, 10, 11, 0], identifier)
+        }
+        XCTAssertNil(ilAnalyticsDate("11.10.2026"))
+        XCTAssertEqual(ilAnalyticsShiftedWeekStart("2026-10-05", weeks: 1), "2026-10-12")
+        XCTAssertEqual(ilAnalyticsShiftedWeekStart("2026-10-26", weeks: 1), "2026-11-02")
+        XCTAssertEqual(ilAnalyticsShiftedWeekStart("2026-10-05", weeks: -1), "2026-09-28")
     }
 
     func testSharedMessagesAreTranslatedAtTheBridge() throws {

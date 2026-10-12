@@ -134,7 +134,7 @@ struct IOSExerciseGlassHero: View {
         }
         guard first > 0 else { return absolute }
         let percent = Int((delta / first * 100).rounded())
-        return "\(absolute) · \(percent > 0 ? "+" : "")\(percent) %"
+        return "\(absolute) · \(ilPercentChangeText(Double(percent), fractionDigits: 0...0))"
     }
 }
 

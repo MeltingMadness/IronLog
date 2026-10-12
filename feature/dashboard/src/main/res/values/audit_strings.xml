@@ -21,7 +21,7 @@
     <string name="dashboard_check_in_failed">Your daily form couldn\'t be saved.</string>
     <string name="dashboard_unknown_exercise">Unknown</string>
     <string name="dashboard_load_failed">Couldn\'t load the dashboard.</string>
-    <string name="dashboard_workout_already_active">Another workout is already active. Please resume or finish it first.</string>
+    <string name="dashboard_workout_already_active">Another workout is already in progress. Resume or finish it first.</string>
     <string name="dashboard_plan_changed">The suggested plan has changed. Please try again.</string>
     <string name="dashboard_skip_failed">Couldn\'t skip sub-plan: %1$s</string>
     <string name="dashboard_meta_plan_invalid">Meta plan is incomplete or has no valid sub-plans.</string>

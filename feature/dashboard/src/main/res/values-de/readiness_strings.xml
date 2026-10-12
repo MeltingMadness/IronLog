@@ -23,7 +23,7 @@
     <string name="dashboard_trend_confidence_moderate">mittel</string>
     <string name="dashboard_trend_confidence_high">hoch</string>
     <string name="dashboard_trend_no_number">Ohne ausreichende Evidenz zeigt die App bewusst keine Prozentzahl.</string>
-    <string name="dashboard_trend_loading">Trainingstrend wird berechnet ...</string>
+    <string name="dashboard_trend_loading">Trainingstrend wird berechnet …</string>
     <string name="dashboard_trend_retry">Erneut berechnen</string>
     <string name="dashboard_trend_show_details">Details anzeigen</string>
     <string name="dashboard_trend_hide_details">Details ausblenden</string>

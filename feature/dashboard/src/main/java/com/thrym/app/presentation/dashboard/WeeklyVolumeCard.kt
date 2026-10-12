@@ -31,7 +31,9 @@ import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.fill
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.thrym.app.domain.model.UnitSystem
+import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.currentLocale
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
@@ -40,25 +42,34 @@ import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 
 /**
  * Displays a line chart of total training volume per week over the last 8 weeks.
+ * [weeklyVolume] holds the week start and the volume in kg; the chart, axis and labels
+ * show it in [unitSystem].
  */
 @Composable
 fun WeeklyVolumeCard(
-    weeklyVolume: List<Pair<String, Double>>,
+    weeklyVolume: List<Pair<LocalDate, Double>>,
+    unitSystem: UnitSystem,
     modifier: Modifier = Modifier
 ) {
     val dims = thrymDimens
     val surfaces = thrymSurfaceRoles
     val modelProducer = remember { CartesianChartModelProducer() }
+    val locale = currentLocale()
+    val weekLabels = remember(weeklyVolume, locale) {
+        val format = DateFormatting.dayMonth(locale)
+        weeklyVolume.map { format.format(it.first) }
+    }
 
-    LaunchedEffect(weeklyVolume) {
+    LaunchedEffect(weeklyVolume, unitSystem) {
         if (weeklyVolume.size >= 2) {
             withContext(Dispatchers.Default) {
                 modelProducer.runTransaction {
                     lineSeries {
-                        series(weeklyVolume.map { it.second })
+                        series(weeklyVolume.map { WeightFormatting.convertToDisplay(it.second, unitSystem) })
                     }
                 }
             }
@@ -82,7 +93,7 @@ fun WeeklyVolumeCard(
             )
 
             Text(
-                text = stringResource(DashboardR.string.dashboard_ui_volume_unit),
+                text = stringResource(DashboardR.string.dashboard_ui_volume_unit, WeightFormatting.unitLabel(unitSystem)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -103,7 +114,7 @@ fun WeeklyVolumeCard(
                         ),
                         bottomAxis = HorizontalAxis.rememberBottom(
                             valueFormatter = CartesianValueFormatter { _, value, _ ->
-                                weeklyVolume.getOrNull(value.toInt())?.first.orEmpty()
+                                weekLabels.getOrNull(value.toInt()).orEmpty()
                             }
                         ),
                     ),
@@ -116,7 +127,7 @@ fun WeeklyVolumeCard(
                 Text(
                     text = stringResource(
                         id = R.string.dashboard_volume_trend_current_week,
-                        WeightFormatting.formatVolume(weeklyVolume.last().second, UnitSystem.METRIC)
+                        WeightFormatting.formatVolume(weeklyVolume.last().second, unitSystem)
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

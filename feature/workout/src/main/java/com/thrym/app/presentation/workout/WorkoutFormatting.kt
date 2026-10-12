@@ -102,6 +102,17 @@ internal fun formatIntensity(rpe: Double?, intensitySystem: IntensitySystem, loc
     return WeightFormatting.formatNumber(displayValue, locale = locale)
 }
 
+/**
+ * Prefill text for the intensity input in edit mode, in the form the RPE/RIR chips store:
+ * "8.5", "8", "2" (ASCII digits and a dot in every language), so the matching chip shows as
+ * selected and [parseDecimal] reads the value back. The UI shows it via [formatRpeValue].
+ */
+internal fun formatIntensityInput(rpe: Double?, intensitySystem: IntensitySystem): String {
+    if (rpe == null || intensitySystem == IntensitySystem.OFF) return ""
+    val displayValue = if (intensitySystem == IntensitySystem.RIR) 10.0 - rpe else rpe
+    return WeightFormatting.formatInputNumber(displayValue, maxFractionDigits = 2, locale = Locale.ROOT)
+}
+
 /** RPE labels use opaque ink; [rpeColor] is reserved for fills and borders. */
 @Composable
 internal fun rpeTextColor(rpe: Double?): Color? {

@@ -691,8 +691,7 @@ private struct IOSDashboardTrainingTrendCard: View {
 
     private func changeText(_ value: Double?) -> String {
         guard let value, value.isFinite else { return String(localized: "keine Vergleichszahl") }
-        let sign = value > 0 ? "+" : ""
-        return "\(sign)\(value.formatted(.number.precision(.fractionLength(1)))) %"
+        return ilPercentChangeText(value)
     }
 }
 

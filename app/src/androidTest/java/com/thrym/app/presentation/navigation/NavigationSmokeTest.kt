@@ -51,6 +51,7 @@ import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.util.DateFormatting
+import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.progression.ProgressionReviewViewModel
 import com.thrym.app.presentation.theme.ThrymTheme
 import com.thrym.core.designsystem.R
@@ -426,7 +427,7 @@ class NavigationSmokeTest {
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText(text(R.string.history_title)).fetchSemanticsNodes().isNotEmpty()
         }
-        val locale = composeRule.activity.resources.configuration.locales[0]
+        val locale = composeRule.activity.resources.uiLocale()
         val expectedDate = LocalDateTime.now().format(DateFormatting.dateFull(locale))
         composeRule.waitUntil(timeoutMillis = 30_000L) {
             composeRule.onAllNodesWithText(expectedDate).fetchSemanticsNodes().isNotEmpty()

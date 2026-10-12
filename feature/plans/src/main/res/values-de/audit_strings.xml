@@ -44,7 +44,7 @@
     <string name="meta_plan_load_failed_detail">Meta-Plan konnte nicht geladen werden: %1$s</string>
     <string name="meta_plan_children_load_failed">Unterpläne konnten nicht geladen werden: %1$s</string>
     <string name="meta_plan_name_required">Bitte gib einen Namen ein.</string>
-    <string name="meta_plan_children_required">Bitte waehle mindestens einen Unterplan.</string>
+    <string name="meta_plan_children_required">Bitte wähle mindestens einen Unterplan.</string>
     <string name="meta_plan_save_failed">Meta-Plan konnte nicht gespeichert werden: %1$s</string>
     <string name="meta_plans_load_failed">Meta-Pläne konnten nicht geladen werden: %1$s</string>
     <string name="meta_plan_delete_failed">Meta-Plan konnte nicht gelöscht werden: %1$s</string>

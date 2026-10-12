@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 data class ExerciseEditorState(
     val id: Long? = null,
@@ -68,17 +69,21 @@ class ExerciseLibraryViewModel(
     private val selectedMuscleGroup = MutableStateFlow<MuscleGroup?>(null)
     private val editor = MutableStateFlow<ExerciseEditorState?>(null)
     private val error = MutableStateFlow<String?>(null)
+    // UI locale; a runtime language switch keeps this ViewModel, so the screen reports it
+    // and the list is sorted again by the names in the new language.
+    private val locale = MutableStateFlow(strings.locale)
 
     // Filtering and sorting run in memory on the localized display name: the database
     // only knows the stored (German canonical) names of the built-in exercises.
     private val exercises = combine(
         exerciseRepository.getAllExercises(),
         searchQuery,
-        selectedMuscleGroup
-    ) { list, query, group ->
+        selectedMuscleGroup,
+        locale
+    ) { list, query, group, uiLocale ->
         list.filterNot { it.isArchived }
             .filter { query.isNotBlank() || group == null || it.primaryMuscleGroup == group }
-            .filterAndSortByDisplayName(query, displayName = { strings.exerciseName(it) }, locale = strings.locale)
+            .filterAndSortByDisplayName(query, displayName = { strings.exerciseName(it) }, locale = uiLocale)
     }.catch { e ->
         // Unlike catchAndLog, this must keep the combine() below alive with a value so
         // isLoading doesn't stay stuck at its initial `true` forever (see History pattern).
@@ -119,6 +124,11 @@ class ExerciseLibraryViewModel(
 
     fun onSearchQueryChange(query: String) {
         searchQuery.value = query
+    }
+
+    /** Called by the screen with the current UI locale; a change re-sorts the list. */
+    fun onLocaleChanged(locale: Locale) {
+        this.locale.value = locale
     }
 
     fun onMuscleGroupSelected(group: MuscleGroup?) {

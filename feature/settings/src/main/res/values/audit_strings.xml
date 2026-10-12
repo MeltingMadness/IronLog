@@ -11,5 +11,7 @@
     <string name="settings_intensity_rir" translatable="false">RIR</string>
     <string name="settings_weight_kg" translatable="false">%1$s kg</string>
     <string name="settings_unknown_error">Action failed: unknown error</string>
+    <string name="settings_error_backup_too_new">This backup is from a newer app version (schema %1$d, this app supports %2$d). Update the app to import it.</string>
+    <string name="settings_error_backup_data_changed">Training data changed while the import was being prepared. Nothing was deleted. Please try again.</string>
     <string name="settings_incident_subject">%1$s incident %2$s</string>
 </resources>

@@ -66,6 +66,12 @@ xcodebuild test -project iosApp/ThrymIOS.xcodeproj -scheme ThrymIOS \
 
 You can also open `iosApp/ThrymIOS.xcodeproj` in Xcode after generating it. Use any iPhone simulator you have installed (`xcrun simctl list devices available`). See [`iosApp/README.md`](iosApp/README.md) (German) for more checks, for example how to run a single test class.
 
+If you change `:shared`, also run the golden IronLog backup tests on Kotlin/Native, as CI does. The iOS app runs this code natively, and `:shared:testAndroidHostTest` only covers the JVM:
+
+```bash
+./gradlew :shared:iosSimulatorArm64Test --tests 'com.thrym.shared.backup.IronLogBackupFixtureImportTest'
+```
+
 **The Xcode project is generated.** `iosApp/generate_project.py` writes `iosApp/ThrymIOS.xcodeproj` and picks up every Swift file in `iosApp/ThrymIOS/` and `iosApp/ThrymIOSTests/` automatically. Never edit `project.pbxproj` by hand. After you add, remove or rename Swift files or resources, or change generator settings, run the generator again and **commit the regenerated project**. CI fails if the committed project differs from the generator output.
 
 **Running on your own iPhone.** Simulator builds need no signing. For a device build:
@@ -83,14 +89,14 @@ Every pull request has to pass these checks before it can be merged:
 
 1. Unit tests: `./gradlew test :shared:testAndroidHostTest`
 2. Lint: `./gradlew lintDebug` with no errors. This includes `MissingTranslation`, which fails when a string is missing in one of the languages.
-3. Translation completeness: `python3 .github/scripts/check-translations.py` checks that every text exists in English and German with matching placeholders. The Android job runs it with `--platform android`, the iOS job with `--platform ios`; without an option it checks both platforms.
+3. Translation completeness: `python3 .github/scripts/check-translations.py` checks that every text exists in English and German with matching placeholders. The Android job runs it with `--platform android`, the iOS job with `--platform ios`; without an option it checks both platforms. On iOS it can only check keys that are already in the string catalogs, so it does not notice a new text that is missing from the catalog (see the iOS rules below).
 4. Debug build: `./gradlew assembleDebug`
 5. Instrumentation smoke tests: `./gradlew :app:connectedDebugAndroidTest` on an API 35 emulator with animations disabled. A guard script (`.github/scripts/guard-zero-tests.py`) fails the job if no test report exists, no test ran, or one of the expected smoke test classes (`EXPECTED_TEST_CLASSES` in the script) did not run. If you rename or remove one of those classes, update the list.
 
 **iOS** (`.github/workflows/ios-ci.yml`, `macos-26` runner with Xcode 26.6)
 
 6. Generator drift check: `python3 iosApp/generate_project.py` must not change the committed `iosApp/ThrymIOS.xcodeproj`.
-7. Build and XCTest: the `xcodebuild test` command shown above must pass. It also builds `Shared.framework` with Gradle and JDK 17. As on Android, the job fails if no test ran.
+7. Build and tests: the golden IronLog backup tests must pass on Kotlin/Native (`./gradlew :shared:iosSimulatorArm64Test --tests 'com.thrym.shared.backup.IronLogBackupFixtureImportTest'`), and the `xcodebuild test` command shown above must pass. The build also creates `Shared.framework` with Gradle and JDK 17. As on Android, the job fails if no test ran.
 
 If you can't build the iOS app yourself (no Mac), CI checks it for you. Please mention this in the pull request.
 
@@ -115,16 +121,26 @@ Thrym ships in English (default and fallback) and German. All visible text must 
 
 **iOS**
 
-- UI text lives in the string catalog `iosApp/ThrymIOS/Localizable.xcstrings`. The keys are the German texts (source language `de`). Every entry needs a `de` **and** an `en` localization. The project's development region is `en`, so English is the fallback.
-- SwiftUI text literals are localized automatically. For strings built in code, use `String(localized:)`. For counts, use plural variants in the catalog.
+- UI text lives in the string catalog `iosApp/ThrymIOS/Localizable.xcstrings`. The names of the built-in exercises live in a second catalog, `iosApp/ThrymIOS/Exercises.xcstrings`. The keys are the German texts (source language `de`). Every entry needs a `de` **and** an `en` localization. The project's development region is `en`, so English is the fallback.
+- SwiftUI text literals are looked up in the catalog at runtime. For strings built in code, use `String(localized:)`. For counts, use plural variants in the catalog.
+- **Add new keys to the catalog by hand.** The generated Xcode project does not extract strings (`SWIFT_EMIT_LOC_STRINGS` is not set), so building does not add a new `Text("…")` to `Localizable.xcstrings`. Add every new or changed text yourself, with `de` and `en`, and remove keys that are no longer used. `check-translations.py` and the XCTests only check keys that are already in the catalog. If you forget one, CI stays green and the English UI shows the German text.
+- Some error messages from the shared Kotlin core are fixed German texts: those thrown by `SharedStateStore` and by the iOS bridges `IosTrainingFeature` and `IosSettingsFeature` (`shared/src/iosMain`). The iOS app translates them with `ilSharedMessage` (`iosApp/ThrymIOS/SharedBootstrap.swift`), which looks up the German text as a key in `Localizable.xcstrings` (entries with `extractionState` `manual`). If you add or reword such a message in Kotlin, add the matching manual catalog entry with `de` and `en` in the same pull request and remove the old key. Otherwise the English UI shows the German message, and no check fails.
 
 **Both platforms**
 
 - Every text change comes in **both languages in the same pull request**.
 - **Never translate or rename enum constants** such as `BRUST`, `LANGHANTEL`, `WARMUP` or `PLANNED_FAILURE`. They are storage keys in Room, in the iOS store and in backups. Only their display is translated.
-- Built-in exercises are stored under their German canonical names in the database and in backups (seed data: `core/database/src/main/java/com/thrym/app/data/seed/ExerciseSeedData.kt`). Both platforms translate them for display through a lookup table. If you add a built-in exercise, add its translation on both platforms. Never change the stored name of an existing one. Exercises that users create are not translated.
+- Built-in exercises are stored under their German canonical names in the database and in backups. Both platforms translate them for display only: Android through `BuiltInExerciseNames` and the `exercise_names.xml` resources, iOS through `ilExerciseDisplayName` and `Exercises.xcstrings`. Never change the stored name of an existing one. Exercises that users create are not translated. If you add a built-in exercise, add it in all of these places:
+  - Android seed data: `core/database/src/main/java/com/thrym/app/data/seed/ExerciseSeedData.kt`
+  - iOS seed data: `DefaultExerciseCatalog` in `shared/src/commonMain/kotlin/com/thrym/shared/store/DefaultExerciseCatalog.kt`
+  - Android lookup table: `core/designsystem/src/main/java/com/thrym/app/presentation/common/BuiltInExerciseNames.kt`, plus the name in `core/designsystem/src/main/res/values/exercise_names.xml` (English) and `values-de/exercise_names.xml` (German, identical to the canonical name)
+  - iOS lookup table: `iosApp/ThrymIOS/Exercises.xcstrings`, with `de` and `en`
+  - the expected count of built-in exercises (currently 79) in `BuiltInExerciseNamesTest` (Android) and `StringCatalogTests` (iOS)
 - Format numbers, weights and dates with locale-aware APIs. Don't hard-code decimal separators or date patterns.
-- To add a language, please open an issue first. It needs all Android resources, the iOS catalog, the exercise names and the language list for Android's per-app language setting.
+- To add a language, please open an issue first. Every place that lists the supported languages needs the new one:
+  - Android: a `values-xx/` folder with all strings in every module that has UI text (including `exercise_names.xml`), `app/src/main/res/xml/locales_config.xml` (per-app language setting) and `androidResources.localeFilters` in `app/build.gradle.kts`. Without the `localeFilters` entry the build strips the new resources from the APK.
+  - iOS: the new localization in `Localizable.xcstrings` and `Exercises.xcstrings`, `KNOWN_REGIONS` in `iosApp/generate_project.py` (then run the generator and commit the project), and `CFBundleLocalizations` in `iosApp/ThrymIOS/Info.plist` and `iosApp/project.yml`.
+  - Translation check: extend `.github/scripts/check-translations.py`. It only checks the languages it names (`DE_VALUES_DIR` for Android, `CATALOG_LANGUAGES` for iOS).
 
 ### Logging
 
@@ -145,11 +161,13 @@ Any change to the Room schema needs all of the following:
 
 **Never break the import of older backups.** Every backup an earlier version exported, including backups from IronLog (format version 1, schema versions up to the current one), must keep importing on Android and iOS. Only change the backup format additively: never rename fields or stored keys. Missing fields get safe defaults. Import is fail-closed: an invalid backup must not change any data. In the same way, the iOS app's stored training state (`Application Support/Thrym/`) must stay readable after an update.
 
+**Never touch the golden backups.** `shared/src/commonTest/kotlin/com/thrym/shared/backup/IronLogBackupFixtures.kt` and `data/src/test/resources/backup-fixtures/` hold frozen exports of IronLog 1.4.0 (Android) and of the IronLog iOS app (schema 15). The Kotlin constants and the JSON files are byte-identical copies, pinned by SHA-256. Never edit, reformat or regenerate them, and never change their hashes. Both `IronLogBackupFixtureImportTest` classes (in `:shared` and `data`) must keep passing after every backup format change. If they fail, fix the import code, not the fixtures.
+
 Weights are always stored in kilograms. Pounds are converted for display only.
 
 ### UI tests
 
-- Don't match hard-coded text. Resolve expected texts from resources (`getString(R.string.…)` on Android, the string catalog in XCTest), so tests pass in English and in German.
+- Don't match hard-coded text. Resolve expected texts from resources (`getString(R.string.…)` on Android, the string catalog in XCTest), so tests pass in English and in German. The only exceptions are the catalog and bundle tests (`StringCatalogTests`, `LocalizationTests`, `ExerciseDisplayNameTests`). They check a few sample translations with literals, against an explicitly loaded `en` or `de` bundle.
 - Before you click, wait until the element is enabled (`isEnabled()`). Wait for snackbars to appear, and assert the result of an action instead of clicking on blindly. CI runs without animations and is slower than your machine.
 
 ### App name and IDs

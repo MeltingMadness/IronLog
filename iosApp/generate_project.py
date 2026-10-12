@@ -28,7 +28,9 @@ TESTS_PRODUCT_NAME = f"{TESTS_NAME}.xctest"
 SIGNING_XCCONFIG = "Config/Signing.xcconfig"
 BUNDLE_ID_SETTING = "THRYM_BUNDLE_ID"
 # English is the development language and the fallback for every other
-# device language; German is shipped as a translation.
+# device language; German is shipped as a translation. Keep KNOWN_REGIONS in
+# sync with CFBundleLocalizations (ThrymIOS/Info.plist, project.yml) and the
+# languages of the *.xcstrings catalogs (see CONTRIBUTING.md, adding a language).
 DEVELOPMENT_REGION = "en"
 KNOWN_REGIONS = ("en", "de", "Base")
 DEPLOYMENT_TARGET = "17.0"

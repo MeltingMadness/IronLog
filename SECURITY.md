@@ -18,6 +18,8 @@ Report them privately through GitHub:
 
 Only you and the maintainer can see the report. You can expect a first reply within about a week. We'll work out the fix and the disclosure together with you, and we're happy to credit you in the advisory unless you'd rather stay anonymous.
 
+If the **Report a vulnerability** button is missing, private reporting has been switched off by mistake. In that case, open an issue titled "Security contact request" that only asks the maintainer for a private way to reach them. Leave out every detail of the vulnerability.
+
 Please use test data only. Never send real training data, real backup files or incident reports that contain personal information. If a crafted file is needed to reproduce the issue, attach a minimal one that you made yourself.
 
 ## Scope

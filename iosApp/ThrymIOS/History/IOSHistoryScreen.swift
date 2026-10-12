@@ -730,7 +730,7 @@ private struct IOSHistorySetEditor: View {
         _intention = State(initialValue: intention)
         _weightText = State(initialValue: Self.displayedWeight(set.weightKg, unitSystem: unitSystem))
         _repsText = State(initialValue: "\(set.reps)")
-        _rpeText = State(initialValue: set.rpe.map { IOSHistoryFormatting.number($0) } ?? "")
+        _rpeText = State(initialValue: set.rpe.map { IOSNumber.format($0, fractionDigits: 1) } ?? "")
     }
 
     var body: some View {
@@ -785,8 +785,7 @@ private struct IOSHistorySetEditor: View {
     }
 
     private func save() {
-        let normalizedWeight = weightText.replacingOccurrences(of: ",", with: ".")
-        guard let displayedWeight = Double(normalizedWeight), displayedWeight.isFinite, displayedWeight >= 0 else {
+        guard let displayedWeight = IOSNumber.parse(weightText), displayedWeight >= 0 else {
             errorMessage = String(localized: "Bitte gib ein gültiges Gewicht ein.")
             return
         }
@@ -797,7 +796,7 @@ private struct IOSHistorySetEditor: View {
         let rpe: Double?
         if rpeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             rpe = nil
-        } else if let parsed = Double(rpeText.replacingOccurrences(of: ",", with: ".")), parsed.isFinite, parsed >= 0, parsed <= 10 {
+        } else if let parsed = IOSNumber.parse(rpeText), parsed >= 0, parsed <= 10 {
             rpe = parsed
         } else {
             errorMessage = String(localized: "Die RPE muss zwischen 0 und 10 liegen.")
@@ -813,7 +812,7 @@ private struct IOSHistorySetEditor: View {
     private static func displayedWeight(_ kilograms: Double, unitSystem: String) -> String {
         let isImperial = unitSystem.uppercased() == "IMPERIAL"
         let value = isImperial ? kilograms * IOSWeightFormatter.poundsPerKilogram : kilograms
-        return IOSHistoryFormatting.number(value, maximumFractionDigits: 2)
+        return IOSNumber.format(value, fractionDigits: 2)
     }
 }
 

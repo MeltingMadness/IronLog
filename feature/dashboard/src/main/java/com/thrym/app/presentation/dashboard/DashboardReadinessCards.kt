@@ -1,6 +1,8 @@
 package com.thrym.app.presentation.dashboard
 
 import com.thrym.feature.dashboard.R as UxR
+import com.thrym.core.designsystem.R as DesignR
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.domain.util.WeightFormatting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -397,10 +399,13 @@ private fun ExerciseTrendRow(exercise: ExerciseTrend) {
     }
 }
 
+/** Signed change in the UI locale: "+2.5%" (en), "+2,5 %" (de), no trailing ".0". */
+@Composable
 private fun formatChange(changePercent: Double): String {
     val rounded = kotlin.math.round(changePercent * 10) / 10
     val sign = if (rounded > 0) "+" else ""
-    return "$sign$rounded %"
+    val number = WeightFormatting.formatNumber(rounded, maxFractionDigits = 1, locale = currentLocale())
+    return stringResource(DesignR.string.common_percent_value, sign + number)
 }
 
 /**

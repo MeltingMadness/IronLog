@@ -8,7 +8,7 @@ Die native SwiftUI-App baut mit Xcode 26.6 und läuft im iPhone-17-Simulator mit
 
 Der gemeinsame Kotlin-Kern besitzt den kanonischen Trainingsgraphen, Progressionsregeln, Bestleistungen und Auswertungen. iOS speichert den validierten Graphen atomar unter `Application Support/Thrym/training-state.json`. Änderungen werden erst nach erfolgreicher Speicherung veröffentlicht. Einstellungen liegen in NSUserDefaults. Die ältere Repository-Abstraktion ist nicht der direkte UI-Zugriff: Swift verwendet `IosTrainingFeature` und `IosSettingsFeature` als Plattformbrücken zum gemeinsamen Kern.
 
-Die Oberfläche gibt es wie auf Android auf Englisch und Deutsch (String-Katalog `Localizable.xcstrings`, Englisch als Fallback). Eingebaute Übungsnamen und Enum-Werte werden nur für die Anzeige übersetzt; Backups bleiben mit Android und mit alten IronLog-Backups kompatibel. Das Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.
+Die Oberfläche gibt es wie auf Android auf Englisch und Deutsch (String-Kataloge `Localizable.xcstrings` für UI-Texte und `Exercises.xcstrings` für eingebaute Übungen, Englisch als Fallback). Eingebaute Übungsnamen und Enum-Werte werden nur für die Anzeige übersetzt; Backups bleiben mit Android und mit alten IronLog-Backups kompatibel. Das Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.
 
 ## Bereits nachgewiesen
 

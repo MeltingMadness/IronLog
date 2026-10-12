@@ -67,3 +67,10 @@ Diese Aussagen gelten nur, solange Backup und Export keine Server-Ziele erhalten
 ## Branch Protection (externe manuelle Konfiguration)
 
 Branch Protection für `main` ist eine manuelle GitHub-Einstellung und wird nicht von diesem Repository verwaltet. Einzurichten ist mindestens: alle sieben PR-Gates als Required Checks, also die Jobs `unit-lint-build` und `android-smoke` aus `android-ci.yml` sowie „Build + unit tests (iOS Simulator)“ (`simulator-build-test`) aus `ios-ci.yml`, keine direkten Pushes (oder nur mit Review), Linear History optional. Ohne diese Konfiguration läuft CI zwar, aber nichts erzwingt die Gates vor dem Merge.
+
+## Repository-Einstellungen (externe manuelle Konfiguration)
+
+Auch diese GitHub-Einstellungen verwaltet das Repository nicht selbst. Sie sind vor dem öffentlichen Start und nach jeder Änderung der Repository-Einstellungen zu prüfen:
+
+- **Private vulnerability reporting** (Settings → Code security → Private vulnerability reporting) muss eingeschaltet sein. `SECURITY.md` und `CODE_OF_CONDUCT.md` nennen den Button „Report a vulnerability“ im Security-Tab als privaten Meldeweg für Sicherheitslücken und Verhaltensverstöße, und `.github/ISSUE_TEMPLATE/config.yml` verweist darauf. Ist die Einstellung aus, fehlt der Button; dann bleibt nur der Notweg aus `SECURITY.md`, ein Issue, das nur nach einem privaten Kontakt fragt. Prüfen mit `gh api repos/MeltingMadness/Thrym/private-vulnerability-reporting`; erwartet ist `"enabled": true`.
+- **Beschreibung und Topics** des Repositorys sollen zum README passen: Thrym, offline, Android und iOS. Ändern mit `gh repo edit MeltingMadness/Thrym --description "…"` und `--add-topic …`.

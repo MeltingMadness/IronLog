@@ -17,6 +17,7 @@ import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.theme.ThrymInteractiveColors
 import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.theme.semanticText
+import com.thrym.app.presentation.workout.parseDecimal
 
 @Composable
 internal fun plannedSetLabel(kind: String): String = stringResource(
@@ -36,7 +37,7 @@ internal fun IndividualSetTargetsSheet(item: PlanExerciseUi, onDismiss: () -> Un
         val targets = item.planExercise.setTargets.ifEmpty {
             List((item.targetSetsInput.toIntOrNull() ?: 3).coerceIn(1, 100)) {
                 PlannedSet(reps = item.targetRepsInput.toIntOrNull() ?: 10,
-                    weightKg = item.targetWeightInput.replace(',', '.').toDoubleOrNull()?.let { WeightFormatting.convertToKg(it, unit) } ?: item.planExercise.targetWeightKg)
+                    weightKg = parseDecimal(item.targetWeightInput)?.let { WeightFormatting.convertToKg(it, unit) } ?: item.planExercise.targetWeightKg)
             }
         }
         mutableStateOf(targets.map { SetDraft(it.kind, WeightFormatting.formatInputNumber(WeightFormatting.convertToDisplay(it.weightKg, unit)), it.reps.toString()) })
@@ -77,7 +78,7 @@ internal fun IndividualSetTargetsSheet(item: PlanExerciseUi, onDismiss: () -> Un
             Button(onClick = {
                 val parsed = rows.mapNotNull { row ->
                     val reps = row.reps.toIntOrNull()
-                    val weight = row.weight.replace(',', '.').toDoubleOrNull()
+                    val weight = parseDecimal(row.weight)
                     if (reps == null || weight == null) null else PlannedSet(row.kind, reps, WeightFormatting.convertToKg(weight, unit))
                 }
                 if (parsed.size != rows.size || parsed.isEmpty() || !PlannedSets.valid(parsed)) error = invalidTargetsMessage

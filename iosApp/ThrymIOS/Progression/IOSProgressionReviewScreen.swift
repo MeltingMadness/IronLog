@@ -523,7 +523,7 @@ private struct IOSProgressionEditSheet: View {
             errorMessage = String(localized: "Gib eine positive Wiederholungszahl ein.")
             return
         }
-        guard let displayedWeight = Double(weightText.replacingOccurrences(of: ",", with: ".")), displayedWeight.isFinite, displayedWeight >= 0 else {
+        guard let displayedWeight = IOSNumber.parse(weightText), displayedWeight >= 0 else {
             errorMessage = String(localized: "Gib ein gültiges Gewicht ein.")
             return
         }
@@ -560,9 +560,10 @@ private enum IOSProgressionFormatting {
         IOSHistoryFormatting.number(value, maximumFractionDigits: 2)
     }
 
+    /// Text-field prefill: ungrouped, so [IOSNumber.parse] reads 1000 and more back unchanged.
     static func displayedWeight(_ kilograms: Double, unitSystem: String) -> String {
         let value = unitSystem.uppercased() == "IMPERIAL" ? kilograms * IOSWeightFormatter.poundsPerKilogram : kilograms
-        return number(value)
+        return IOSNumber.format(value)
     }
 }
 

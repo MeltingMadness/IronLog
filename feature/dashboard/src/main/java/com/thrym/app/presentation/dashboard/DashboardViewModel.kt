@@ -2,7 +2,6 @@ package com.thrym.app.presentation.dashboard
 
 import com.thrym.app.presentation.common.UiStrings
 import com.thrym.app.presentation.common.toUserDetail
-import com.thrym.app.presentation.common.exerciseName
 import com.thrym.feature.dashboard.R as UxR
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
@@ -10,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.thrym.app.data.local.entity.EpochConverter
 import com.thrym.app.domain.model.DeloadAssessment
 import com.thrym.app.domain.model.DeloadMode
+import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.MetaPlanRotationEvent
 import com.thrym.app.domain.model.MetaTrainingPlan
 import com.thrym.app.domain.model.MuscleGroup
@@ -153,16 +153,22 @@ data class DashboardUiState(
     val weekDays: List<DashboardWeekDay> = emptyList(),
     val volumeThisWeekKg: Double = 0.0,
     val unitSystem: UnitSystem = UnitSystem.METRIC,
-    /** Exercise names by id for plan previews; plan rows do not always carry the name. */
-    val exerciseNames: Map<Long, String> = emptyMap(),
-    val recentRecords: List<Pair<PersonalRecord, String>> = emptyList(),
+    /**
+     * Exercises by id for plan previews; plan rows do not always carry the name. The state keeps
+     * language-neutral data (exercises, dates) and the UI resolves names and labels, so a
+     * runtime language switch shows at once instead of after the next data reload.
+     */
+    val planExercises: Map<Long, Exercise> = emptyMap(),
+    /** Recent records with their exercise; `null` when the exercise no longer exists. */
+    val recentRecords: List<Pair<PersonalRecord, Exercise?>> = emptyList(),
     val lastWorkout: WorkoutSession? = null,
     val lastWorkoutExerciseCount: Int = 0,
-    val weeklyVolume: List<Pair<String, Double>> = emptyList(),
+    /** Total volume in kg per week, keyed by the first day of the week. */
+    val weeklyVolume: List<Pair<LocalDate, Double>> = emptyList(),
     val weeklyMuscleVolume: DashboardWeeklyMuscleVolumeState = DashboardWeeklyMuscleVolumeState(),
     val pendingProgressionCount: Int = 0,
     val deload: DeloadAssessment? = null,
-    val deloadExerciseName: String? = null,
+    val deloadExercise: Exercise? = null,
     val deloadMode: DeloadMode? = null,
     /** Verhindert doppelte Deload-Aktionen, solange der Persistenzschritt läuft. */
     val isDeloadModeUpdating: Boolean = false,
@@ -577,17 +583,17 @@ class DashboardViewModel(
                 workoutRepository.observeLastSessionPerPlan()
             ) { plans, lastPlanSessions ->
                 val exerciseIds = plans.flatMap { plan -> plan.exercises.map { it.exerciseId } }.distinct()
-                val names = runCatching {
-                    exerciseRepository.getExercisesByIds(exerciseIds).associate { it.id to strings.exerciseName(it) }
+                val exercises = runCatching {
+                    exerciseRepository.getExercisesByIds(exerciseIds).associateBy { it.id }
                 }.getOrDefault(emptyMap())
                 buildPlanOptions(
                     plans = plans,
                     lastSessionsPerPlan = lastPlanSessions
-                ) to names
+                ) to exercises
             }
                 .catchAndLog("DashboardVM_Plans")
-                .collect { (plans, names) ->
-                    _uiState.update { it.copy(trainingPlans = plans, exerciseNames = names) }
+                .collect { (plans, exercises) ->
+                    _uiState.update { it.copy(trainingPlans = plans, planExercises = exercises) }
                     reprojectTrendIfPlanChanged()
                 }
         }
@@ -699,8 +705,8 @@ class DashboardViewModel(
                 val records = statisticsRepository.getRecentRecordsList(5)
                 val recordExerciseMap = exerciseRepository.getExercisesByIds(records.map { it.exerciseId })
                     .associateBy { it.id }
-                val recordsWithNames = records.map { record ->
-                    Pair(record, recordExerciseMap[record.exerciseId]?.let { strings.exerciseName(it) } ?: strings.get(UxR.string.dashboard_unknown_exercise))
+                val recordsWithExercises = records.map { record ->
+                    Pair(record, recordExerciseMap[record.exerciseId])
                 }
 
                 val lastWorkout = workoutRepository.getLastCompletedSessionBefore(nowEpochMillis)
@@ -733,7 +739,7 @@ class DashboardViewModel(
                                 !completedAt.isAfter(nowDateTime)
                         }
                         .sumOf { it.weightKg * it.reps }
-                    DateFormatting.dayMonth(strings.locale).format(weekStart) to volume
+                    weekStart to volume
                 }
 
                 val deload = runCatching { deloadRepository.assess() }
@@ -741,9 +747,9 @@ class DashboardViewModel(
                         AppLogger.w("DashboardVM", "Deload-Analyse fehlgeschlagen: ${error.message}", error)
                     }
                     .getOrNull()
-                val deloadExerciseName = deload?.strongestExerciseId
+                val deloadExercise = deload?.strongestExerciseId
                     ?.let { id ->
-                        runCatching { exerciseRepository.getExerciseById(id)?.let { strings.exerciseName(it) } }.getOrNull()
+                        runCatching { exerciseRepository.getExerciseById(id) }.getOrNull()
                     }
 
                 val weeklyMuscleVolume = weeklyRequestId?.let {
@@ -778,13 +784,13 @@ class DashboardViewModel(
                         weekDays = weekDays,
                         volumeThisWeekKg = volumeByWeek.lastOrNull()?.second ?: 0.0,
                         unitSystem = preferences.unitSystem,
-                        recentRecords = recordsWithNames,
+                        recentRecords = recordsWithExercises,
                         lastWorkout = lastWorkout,
                         lastWorkoutExerciseCount = lastWorkoutExerciseCount,
                         weeklyVolume = volumeByWeek,
                         weeklyMuscleVolume = weeklyState,
                         deload = deload,
-                        deloadExerciseName = deloadExerciseName,
+                        deloadExercise = deloadExercise,
                         deloadMode = preferences.deloadMode,
                         isLoading = false
                     )

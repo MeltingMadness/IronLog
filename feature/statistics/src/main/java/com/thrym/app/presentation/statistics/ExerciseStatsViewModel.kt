@@ -21,7 +21,6 @@ import com.thrym.app.domain.util.MuscleVolumeCalculator
 import com.thrym.app.domain.util.WorkoutCalculations
 import com.thrym.app.domain.util.catchAndLog
 import com.thrym.app.presentation.common.toUserMessage
-import com.thrym.app.domain.util.DateFormatting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -38,7 +37,8 @@ enum class ChartMetric(@StringRes val labelRes: Int) {
 }
 
 data class ChartDataPoint(
-    val dateLabel: String,
+    /** Day of the session; the UI formats it, so a runtime language switch shows at once. */
+    val date: LocalDate,
     val value: Float,
     /** Full timestamp retained for an identifiable value outside the chart axis. */
     val timestamp: LocalDateTime? = null,
@@ -217,7 +217,7 @@ class ExerciseStatsViewModel(
         val chartData = ordered.map { agg ->
             val date = agg.latestTime
             ChartDataPoint(
-                dateLabel = date.format(DateFormatting.dayMonth(strings.locale)),
+                date = date.toLocalDate(),
                 value = when (metric) {
                     ChartMetric.WEIGHT -> agg.maxWeight.toFloat()
                     ChartMetric.E1RM   -> agg.maxE1Rm.toFloat()

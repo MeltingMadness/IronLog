@@ -20,6 +20,6 @@
     <string name="error_plan_apply_session_not_found">Workout not found</string>
     <string name="error_plan_apply_session_not_finished">Please finish the workout first</string>
     <string name="error_plan_apply_no_plan">This workout has no plan</string>
-    <string name="error_plan_apply_plan_exercise_missing">The plan has changed. Please check it in the editor.</string>
-    <string name="error_plan_apply_plan_changed">The plan has changed since this workout. Please check it in the editor.</string>
+    <string name="error_plan_apply_plan_exercise_missing">The plan was changed. Please check it in the editor.</string>
+    <string name="error_plan_apply_plan_changed">The plan changed after the workout. Please check it in the editor.</string>
 </resources>

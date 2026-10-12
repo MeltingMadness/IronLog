@@ -19,7 +19,6 @@ import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.TrainingPlanRepository
 import com.thrym.app.domain.repository.ProgressionRepository
 import com.thrym.app.domain.util.WeightFormatting
-import java.math.BigDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -270,10 +269,7 @@ class ProgressionReviewViewModel(
         }
 
         val weightKg = if (ProgressionEditField.WEIGHT in draft.dirtyFields) {
-            draft.weight
-                .trim()
-                .replace(',', '.')
-                .toDoubleOrNull()
+            WeightFormatting.parseInputNumber(draft.weight)
                 ?.takeIf { it.isFinite() && it >= 0.0 }
                 ?.let { WeightFormatting.convertToKg(it, draft.unitSystem) }
                 ?: run {
@@ -327,7 +323,7 @@ class ProgressionReviewViewModel(
         return ProgressionEditDraft(
             sets = target.sets.toString(),
             reps = target.reps.toString(),
-            weight = editableNumber(WeightFormatting.convertToDisplay(target.weightKg, unitSystem)),
+            weight = editableWeight(WeightFormatting.convertToDisplay(target.weightKg, unitSystem), unitSystem),
             unitSystem = unitSystem
         )
     }
@@ -341,8 +337,9 @@ class ProgressionReviewViewModel(
         is ProgressionConfig.Invalid -> null
     }
 
-    private fun editableNumber(value: Double): String =
-        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+    /** Rounded like every other weight field ("220.5" lb, not "220.46226218"), UI decimal separator. */
+    private fun editableWeight(displayValue: Double, unitSystem: UnitSystem): String =
+        WeightFormatting.formatInputNumber(displayValue, WeightFormatting.weightDecimals(displayValue, unitSystem))
 
     private companion object {
         const val SESSION_ID_KEY = "sessionId"

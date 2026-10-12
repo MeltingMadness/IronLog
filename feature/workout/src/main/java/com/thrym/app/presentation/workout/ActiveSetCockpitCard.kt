@@ -376,7 +376,7 @@ internal fun ActiveSetCockpitCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
                         if (intensityInput.text.isNotEmpty()) {
-                            val rpeVal = intensityInput.text.toDoubleOrNull()
+                            val rpeVal = parseDecimal(intensityInput.text)
                             val accent = rpeTextColor(rpeVal) ?: MaterialTheme.accentText
                             // Chips store "8.5"; show it with the UI decimal separator ("8,5" in German).
                             val shownValue = parseDecimal(intensityInput.text)?.let { formatRpeValue(it, currentLocale()) }

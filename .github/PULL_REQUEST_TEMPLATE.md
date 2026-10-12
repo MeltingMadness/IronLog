@@ -32,7 +32,7 @@
 
 **Text and translations**
 
-- [ ] No hard-coded UI text. Android strings exist in `values/` (English) **and** `values-de/` (German). iOS strings in `Localizable.xcstrings` have `en` **and** `de`.
+- [ ] No hard-coded UI text. Android strings exist in `values/` (English) **and** `values-de/` (German). iOS strings in the string catalogs (`*.xcstrings`) have `en` **and** `de`, and new iOS texts were added to the catalog by hand.
 - [ ] `python3 .github/scripts/check-translations.py` passes.
 - [ ] Enum constants and stored canonical exercise names are unchanged (only their display is translated).
 

@@ -69,8 +69,8 @@
         <item quantity="other">%1$d / %2$d sets</item>
     </plurals>
     <plurals name="progression_review_reason_too_few_sets">
-        <item quantity="one">The evaluation needed %1$d work set, but only %2$d were available.</item>
-        <item quantity="other">The evaluation needed %1$d work sets, but only %2$d were available.</item>
+        <item quantity="one">The evaluation needed %1$d work set; only %2$d available.</item>
+        <item quantity="other">The evaluation needed %1$d work sets; only %2$d available.</item>
     </plurals>
     <plurals name="progression_review_reason_repeat_reps">
         <item quantity="one">At least %1$d rep was expected; you reached %2$d. The rep target stays the same; the weight you used is kept.</item>

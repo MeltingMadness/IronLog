@@ -6,7 +6,7 @@
         <item quantity="one">%d workout</item>
         <item quantity="other">%d workouts</item>
     </plurals>
-    <string name="dashboard_ui_volume_unit">Volume in kg × reps · date = start of week</string>
+    <string name="dashboard_ui_volume_unit">Volume in %1$s × reps · date = start of week</string>
     <string name="dashboard_glass_up_next">Up next</string>
     <string name="dashboard_glass_up_next_from">Up next · %1$s</string>
     <string name="dashboard_glass_running">Workout in progress</string>

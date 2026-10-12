@@ -124,7 +124,6 @@ struct IOSDashboardDeloadCard: View {
     }
 
     private func percentText(_ value: Double) -> String {
-        let sign = value > 0 ? "+" : ""
-        return "\(sign)\(value.formatted(.number.precision(.fractionLength(1)))) %"
+        ilPercentChangeText(value)
     }
 }

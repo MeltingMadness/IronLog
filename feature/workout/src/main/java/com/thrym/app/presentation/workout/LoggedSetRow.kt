@@ -86,6 +86,9 @@ internal fun LoggedSetRow(
     val intensityText = remember(set.id, set.rpe, intensitySystem) {
         formatIntensity(set.rpe, intensitySystem)
     }
+    val intensityInputText = remember(set.id, set.rpe, intensitySystem) {
+        formatIntensityInput(set.rpe, intensitySystem)
+    }
 
     LaunchedEffect(updateSuccessCount) {
         if (updateSuccessCount > 0 && isEditing) {
@@ -104,8 +107,8 @@ internal fun LoggedSetRow(
             weightPlaceholder = weightText,
             defaultReps = set.reps.toString(),
             repsPlaceholder = set.reps.toString(),
-            defaultIntensity = intensityText,
-            intensityPlaceholder = intensityText,
+            defaultIntensity = intensityInputText,
+            intensityPlaceholder = intensityInputText,
             defaultIntention = intention,
             intentionFailed = intentionFailed,
             intensitySystem = intensitySystem,

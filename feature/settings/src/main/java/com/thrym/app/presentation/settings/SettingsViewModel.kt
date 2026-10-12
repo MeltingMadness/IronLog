@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.annotation.StringRes
+import com.thrym.app.data.backup.BackupConcurrentModificationException
 import com.thrym.app.data.backup.BackupHashMismatchException
+import com.thrym.app.data.backup.BackupSchemaTooNewException
 import com.thrym.app.domain.model.AppPreferences
 import com.thrym.app.domain.model.IncidentReport
 import com.thrym.app.domain.model.IntensitySystem
@@ -22,6 +24,7 @@ import com.thrym.app.domain.repository.RecoveryBackup
 import com.thrym.app.domain.repository.ProgressionRepository
 import kotlinx.coroutines.CancellationException
 import com.thrym.app.domain.repository.ReminderScheduler
+import com.thrym.app.domain.util.AppLogger
 import com.thrym.app.domain.util.BuildInfo
 import com.thrym.shared.settings.SettingsPreferencesController
 import com.thrym.shared.settings.isBackupReminderDue
@@ -374,18 +377,26 @@ class SettingsViewModel(
         importConfirmationVisible.value = false
     }
 
+    /**
+     * Localized copy for the failures the user can act on. Other exception messages are
+     * English developer diagnostics: they go to the log, the UI shows a generic message.
+     */
     private suspend fun emitError(error: Throwable) {
-        val detail = error.message
-        _events.emit(
-            if (detail == null) {
+        val message = when (error) {
+            is BackupSchemaTooNewException -> SettingsEvent.Message(
+                com.thrym.feature.settings.R.string.settings_error_backup_too_new,
+                listOf(error.backupSchemaVersion, error.appSchemaVersion)
+            )
+            is BackupConcurrentModificationException -> SettingsEvent.Message(
+                com.thrym.feature.settings.R.string.settings_error_backup_data_changed
+            )
+            else -> {
+                // Logging is best-effort (android.util.Log is unavailable in JVM unit tests).
+                runCatching { AppLogger.w(TAG, "Settings action failed: ${error.message}", error) }
                 SettingsEvent.Message(com.thrym.feature.settings.R.string.settings_unknown_error)
-            } else {
-                SettingsEvent.Message(
-                    com.thrym.core.designsystem.R.string.common_error_action_failed,
-                    listOf(detail)
-                )
             }
-        )
+        }
+        _events.emit(message)
     }
 
     // A committed import stays successful even if its derived-data catch-up fails.

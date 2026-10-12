@@ -71,6 +71,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import com.thrym.core.designsystem.R
 import com.thrym.app.domain.model.DeloadMode
+import com.thrym.app.domain.model.RecordType
+import com.thrym.app.domain.model.UnitSystem
+import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
@@ -81,6 +84,7 @@ import com.thrym.app.presentation.theme.semanticText
 import com.thrym.app.presentation.theme.staggeredEntrance
 import com.thrym.app.presentation.common.WeeklyMuscleVolumeCard
 import com.thrym.app.presentation.common.label
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.rememberDateTimeFormatter
 import com.thrym.feature.dashboard.R as DashboardR
 import org.koin.androidx.compose.koinViewModel
@@ -178,7 +182,7 @@ fun DashboardScreen(
                 val isFirstTimeUser = state.lastWorkout == null && state.recentRecords.isEmpty()
                 val recommended = recommendedPlan(state.metaPlanOptions, state.trainingPlans)
                 val previewExercises = recommended?.plan?.exercises
-                    ?.map { it.exerciseName.ifBlank { state.exerciseNames[it.exerciseId].orEmpty() } }
+                    ?.map { it.exerciseName.ifBlank { state.planExercises[it.exerciseId]?.localizedName().orEmpty() } }
                     ?.filter { it.isNotBlank() }?.take(4) ?: emptyList()
 
                 val startRecommended = {
@@ -205,7 +209,7 @@ fun DashboardScreen(
                         activeSessionName = state.activeSession?.name,
                         recommended = recommended,
                         unitSystem = state.unitSystem,
-                        exerciseNames = state.exerciseNames,
+                        planExercises = state.planExercises,
                         onStartWorkout = startRecommended,
                         onChoosePlan = { viewModel.showPlanSelectionSheet() },
                         onContinueWorkout = continueActive
@@ -353,14 +357,15 @@ fun DashboardScreen(
                             items(
                                 items = state.recentRecords,
                                 key = { (record, _) -> "${record.exerciseId}-${record.type.name}-${record.achievedAt}" }
-                            ) { (record, exerciseName) ->
+                            ) { (record, exercise) ->
                                 val index = state.recentRecords.indexOfFirst {
                                     it.first.id == record.id && it.first.achievedAt == record.achievedAt
                                 }
                                 RecordCard(
-                                    exerciseName = exerciseName,
+                                    exerciseName = exercise?.localizedName()
+                                        ?: stringResource(UxR.string.dashboard_unknown_exercise),
                                     recordType = record.type.label(),
-                                    recordValue = formatRecordValue(record.type.name, record.value),
+                                    recordValue = formatRecordValue(record.type, record.value, state.unitSystem),
                                     modifier = Modifier.staggeredEntrance(index)
                                 )
                             }
@@ -369,7 +374,7 @@ fun DashboardScreen(
                 }
 
                 item {
-                    WeeklyVolumeCard(weeklyVolume = state.weeklyVolume)
+                    WeeklyVolumeCard(weeklyVolume = state.weeklyVolume, unitSystem = state.unitSystem)
                 }
 
                 state.lastWorkout?.let { workout ->
@@ -871,14 +876,14 @@ private fun SectionTitle(text: String) {
     )
 }
 
+/** Record value in the user's unit (kg or lb), formatted like the statistics screen. */
 @Composable
-private fun formatRecordValue(type: String, value: Double): String {
+private fun formatRecordValue(type: RecordType, value: Double, unitSystem: UnitSystem): String {
     return when (type) {
-        "MAX_WEIGHT" -> stringResource(id = R.string.common_record_weight, value)
-        "MAX_REPS" -> pluralStringResource(id = R.plurals.common_record_reps, count = value.toInt(), value.toInt())
-        "MAX_VOLUME" -> stringResource(id = R.string.common_record_volume, value.toInt())
-        "MAX_E1RM" -> stringResource(id = R.string.common_record_e1rm, value)
-        else -> "$value"
+        RecordType.MAX_WEIGHT,
+        RecordType.MAX_E1RM -> WeightFormatting.formatWeight(value, unitSystem)
+        RecordType.MAX_REPS -> pluralStringResource(id = R.plurals.common_record_reps, count = value.toInt(), value.toInt())
+        RecordType.MAX_VOLUME -> WeightFormatting.formatVolume(value, unitSystem)
     }
 }
 

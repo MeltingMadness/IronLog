@@ -87,6 +87,28 @@ class BuiltInExerciseNamesTest {
     }
 
     @Test
+    fun `reserved names cover every shipped language`() {
+        val reserved = BuiltInExerciseNames.reservedNames(listOf(TestUiStrings.german, TestUiStrings))
+
+        assertTrue(reserved.contains("Kreuzheben"))
+        assertTrue(reserved.contains("Deadlift"))
+        assertTrue(reserved.containsAll(BuiltInExerciseNames.localizedNames(TestUiStrings)))
+        assertTrue(reserved.containsAll(BuiltInExerciseNames.canonicalNames))
+    }
+
+    @Test
+    fun `shipped languages match the per-app language config`() {
+        val root = generateSequence(File(".").absoluteFile) { it.parentFile }
+            .first { File(it, "settings.gradle.kts").isFile }
+        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+            .parse(File(root, "app/src/main/res/xml/locales_config.xml"))
+        val nodes = document.getElementsByTagName("locale")
+        val configured = (0 until nodes.length).map { (nodes.item(it) as Element).getAttribute("android:name") }
+
+        assertEquals(configured, BuiltInExerciseNames.shippedLanguages.map { it.toLanguageTag() })
+    }
+
+    @Test
     fun `history search maps a localized query to canonical names`() {
         val matches = BuiltInExerciseNames.canonicalNamesMatching("deadlift", TestUiStrings)
 

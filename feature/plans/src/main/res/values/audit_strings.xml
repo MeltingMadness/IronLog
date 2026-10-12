@@ -51,7 +51,7 @@
     <string name="meta_plan_delete_failed">Couldn\'t delete meta plan: %1$s</string>
     <string name="plan_action_delete">Deleting plan</string>
     <string name="plan_action_start">Starting workout</string>
-    <string name="plan_workout_already_active">Another workout is already active. Resume or finish it first.</string>
+    <string name="plan_workout_already_active">Another workout is already in progress. Resume or finish it first.</string>
     <plurals name="meta_plans_last_done_days">
         <item quantity="one">Last completed: %1$d day ago</item>
         <item quantity="other">Last completed: %1$d days ago</item>

@@ -5,9 +5,15 @@
     <string name="stats_weekly_volume_week_complete">Completed week</string>
     <string name="stats_weekly_volume_previous_week">Previous week</string>
     <string name="stats_weekly_volume_next_week">Next week</string>
-    <plurals name="stats_weekly_volume_summary">
-        <item quantity="one">%1$s weighted work sets · %2$d workout</item>
-        <item quantity="other">%1$s weighted work sets · %2$d workouts</item>
+    <!-- %1$s = stats_weekly_volume_sets, %2$s = stats_weekly_volume_workouts -->
+    <string name="stats_weekly_volume_summary">%1$s · %2$s</string>
+    <plurals name="stats_weekly_volume_sets">
+        <item quantity="one">%1$s weighted work set</item>
+        <item quantity="other">%1$s weighted work sets</item>
+    </plurals>
+    <plurals name="stats_weekly_volume_workouts">
+        <item quantity="one">%1$d workout</item>
+        <item quantity="other">%1$d workouts</item>
     </plurals>
     <string name="stats_weekly_volume_orientation_hint">MEV, MAV and MRV are guideline values, counted in weighted work sets. This rating doesn\'t replace individual training planning.</string>
     <string name="stats_weekly_volume_error">The weekly summary couldn\'t be loaded.</string>

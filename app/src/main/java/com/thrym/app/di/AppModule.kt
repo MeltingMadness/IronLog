@@ -1,5 +1,6 @@
 package com.thrym.app.di
 
+import android.content.res.Configuration
 import com.thrym.app.BuildConfig
 
 import com.thrym.app.data.backup.BackupDocumentIo
@@ -37,6 +38,9 @@ import com.thrym.app.domain.repository.TrainingPlanRepository
 import com.thrym.app.domain.repository.WorkoutRepository
 import com.thrym.app.domain.progression.ProgressionEngine
 import com.thrym.app.domain.util.BuildInfo
+import com.thrym.app.presentation.common.BuiltInExerciseNames
+import com.thrym.app.presentation.common.ResourcesUiStrings
+import com.thrym.app.presentation.common.uiLocale
 import com.thrym.app.presentation.dashboard.DashboardViewModel
 import com.thrym.app.presentation.exercises.ExerciseLibraryViewModel
 import com.thrym.app.presentation.history.WorkoutDetailViewModel
@@ -66,7 +70,7 @@ val appModule = module {
                 context.resources.getQuantityString(resourceId, quantity, *args)
 
             override val locale: java.util.Locale
-                get() = context.resources.configuration.locales[0] ?: java.util.Locale.getDefault()
+                get() = context.resources.uiLocale()
         }
     }
     single { BuildInfo(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
@@ -86,10 +90,18 @@ val appModule = module {
     single<RecoveryBackupStore> { FileRecoveryBackupStore(androidContext()) }
 
     single<ExerciseRepository> {
-        val strings = get<com.thrym.app.presentation.common.UiStrings>()
-        ExerciseRepositoryImpl(get()) {
-            com.thrym.app.presentation.common.BuiltInExerciseNames.localizedNames(strings)
+        val context = androidContext().applicationContext
+        // Reserve the built-in names of every shipped language, not only the current one, so
+        // the duplicate check does not depend on the UI language at creation time.
+        val reservedNames by lazy {
+            BuiltInExerciseNames.reservedNames(
+                BuiltInExerciseNames.shippedLanguages.map { language ->
+                    val configuration = Configuration(context.resources.configuration).apply { setLocale(language) }
+                    ResourcesUiStrings(context.createConfigurationContext(configuration).resources)
+                }
+            )
         }
+        ExerciseRepositoryImpl(get()) { reservedNames }
     }
     single<WorkoutRepository> {
         val appPreferencesRepository = get<AppPreferencesRepository>()

@@ -23,7 +23,7 @@ enum IOSProgressionScheme: String, CaseIterable, Identifiable {
 struct IOSProgressionDraft: Equatable {
     var scheme: IOSProgressionScheme = .manual
     private var unsupportedScheme: String?
-    var stepValue = "2.5"
+    var stepValue = IOSNumber.format(2.5)
     var stepUnit = "KG"
     var minReps = "8"
     var maxReps = "12"

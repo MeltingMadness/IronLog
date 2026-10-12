@@ -444,9 +444,7 @@ final class IOSSettingsViewModel: ObservableObject {
     }
 
     func weightLabel(_ kilograms: Double) -> String {
-        let value = kilograms.truncatingRemainder(dividingBy: 1) == 0
-            ? String(Int(kilograms))
-            : String(kilograms)
+        let value = iosWorkoutDecimal(kilograms)
         return String(localized: "\(value) kg")
     }
 

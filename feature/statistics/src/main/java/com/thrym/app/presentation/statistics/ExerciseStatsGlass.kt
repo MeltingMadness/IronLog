@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.thrym.app.domain.model.AppearanceStyle
 import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.UnitSystem
+import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.theme.AthleticLabel
@@ -133,7 +134,7 @@ internal fun GlassStatsHero(
                 val percent = if (first.value > 0f) (delta / first.value * 100f).roundToInt() else null
                 val deltaText = listOfNotNull(
                     formatDelta(delta, metric, unitSystem),
-                    percent?.let { (if (it > 0) "+" else "") + "$it %" }
+                    percent?.let { stringResource(R.string.common_percent_value, (if (it > 0) "+" else "") + it) }
                 ).joinToString(" · ")
                 Text(
                     deltaText,
@@ -162,16 +163,17 @@ internal fun GlassStatsHero(
                     .height(140.dp)
                     .semantics { contentDescription = description }
             )
+            val dayMonth = DateFormatting.dayMonth(currentLocale())
             Row(Modifier.fillMaxWidth()) {
                 Text(
-                    stringResource(UxR.string.stats_dated_value, first.dateLabel, formatValue(first.value, metric, unitSystem)),
+                    stringResource(UxR.string.stats_dated_value, first.date.format(dayMonth), formatValue(first.value, metric, unitSystem)),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = TextStyle(fontFeatureSettings = "tnum"),
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    stringResource(UxR.string.stats_dated_value, latest.dateLabel, formatValue(latest.value, metric, unitSystem)),
+                    stringResource(UxR.string.stats_dated_value, latest.date.format(dayMonth), formatValue(latest.value, metric, unitSystem)),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = TextStyle(fontFeatureSettings = "tnum")

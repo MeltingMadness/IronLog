@@ -82,23 +82,27 @@ Danach in Xcode das Gerät wählen und starten. `Config/Signing.xcconfig` nicht 
 
 ## Lokalisierung
 
-- Die App gibt es auf Englisch und Deutsch. Sichtbare UI-Texte stehen im String-Katalog `ThrymIOS/Localizable.xcstrings`.
+- Die App gibt es auf Englisch und Deutsch. Es gibt zwei String-Kataloge: `ThrymIOS/Localizable.xcstrings` für die sichtbaren UI-Texte und `ThrymIOS/Exercises.xcstrings` für die Namen der eingebauten Übungen.
 - Schlüssel ist der deutsche UI-Text (`sourceLanguage` `de`). Jeder Eintrag braucht eine `en`- und eine `de`-Lokalisierung. Die `developmentRegion` des Projekts ist `en`, damit Englisch der Fallback für alle anderen Systemsprachen ist.
-- SwiftUI-Literale nutzen die automatische Lokalisierung, String-basierte Beschriftungen und Meldungen `String(localized:)`. Mengen („1 Training“, „3 Trainings“) sind Plural-Varianten im Katalog.
-- Gespeicherte Werte bleiben sprachneutral. Enum-Konstanten aus dem gemeinsamen Kern (`BRUST`, `LANGHANTEL` …) werden nur für die Anzeige übersetzt. Eingebaute Übungen kommen mit ihrem deutschen kanonischen Namen aus `:shared` und werden über eine Nachschlagetabelle übersetzt angezeigt; eigene Übungen bleiben, wie sie eingegeben wurden.
+- SwiftUI-Literale werden zur Laufzeit im Katalog nachgeschlagen, String-basierte Beschriftungen und Meldungen nutzen `String(localized:)`. Mengen („1 Training“, „3 Trainings“) sind Plural-Varianten im Katalog.
+- Das generierte Projekt extrahiert keine Strings (`SWIFT_EMIT_LOC_STRINGS` ist nicht gesetzt), ein Build trägt neue Literale also nicht in den Katalog ein. Jeder neue oder geänderte UI-Text kommt von Hand mit `de` und `en` in `Localizable.xcstrings`; ein nicht mehr benutzter Schlüssel wird entfernt. `check-translations.py` und die XCTests prüfen nur Schlüssel, die schon im Katalog stehen. Fehlt ein Eintrag, bleibt die CI grün, und die englische Oberfläche zeigt den deutschen Text.
+- Fehlermeldungen aus dem gemeinsamen Kern (`SharedStateStore`, `IosTrainingFeature`, `IosSettingsFeature`) sind feste deutsche Texte. `ilSharedMessage` (`ThrymIOS/SharedBootstrap.swift`) schlägt sie als Schlüssel in `Localizable.xcstrings` nach (Einträge mit `extractionState` `manual`). Wer eine solche Meldung in Kotlin neu einführt oder umformuliert, legt im selben PR den passenden manuellen Eintrag mit `de` und `en` an und entfernt den alten Schlüssel. Englische technische Meldungen, etwa aus dem Backup-Validator, haben keinen Eintrag und erscheinen unverändert.
+- Gespeicherte Werte bleiben sprachneutral. Enum-Konstanten aus dem gemeinsamen Kern (`BRUST`, `LANGHANTEL` …) werden nur für die Anzeige übersetzt. Eingebaute Übungen kommen mit ihrem deutschen kanonischen Namen aus `DefaultExerciseCatalog` (`:shared`) und werden über `ilExerciseDisplayName` (`ThrymIOS/Models/ExerciseDisplayName.swift`) mit der Tabelle `Exercises.xcstrings` übersetzt angezeigt; eigene Übungen bleiben, wie sie eingegeben wurden. Der Übungseditor bearbeitet den gespeicherten Namen: In der englischen Oberfläche steht im Feld einer eingebauten Übung deshalb der deutsche Name, und ein Hinweis darunter nennt den angezeigten Namen.
+- Eine neue eingebaute Übung braucht einen Eintrag mit `de` und `en` in `Exercises.xcstrings` und dieselben Änderungen auf Android (siehe [`CONTRIBUTING.md`](../CONTRIBUTING.md#ui-text-and-translations)). `StringCatalogTests` erwartet genau 79 Einträge und wird mitgezogen.
 - Zahlen und Datumsangaben folgen dem Gerätelocale.
 - Die Sprache folgt der Systemsprache und lässt sich in den iOS-Einstellungen pro App ändern.
 - Vor dem Commit `python3 .github/scripts/check-translations.py --platform ios` ausführen.
-- XCTests prüfen Texte nicht über hart kodierte deutsche oder englische Literale.
+- Feature- und UI-Tests lesen erwartete Texte aus dem String-Katalog, statt deutsche oder englische Literale zu vergleichen. Nur die Katalog- und Bundle-Tests (`StringCatalogTests`, `LocalizationTests`, `ExerciseDisplayNameTests`) prüfen einige Beispielübersetzungen mit Literalen gegen ein explizit geladenes `en`- bzw. `de`-Bundle.
 
 ## CI
 
 `.github/workflows/ios-ci.yml` (Job `simulator-build-test`) läuft auf `macos-26` mit Xcode 26.6:
 
-1. `python3 .github/scripts/check-translations.py --platform ios` prüft, dass jeder Katalogeintrag `de` und `en` hat und die Formatplatzhalter passen.
+1. `python3 .github/scripts/check-translations.py --platform ios` prüft, dass jeder Eintrag in beiden Katalogen `de` und `en` hat und die Formatplatzhalter passen. Texte, die im Katalog fehlen, findet die Prüfung nicht (siehe Lokalisierung).
 2. Der Generator erzeugt das Projekt neu; ändert sich dabei etwas am eingecheckten Projekt, schlägt der Job fehl.
-3. `xcodebuild test` läuft im iPhone-17-Simulator ohne Signierung, mit JDK 17 für die Gradle-Build-Phase.
-4. Ein Zero-Tests-Guard wertet das `xcresult`-Bundle aus und schlägt fehl, wenn kein Test lief. Das Bundle wird als Artefakt `ios-test-results` hochgeladen.
+3. `./gradlew :shared:iosSimulatorArm64Test --tests 'com.thrym.shared.backup.IronLogBackupFixtureImportTest'` lässt die Golden-Fixture-Tests für den Import alter IronLog-Backups unter Kotlin/Native im Simulator laufen. Die iOS-App führt diesen Code nativ aus; `:shared:testAndroidHostTest` in der Android-CI prüft nur die JVM.
+4. `xcodebuild test` läuft im iPhone-17-Simulator ohne Signierung, mit JDK 17 für die Gradle-Build-Phase.
+5. Ein Zero-Tests-Guard wertet das `xcresult`-Bundle aus und schlägt fehl, wenn kein Test lief. Das Bundle wird als Artefakt `ios-test-results` hochgeladen.
 
 Signierte Archive baut die CI nicht.
 

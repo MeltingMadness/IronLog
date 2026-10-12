@@ -24,7 +24,7 @@
     <string name="dashboard_trend_confidence_moderate">moderate</string>
     <string name="dashboard_trend_confidence_high">high</string>
     <string name="dashboard_trend_no_number">Without enough evidence, the app intentionally shows no percentage.</string>
-    <string name="dashboard_trend_loading">Calculating training trend...</string>
+    <string name="dashboard_trend_loading">Calculating training trend…</string>
     <string name="dashboard_trend_retry">Recalculate</string>
     <string name="dashboard_trend_show_details">Show details</string>
     <string name="dashboard_trend_hide_details">Hide details</string>

@@ -113,12 +113,20 @@ fun WeeklyMuscleVolumeCard(
             }
 
             if (!isLoading && error == null && completedWorkoutCount != null) {
+                val weeklySets = volumes.sumOf { it.weeklySets }
                 Text(
-                    text = pluralStringResource(
-                        R.plurals.stats_weekly_volume_summary,
-                        completedWorkoutCount,
-                        formatSets(volumes.sumOf { it.weeklySets }),
-                        completedWorkoutCount
+                    text = stringResource(
+                        R.string.stats_weekly_volume_summary,
+                        pluralStringResource(
+                            R.plurals.stats_weekly_volume_sets,
+                            setCountQuantity(weeklySets),
+                            formatSets(weeklySets)
+                        ),
+                        pluralStringResource(
+                            R.plurals.stats_weekly_volume_workouts,
+                            completedWorkoutCount,
+                            completedWorkoutCount
+                        )
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -460,6 +468,9 @@ private fun formatSets(value: Double): String =
     } else {
         String.format(currentLocale(), "%.1f", value)
     }
+
+/** Plural quantity for a fractional set count: singular only for exactly one set (1.5 stays plural). */
+private fun setCountQuantity(value: Double): Int = if (value == 1.0) 1 else 0
 
 private fun MuscleVolume.mevFraction(): Float =
     (thresholds.mev / thresholds.mrv).toFloat().coerceIn(0f, 1f)

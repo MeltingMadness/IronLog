@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 
 enum class ProgressionField {
     STEP,
@@ -318,7 +317,8 @@ class PlanEditorViewModel(
     }
 
     fun updateTargetWeightDisplay(index: Int, displayWeight: Double) {
-        updateTargetWeightInput(index, editableNumber(displayWeight))
+        val unit = _uiState.value.exercises.getOrNull(index)?.targetWeightInputUnit ?: _uiState.value.unitSystem
+        updateTargetWeightInput(index, editableWeight(displayWeight, unit))
     }
 
     fun updateTargetSetsInput(index: Int, value: String) {
@@ -736,7 +736,7 @@ class PlanEditorViewModel(
             scheme = config.scheme
         )
         return base.copy(
-            step = editableNumber(WeightFormatting.convertToDisplay(step.kilograms, unitSystem)),
+            step = editableWeight(WeightFormatting.convertToDisplay(step.kilograms, unitSystem), unitSystem),
             minReps = if (config is ProgressionConfig.DoubleProgression) {
                 config.minReps.toString()
             } else {
@@ -753,18 +753,18 @@ class PlanEditorViewModel(
                 base.totalReps
             },
             targetRpe = if (config is ProgressionConfig.RpeRir) {
-                editableNumber(config.targetRpe)
+                editableNumber(config.targetRpe, 2)
             } else {
                 base.targetRpe
             },
             rpeTolerance = if (config is ProgressionConfig.RpeRir) {
-                editableNumber(config.tolerance)
+                editableNumber(config.tolerance, 2)
             } else {
                 base.rpeTolerance
             },
             successThreshold = if (config is ProgressionConfig.Linear) config.successThreshold.toString() else "1",
             stallThreshold = failurePolicy.stallThreshold.toString(),
-            backoffPercent = editableNumber(failurePolicy.backoffPercent),
+            backoffPercent = editableNumber(failurePolicy.backoffPercent, 1),
             originalStep = step,
             stepWasEdited = false
         )
@@ -795,12 +795,12 @@ class PlanEditorViewModel(
     ) = ProgressionEditorUi(
         exerciseIndex = exerciseIndex,
         scheme = scheme,
-        step = if (unitSystem == UnitSystem.IMPERIAL) "5" else "2.5",
+        step = if (unitSystem == UnitSystem.IMPERIAL) "5" else editableNumber(2.5, 1),
         minReps = planExercise.targetReps.toString(),
         maxReps = (planExercise.targetReps + 2).toString(),
         totalReps = planExercise.targetSets.toLong().times(planExercise.targetReps).toString(),
         targetRpe = "8",
-        rpeTolerance = "0.5",
+        rpeTolerance = editableNumber(0.5, 2),
         stallThreshold = "2",
         backoffPercent = "10",
         unitSystem = unitSystem,
@@ -995,13 +995,20 @@ class PlanEditorViewModel(
         if (planExercise.targetWeightKg == 0.0) {
             ""
         } else if (planExercise.targetWeightKg.isFinite()) {
-            editableNumber(WeightFormatting.convertToDisplay(planExercise.targetWeightKg, unitSystem))
+            editableWeight(WeightFormatting.convertToDisplay(planExercise.targetWeightKg, unitSystem), unitSystem)
         } else {
             planExercise.targetWeightKg.toString()
         }
 
-    private fun editableNumber(value: Double): String =
-        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+    /**
+     * Prefill text for a weight field: rounded like every other weight ("220.5" lb, not
+     * "220.46226218") with the UI decimal separator, so an unchanged value reads back the same.
+     */
+    private fun editableWeight(displayValue: Double, unitSystem: UnitSystem): String =
+        editableNumber(displayValue, WeightFormatting.weightDecimals(displayValue, unitSystem))
+
+    private fun editableNumber(value: Double, maxFractionDigits: Int): String =
+        WeightFormatting.formatInputNumber(value, maxFractionDigits, strings.locale)
 
     private fun PlanExercise.toProgressionTarget() = ProgressionTarget(
         sets = targetSets,

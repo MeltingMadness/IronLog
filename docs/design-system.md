@@ -78,7 +78,7 @@ Standard-Darstellung (`AppearanceStyle.LIQUID_GLASS`, iOS `ThrymAppearance.liqui
 
 Gilt für Android und iOS gleich:
 
-- Zahlen und Datumsangaben folgen dem Gerätelocale: auf Deutsch „82,5 kg“ und „12.305 kg“, auf Englisch „82.5 kg“ und „12,305 kg“. Nie Rohwerte wie „80.0“ anzeigen und keine festen `Locale.GERMANY`- bzw. `de_DE`-Formatierer verwenden. Android: `WeightFormatting` in `core:common` (Eingabefelder ohne Tausendertrennzeichen über `formatInputNumber`). iOS: `iosWorkoutDecimal`, `IOSNumber`, `ilWeightText`. Gespeichert wird weiter in kg; lb ist nur Anzeige.
+- Zahlen und Datumsangaben folgen dem Gerätelocale: auf Deutsch „82,5 kg“ und „12.305 kg“, auf Englisch „82.5 kg“ und „12,305 kg“. Nie Rohwerte wie „80.0“ anzeigen und keine festen `Locale.GERMANY`- bzw. `de_DE`-Formatierer verwenden. Android: `WeightFormatting` in `core:common` (Eingabefelder über `formatInputNumber`: ASCII-Ziffern ohne Tausendertrennzeichen, nur das Dezimalzeichen folgt der Sprache; eingelesen wird über `parseInputNumber`). iOS: `iosWorkoutDecimal`, `IOSNumber`, `ilWeightText`. Gespeichert wird weiter in kg; lb ist nur Anzeige.
 - Sätze einheitlich als Gewicht × Wiederholungen, auf Deutsch „82,5 kg × 8 Wdh“. 0 kg wird als „Körpergewicht“ angezeigt.
 - Mengen mit passender Einzahl/Mehrzahl („1 Training“, „3 Trainings“) in beiden Sprachen. Android: `plurals`-Ressourcen in `values/` und `values-de/`. iOS: Plural-Varianten im String-Katalog.
 - Deutsche Texte mit echten Umlauten, keine zusätzlichen Häkchen oder Pfeile in Button-Texten. Unbekannte Werte (z. B. Satzabsicht „Nicht angegeben“) werden nicht als Daten angezeigt.
@@ -102,4 +102,4 @@ Gilt für Android und iOS gleich:
 UI-Texte stehen nie als Literal in Composables oder Views:
 
 - **Android:** `core/designsystem/src/main/res/values/` (Englisch) und `values-de/` (Deutsch) für gemeinsame Texte, sonst `res/values/*_strings.xml` und `res/values-de/*_strings.xml` des Feature-Moduls. Jeder String steht in beiden Sprachen; Lint (`MissingTranslation`) und `.github/scripts/check-translations.py` prüfen das. Sprachneutrale Strings nur in `values/` mit `translatable="false"`.
-- **iOS:** `iosApp/ThrymIOS/Localizable.xcstrings` mit dem deutschen Text als Schlüssel und Lokalisierungen für `en` und `de`; ebenfalls von `check-translations.py` geprüft.
+- **iOS:** String-Kataloge (`*.xcstrings`) mit dem deutschen Text als Schlüssel und Lokalisierungen für `en` und `de`: `iosApp/ThrymIOS/Localizable.xcstrings` für UI-Texte, `iosApp/ThrymIOS/Exercises.xcstrings` für die Namen der eingebauten Übungen; ebenfalls von `check-translations.py` geprüft. Neue Texte werden von Hand eingetragen, weil das generierte Projekt keine Strings extrahiert.

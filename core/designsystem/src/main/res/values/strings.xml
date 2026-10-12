@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Language these resources are in; dates use it so they never mix with fallback text (see uiLocale). -->
+    <string name="ui_language_tag">en</string>
     <string name="nav_back">Back</string>
     <string name="nav_home">Home</string>
     <string name="nav_plans">Plans</string>
@@ -38,10 +40,10 @@
     <string name="deload_card_title_active">Deload week active</string>
     <string name="deload_card_fatigue_score">Fatigue score: %1$d/100</string>
     <string name="deload_card_body">Your performance trend points to accumulated fatigue. A deload week protects your progress.</string>
-    <string name="deload_signal_e1rm_stagnation">e1RM stalling</string>
+    <string name="deload_signal_e1rm_stagnation">e1RM stagnating</string>
     <string name="deload_signal_e1rm_drop">e1RM dropping</string>
     <string name="deload_signal_rpe_creep">RPE rising</string>
-    <string name="deload_signal_failure_frequency">Frequent failure sets</string>
+    <string name="deload_signal_failure_frequency">Many failure sets</string>
     <string name="deload_strongest_exercise">Biggest drop: %1$s (%2$s)</string>
     <string name="deload_mode_halve_volume">Halve volume</string>
     <string name="deload_mode_reduce_intensity" formatted="false">Intensity −15%</string>
@@ -238,8 +240,8 @@
     <string name="plan_editor_progression_scheme_total_reps">Total reps</string>
     <string name="plan_editor_progression_scheme_rpe_rir" translatable="false">RPE/RIR</string>
     <string name="plan_editor_progression_step">Increment (%1$s)</string>
-    <string name="plan_editor_progression_min_reps">Min. reps</string>
-    <string name="plan_editor_progression_max_reps">Max. reps</string>
+    <string name="plan_editor_progression_min_reps">Min reps</string>
+    <string name="plan_editor_progression_max_reps">Max reps</string>
     <string name="plan_editor_progression_total_reps">Target total reps</string>
     <string name="plan_editor_progression_target_rpe">Target RPE</string>
     <string name="plan_editor_progression_rpe_tolerance">Tolerance</string>
@@ -251,8 +253,8 @@
     <string name="plan_editor_progression_preview_total_reps">At %1$s total reps, the target increases by %2$s %3$s.</string>
     <string name="plan_editor_progression_preview_rpe_rir">At target RPE %1$s with tolerance %2$s, the target increases by %3$s %4$s.</string>
     <string name="plan_editor_progression_error_step">Enter an increment greater than 0.</string>
-    <string name="plan_editor_progression_error_min_reps">Min. reps must be between 1 and the current rep target.</string>
-    <string name="plan_editor_progression_error_max_reps">Max. reps must be at least the current rep target.</string>
+    <string name="plan_editor_progression_error_min_reps">Min reps must be between 1 and the current rep target.</string>
+    <string name="plan_editor_progression_error_max_reps">Max reps must be at least the current rep target.</string>
     <string name="plan_editor_progression_error_total_reps">Enter a positive total rep count.</string>
     <string name="plan_editor_progression_error_target_rpe">Target RPE must be between 1 and 10.</string>
     <string name="plan_editor_progression_error_rpe_tolerance">Tolerance must be between 0 and 2.</string>
@@ -302,7 +304,8 @@
     <string name="stats_e1rm_latest_label">Current 1RM</string>
     <string name="stats_e1rm_abs_label">Increase</string>
     <string name="stats_e1rm_rel_label" formatted="false">Increase in %</string>
-    <string name="stats_e1rm_rel_value" translatable="false">%1$s %%</string>
+    <!-- Signed percentage such as "+5%"; the number arrives already formatted. -->
+    <string name="common_percent_value">%1$s%%</string>
     <string name="stats_weekly_volume_title">Weekly volume</string>
     <string name="stats_weekly_volume_subtitle">Work sets per muscle group per week — MEV: minimum, MAV: target, MRV: maximum</string>
     <string name="stats_weekly_volume_empty">No work sets logged for these muscle groups this week yet.</string>
@@ -444,9 +447,6 @@
     <string name="settings_intensity_off">Off</string>
     <string name="common_unknown">Unknown</string>
     <string name="common_calendar_week">Week %1$d</string>
-    <string name="common_record_weight" translatable="false">%1$.1f kg</string>
-    <string name="common_record_volume" translatable="false">%1$d kg</string>
-    <string name="common_record_e1rm" translatable="false">%1$.1f kg</string>
     <string name="settings_msg_backup_exported">Verified backup exported.</string>
     <string name="settings_msg_backup_imported">Backup imported successfully.</string>
     <string name="settings_msg_backup_source_changed">The backup file has changed since the preview. Please select the file again.</string>

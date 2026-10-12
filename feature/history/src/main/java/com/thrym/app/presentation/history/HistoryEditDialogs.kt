@@ -49,7 +49,8 @@ internal sealed interface HistorySetInputResult {
 }
 
 /**
- * Parses the editor fields like the iOS history editor: comma or dot as decimal separator,
+ * Parses the editor fields like the iOS history editor: comma or dot as decimal separator
+ * (native digits accepted, see [WeightFormatting.parseInputNumber]),
  * weight in the user's unit, optional intensity in the active system (RIR is stored as RPE).
  * With intensity tracking off the stored RPE is kept unchanged.
  */
@@ -61,7 +62,7 @@ internal fun parseHistorySetInput(
     intensitySystem: IntensitySystem,
     currentRpe: Double?
 ): HistorySetInputResult {
-    val displayWeight = weightText.trim().replace(',', '.').toDoubleOrNull()
+    val displayWeight = WeightFormatting.parseInputNumber(weightText)
         ?.takeIf { it.isFinite() && it >= 0.0 }
         ?: return HistorySetInputResult.InvalidWeight
     val reps = repsText.trim().toIntOrNull()?.takeIf { it >= 0 }
@@ -70,7 +71,7 @@ internal fun parseHistorySetInput(
         intensitySystem == IntensitySystem.OFF -> currentRpe
         intensityText.isBlank() -> null
         else -> {
-            val value = intensityText.trim().replace(',', '.').toDoubleOrNull()
+            val value = WeightFormatting.parseInputNumber(intensityText)
                 ?.takeIf { it.isFinite() && it in 0.0..10.0 }
                 ?: return HistorySetInputResult.InvalidIntensity
             if (intensitySystem == IntensitySystem.RIR) 10.0 - value else value

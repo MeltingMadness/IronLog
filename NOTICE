@@ -1,7 +1,22 @@
 Thrym (formerly IronLog)
 Copyright 2026 Martin (https://github.com/MeltingMadness)
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+The source code of this product is licensed under the Apache License,
+Version 2.0 (see LICENSE).
+
+Name and icon:
+The Apache License does not cover the name "Thrym", the Thrym logo or the
+app icon. All rights to them are reserved. They are included only so that
+the official app can be built from this repository, and they are not
+licensed for use by forks. The icon files are:
+  app/src/main/res/drawable/ic_launcher_background.xml
+  app/src/main/res/drawable/ic_launcher_foreground.xml
+  app/src/main/res/drawable/ic_launcher_monochrome.xml
+  app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+  app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+  iosApp/ThrymIOS/Assets.xcassets/AppIcon.appiconset/ (AppIcon.png, AppIcon.svg)
+  fastlane/metadata/android/en-US/images/icon.png
+See README.md, section "License".
 
 Bundled font:
 Geist, Copyright (c) 2023 Vercel, in collaboration with basement.studio,

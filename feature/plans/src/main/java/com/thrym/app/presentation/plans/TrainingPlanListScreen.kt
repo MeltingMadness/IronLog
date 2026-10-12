@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thrym.core.designsystem.R
+import com.thrym.feature.plans.R as PlansR
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
@@ -331,10 +333,11 @@ private fun PlanCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            if (item.exerciseNames.isNotEmpty()) {
+            if (item.exercises.isNotEmpty()) {
+                val unknownExercise = stringResource(PlansR.string.plan_unknown_exercise)
                 Spacer(modifier = Modifier.height(dims.spacingSm))
                 Text(
-                    text = item.exerciseNames.joinToString(" · "),
+                    text = item.exercises.map { it?.localizedName() ?: unknownExercise }.joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                     maxLines = 2,

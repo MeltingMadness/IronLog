@@ -41,7 +41,9 @@ import com.thrym.app.domain.model.RecordType
 import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.repository.AppPreferencesRepository
 import com.thrym.app.presentation.common.rememberDateTimeFormatter
+import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
+import com.thrym.app.presentation.common.currentLocale
 import com.thrym.app.presentation.common.ThrymScreenScaffold
 import com.thrym.app.presentation.common.ThrymSurfaceCard
 import com.thrym.app.presentation.common.ThrymSurfaceTone
@@ -89,12 +91,14 @@ fun ExerciseStatsScreen(
     val dims = thrymDimens
     val liquidGlass = isLiquidGlass()
 
-    LaunchedEffect(state.chartData) {
+    LaunchedEffect(state.chartData, preferences.unitSystem) {
         if (state.chartData.isNotEmpty()) {
+            // All metrics are stored in kg; the axis shows them in the user's unit like the labels.
+            val unitSystem = preferences.unitSystem
             withContext(Dispatchers.Default) {
                 modelProducer.runTransaction {
                     lineSeries {
-                        series(state.chartData.map { it.value.toDouble() })
+                        series(state.chartData.map { WeightFormatting.convertToDisplay(it.value.toDouble(), unitSystem) })
                     }
                 }
             }
@@ -326,7 +330,7 @@ fun ExerciseStatsScreen(
                             )
                             val deltaSign = if (e1rmProgression.deltaPercent > 0f) "+" else ""
                             val deltaRel = stringResource(
-                                id = R.string.stats_e1rm_rel_value,
+                                id = R.string.common_percent_value,
                                 deltaSign + e1rmProgression.deltaPercent.roundToInt()
                             )
                             StatCard(
@@ -571,7 +575,7 @@ private fun recentSetTypeLabel(type: SetType): String = stringResource(
 @Composable
 private fun chartPointDate(point: ChartDataPoint): String {
     val dateTimeFormat = rememberDateTimeFormatter()
-    return point.timestamp?.format(dateTimeFormat) ?: point.dateLabel
+    return point.timestamp?.format(dateTimeFormat) ?: point.date.format(DateFormatting.dayMonth(currentLocale()))
 }
 
 private fun formatMetricValue(

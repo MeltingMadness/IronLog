@@ -185,9 +185,9 @@ class ExerciseStatsViewModelTest {
         val vm = createViewModel(exercise.id)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val labels = vm.uiState.value.chartData.map { it.dateLabel }
-        // TestUiStrings formats like an en-US device: month/day without the year.
-        assertEquals(listOf("12/31", "1/2"), labels)
+        // Chronological across the year boundary; the UI formats the dates ("12/31", "1/2").
+        val dates = vm.uiState.value.chartData.map { it.date }
+        assertEquals(listOf(LocalDate.of(2025, 12, 31), LocalDate.of(2026, 1, 2)), dates)
     }
 
     @Test

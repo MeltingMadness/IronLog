@@ -6,6 +6,7 @@ import com.thrym.app.domain.model.SetType
 import com.thrym.app.domain.model.WorkoutPlanTarget
 import com.thrym.app.domain.model.WorkoutSet
 import com.thrym.app.domain.util.RpeAutoregulation
+import com.thrym.app.domain.util.WeightFormatting
 import kotlinx.coroutines.flow.map
 
 private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
@@ -13,10 +14,10 @@ private val submissionIdSequence = java.util.concurrent.atomic.AtomicLong(0L)
 internal fun nextSubmissionId(): Long = submissionIdSequence.incrementAndGet()
 
 /**
- * Normalizes user-typed decimal input (weight/intensity) so that comma decimal
- * separators (common on non-US keyboards) are parsed the same as dots.
+ * Parses user-typed decimal input (weight/intensity): comma and dot both work as the decimal
+ * separator, and native digits are accepted. See [WeightFormatting.parseInputNumber].
  */
-fun parseDecimal(text: String): Double? = text.trim().replace(",", ".").toDoubleOrNull()
+fun parseDecimal(text: String): Double? = WeightFormatting.parseInputNumber(text)
 
 fun lastWorkSetReachedTarget(
     planTarget: WorkoutPlanTarget?,

@@ -1,11 +1,11 @@
 package com.thrym.app.presentation.plans
 
 import com.thrym.app.presentation.common.UiStrings
-import com.thrym.app.presentation.common.exerciseName
 import com.thrym.feature.plans.R as UxR
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thrym.app.domain.error.toAppError
+import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.TrainingPlan
 import com.thrym.app.domain.repository.ExerciseRepository
 import com.thrym.app.domain.repository.MetaTrainingPlanRepository
@@ -23,7 +23,11 @@ import java.time.temporal.ChronoUnit
 
 data class PlanListItem(
     val plan: TrainingPlan,
-    val exerciseNames: List<String>,
+    /**
+     * The plan's exercises in order, `null` for one that no longer exists. Names are resolved
+     * in the UI, so a runtime language switch shows at once.
+     */
+    val exercises: List<Exercise?>,
     /** Days since the last completed session of this plan, `null` if never trained. */
     val lastDoneDaysAgo: Long? = null
 )
@@ -65,16 +69,13 @@ class TrainingPlanListViewModel(
                 workoutRepository.observeLastSessionPerPlan(),
                 metaTrainingPlanRepository.getAllMetaPlans()
             ) { plans, exercises, lastSessions, metaPlans ->
-                val exerciseNameById = exercises.associateBy({ it.id }, { strings.exerciseName(it) })
+                val exerciseById = exercises.associateBy { it.id }
                 val lastStartByPlanId = lastSessions.associateBy({ it.planId }, { it.lastStartTime })
                 val today = LocalDate.now()
                 val items = plans.map { plan ->
-                    val names = plan.exercises.map { exercise ->
-                        exerciseNameById[exercise.exerciseId] ?: strings.get(UxR.string.plan_unknown_exercise)
-                    }
                     PlanListItem(
                         plan = plan,
-                        exerciseNames = names,
+                        exercises = plan.exercises.map { exerciseById[it.exerciseId] },
                         lastDoneDaysAgo = lastStartByPlanId[plan.id]?.let { millis ->
                             ChronoUnit.DAYS.between(
                                 Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate(),

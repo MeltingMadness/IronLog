@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" tests="28" skipped="0" failures="0" errors="0" timestamp="2026-09-15T10:32:08.456Z" hostname="mmba.tail6ae155.ts.net" time="0.11">
+<testsuite name="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" tests="28" skipped="0" failures="0" errors="0" timestamp="2026-09-15T10:32:08.456Z" hostname="localhost" time="0.11">
   <properties/>
   <testcase name="metric step accepts decimal comma and stores canonical kilograms" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.073"/>
   <testcase name="savePlan ignores duplicate requests while save is in flight" classname="com.ironlog.app.presentation.plans.PlanEditorViewModelTest" time="0.004"/>

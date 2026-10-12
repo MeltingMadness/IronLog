@@ -383,8 +383,7 @@ private struct IOSExerciseE1rmProgressionCard: View {
     }
 
     private func percentText(_ value: Double) -> String {
-        let sign = value > 0 ? "+" : ""
-        return "\(sign)\(value.formatted(.number.precision(.fractionLength(0...1)))) %"
+        ilPercentChangeText(value, fractionDigits: 0...1)
     }
 }
 

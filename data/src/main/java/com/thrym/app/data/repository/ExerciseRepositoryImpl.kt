@@ -13,9 +13,10 @@ import kotlinx.coroutines.flow.map
 class ExerciseRepositoryImpl(
     private val exerciseDao: ExerciseDao,
     /**
-     * Built-in exercise names in the current UI language. Built-ins are stored under their
+     * Built-in exercise names in every shipped UI language. Built-ins are stored under their
      * German canonical name, so the DAO check alone would let a custom exercise reuse a
-     * translated built-in name (e.g. "Deadlift") and show up twice in the list.
+     * translated built-in name (e.g. "Deadlift") and show up twice in the list, either right
+     * away or after a language switch.
      */
     private val localizedBuiltInNames: () -> Collection<String> = { emptyList() }
 ) : ExerciseRepository {

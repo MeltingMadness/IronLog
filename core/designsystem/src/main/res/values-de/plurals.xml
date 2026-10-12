@@ -69,8 +69,8 @@
         <item quantity="other">%1$d / %2$d Sätze</item>
     </plurals>
     <plurals name="progression_review_reason_too_few_sets">
-        <item quantity="one">Für die Auswertung war %1$d Arbeitssatz nötig, vorhanden waren %2$d.</item>
-        <item quantity="other">Für die Auswertung waren %1$d Arbeitssätze nötig, vorhanden waren %2$d.</item>
+        <item quantity="one">Für die Auswertung war %1$d Arbeitssatz nötig, vorhanden: %2$d.</item>
+        <item quantity="other">Für die Auswertung waren %1$d Arbeitssätze nötig, vorhanden: %2$d.</item>
     </plurals>
     <plurals name="progression_review_reason_repeat_reps">
         <item quantity="one">Mindestens %1$d Wiederholung war erwartet, erreicht wurden %2$d. Das Wiederholungsziel bleibt gleich; das trainierte Gewicht wird beibehalten.</item>

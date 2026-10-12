@@ -143,18 +143,44 @@ class WorkoutCalculationsTest {
     }
 
     @Test
-    fun `formatInputNumber ist in beiden Sprachen wieder einlesbar`() {
-        for (locale in listOf(EN, DE)) {
+    fun `formatInputNumber ist in allen Locales wieder einlesbar`() {
+        for (locale in listOf(EN, DE) + NATIVE_DIGIT_LOCALES) {
             for (value in listOf(0.5, 82.5, 1234.5, 12305.25)) {
                 val text = WeightFormatting.formatInputNumber(value, locale = locale)
-                // Gleiche Regel wie parseDecimal in den Eingabefeldern: Komma oder Punkt als Dezimaltrenner.
-                assertEquals(text, value, text.replace(',', '.').toDouble(), 1e-9)
+                assertEquals("$locale: $text", value, WeightFormatting.parseInputNumber(text)!!, 1e-9)
             }
         }
+    }
+
+    @Test
+    fun `formatInputNumber schreibt auch in Locales mit eigenen Ziffern ASCII`() {
+        // ar und fa haben eigene Ziffern und "٫" als Dezimaltrenner; Eingabefelder bekommen
+        // trotzdem ASCII-Ziffern und einen Punkt, wie auf iOS.
+        for (locale in NATIVE_DIGIT_LOCALES) {
+            assertEquals(locale.toString(), "1234.5", WeightFormatting.formatInputNumber(1234.5, locale = locale))
+            assertEquals(locale.toString(), "80", WeightFormatting.formatInputNumber(80.0, locale = locale))
+        }
+    }
+
+    @Test
+    fun `parseInputNumber liest Komma, Punkt und fremde Ziffern`() {
+        assertEquals(82.5, WeightFormatting.parseInputNumber(" 82,5 ")!!, 0.0)
+        assertEquals(82.5, WeightFormatting.parseInputNumber("82.5")!!, 0.0)
+        assertEquals(82.5, WeightFormatting.parseInputNumber("٨٢٫٥")!!, 0.0) // Arabisch-indisch
+        assertEquals(82.5, WeightFormatting.parseInputNumber("۸۲٫۵")!!, 0.0) // Persisch
+        assertEquals(1234.5, WeightFormatting.parseInputNumber("١٬٢٣٤٫٥")!!, 0.0)
+        assertEquals(1234.5, WeightFormatting.parseInputNumber("১২৩৪.৫")!!, 0.0) // Bengalisch
+        assertEquals(null, WeightFormatting.parseInputNumber(""))
+        assertEquals(null, WeightFormatting.parseInputNumber("abc"))
     }
 
     private companion object {
         val EN: Locale = Locale.US
         val DE: Locale = Locale.GERMANY
+        val NATIVE_DIGIT_LOCALES: List<Locale> = listOf(
+            Locale.forLanguageTag("ar-EG"),
+            Locale.forLanguageTag("fa-IR"),
+            Locale.forLanguageTag("bn-BD")
+        )
     }
 }

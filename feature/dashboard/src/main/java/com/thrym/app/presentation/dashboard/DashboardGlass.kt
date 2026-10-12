@@ -44,10 +44,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.thrym.app.domain.model.AppearanceStyle
+import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.PlanExercise
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.currentLocale
+import com.thrym.app.presentation.common.localizedName
 import com.thrym.app.presentation.common.skeletonDateFormatter
 import com.thrym.app.presentation.theme.AthleticLabel
 import com.thrym.app.presentation.theme.GlassLevel
@@ -139,7 +141,7 @@ internal fun GlassCommandCenterCard(
     activeSessionName: String?,
     recommended: DashboardRecommendedPlan?,
     unitSystem: UnitSystem,
-    exerciseNames: Map<Long, String>,
+    planExercises: Map<Long, Exercise>,
     onStartWorkout: () -> Unit,
     onChoosePlan: () -> Unit,
     onContinueWorkout: () -> Unit
@@ -231,7 +233,7 @@ internal fun GlassCommandCenterCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = exercise.exerciseName.ifBlank { exerciseNames[exercise.exerciseId].orEmpty() },
+                                text = exercise.exerciseName.ifBlank { planExercises[exercise.exerciseId]?.localizedName().orEmpty() },
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f),

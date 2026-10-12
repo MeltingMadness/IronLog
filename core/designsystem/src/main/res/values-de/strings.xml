@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ui_language_tag">de</string>
     <string name="nav_back">Zurück</string>
     <string name="nav_home">Home</string>
     <string name="nav_plans">Pläne</string>
@@ -37,10 +38,10 @@
     <string name="deload_card_title_active">Deload-Woche aktiv</string>
     <string name="deload_card_fatigue_score">Ermüdungswert: %1$d/100</string>
     <string name="deload_card_body">Deine Leistungskurve deutet auf aufgestaute Ermüdung hin. Eine Deload-Woche schützt deine Fortschritte.</string>
-    <string name="deload_signal_e1rm_stagnation">E1RM stagniert</string>
-    <string name="deload_signal_e1rm_drop">E1RM sinkt</string>
+    <string name="deload_signal_e1rm_stagnation">e1RM stagniert</string>
+    <string name="deload_signal_e1rm_drop">e1RM sinkt</string>
     <string name="deload_signal_rpe_creep">RPE steigt</string>
-    <string name="deload_signal_failure_frequency">Viele Fehlversuche</string>
+    <string name="deload_signal_failure_frequency">Viele Fehlersätze</string>
     <string name="deload_strongest_exercise">Stärkster Abfall: %1$s (%2$s)</string>
     <string name="deload_mode_halve_volume">Volumen halbieren</string>
     <string name="deload_mode_reduce_intensity" formatted="false">Intensität −15 %</string>
@@ -288,6 +289,7 @@
     <string name="stats_e1rm_latest_label">Aktuelles 1RM</string>
     <string name="stats_e1rm_abs_label">Steigerung</string>
     <string name="stats_e1rm_rel_label" formatted="false">Steigerung in %</string>
+    <string name="common_percent_value">%1$s %%</string>
     <string name="stats_weekly_volume_title">Wochenvolumen</string>
     <string name="stats_weekly_volume_subtitle">Arbeitssätze je Muskelgruppe und Woche — MEV: Minimum, MAV: Ziel, MRV: Maximum</string>
     <string name="stats_weekly_volume_empty">Diese Woche sind noch keine Arbeitssätze für diese Muskelgruppen erfasst.</string>

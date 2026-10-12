@@ -29,6 +29,13 @@ final class ProgressionDraftTests: XCTestCase {
         XCTAssertThrowsError(try draft.validatedConfig().get())
     }
 
+    func testDefaultIncrementUsesTheLocaleDecimalSeparator() throws {
+        var draft = IOSProgressionDraft()
+        XCTAssertEqual(draft.stepValue, IOSNumber.format(2.5))
+        draft.scheme = .linear
+        XCTAssertEqual(try XCTUnwrap(try draft.validatedConfig().get().incrementKg), 2.5, accuracy: 0.000001)
+    }
+
     func testDecimalDumbbellIncrementUsesBackupUnitContract() throws {
         var draft = IOSProgressionDraft()
         draft.scheme = .linear

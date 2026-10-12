@@ -519,13 +519,12 @@ class DashboardViewModelTest {
         val entries = vm.uiState.value.weeklyVolume
         val expectedStarts = (0L until 8L).map { windowStart.plusWeeks(it) }
         assertEquals(8, entries.size)
-        assertEquals(expectedStarts.map { DateFormatting.dayMonth(TestUiStrings.locale).format(it) }, entries.map { it.first })
+        assertEquals(expectedStarts, entries.map { it.first })
         assertEquals(1000.0, entries[expectedStarts.indexOf(populatedWeek)].second, 0.0001)
         assertEquals(500.0, entries[expectedStarts.indexOf(earlierWeek)].second, 0.0001)
         assertTrue(entries.filterIndexed { index, _ ->
             expectedStarts[index] != populatedWeek && expectedStarts[index] != earlierWeek
         }.all { it.second == 0.0 })
-        assertTrue(entries.none { it.first.startsWith("KW") })
     }
 
     @Test
@@ -544,7 +543,7 @@ class DashboardViewModelTest {
         val entries = vm.uiState.value.weeklyVolume
         assertEquals(8, entries.size)
         assertEquals(
-            (0L until 8L).map { DateFormatting.dayMonth(TestUiStrings.locale).format(windowStart.plusWeeks(it)) },
+            (0L until 8L).map { windowStart.plusWeeks(it) },
             entries.map { it.first }
         )
         assertEquals(500.0, entries[6].second, 0.0001)
@@ -923,7 +922,7 @@ class DashboardViewModelTest {
         val state = vm.uiState.value
         assertEquals(true, state.deload?.recommended)
         assertEquals(75, state.deload?.fatigueScore)
-        assertEquals("Kniebeuge", state.deloadExerciseName)
+        assertEquals("Kniebeuge", state.deloadExercise?.name)
         assertEquals(null, state.deloadMode)
     }
 

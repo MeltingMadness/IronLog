@@ -7,6 +7,8 @@ import com.thrym.app.domain.model.Exercise
 import com.thrym.app.domain.model.ExerciseCategory
 import com.thrym.app.domain.model.MuscleGroup
 import com.thrym.app.domain.repository.ExerciseRepository
+import com.thrym.app.fakes.TestUiStrings
+import com.thrym.app.presentation.common.BuiltInExerciseNames
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -155,6 +157,23 @@ class ExerciseRepositoryImplTest {
 
         val error = assertFailsWith<ExerciseValidationException> {
             localized.addCustomExercise(customExercise(name = " deadlift "))
+        }
+
+        assertEquals(ExerciseValidationException.Reason.DUPLICATE_NAME, error.reason)
+        coVerify(exactly = 0) { exerciseDao.insert(any()) }
+    }
+
+    @Test
+    fun `addCustomExercise rejects the English built-in name while the UI is German`() = runTest {
+        // In German the localized names equal the stored canonical names, so only reserving
+        // every shipped language keeps "Deadlift" from showing up twice after a switch to English.
+        val reserved = ExerciseRepositoryImpl(exerciseDao) {
+            BuiltInExerciseNames.reservedNames(listOf(TestUiStrings.german, TestUiStrings))
+        }
+        coEvery { exerciseDao.getActiveExerciseNames(excludeId = null) } returns listOf("Kreuzheben")
+
+        val error = assertFailsWith<ExerciseValidationException> {
+            reserved.addCustomExercise(customExercise(name = "Deadlift"))
         }
 
         assertEquals(ExerciseValidationException.Reason.DUPLICATE_NAME, error.reason)

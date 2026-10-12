@@ -299,11 +299,8 @@ class PlanEditorViewModelTest {
 
         val draft = requireNotNull(viewModel.uiState.value.progressionEditor)
         assertEquals(UnitSystem.METRIC, draft.unitSystem)
-        assertEquals(
-            original.kilograms,
-            draft.step.replace(',', '.').toDouble(),
-            0.000001
-        )
+        // 5 lb = 2.26796 kg, shown rounded; saving unchanged keeps the exact original step.
+        assertEquals("2.3", draft.step)
         assertSame(original, draft.originalStep)
         assertFalse(draft.stepWasEdited)
 
@@ -493,14 +490,35 @@ class PlanEditorViewModelTest {
         advanceUntilIdle()
         viewModel.addExercise(mockExercise1)
 
-        viewModel.updateTargetWeightDisplay(0, 220.46226218)
+        viewModel.updateTargetWeightDisplay(0, 220.5)
 
         assertEquals(UnitSystem.IMPERIAL, viewModel.uiState.value.unitSystem)
+        assertEquals("220.5", viewModel.uiState.value.exercises.single().targetWeightInput)
         assertEquals(
-            100.0,
+            WeightFormatting.convertToKg(220.5, UnitSystem.IMPERIAL),
             viewModel.uiState.value.exercises.single().planExercise.targetWeightKg,
             0.000001
         )
+    }
+
+    @Test
+    fun `imperial target weight reopens as typed`() = runTest {
+        preferencesRepository.updateUnitSystem(UnitSystem.IMPERIAL)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.updatePlanName("Pfund")
+        viewModel.addExercise(mockExercise1)
+        viewModel.updateTargetWeightInput(0, "205")
+
+        viewModel.savePlan()
+        advanceUntilIdle()
+
+        // 205 lb -> kg -> lb is 205.00000000000003; the field shows the rounded value.
+        assertEquals("205", viewModel.uiState.value.exercises.single().targetWeightInput)
+        val planId = fakePlanRepo.getAllPlans().first().single().id
+        val reopened = createViewModel(planId)
+        advanceUntilIdle()
+        assertEquals("205", reopened.uiState.value.exercises.single().targetWeightInput)
     }
 
     @Test
@@ -517,10 +535,8 @@ class PlanEditorViewModelTest {
         preferencesRepository.updateUnitSystem(UnitSystem.IMPERIAL)
         advanceUntilIdle()
 
-        assertEquals(
-            WeightFormatting.convertToDisplay(100.0, UnitSystem.IMPERIAL).toString(),
-            viewModel.uiState.value.exercises.single().targetWeightInput
-        )
+        // 220.46226218 lb, rounded like every other weight field.
+        assertEquals("220.5", viewModel.uiState.value.exercises.single().targetWeightInput)
         assertEquals(UnitSystem.IMPERIAL, viewModel.uiState.value.exercises.single().targetWeightInputUnit)
     }
 
