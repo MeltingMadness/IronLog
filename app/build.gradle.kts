@@ -137,7 +137,7 @@ dependencies {
 
     // Core
     implementation(libs.core.ktx)
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.core:core-splashscreen:1.2.0")
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.serialization.json)
