@@ -1,0 +1,1428 @@
+{
+  "sourceLanguage": "de",
+  "strings": {
+    "Ab-Roller": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ab-Roller"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ab Wheel"
+          }
+        }
+      }
+    },
+    "Abduktion (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abduktion (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hip Abduction (Machine)"
+          }
+        }
+      }
+    },
+    "Arnold Press": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arnold Press"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arnold Press"
+          }
+        }
+      }
+    },
+    "Aufrechtes Rudern": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufrechtes Rudern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upright Row"
+          }
+        }
+      }
+    },
+    "Ausfallschritte (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausfallschritte (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lunge (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Ausfallschritte (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausfallschritte (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lunge (Barbell)"
+          }
+        }
+      }
+    },
+    "Bankdrücken (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bankdrücken (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bench Press (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Bankdrücken (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bankdrücken (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bench Press (Barbell)"
+          }
+        }
+      }
+    },
+    "Beinbeuger liegend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinbeuger liegend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lying Leg Curl"
+          }
+        }
+      }
+    },
+    "Beinbeuger sitzend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinbeuger sitzend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated Leg Curl"
+          }
+        }
+      }
+    },
+    "Beinheben hängend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinheben hängend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hanging Leg Raise"
+          }
+        }
+      }
+    },
+    "Beinheben liegend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinheben liegend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lying Leg Raise"
+          }
+        }
+      }
+    },
+    "Beinpresse": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinpresse"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leg Press"
+          }
+        }
+      }
+    },
+    "Beinstrecker": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beinstrecker"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leg Extension"
+          }
+        }
+      }
+    },
+    "Brustpresse (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brustpresse (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest Press (Machine)"
+          }
+        }
+      }
+    },
+    "Bulgarische Kniebeuge": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulgarische Kniebeuge"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulgarian Split Squat"
+          }
+        }
+      }
+    },
+    "Butterfly Maschine": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Butterfly Maschine"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pec Deck (Machine)"
+          }
+        }
+      }
+    },
+    "Cable Crunch": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Crunch"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Crunch"
+          }
+        }
+      }
+    },
+    "Cable Fly": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Fly"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Fly"
+          }
+        }
+      }
+    },
+    "Cable Fly obere Brust": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Fly obere Brust"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable Fly (Upper Chest)"
+          }
+        }
+      }
+    },
+    "Dips (Brust)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dips (Brust)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest Dip"
+          }
+        }
+      }
+    },
+    "Dips (Trizeps)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dips (Trizeps)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps Dip"
+          }
+        }
+      }
+    },
+    "Einarmiges Kabelziehen": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einarmiges Kabelziehen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Single-Arm Cable Row"
+          }
+        }
+      }
+    },
+    "Enges Bankdrücken": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enges Bankdrücken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close-Grip Bench Press"
+          }
+        }
+      }
+    },
+    "Face Pulls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face Pulls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face Pull"
+          }
+        }
+      }
+    },
+    "Fliegende (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fliegende (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest Fly (Dumbbell)"
+          }
+        }
+      }
+    },
+    "French Press (SZ-Stange)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "French Press (SZ-Stange)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skullcrusher (EZ Bar)"
+          }
+        }
+      }
+    },
+    "Frontheben": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontheben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Front Raise"
+          }
+        }
+      }
+    },
+    "Frontkniebeuge": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontkniebeuge"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Front Squat"
+          }
+        }
+      }
+    },
+    "Glute Kickback (Kabel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glute Kickback (Kabel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glute Kickback (Cable)"
+          }
+        }
+      }
+    },
+    "Goblet Squat": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goblet Squat"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goblet Squat"
+          }
+        }
+      }
+    },
+    "Hackenschmidt": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hackenschmidt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hack Squat"
+          }
+        }
+      }
+    },
+    "Hammercurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hammercurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hammer Curl"
+          }
+        }
+      }
+    },
+    "Hip Thrust (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hip Thrust (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hip Thrust (Barbell)"
+          }
+        }
+      }
+    },
+    "Hip Thrust (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hip Thrust (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hip Thrust (Machine)"
+          }
+        }
+      }
+    },
+    "Hyperextension": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hyperextension"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back Extension"
+          }
+        }
+      }
+    },
+    "Kabelcurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kabelcurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bicep Curl (Cable)"
+          }
+        }
+      }
+    },
+    "Kabelrudern sitzend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kabelrudern sitzend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated Cable Row"
+          }
+        }
+      }
+    },
+    "Kickbacks (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kickbacks (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps Kickback (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Klimmzug": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klimmzug"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pull-Up"
+          }
+        }
+      }
+    },
+    "Klimmzug (Untergriff)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klimmzug (Untergriff)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chin-Up"
+          }
+        }
+      }
+    },
+    "Kniebeuge (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kniebeuge (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Squat (Barbell)"
+          }
+        }
+      }
+    },
+    "Konzentrationscurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konzentrationscurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concentration Curl"
+          }
+        }
+      }
+    },
+    "Kreuzheben": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kreuzheben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deadlift"
+          }
+        }
+      }
+    },
+    "Kurzhantelcurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurzhantelcurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bicep Curl (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Kurzhantelrudern": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurzhantelrudern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bent Over Row (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Langhantelcurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langhantelcurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bicep Curl (Barbell)"
+          }
+        }
+      }
+    },
+    "Langhantelrudern": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langhantelrudern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bent Over Row (Barbell)"
+          }
+        }
+      }
+    },
+    "Latzug breit": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latzug breit"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lat Pulldown (Wide Grip)"
+          }
+        }
+      }
+    },
+    "Latzug eng": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latzug eng"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lat Pulldown (Close Grip)"
+          }
+        }
+      }
+    },
+    "Liegestütze": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liegestütze"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push-Up"
+          }
+        }
+      }
+    },
+    "Negativbankdrücken (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Negativbankdrücken (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decline Bench Press (Barbell)"
+          }
+        }
+      }
+    },
+    "Plank": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plank"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plank"
+          }
+        }
+      }
+    },
+    "Reverse Curls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Curls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Curl"
+          }
+        }
+      }
+    },
+    "Reverse Fly (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Fly (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Fly (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Reverse Fly (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Fly (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Fly (Machine)"
+          }
+        }
+      }
+    },
+    "Rudermaschine": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rudermaschine"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated Row (Machine)"
+          }
+        }
+      }
+    },
+    "Rumänisches Kreuzheben": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rumänisches Kreuzheben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Romanian Deadlift"
+          }
+        }
+      }
+    },
+    "Rumänisches Kreuzheben (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rumänisches Kreuzheben (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Romanian Deadlift (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Russian Twist": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Russian Twist"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Russian Twist"
+          }
+        }
+      }
+    },
+    "SZ-Curls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SZ-Curls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EZ Bar Curl"
+          }
+        }
+      }
+    },
+    "Schrägbankcurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schrägbankcurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incline Dumbbell Curl"
+          }
+        }
+      }
+    },
+    "Schrägbankdrücken (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schrägbankdrücken (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incline Bench Press (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Schrägbankdrücken (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schrägbankdrücken (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incline Bench Press (Barbell)"
+          }
+        }
+      }
+    },
+    "Schulterdrücken (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schulterdrücken (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulder Press (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Schulterdrücken (Langhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schulterdrücken (Langhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulder Press (Barbell)"
+          }
+        }
+      }
+    },
+    "Schulterdrücken (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schulterdrücken (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulder Press (Machine)"
+          }
+        }
+      }
+    },
+    "Seitheben (Kabel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seitheben (Kabel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lateral Raise (Cable)"
+          }
+        }
+      }
+    },
+    "Seitheben (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seitheben (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lateral Raise (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Seitliches Plank": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seitliches Plank"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Side Plank"
+          }
+        }
+      }
+    },
+    "Stirndrücken (Kurzhantel)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stirndrücken (Kurzhantel)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skullcrusher (Dumbbell)"
+          }
+        }
+      }
+    },
+    "Sumo Kreuzheben": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sumo Kreuzheben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sumo Deadlift"
+          }
+        }
+      }
+    },
+    "T-Bar Rudern": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T-Bar Rudern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T-Bar Row"
+          }
+        }
+      }
+    },
+    "Trizepsdrücken Seil": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trizepsdrücken Seil"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps Rope Pushdown"
+          }
+        }
+      }
+    },
+    "Trizepsdrücken am Kabel": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trizepsdrücken am Kabel"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps Pushdown"
+          }
+        }
+      }
+    },
+    "Unterarmcurls": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unterarmcurls"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrist Curl"
+          }
+        }
+      }
+    },
+    "Wadenheben an der Beinpresse": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wadenheben an der Beinpresse"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leg Press Calf Raise"
+          }
+        }
+      }
+    },
+    "Wadenheben sitzend": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wadenheben sitzend"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seated Calf Raise"
+          }
+        }
+      }
+    },
+    "Wadenheben stehend (Maschine)": {
+      "comment": "Name of a built-in exercise. The key is the German canonical name stored in app data and backups; never change the key.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wadenheben stehend (Maschine)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standing Calf Raise (Machine)"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

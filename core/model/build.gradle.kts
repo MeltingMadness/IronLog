@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ironlog.core.model"
+    namespace = "com.thrym.core.model"
     compileSdk = 36
 
     defaultConfig {

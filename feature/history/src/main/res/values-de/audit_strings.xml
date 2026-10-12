@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_filter_time_label">Zeitraum</string>
+    <string name="history_filter_time_all">Alle</string>
+    <string name="history_filter_time_30_days">30 Tage</string>
+    <string name="history_filter_time_90_days">90 Tage</string>
+    <string name="history_filter_time_this_year">Dieses Jahr</string>
+    <string name="history_filter_plan_label">Plan</string>
+    <string name="history_filter_plan_all">Alle Pläne</string>
+    <string name="history_filter_empty_title">Keine passenden Trainings</string>
+    <string name="history_filter_empty_subtitle">Ändere Suche, Plan oder Zeitraum.</string>
+    <string name="history_search_placeholder">Training, Notiz oder Übung suchen</string>
+    <string name="history_search_clear">Suche löschen</string>
+    <string name="history_set_drop">Dropsatz %1$d</string>
+    <string name="history_set_failure">Failure-Satz %1$d</string>
+    <string name="history_glass_week_current">Diese Woche</string>
+    <string name="history_glass_week_last">Letzte Woche</string>
+    <string name="history_glass_week_number">KW %1$d</string>
+    <plurals name="history_glass_week_workouts">
+        <item quantity="one">%d Training</item>
+        <item quantity="other">%d Trainings</item>
+    </plurals>
+    <plurals name="history_glass_exercises">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
+    <string name="history_intentions_load_failed">Satzabsichten konnten nicht geladen werden.</string>
+    <string name="history_set_save_failed">Satz konnte nicht gespeichert werden</string>
+    <string name="history_set_delete_failed">Satz konnte nicht gelöscht werden</string>
+    <string name="history_note_save_failed">Notiz konnte nicht gespeichert werden</string>
+    <string name="history_edit_failed">%1$s. Bitte prüfe die Werte.</string>
+    <string name="history_unknown_exercise">Unbekannt</string>
+    <string name="history_action_load_detail">Training-Details laden</string>
+    <string name="history_action_load_plans">Pläne laden</string>
+    <string name="history_action_delete_workout">Training löschen</string>
+    <string name="history_set_backoff">Backoff-Satz %1$d</string>
+</resources>

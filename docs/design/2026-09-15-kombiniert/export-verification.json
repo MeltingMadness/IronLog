@@ -7,8 +7,8 @@
       "sha256": "ba7f23042d8a35af369f24a125fe58236c72bcafd2367ca190b06ecdd8f3a72f",
       "export": {
         "ok": true,
-        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/A-logging.png",
-        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/A-logging.png",
+        "path": "docs/design/2026-09-15-kombiniert/A-logging.png",
+        "out": "docs/design/2026-09-15-kombiniert/A-logging.png",
         "bytes": 163889,
         "format": "image"
       }
@@ -19,8 +19,8 @@
       "sha256": "0ce7987695255e619889d98b53641734ff41a53f93c21a08a79beb8be7fdf363",
       "export": {
         "ok": true,
-        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/B-planung.png",
-        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/B-planung.png",
+        "path": "docs/design/2026-09-15-kombiniert/B-planung.png",
+        "out": "docs/design/2026-09-15-kombiniert/B-planung.png",
         "bytes": 171180,
         "format": "image"
       }
@@ -31,8 +31,8 @@
       "sha256": "bb7c766e14c966ac2a683e0686d5dd71b8d4964102bc07360e2793abed314468",
       "export": {
         "ok": true,
-        "path": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/C-abschluss.png",
-        "out": "/Users/maert/Documents/IronLog/docs/design/2026-09-15-kombiniert/C-abschluss.png",
+        "path": "docs/design/2026-09-15-kombiniert/C-abschluss.png",
+        "out": "docs/design/2026-09-15-kombiniert/C-abschluss.png",
         "bytes": 184973,
         "format": "image"
       }

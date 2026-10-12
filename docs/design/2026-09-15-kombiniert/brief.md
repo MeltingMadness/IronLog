@@ -14,10 +14,10 @@ Erstelle jetzt die fertige zusammenhängende Designfassung direkt in diesem neue
 Die gemeinsame visuelle Sprache ist als Arbeitsannahme Anthrazit und Orange aus der Open-Design-Fassung. Strukturentscheidungen der gewählten ersten Entwürfe müssen erhalten bleiben; es ist keine Freigabe, sie doch durch OpenDesign-Varianten zu ersetzen. Klare Tabellen, kräftige Auswahlzustände und explizite Wahloptionen aus dem ersten Entwurf erhalten, Farben/Typografie/Abstände/Buttons harmonisieren. Nicht nur Dateien kopieren: eine sichtbare, konsistente Gesamtfassung erstellen, aber die bewussten Strukturpräferenzen respektieren.
 
 ## Exakte Quellen – nur gezielt diese lesen
-- Erster Entwurf: /Users/maert/Documents/IronLog/docs/design/2026-09-14-vorher-nachher/ mit logging.svg, ios.svg, auswahl.svg, satzplanung.svg, abschluss.svg, ergebnis.svg, planuebernahme.svg. SVGs sind detaillierte vollständige 390x867-Mockups; Aufbau und Text daraus beibehalten für Fälle3,4,5,7.
-- OpenDesign-Fassung: /Users/maert/Documents/IronLog/docs/design/2026-09-15-opendesign/ mit01-logging-android.html,02-logging-ios.html,03-exercise-picker.html,04-plan-create.html,05-finish-early.html,06-completion.html,07-plan-changes.html undironlog-boards.css. Die HTMLs zeigen komplette Vergleichsboards; extrahiere deren echte .phone-Struktur fürFälle1,2,6. Die zugehörigen PNGs bieten visuelle Referenz.
-- /Users/maert/Documents/IronLog/docs/design/2026-09-15-dreifachvergleich/ hat alle drei Fassungen nebeneinander, falls zum visuellen Vergleich nötig.
-- Audit nur bei inhaltlicher Unsicherheit: /Users/maert/Documents/IronLog/docs/validation/2026-09-13-competitor-audit/befunde.md.
+- Erster Entwurf: docs/design/2026-09-14-vorher-nachher/ mit logging.svg, ios.svg, auswahl.svg, satzplanung.svg, abschluss.svg, ergebnis.svg, planuebernahme.svg. SVGs sind detaillierte vollständige 390x867-Mockups; Aufbau und Text daraus beibehalten für Fälle3,4,5,7.
+- OpenDesign-Fassung: docs/design/2026-09-15-opendesign/ mit01-logging-android.html,02-logging-ios.html,03-exercise-picker.html,04-plan-create.html,05-finish-early.html,06-completion.html,07-plan-changes.html undironlog-boards.css. Die HTMLs zeigen komplette Vergleichsboards; extrahiere deren echte .phone-Struktur fürFälle1,2,6. Die zugehörigen PNGs bieten visuelle Referenz.
+- docs/design/2026-09-15-dreifachvergleich/ hat alle drei Fassungen nebeneinander, falls zum visuellen Vergleich nötig.
+- Audit nur bei inhaltlicher Unsicherheit: docs/validation/2026-09-13-competitor-audit/befunde.md.
 Keine erneute Konkurrenzrecherche, keine Memory-Suche, keine neuen Rückfragen. Die Auftraggeber-Präferenz steht fest.
 
 ## Fachliche und visuelle Anforderungen

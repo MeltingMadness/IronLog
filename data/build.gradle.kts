@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ironlog.data"
+    namespace = "com.thrym.data"
     compileSdk = 36
 
     defaultConfig {

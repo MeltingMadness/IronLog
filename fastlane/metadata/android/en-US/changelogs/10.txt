@@ -1,0 +1,5 @@
+First release under the name Thrym (formerly IronLog).
+• New app ID com.thrym.app: Thrym installs as a separate app.
+• To keep your data, export a backup in IronLog and import it in Thrym (Settings). Units, theme, plates and reminders are not part of the backup and must be set again.
+• English and German: the app follows the system language; on Android 13+ you can pick a language per app.
+• The source code is now published under the Apache License 2.0.

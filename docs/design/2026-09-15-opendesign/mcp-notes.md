@@ -3,7 +3,7 @@
 Am 15.09.2026 mit Open Design 0.22.2 geprüft. Verwendet wurde der installierte stdio-Server:
 
 ```text
-/Users/maert/.nvm/versions/node/v24.16.0/bin/node
+node
 /Applications/Open Design.app/Contents/Resources/app/prebundled/daemon/daemon-cli.mjs
 mcp --daemon-url http://127.0.0.1:<Port des laufenden lokalen Daemons>
 ```

@@ -27,7 +27,7 @@
 | Einstellungen | Restzeit-Auswahl bis 300 Sekunden; Material You | Restzeit-Auswahl bis 600 Sekunden; Deload-Auswahl hier erreichbar | Auswahlumfang unterschiedlich; Material You ist plattformspezifisch |
 
 Quellbelege zur Matrix:
-[Screen.kt:54](/Users/maert/Documents/IronLog/app/src/main/java/com/ironlog/app/presentation/navigation/Screen.kt:54) · [RootView.swift:9](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/RootView.swift:9) · [DashboardScreen.kt:101](/Users/maert/Documents/IronLog/feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardScreen.kt:101) · [IOSDashboardScreen.swift:31](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Dashboard/IOSDashboardScreen.swift:31) · [WorkoutDetailScreen.kt:157](/Users/maert/Documents/IronLog/feature/history/src/main/java/com/ironlog/app/presentation/history/WorkoutDetailScreen.kt:157) · [IOSHistoryScreen.swift:321](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/History/IOSHistoryScreen.swift:321) · [IOSStatisticsScreen.swift:19](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Statistics/IOSStatisticsScreen.swift:19) · [SettingsScreen.kt:473](/Users/maert/Documents/IronLog/feature/settings/src/main/java/com/ironlog/app/presentation/settings/SettingsScreen.kt:473) · [SettingsScreen.swift:94](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/SettingsScreen.swift:94)
+[Screen.kt:54](app/src/main/java/com/ironlog/app/presentation/navigation/Screen.kt:54) · [RootView.swift:9](iosApp/IronLogIOS/RootView.swift:9) · [DashboardScreen.kt:101](feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardScreen.kt:101) · [IOSDashboardScreen.swift:31](iosApp/IronLogIOS/Dashboard/IOSDashboardScreen.swift:31) · [WorkoutDetailScreen.kt:157](feature/history/src/main/java/com/ironlog/app/presentation/history/WorkoutDetailScreen.kt:157) · [IOSHistoryScreen.swift:321](iosApp/IronLogIOS/History/IOSHistoryScreen.swift:321) · [IOSStatisticsScreen.swift:19](iosApp/IronLogIOS/Statistics/IOSStatisticsScreen.swift:19) · [SettingsScreen.kt:473](feature/settings/src/main/java/com/ironlog/app/presentation/settings/SettingsScreen.kt:473) · [SettingsScreen.swift:94](iosApp/IronLogIOS/SettingsScreen.swift:94)
 
 ## Nachgewiesene Unterschiede in den Codepfaden
 
@@ -37,7 +37,7 @@ Priorität P1: Daten oder Trainingsentscheidungen zuerst absichern. P2: weitere 
 
 Bei global ausgeschalteter Intensität setzt der iOS-Satzeditor RPE auf `nil`, auch wenn nur das Gewicht eines bestehenden Satzes geändert wird. Android erhält den vorhandenen RPE bei effektiv ausgeschalteter Intensität. Zusätzlich erzwingt Android für RPE/RIR-Progressionspläne ein RPE-Feld trotz globalem OFF; iOS versteckt es. Dadurch können historische Intensitätswerte verloren gehen oder die Eingaben für die Progression fehlen.
 
-**Belege:** [ActiveWorkoutViewModel.kt:648](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:648) · [ActiveWorkoutViewModel.kt:757](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:757) · [IOSWorkoutSetEditor.swift:120](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutSetEditor.swift:120) · [IOSWorkoutSetEditor.swift:173](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutSetEditor.swift:173)
+**Belege:** [ActiveWorkoutViewModel.kt:648](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:648) · [ActiveWorkoutViewModel.kt:757](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:757) · [IOSWorkoutSetEditor.swift:120](iosApp/IronLogIOS/Workout/IOSWorkoutSetEditor.swift:120) · [IOSWorkoutSetEditor.swift:173](iosApp/IronLogIOS/Workout/IOSWorkoutSetEditor.swift:173)
 
 **Kleinste Reparatur/Prüfung:** Gemeinsame Regel für effektive Intensität und das Erhalten verborgener Felder. Regression: RPE 9, global OFF, manuelles Training, nur Gewicht ändern → RPE bleibt 9; RPE/RIR-Plan + OFF → Intensität erfassbar.
 
@@ -45,7 +45,7 @@ Bei global ausgeschalteter Intensität setzt der iOS-Satzeditor RPE auf `nil`, a
 
 Android zeigt bei aktivem Plan A und Start von Plan B einen Fehler. Shared/iOS liefert sofort die ID irgendeiner aktiven Session zurück; iOS wechselt nach erfolgreichem Kommando zum Training. Damit wird beim vermeintlichen Start von B stillschweigend A fortgesetzt.
 
-**Belege:** [TrainingPlanListViewModel.kt:75](/Users/maert/Documents/IronLog/feature/plans/src/main/java/com/ironlog/app/presentation/plans/TrainingPlanListViewModel.kt:75) · [SharedStateStore.kt:554](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/store/SharedStateStore.kt:554) · [IOSTrainingStore.swift:151](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/IOSTrainingStore.swift:151)
+**Belege:** [TrainingPlanListViewModel.kt:75](feature/plans/src/main/java/com/ironlog/app/presentation/plans/TrainingPlanListViewModel.kt:75) · [SharedStateStore.kt:554](shared/src/commonMain/kotlin/com/ironlog/shared/store/SharedStateStore.kt:554) · [IOSTrainingStore.swift:151](iosApp/IronLogIOS/IOSTrainingStore.swift:151)
 
 **Kleinste Reparatur/Prüfung:** Konfliktprüfung in den gemeinsamen Startvertrag aufnehmen. Regression: A aktiv, B starten → verständlicher Konflikt, keine neue Session und kein stiller Planwechsel.
 
@@ -53,7 +53,7 @@ Android zeigt bei aktivem Plan A und Start von Plan B einen Fehler. Shared/iOS l
 
 Bei zwei offenen Vorschlägen derselben Planposition und noch unverändertem Ausgangsziel kann Android den älteren Vorschlag einzeln akzeptieren: Es prüft nur, ob das aktuelle Planziel noch zum Ursprung passt. Shared/iOS prüft zusätzlich auf einen neueren offenen Vorschlag und markiert den alten als STALE. Androids Sammelaktion wählt bereits die neuesten Vorschläge; die Lücke betrifft die Einzelentscheidung.
 
-**Belege:** [ProgressionRepositoryImpl.kt:79](/Users/maert/Documents/IronLog/data/src/main/java/com/ironlog/app/data/repository/ProgressionRepositoryImpl.kt:79) · [ProgressionRepositoryImpl.kt:133](/Users/maert/Documents/IronLog/data/src/main/java/com/ironlog/app/data/repository/ProgressionRepositoryImpl.kt:133) · [ProgressionLifecycle.kt:193](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/store/ProgressionLifecycle.kt:193) · [ProgressionLifecycle.kt:777](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/store/ProgressionLifecycle.kt:777)
+**Belege:** [ProgressionRepositoryImpl.kt:79](data/src/main/java/com/ironlog/app/data/repository/ProgressionRepositoryImpl.kt:79) · [ProgressionRepositoryImpl.kt:133](data/src/main/java/com/ironlog/app/data/repository/ProgressionRepositoryImpl.kt:133) · [ProgressionLifecycle.kt:193](shared/src/commonMain/kotlin/com/ironlog/shared/store/ProgressionLifecycle.kt:193) · [ProgressionLifecycle.kt:777](shared/src/commonMain/kotlin/com/ironlog/shared/store/ProgressionLifecycle.kt:777)
 
 **Kleinste Reparatur/Prüfung:** Dieselbe Neuheitsprüfung in beide Entscheidungspfade bringen. Regression mit zwei Sessions, zwei PENDING-Vorschlägen und identischem Quellziel; alten Vorschlag einzeln annehmen.
 
@@ -61,7 +61,7 @@ Bei zwei offenen Vorschlägen derselben Planposition und noch unverändertem Aus
 
 iOS erlaubt eine geordnete Rotation A, B, A. Android entfernt identische Plan-IDs beim Laden und beim Speichern mit distinct(). Wird eine solche Rotation nach Datenübernahme auf Android bearbeitet und gespeichert, wird daraus A, B. Das verändert die Trainingsfolge.
 
-**Belege:** [MetaPlanEditorViewModel.kt:85](/Users/maert/Documents/IronLog/feature/plans/src/main/java/com/ironlog/app/presentation/plans/MetaPlanEditorViewModel.kt:85) · [MetaPlanEditorViewModel.kt:202](/Users/maert/Documents/IronLog/feature/plans/src/main/java/com/ironlog/app/presentation/plans/MetaPlanEditorViewModel.kt:202) · [IOSMetaPlanEditorScreen.swift:113](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Plans/IOSMetaPlanEditorScreen.swift:113) · [SharedStateStore.kt:418](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/store/SharedStateStore.kt:418)
+**Belege:** [MetaPlanEditorViewModel.kt:85](feature/plans/src/main/java/com/ironlog/app/presentation/plans/MetaPlanEditorViewModel.kt:85) · [MetaPlanEditorViewModel.kt:202](feature/plans/src/main/java/com/ironlog/app/presentation/plans/MetaPlanEditorViewModel.kt:202) · [IOSMetaPlanEditorScreen.swift:113](iosApp/IronLogIOS/Plans/IOSMetaPlanEditorScreen.swift:113) · [SharedStateStore.kt:418](shared/src/commonMain/kotlin/com/ironlog/shared/store/SharedStateStore.kt:418)
 
 **Kleinste Reparatur/Prüfung:** Rotation als geordnete Liste von Einträgen auf beiden Plattformen behandeln. Regression: A/B/A laden, Namen ändern, speichern → A/B/A bleibt erhalten.
 
@@ -69,7 +69,7 @@ iOS erlaubt eine geordnete Rotation A, B, A. Android entfernt identische Plan-ID
 
 Android entscheidet anhand der unveränderten geplanten Satzzahl und aller Nicht-Warmup-Sätze, ob eine Übung fertig ist. Die angezeigten geplanten Slots und iOS verwenden dagegen NORMAL-Sätze und das reduzierte Deload-Ziel. Beispiel: Plan 4 Sätze, Deload auf 2 → nach dem zweiten normalen Satz stoppt iOS den Timer, Android startet ihn erneut. DROP/FAILURE können auf Android umgekehrt zu früh als erfüllte Slots zählen.
 
-**Belege:** [ActiveWorkoutViewModel.kt:590](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:590) · [ActiveWorkoutScreen.kt:673](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutScreen.kt:673) · [IOSWorkoutScreen.swift:608](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutScreen.swift:608)
+**Belege:** [ActiveWorkoutViewModel.kt:590](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:590) · [ActiveWorkoutScreen.kt:673](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutScreen.kt:673) · [IOSWorkoutScreen.swift:608](iosApp/IronLogIOS/Workout/IOSWorkoutScreen.swift:608)
 
 **Kleinste Reparatur/Prüfung:** Eine gemeinsame Funktion für erfüllte Plan-Slots und effektive Deload-Ziele verwenden. Gezielte Fälle: letzter normaler Satz, Warmup, DROP, FAILURE, Deload.
 
@@ -77,7 +77,7 @@ Android entscheidet anhand der unveränderten geplanten Satzzahl und aller Nicht
 
 Die Android-Übungsstatistik lädt Sätze ohne Filter auf abgeschlossene Sessions. iOS nutzt nur abgeschlossene, zeitlich gültige Trainings. Beispiel: abgeschlossen 80 kg × 5, laufendes Training 100 kg × 5 → Android kann bereits 100 kg und e1RM 116,7 anzeigen, iOS weiter 80 kg und e1RM 93,3. Das ist eine abweichende Auswertungsdefinition, kein Beleg für unterschiedliche Epley-Formeln.
 
-**Belege:** [ExerciseStatsViewModel.kt:99](/Users/maert/Documents/IronLog/feature/statistics/src/main/java/com/ironlog/app/presentation/statistics/ExerciseStatsViewModel.kt:99) · [WorkoutSetDao.kt:35](/Users/maert/Documents/IronLog/core/database/src/main/java/com/ironlog/app/data/local/dao/WorkoutSetDao.kt:35) · [SharedTrainingAnalytics.kt:105](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:105) · [SharedTrainingAnalytics.kt:327](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:327)
+**Belege:** [ExerciseStatsViewModel.kt:99](feature/statistics/src/main/java/com/ironlog/app/presentation/statistics/ExerciseStatsViewModel.kt:99) · [WorkoutSetDao.kt:35](core/database/src/main/java/com/ironlog/app/data/local/dao/WorkoutSetDao.kt:35) · [SharedTrainingAnalytics.kt:105](shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:105) · [SharedTrainingAnalytics.kt:327](shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:327)
 
 **Kleinste Reparatur/Prüfung:** Festlegen, ob historische Statistik nur abgeschlossene Trainings enthält; Empfehlung: ja, laufende Werte gesondert kennzeichnen. Gleiche Projektion und Fixture auf beiden Plattformen.
 
@@ -85,7 +85,7 @@ Die Android-Übungsstatistik lädt Sätze ohne Filter auf abgeschlossene Session
 
 Android verwendet für das zusätzliche Backoff-Gewicht nach RPE-Überschreitung den Standardabschlag von 10 %. iOS übergibt den konfigurierten backoffPercent an den Coach. Bei 100 kg und 20 % Konfiguration entstehen 90 kg gegenüber 80 kg. Ob der Progressions-Backoff auch für den Folgesatz gelten soll, muss als Produktregel geklärt werden; aus dem Unterschied allein folgt nicht, welche Seite richtig ist.
 
-**Belege:** [ActiveWorkoutViewModel.kt:102](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:102) · [RpeAutoregulation.kt:57](/Users/maert/Documents/IronLog/core/common/src/main/java/com/ironlog/app/domain/util/RpeAutoregulation.kt:57) · [IOSWorkoutNextSetCoach.swift:42](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutNextSetCoach.swift:42)
+**Belege:** [ActiveWorkoutViewModel.kt:102](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:102) · [RpeAutoregulation.kt:57](core/common/src/main/java/com/ironlog/app/domain/util/RpeAutoregulation.kt:57) · [IOSWorkoutNextSetCoach.swift:42](iosApp/IronLogIOS/Workout/IOSWorkoutNextSetCoach.swift:42)
 
 **Kleinste Reparatur/Prüfung:** Den beabsichtigten Backoff-Vertrag festlegen und identische Parameter weiterreichen. Regression mit bewusst vom Standard abweichenden 20 %.
 
@@ -93,7 +93,7 @@ Android verwendet für das zusätzliche Backoff-Gewicht nach RPE-Überschreitung
 
 Androids prominente Belastungskarte zeigt fatigueScore; iOS zeigt auf der Bereitschaftskarte 100 − fatigueScore. Derselbe Ermüdungswert 60 erscheint daher als Belastung 60/100 beziehungsweise Bereitschaft 40 %. Bei unauffälliger Belastung waren live auf Android ein Haken und auf iOS 100 % sichtbar. Die Bezeichnungen sind verschieden, daher kein nachgewiesener Rechenfehler; die Plattformen vermitteln aber nicht dieselbe Hauptkennzahl.
 
-**Belege:** [DashboardScreen.kt:648](/Users/maert/Documents/IronLog/feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardScreen.kt:648) · [IOSDashboardScreen.swift:384](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Dashboard/IOSDashboardScreen.swift:384) · [SharedTrainingAnalytics.kt:479](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:479)
+**Belege:** [DashboardScreen.kt:648](feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardScreen.kt:648) · [IOSDashboardScreen.swift:384](iosApp/IronLogIOS/Dashboard/IOSDashboardScreen.swift:384) · [SharedTrainingAnalytics.kt:479](shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:479)
 
 **Kleinste Reparatur/Prüfung:** Auf beiden Startseiten denselben Readiness-Kreis mit derselben Richtung und Beschriftung zeigen; Belastung separat erklären. Fehlende Datengrundlage weiterhin ausdrücklich darstellen.
 
@@ -101,7 +101,7 @@ Androids prominente Belastungskarte zeigt fatigueScore; iOS zeigt auf der Bereit
 
 Androids 30-/90-Tage-Verlauf beginnt um Mitternacht des Grenztags; iOS rechnet vom aktuellen Zeitpunkt zurück. Am 11. September um 15 Uhr wird ein Training vom 12. August um 10 Uhr unter „30 Tage“ daher unterschiedlich gefiltert. Außerdem speichert iOS laufende Pausentimer dauerhaft und stellt sie wieder her; Android hält sie nur im ViewModel. Nach Prozessverlust ist das Verhalten damit verschieden.
 
-**Belege:** [WorkoutHistoryViewModel.kt:50](/Users/maert/Documents/IronLog/feature/history/src/main/java/com/ironlog/app/presentation/history/WorkoutHistoryViewModel.kt:50) · [IOSHistorySupport.swift:54](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/History/IOSHistorySupport.swift:54) · [ActiveWorkoutViewModel.kt:237](/Users/maert/Documents/IronLog/feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:237) · [IOSWorkoutRestTimer.swift:52](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutRestTimer.swift:52) · [IOSWorkoutScreen.swift:767](/Users/maert/Documents/IronLog/iosApp/IronLogIOS/Workout/IOSWorkoutScreen.swift:767)
+**Belege:** [WorkoutHistoryViewModel.kt:50](feature/history/src/main/java/com/ironlog/app/presentation/history/WorkoutHistoryViewModel.kt:50) · [IOSHistorySupport.swift:54](iosApp/IronLogIOS/History/IOSHistorySupport.swift:54) · [ActiveWorkoutViewModel.kt:237](feature/workout/src/main/java/com/ironlog/app/presentation/workout/ActiveWorkoutViewModel.kt:237) · [IOSWorkoutRestTimer.swift:52](iosApp/IronLogIOS/Workout/IOSWorkoutRestTimer.swift:52) · [IOSWorkoutScreen.swift:767](iosApp/IronLogIOS/Workout/IOSWorkoutScreen.swift:767)
 
 **Kleinste Reparatur/Prüfung:** Zeitfenster explizit definieren; Timer-Startzeit und Dauer auch unter Android wiederherstellbar speichern. Grenzzeit-Fixture und gezielter Prozess-Neustarttest in Testdatenumgebung.
 
@@ -109,7 +109,7 @@ Androids 30-/90-Tage-Verlauf beginnt um Mitternacht des Grenztags; iOS rechnet v
 
 iOS erzeugt fehlende Progressionsergebnisse unmittelbar nach Import/Recovery. Androids Importpfad tut dies nicht; der Dashboard-Hook läuft bei ViewModel-Initialisierung, nicht beim bloßen Refresh. Bei einem alten Backup ohne Ergebnisse kann deshalb im bestehenden Android-Lebenszyklus die Nachberechnung fehlen. Eine spätere Neuerstellung kann sie nachholen; bei bereits konsistentem Backup muss kein sichtbarer Unterschied auftreten.
 
-**Belege:** [IosSettingsFeature.kt:730](/Users/maert/Documents/IronLog/shared/src/iosMain/kotlin/com/ironlog/shared/ios/IosSettingsFeature.kt:730) · [BackupRepositoryImpl.kt:157](/Users/maert/Documents/IronLog/data/src/main/java/com/ironlog/app/data/repository/BackupRepositoryImpl.kt:157) · [SettingsViewModel.kt:229](/Users/maert/Documents/IronLog/feature/settings/src/main/java/com/ironlog/app/presentation/settings/SettingsViewModel.kt:229) · [DashboardViewModel.kt:124](/Users/maert/Documents/IronLog/feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardViewModel.kt:124) · [DashboardViewModel.kt:556](/Users/maert/Documents/IronLog/feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardViewModel.kt:556)
+**Belege:** [IosSettingsFeature.kt:730](shared/src/iosMain/kotlin/com/ironlog/shared/ios/IosSettingsFeature.kt:730) · [BackupRepositoryImpl.kt:157](data/src/main/java/com/ironlog/app/data/repository/BackupRepositoryImpl.kt:157) · [SettingsViewModel.kt:229](feature/settings/src/main/java/com/ironlog/app/presentation/settings/SettingsViewModel.kt:229) · [DashboardViewModel.kt:124](feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardViewModel.kt:124) · [DashboardViewModel.kt:556](feature/dashboard/src/main/java/com/ironlog/app/presentation/dashboard/DashboardViewModel.kt:556)
 
 **Kleinste Reparatur/Prüfung:** Gemeinsamen idempotenten Nachbereitungsablauf nach Import/Recovery verwenden. Fixture: älteres Backup ohne Outcomes im bereits geöffneten Dashboard importieren.
 
@@ -120,7 +120,7 @@ iOS erzeugt fehlende Progressionsergebnisse unmittelbar nach Import/Recovery. An
 - Die geprüften Deload-Zielanpassungen und zentralen Belastungsformeln stimmen überein. Die Android-Timerentscheidung verwendet diese Zielanpassung noch nicht konsistent.
 - Beide Backup-Pfade verwenden Schema 12 und den gemeinsamen Validator. Einstellungen liegen außerhalb des Trainingsbackups. Beide besitzen Schutzmechanismen vor Überschreiben und Recovery. iOS importiert die Vorschau-Bytes; Android liest die Quelle erneut und prüft ihren Hash. Diese unterschiedliche Technik ist für sich kein Integritätsfehler.
 
-[ProgressionEngine.kt:24](/Users/maert/Documents/IronLog/core/common/src/main/java/com/ironlog/app/domain/progression/ProgressionEngine.kt:24) · [SharedTrainingAnalytics.kt:76](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:76) · [MuscleVolumeCalculator.kt:76](/Users/maert/Documents/IronLog/core/common/src/main/java/com/ironlog/app/domain/util/MuscleVolumeCalculator.kt:76) · [DeloadTargetAdjustment.kt:15](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/deload/DeloadTargetAdjustment.kt:15) · [BackupPayloadV1.kt:13](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/backup/BackupPayloadV1.kt:13) · [BackupPayloadValidator.kt:1](/Users/maert/Documents/IronLog/shared/src/commonMain/kotlin/com/ironlog/shared/backup/BackupPayloadValidator.kt:1)
+[ProgressionEngine.kt:24](core/common/src/main/java/com/ironlog/app/domain/progression/ProgressionEngine.kt:24) · [SharedTrainingAnalytics.kt:76](shared/src/commonMain/kotlin/com/ironlog/shared/analytics/SharedTrainingAnalytics.kt:76) · [MuscleVolumeCalculator.kt:76](core/common/src/main/java/com/ironlog/app/domain/util/MuscleVolumeCalculator.kt:76) · [DeloadTargetAdjustment.kt:15](shared/src/commonMain/kotlin/com/ironlog/shared/deload/DeloadTargetAdjustment.kt:15) · [BackupPayloadV1.kt:13](shared/src/commonMain/kotlin/com/ironlog/shared/backup/BackupPayloadV1.kt:13) · [BackupPayloadValidator.kt:1](shared/src/commonMain/kotlin/com/ironlog/shared/backup/BackupPayloadValidator.kt:1)
 
 ## Empfehlung für die Umsetzung
 
@@ -148,8 +148,8 @@ Aussagenregister: „UI gleich aufgebaut“ **CONTRADICTED** (Screenshots/Routen
 
 ## Bildbelege
 
-[Drei aktuelle Bildschirmpaare als Vergleich](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/vergleich.html)
+[Drei aktuelle Bildschirmpaare als Vergleich](<lokales Analyseverzeichnis>/2026-09-11/parity/vergleich.html)
 
-- Startseite: [Android](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/android-home.png) · [iOS](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/ios-home.jpg)
-- Pläne: [Android](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/android-plans.png) · [iOS](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/ios-plans.jpg)
-- Verlauf: [Android](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/android-history.png) · [iOS](/Users/maert/Documents/IronLog-Analysen/2026-09-11/parity/ios-history.jpg)
+- Startseite: [Android](<lokales Analyseverzeichnis>/2026-09-11/parity/android-home.png) · [iOS](<lokales Analyseverzeichnis>/2026-09-11/parity/ios-home.jpg)
+- Pläne: [Android](<lokales Analyseverzeichnis>/2026-09-11/parity/android-plans.png) · [iOS](<lokales Analyseverzeichnis>/2026-09-11/parity/ios-plans.jpg)
+- Verlauf: [Android](<lokales Analyseverzeichnis>/2026-09-11/parity/android-history.png) · [iOS](<lokales Analyseverzeichnis>/2026-09-11/parity/ios-history.jpg)

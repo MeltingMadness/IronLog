@@ -1,0 +1,131 @@
+package com.thrym.app.presentation.plans
+
+import com.thrym.app.presentation.common.UiStrings
+import com.thrym.app.presentation.common.toUserDetail
+import com.thrym.feature.plans.R as UxR
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.thrym.app.domain.model.MetaTrainingPlan
+import com.thrym.app.domain.model.TrainingPlan
+import com.thrym.app.domain.repository.MetaTrainingPlanRepository
+import com.thrym.app.domain.repository.TrainingPlanRepository
+import com.thrym.app.domain.repository.WorkoutRepository
+import com.thrym.app.domain.util.AppLogger
+import com.thrym.app.domain.util.resolveMetaPlanRotation
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+
+data class MetaPlanListItemUi(
+    val metaPlan: MetaTrainingPlan,
+    val subPlans: List<TrainingPlan>,
+    val nextSubPlan: TrainingPlan?,
+    val lastDoneDaysAgo: Long?
+)
+
+data class MetaPlanListUiState(
+    val items: List<MetaPlanListItemUi> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: String? = null
+)
+
+class MetaPlanListViewModel(
+    private val trainingPlanRepository: TrainingPlanRepository,
+    private val workoutRepository: WorkoutRepository,
+    private val metaTrainingPlanRepository: MetaTrainingPlanRepository,
+    private val strings: UiStrings
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(MetaPlanListUiState())
+    val uiState: StateFlow<MetaPlanListUiState> = _uiState
+
+    init {
+        observeMetaPlans()
+    }
+
+    private fun observeMetaPlans() {
+        viewModelScope.launch {
+            combine(
+                trainingPlanRepository.getAllPlans(),
+                workoutRepository.observeLastSessionPerMetaPlanSubPlan(),
+                metaTrainingPlanRepository.observeLastRotationEventPerMetaPlanSubPlan(),
+                metaTrainingPlanRepository.getAllMetaPlans()
+            ) { plans, lastSessionsPerSubPlan, rotationEvents, metaPlans ->
+                val plansById = plans.associateBy { it.id }
+                val lastTimeIndex = lastSessionsPerSubPlan.associateBy(
+                    keySelector = { it.planId to it.metaPlanId },
+                    valueTransform = { it.lastStartTime }
+                )
+                metaPlans.map { metaPlan ->
+                    val subPlans = metaPlan.items
+                        .sortedBy { it.orderIndex }
+                        .mapNotNull { item -> plansById[item.trainingPlanId] }
+
+                    val eventIndexForMetaPlan = rotationEvents
+                        .filter { it.metaPlanId == metaPlan.id }
+                        .associate { it.trainingPlanId to it.lastEventAt }
+
+                    val rotationIds = resolveMetaPlanRotation(
+                        orderedPlanIds = subPlans.map { it.id },
+                        lastEventAtByPlanId = eventIndexForMetaPlan
+                    )
+
+                    val nextSubPlan = rotationIds.firstOrNull()?.let(plansById::get)
+
+                    val lastDoneMillis = subPlans
+                        .mapNotNull { plan -> lastTimeIndex[plan.id to metaPlan.id] }
+                        .maxOrNull()
+
+                    MetaPlanListItemUi(
+                        metaPlan = metaPlan,
+                        subPlans = subPlans,
+                        nextSubPlan = nextSubPlan,
+                        lastDoneDaysAgo = lastDoneMillis?.toRelativeDaysAgo()
+                    )
+                }
+            }
+                .catch { error ->
+                    AppLogger.e("MetaPlanListVM", "Flow-Fehler: ${error.message}", error)
+                    _uiState.value = MetaPlanListUiState(
+                        items = emptyList(),
+                        isLoading = false,
+                        error = strings.get(UxR.string.meta_plans_load_failed, error.toUserDetail(strings))
+                    )
+                }
+                .collect { items ->
+                    _uiState.value = MetaPlanListUiState(
+                        items = items,
+                        isLoading = false,
+                        error = null
+                    )
+                }
+        }
+    }
+
+    fun deleteMetaPlan(metaPlanId: Long) {
+        viewModelScope.launch {
+            try {
+                metaTrainingPlanRepository.deleteMetaPlan(metaPlanId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = strings.get(UxR.string.meta_plan_delete_failed, e.toUserDetail(strings))
+                )
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+}
+
+private fun Long.toRelativeDaysAgo(): Long {
+    val date = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
+    return ChronoUnit.DAYS.between(date, LocalDate.now())
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="workout_plate_calc_reachable">Erreichbar: %1$s pro Seite</string>
-    <string name="workout_plate_calc_target">Ziel: %1$s pro Seite</string>
-    <string name="workout_plate_calc_no_fit">Keine passende Scheibenkombination verfügbar.</string>
-    <string name="workout_plate_calc_unmatched_deficit">Fehlend: %1$s pro Seite</string>
+    <string name="workout_plate_calc_reachable">Achievable: %1$s per side</string>
+    <string name="workout_plate_calc_target">Target: %1$s per side</string>
+    <string name="workout_plate_calc_no_fit">No matching plate combination available.</string>
+    <string name="workout_plate_calc_unmatched_deficit">Missing: %1$s per side</string>
 </resources>

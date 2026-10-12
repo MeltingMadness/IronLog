@@ -1,0 +1,40 @@
+Thrym ist ein Trainingstagebuch für Krafttraining, das komplett offline funktioniert. Plane dein Training, protokolliere deine Sätze schnell im Studio und verfolge deine Fortschritte. Deine Daten bleiben auf deinem Gerät: kein Konto, keine Werbung, kein Tracking, und die App fordert keinen Internetzugriff an.
+
+<b>Training</b>
+• Training aus einem Plan, aus einem Meta-Plan oder frei starten
+• Gewicht und Wiederholungen sind vorbelegt, du bestätigst sie nur oder passt sie an
+• Optionale Angaben je Satz: RPE oder RIR, Satztyp (Aufwärmen, Drop, Versagen), Satzintention und Scheibenrechner
+• Pausen-Timer, Supersätze und mehrere Übungen auf einmal hinzufügen
+• Neue Rekorde werden schon während des Trainings erkannt
+• Vorzeitig beenden mit offenen Sätzen und Zusammenfassung der tatsächlich absolvierten Sätze
+
+<b>Pläne und Meta-Pläne</b>
+• Pläne mit Zielwerten für Sätze, Wiederholungen und Gewicht oder mit eigenen Vorgaben für jeden Satz
+• Meta-Pläne wechseln reihum zwischen mehreren Plänen (zum Beispiel Push, Pull, Beine) und schlagen den nächsten vor; ein Vorschlag lässt sich überspringen
+• Progressionsschema je Planübung: linear, doppelte Progression, Gesamtwiederholungen oder RPE/RIR
+
+<b>Progressions-Coach</b>
+• Nach dem Training schlägt der Coach neue Zielwerte vor und nennt jeweils den Grund
+• Dein Plan ändert sich erst, wenn du bestätigst: jeden Vorschlag übernehmen, bearbeiten oder verwerfen
+• Ein verfehltes Ziel wird wiederholt, mehrere Fehlversuche in Folge führen zu einem Backoff-Vorschlag
+
+<b>Erholung und Volumen</b>
+• Optionaler täglicher Check-in zu Schlaf, Energie, Stress und Muskelkater
+• Trainingsbereitschaft und Deload-Hinweise auf Basis deiner letzten Trainings
+• Deload-Modus mit halber Satzzahl oder 15 % weniger Gewicht
+• Wochenvolumen je Muskelgruppe mit MEV/MAV-Bereichen und Verlauf über 8 Wochen
+
+<b>Verlauf und Statistik</b>
+• Alle Trainings mit Suche und Filtern nach Zeitraum und Plan
+• Einzelne Sätze nachträglich korrigieren oder löschen und eine Trainingsnotiz ergänzen
+• Übungsbibliothek mit Suche, Muskelfilter, eigenen Übungen und Archiv
+• Je Übung: Rekorde, geschätztes 1RM (e1RM) und Verlaufsdiagramm
+
+<b>Einstellungen und Daten</b>
+• kg oder lb, Wochenstart, zwei Darstellungen, sieben Farbschemata, helles, dunkles oder System-Design und dynamische Farben
+• Scheiben und Stangengewicht für den Scheibenrechner, Pausen-Timer und Trainings-Erinnerungen
+• Backups als lokale Datei exportieren und importieren, mit optionaler Backup-Erinnerung; vor jedem Import legt die App ein internes Sicherheitsbackup an
+
+Thrym gibt es auf Deutsch und Englisch. Eine native iOS-Version entsteht aus demselben Quellcode. Der Quellcode steht unter der Apache License 2.0.
+
+Thrym hieß früher IronLog. Um deine Daten mitzunehmen, exportiere in IronLog ein Backup und importiere es in Thrym.

@@ -1,0 +1,66 @@
+name: Feature request
+description: Suggest an idea or an improvement for Thrym.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your idea. Please write in English if you can.
+
+        Thrym is an offline app by design: no account, no server, no tracking, and all data stays on the device. Ideas that need a network connection or a server would change that. Please say so if your idea needs either.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What do you want to do, and what is missing or hard today?
+      placeholder: When I train …, I want to …, but …
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How could Thrym solve it? Describe the behavior, not necessarily the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Workarounds you use today, or other ways to solve it.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform is this about?
+      options:
+        - Both
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Sketches, screenshots (with test data only), or references to training methods, for example.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the existing issues and this idea has not been suggested yet.
+          required: true
+        - label: I would like to implement this myself (please wait for feedback on the approach before you start).
+          required: false

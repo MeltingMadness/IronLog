@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_backup_last_external_export">Letzter erfolgreicher externer Export: %1$s</string>
+    <string name="settings_backup_no_external_export">Noch kein erfolgreicher externer Export.</string>
+    <string name="settings_backup_reminder_title">An externes Backup erinnern</string>
+    <string name="settings_backup_reminder_subtitle">Zeigt nach sieben Tagen ohne erfolgreichen Export einen Hinweis in den Einstellungen.</string>
+    <string name="settings_backup_reminder_due_title">Externes Backup empfohlen</string>
+    <string name="settings_backup_reminder_due_message">Seit dem letzten erfolgreichen Export sind mindestens sieben Tage vergangen. Das interne Sicherheitsbackup hilft nur auf diesem Gerät; ein externer Export schützt zusätzlich bei Geräteverlust.</string>
+    <string name="settings_backup_recovery_note">Internes Sicherheitsbackup: schützt vor versehentlichen Änderungen auf diesem Gerät.</string>
+    <string name="settings_unknown_error">Aktion fehlgeschlagen: unbekannter Fehler</string>
+    <string name="settings_error_backup_too_new">Dieses Backup stammt aus einer neueren App-Version (Schema %1$d, diese App unterstützt %2$d). Aktualisiere die App, um es zu importieren.</string>
+    <string name="settings_error_backup_data_changed">Trainingsdaten wurden während der Importvorbereitung geändert. Es wurde nichts gelöscht. Bitte versuche es erneut.</string>
+    <string name="settings_incident_subject">%1$s Incident %2$s</string>
+</resources>

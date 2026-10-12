@@ -9,37 +9,50 @@ shared/build/
 /captures
 .externalNativeBuild
 .cxx
+.kotlin/
 
-# Lokale/IDE-spezifische Dateien
+# Local / IDE files
 local.properties
 .idea/
 *.iml
 .DS_Store
 
-# Signing & Geheimnisse (NIEMALS committen!)
+# Signing & secrets (never commit!)
 keystore.properties
 release-keystore/
 *.jks
 *.keystore
 
-# Crash-/Replay-Logs (JVM)
+# JVM crash / replay logs
 hs_err_pid*.log
 replay_pid*.log
 
-# iOS (KMP)
+# iOS
 **/DerivedData/
 **/xcuserdata/
 *.xcworkspace/xcuserdata/
+*.xcresult
+iosApp/Local.xcconfig
 
-.kotlin/
+# fastlane output
+fastlane/report.xml
+fastlane/README.md
 
-# Lokale Fremd-Daten (Desktop-Tools)
+# Local tooling and personal working files
 .freebuff/
-
-# Lokale Arbeits-/Ausgabeordner
+.superpowers/
+.agents/
+.claude/napkin.md
+.claude/settings.local.json
+.claude/worktrees/
+deploy.ps1
+release.ps1
+screen.png
+mockups/
 /tmp/
 /output/
 __pycache__/
 
-# Wettbewerber-Screenshots (gross, nicht fuer das oeffentliche Repo)
-docs/validation/2026-09-13-competitor-audit/evidence/
+# Competitor analysis: kept local and no longer tracked. Earlier commits still
+# contain it; untracking does not remove it from the published history.
+docs/validation/2026-09-13-competitor-audit/

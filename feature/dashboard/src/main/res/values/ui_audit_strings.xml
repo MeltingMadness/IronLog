@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="dashboard_ui_this_week">Diese Woche</string>
-    <string name="dashboard_ui_this_month">Dieser Monat</string>
+    <string name="dashboard_ui_this_week">This week</string>
+    <string name="dashboard_ui_this_month">This month</string>
     <plurals name="dashboard_ui_training_count">
-        <item quantity="one">%d Training</item>
-        <item quantity="other">%d Trainings</item>
+        <item quantity="one">%d workout</item>
+        <item quantity="other">%d workouts</item>
     </plurals>
-    <string name="dashboard_ui_volume_unit">Volumen in kg × Wiederholungen · Datum = Wochenbeginn</string>
-    <string name="dashboard_glass_up_next">Heute dran</string>
-    <string name="dashboard_glass_up_next_from">Heute dran · %1$s</string>
-    <string name="dashboard_glass_running">Training läuft</string>
-    <string name="dashboard_glass_start">Training starten</string>
+    <string name="dashboard_ui_volume_unit">Volume in %1$s × reps · date = start of week</string>
+    <string name="dashboard_glass_up_next">Up next</string>
+    <string name="dashboard_glass_up_next_from">Up next · %1$s</string>
+    <string name="dashboard_glass_running">Workout in progress</string>
+    <string name="dashboard_glass_start">Start workout</string>
     <plurals name="dashboard_glass_more_exercises">
-        <item quantity="one">+ %d weitere Übung</item>
-        <item quantity="other">+ %d weitere Übungen</item>
+        <item quantity="one">+ %d more exercise</item>
+        <item quantity="other">+ %d more exercises</item>
     </plurals>
-    <string name="dashboard_glass_day_trained">trainiert</string>
-    <string name="dashboard_glass_day_today">heute</string>
-    <string name="dashboard_glass_day_open">offen</string>
+    <string name="dashboard_glass_day_trained">trained</string>
+    <string name="dashboard_glass_day_today">today</string>
+    <string name="dashboard_glass_day_open">not trained</string>
 </resources>

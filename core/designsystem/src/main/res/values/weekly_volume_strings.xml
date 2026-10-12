@@ -1,25 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="stats_weekly_volume_week_range">%1$s – %2$s</string>
-    <string name="stats_weekly_volume_week_current">Laufende Woche · Werte bis heute</string>
-    <string name="stats_weekly_volume_week_complete">Abgeschlossene Woche</string>
-    <string name="stats_weekly_volume_previous_week">Vorherige Woche</string>
-    <string name="stats_weekly_volume_next_week">Nächste Woche</string>
-    <plurals name="stats_weekly_volume_summary">
-        <item quantity="one">%1$s gewichtete Arbeitssätze · %2$d Training</item>
-        <item quantity="other">%1$s gewichtete Arbeitssätze · %2$d Trainings</item>
+    <string name="stats_weekly_volume_week_range" translatable="false">%1$s – %2$s</string>
+    <string name="stats_weekly_volume_week_current">Current week · data up to today</string>
+    <string name="stats_weekly_volume_week_complete">Completed week</string>
+    <string name="stats_weekly_volume_previous_week">Previous week</string>
+    <string name="stats_weekly_volume_next_week">Next week</string>
+    <!-- %1$s = stats_weekly_volume_sets, %2$s = stats_weekly_volume_workouts -->
+    <string name="stats_weekly_volume_summary">%1$s · %2$s</string>
+    <plurals name="stats_weekly_volume_sets">
+        <item quantity="one">%1$s weighted work set</item>
+        <item quantity="other">%1$s weighted work sets</item>
     </plurals>
-    <string name="stats_weekly_volume_orientation_hint">MEV, MAV und MRV sind Orientierungswerte in gewichteten Arbeitssätzen. Die Einordnung ersetzt keine individuelle Trainingssteuerung.</string>
-    <string name="stats_weekly_volume_error">Die Wochen-Auswertung konnte nicht geladen werden.</string>
-    <string name="stats_weekly_volume_retry">Erneut laden</string>
-    <string name="stats_weekly_volume_expand">Muskelgruppen anzeigen</string>
-    <string name="stats_weekly_volume_collapse">Muskelgruppen ausblenden</string>
-    <string name="stats_weekly_volume_expanded">Ausgeklappt</string>
-    <string name="stats_weekly_volume_collapsed">Eingeklappt</string>
-    <string name="stats_volume_sets_progress">%1$s / MAV %2$s Sätze</string>
-    <string name="stats_volume_thresholds">MEV %1$s · MAV %2$s · MRV %3$s</string>
-    <string name="stats_volume_status_no_sets">Noch keine Sätze</string>
-    <string name="stats_volume_status_below_mev">Unter MEV · Orientierung</string>
-    <string name="stats_volume_status_in_orientation">Im Orientierungsbereich</string>
-    <string name="stats_volume_status_above_mrv">Über MRV · Orientierung</string>
+    <plurals name="stats_weekly_volume_workouts">
+        <item quantity="one">%1$d workout</item>
+        <item quantity="other">%1$d workouts</item>
+    </plurals>
+    <string name="stats_weekly_volume_orientation_hint">MEV, MAV and MRV are guideline values, counted in weighted work sets. This rating doesn\'t replace individual training planning.</string>
+    <string name="stats_weekly_volume_error">The weekly summary couldn\'t be loaded.</string>
+    <string name="stats_weekly_volume_retry">Reload</string>
+    <string name="stats_weekly_volume_expand">Show muscle groups</string>
+    <string name="stats_weekly_volume_collapse">Hide muscle groups</string>
+    <string name="stats_weekly_volume_expanded">Expanded</string>
+    <string name="stats_weekly_volume_collapsed">Collapsed</string>
+    <string name="stats_volume_sets_progress">%1$s / MAV %2$s sets</string>
+    <string name="stats_volume_thresholds" translatable="false">MEV %1$s · MAV %2$s · MRV %3$s</string>
+    <string name="stats_volume_status_no_sets">No sets yet</string>
+    <string name="stats_volume_status_below_mev">Below MEV · guideline</string>
+    <string name="stats_volume_status_in_orientation">Within guideline range</string>
+    <string name="stats_volume_status_above_mrv">Above MRV · guideline</string>
 </resources>

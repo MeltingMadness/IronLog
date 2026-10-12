@@ -1,12 +1,14 @@
-# IronLog iOS: Funktionsstand und Abnahme
+# Thrym iOS: Funktionsstand und Abnahme
 
-Stand: 9. September 2026. Android bleibt die fachliche Referenz. Diese Liste unterscheidet implementierte Funktionen von tatsächlich geprüften Abläufen; sie ist keine Releasefreigabe.
+Android und iOS sind gleichberechtigte Plattformen; die fachlichen Regeln liegen gemeinsam in `:shared`. Diese Liste unterscheidet implementierte Funktionen von tatsächlich geprüften Abläufen; sie ist keine Releasefreigabe. Die Abnahme in der Tabelle stammt vom 9. September 2026 (damals noch unter dem Namen IronLog).
 
 ## Aktueller Stand
 
 Die native SwiftUI-App baut mit Xcode 26.6 und läuft im iPhone-17-Simulator mit iOS 26.5. Dashboard, Training, Verlauf, Pläne und Einstellungen sind echte Screens. Statistik, Progressionsreview, Übungsbibliothek und Editoren sind angebunden. Die früheren Swift-Compiler- und Simulator-Installationsblocker sind behoben.
 
-Der gemeinsame Kotlin-Kern besitzt den kanonischen Trainingsgraphen, Progressionsregeln, Bestleistungen und Auswertungen. iOS speichert den validierten Graphen atomar unter `Application Support/IronLog/training-state.json`. Änderungen werden erst nach erfolgreicher Speicherung veröffentlicht. Einstellungen liegen in NSUserDefaults. Die ältere Repository-Abstraktion ist nicht der direkte UI-Zugriff: Swift verwendet `IosTrainingFeature` und `IosSettingsFeature` als Plattformbrücken zum gemeinsamen Kern.
+Der gemeinsame Kotlin-Kern besitzt den kanonischen Trainingsgraphen, Progressionsregeln, Bestleistungen und Auswertungen. iOS speichert den validierten Graphen atomar unter `Application Support/Thrym/training-state.json`. Änderungen werden erst nach erfolgreicher Speicherung veröffentlicht. Einstellungen liegen in NSUserDefaults. Die ältere Repository-Abstraktion ist nicht der direkte UI-Zugriff: Swift verwendet `IosTrainingFeature` und `IosSettingsFeature` als Plattformbrücken zum gemeinsamen Kern.
+
+Die Oberfläche gibt es wie auf Android auf Englisch und Deutsch (String-Kataloge `Localizable.xcstrings` für UI-Texte und `Exercises.xcstrings` für eingebaute Übungen, Englisch als Fallback). Eingebaute Übungsnamen und Enum-Werte werden nur für die Anzeige übersetzt; Backups bleiben mit Android und mit alten IronLog-Backups kompatibel. Das Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.
 
 ## Bereits nachgewiesen
 
@@ -41,18 +43,20 @@ Die Backup-Bestätigung hält die tatsächlich geprüften Bytes und den lokalen 
 
 ## Reproduzierbare Validierung
 
-Zentrale Werkzeuge sind XcodeBuildMCP `build_run_sim` und gezielte `test_sim`-Aufrufe. Das Projekt wird mit `python3 iosApp/generate_project.py` erzeugt; der Xcode-Build integriert das KMP-Framework über `iosApp/scripts/build-shared.sh`.
-
-Gezielte Kotlin-Tests laufen mit JDK 17, zum Beispiel:
+Das Projekt wird mit `python3 iosApp/generate_project.py` erzeugt; der Xcode-Build integriert das KMP-Framework über `iosApp/scripts/build-shared.sh`. Die iOS-CI (`.github/workflows/ios-ci.yml`, `macos-26` mit Xcode 26.6) prüft bei jedem Pull Request, dass der Generator das eingecheckte Projekt nicht verändert, und führt die XCTest-Suite im Simulator aus:
 
 ```sh
-JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew --offline --no-daemon :shared:testAndroidHostTest --tests '*DeloadTargetAdjustmentTest' --tests '*SharedTrainingAnalyticsTest'
+python3 iosApp/generate_project.py
+xcodebuild test -project iosApp/ThrymIOS.xcodeproj -scheme ThrymIOS \
+  -destination 'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO
 ```
 
-Dieser Aufruf war am 9. September erfolgreich (`/tmp/ironlog-ios-deload-week-test.log`). Frühere gezielte Nachweise liegen in `/tmp/ironlog-ios-framework-import-test.log`, `/tmp/ironlog-ios-focused-retest.log` und `/tmp/ironlog-ios-plates-test.log`. Temporäre Logs sind lokale Prüfevidenz, keine dauerhaften CI-Artefakte.
+Gezielte Kotlin-Tests des gemeinsamen Kerns laufen mit JDK 17, zum Beispiel:
 
-Die beim Android-/iOS-Abgleich gefundenen Funktionslücken sind implementiert und in den integrierten nativen Build aufgenommen. Die kritischen Trainings-, Progressions- und Datenübernahmeabläufe sind gezielt geprüft; dies ist keine exhaustive UI- oder Release-Abnahme. Signierung, TestFlight/App-Store-Verteilung und ein Test auf einem physischen iPhone sind separat zu bewerten.
+```sh
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew --no-daemon :shared:testAndroidHostTest --tests '*DeloadTargetAdjustmentTest' --tests '*SharedTrainingAnalyticsTest'
+```
 
-Weitere Prüfevidenz: `/tmp/ironlog-ios-history-edit-test.log` (Store/Validator gezielt grün), `/tmp/ironlog-ios-android-compat-build.log` (Android-Debug-APK erfolgreich), XcodeBuildMCP `test_sim_2026-09-09T21-13-07-886Z` (2 BackupBridgeTests, 0 Fehler).
+Die beim Android-/iOS-Abgleich gefundenen Funktionslücken sind implementiert. Die kritischen Trainings-, Progressions- und Datenübernahmeabläufe sind gezielt geprüft; das ist keine vollständige UI- oder Release-Abnahme. Signierung, TestFlight/App-Store-Verteilung und ein Test auf einem physischen iPhone sind separat zu bewerten (siehe [`iosApp/TESTFLIGHT.md`](../iosApp/TESTFLIGHT.md)).
 
-Aktuelle Integrationsevidenz: `/tmp/ironlog-ios-parity-critical-test.log` (40 Tests: Store 17, Analytics 8, NextSetCoach 5, Android-RPE-Adapter 10; 0 Fehler), XcodeBuildMCP `test_sim_2026-09-09T21-40-23-677Z` (4 native Recovery-/Timer-Tests; 0 Fehler), `build_run_sim_2026-09-09T21-42-50-715Z` (integrierter Build/Installation/Start erfolgreich). Das originale Launcherlogo ist als opakes iOS-AppIcon eingebunden; native Bedienelemente übernehmen den gewählten Farbakzent. Der unter iOS wirkungslose Android-Schalter „Dynamische Farben“ wird nicht angeboten.
+Historische Nachweise der Abnahme vom September 2026 (lokale Testläufe und Simulator-Sitzungen) siehe [`docs/validation/`](validation/), insbesondere [`2026-09-11-android-ios-parity.md`](validation/2026-09-11-android-ios-parity.md) und [`2026-09-11-parity-fixes.md`](validation/2026-09-11-parity-fixes.md).

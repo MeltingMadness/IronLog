@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_backup_last_external_export">Letzter erfolgreicher externer Export: %1$s</string>
-    <string name="settings_backup_no_external_export">Noch kein erfolgreicher externer Export.</string>
-    <string name="settings_backup_reminder_title">An externes Backup erinnern</string>
-    <string name="settings_backup_reminder_subtitle">Zeigt nach sieben Tagen ohne erfolgreichen Export einen Hinweis in den Einstellungen.</string>
-    <string name="settings_backup_reminder_due_title">Externes Backup empfohlen</string>
-    <string name="settings_backup_reminder_due_message">Seit dem letzten erfolgreichen Export sind mindestens sieben Tage vergangen. Das interne Sicherheitsbackup hilft nur auf diesem Gerät; ein externer Export schützt zusätzlich bei Geräteverlust.</string>
-    <string name="settings_backup_recovery_note">Internes Sicherheitsbackup: schützt vor versehentlichen Änderungen auf diesem Gerät.</string>
-    <string name="settings_intensity_rpe">RPE</string>
-    <string name="settings_intensity_rir">RIR</string>
-    <string name="settings_weight_kg">%1$s kg</string>
-    <string name="settings_unknown_error">Aktion fehlgeschlagen: unbekannter Fehler</string>
-    <string name="settings_incident_subject">%1$s Incident %2$s</string>
+    <string name="settings_backup_last_external_export">Last successful external export: %1$s</string>
+    <string name="settings_backup_no_external_export">No successful external export yet.</string>
+    <string name="settings_backup_reminder_title">Remind me about external backups</string>
+    <string name="settings_backup_reminder_subtitle">Shows a notice in Settings after seven days without a successful export.</string>
+    <string name="settings_backup_reminder_due_title">External backup recommended</string>
+    <string name="settings_backup_reminder_due_message">At least seven days have passed since your last successful export. The internal safety backup only helps on this device; an external export also protects you if you lose your device.</string>
+    <string name="settings_backup_recovery_note">Internal safety backup: protects against accidental changes on this device.</string>
+    <string name="settings_intensity_rpe" translatable="false">RPE</string>
+    <string name="settings_intensity_rir" translatable="false">RIR</string>
+    <string name="settings_weight_kg" translatable="false">%1$s kg</string>
+    <string name="settings_unknown_error">Action failed: unknown error</string>
+    <string name="settings_error_backup_too_new">This backup is from a newer app version (schema %1$d, this app supports %2$d). Update the app to import it.</string>
+    <string name="settings_error_backup_data_changed">Training data changed while the import was being prepared. Nothing was deleted. Please try again.</string>
+    <string name="settings_incident_subject">%1$s incident %2$s</string>
 </resources>

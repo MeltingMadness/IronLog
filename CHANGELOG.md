@@ -2,9 +2,15 @@
 
 ## Unveröffentlicht
 
-- Open Source: Apache-2.0-Lizenz und NOTICE ergänzt. Name, Logo und Icon sind von der Lizenz ausgenommen.
-- Neuer App-Name: **Thrym** (vorher IronLog).
-- Der sichtbare App-Name steht jetzt nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen). Paketname, Bundle-ID und Datenpfade bleiben unverändert.
+- Open Source: Apache-2.0-Lizenz und NOTICE. Der Code steht unter Apache-2.0; Name „Thrym“, Logo und App-Icon sind nicht für Forks lizenziert.
+- Neuer App-Name: **Thrym** (vorher IronLog). Der sichtbare Name steht nur noch in `branding.properties` und gilt für Android und iOS (Startbildschirm, Willkommenstext, Incident-Betreff, iOS-Erinnerungen).
+- Neue IDs: Android `com.thrym.app`, iOS `com.thrym.ios`, Pakete `com.thrym.*`, Datenbank `thrym.db`, iOS-Daten unter `Application Support/Thrym/`. Thrym installiert sich als neue App und übernimmt keine IronLog-Daten automatisch. Umzug per Backup: in IronLog „Backup exportieren“, in Thrym „Backup importieren“. Alte IronLog-Backups lassen sich auf beiden Plattformen importieren. Einstellungen (Einheiten, Design, Erinnerungen, Scheiben …) sind nicht im Backup und müssen neu gesetzt werden.
+- Englische Oberfläche: Englisch ist Standard und Fallback, Deutsch bleibt vollständig. Ab Android 13 lässt sich die Sprache pro App wählen. Eingebaute Übungen und Muskelgruppen erscheinen übersetzt; gespeicherte Daten und Backups bleiben sprachunabhängig.
+- Zahlen und Datumsangaben folgen der Gerätesprache statt fest dem deutschen Format.
+- CI: neuer iOS-Workflow (Projektgenerator-Abgleich und XCTest auf `macos-26` mit Xcode 26.6) und Prüfung auf vollständige Übersetzungen auf beiden Plattformen.
+- Community-Dateien für Mitwirkende, README auf Englisch. iOS-Gerätebuilds mit eigenem Team und eigener Bundle-ID über `iosApp/Local.xcconfig`.
+- F-Droid-Metadaten unter `fastlane/metadata/android/`.
+- Persönliche Skripte, Notizen, Mockups und Screenshots aus dem Repository entfernt.
 
 ## 1.4.0 (Android versionCode 9 / iOS Build 4) – Polish und Parität · 26.09.2026
 

@@ -31,8 +31,8 @@ Die Schrittweite wird pro Übung konfiguriert; bestehende persönliche Pläne au
 
 Version 1.1.2, versionCode 4, signierte APK. SHA-256: `4d939426b2674ebdd4cbd7e65be445035212e14b3c9ec37c2735b54f1acf8ea4`.
 
-Lokales separates Artefakt: `/Users/maert/Documents/IronLog-Analysen/2026-09-09/ironlog-1.1.2-progression.apk`.
+Lokales separates Artefakt: `<lokales Analyseverzeichnis>/2026-09-09/ironlog-1.1.2-progression.apk`.
 
 ## Geräteinstallation anschließend abgeschlossen
 
-Version 1.1.2 wurde per WLAN-ADB als signaturgleiches Update installiert (Success). Installierte APK entspricht SHA-256 oben; erste Installationszeit 24.03.2026 20:18:29 erhalten. Kaltstart erfolgreich in 474 ms. Im geprüften App-Startprotokoll keine Fatal-/SQLite-/Progression-Recovery-Fehlermarker. Das ist keine vollständige inhaltliche Prüfung aller reparierten Auswertungen. Details privat unter `/Users/maert/Documents/IronLog-Analysen/2026-09-09/install/verification.json`. Persönliche Kurzhantel-Schrittweiten wurden nicht verändert.
+Version 1.1.2 wurde per WLAN-ADB als signaturgleiches Update installiert (Success). Installierte APK entspricht SHA-256 oben; erste Installationszeit 24.03.2026 20:18:29 erhalten. Kaltstart erfolgreich in 474 ms. Im geprüften App-Startprotokoll keine Fatal-/SQLite-/Progression-Recovery-Fehlermarker. Das ist keine vollständige inhaltliche Prüfung aller reparierten Auswertungen. Details privat unter `<lokales Analyseverzeichnis>/2026-09-09/install/verification.json`. Persönliche Kurzhantel-Schrittweiten wurden nicht verändert.

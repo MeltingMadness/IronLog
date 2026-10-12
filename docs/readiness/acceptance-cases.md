@@ -15,4 +15,4 @@ Diese Fälle beschreiben Produkterwartungen, keine medizinisch validierten Schwe
 - Der Bezug zum heutigen Training berücksichtigt tatsächliche Plan-Muskelgruppen. Wochenvolumen bleibt Belastungsinformation, keine Erholungsprozentanzeige.
 - Der Vorschlag ändert weder Zielgewicht noch Satzzahl oder Deload-Schalter automatisch.
 - Import ersetzt gemäß bestehendem Backup-Vertrag den gesamten Graph. Satzintentionen dürfen nicht anhand gleicher numerischer IDs mit unabhängigen Datenbeständen vermischt werden.
-- Android und iOS projizieren dieselben Daten auf dieselben Engine-Eingaben und Ergebnisse. Native UI zeigt nachvollziehbare deutsche Texte statt interner Reason-Codes.
+- Android und iOS projizieren dieselben Daten auf dieselben Engine-Eingaben und Ergebnisse. Native UI zeigt nachvollziehbare, lokalisierte Texte (Englisch und Deutsch) statt interner Reason-Codes.

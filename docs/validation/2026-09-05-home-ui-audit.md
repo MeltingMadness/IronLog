@@ -4,7 +4,7 @@
 
 Ausgangspunkt: installierte Version 1.1.0 (Code 2), physisches Android-Gerät 24090RA29G, 1220 × 2712 Pixel, Dichte 520 dpi, Systemschrift 100 %. Prüfung der Startseite anhand von vier Screenshots, UI-Hierarchie und Compose-Code. Keine Aussage über vollständige App-Abdeckung oder größere Schriftstufen.
 
-Private Geräteaufnahmen liegen außerhalb des Repositories unter `/Users/maert/Documents/IronLog-Analysen/2026-09-05/ui-audit/`. Eine unabhängige Luna-Max-Codeprüfung ergänzte die Geräteprüfung.
+Private Geräteaufnahmen liegen außerhalb des Repositories unter `<lokales Analyseverzeichnis>/2026-09-05/ui-audit/`. Eine unabhängige Luna-Max-Codeprüfung ergänzte die Geräteprüfung.
 
 ## Befunde und Bearbeitungsstand
 

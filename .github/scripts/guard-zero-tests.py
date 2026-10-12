@@ -26,14 +26,14 @@ import xml.etree.ElementTree as ET
 
 # Smoke gate contract: these classes MUST have executed at least one test.
 EXPECTED_TEST_CLASSES = (
-    "com.ironlog.app.presentation.navigation.NavigationSmokeTest",
-    "com.ironlog.app.data.local.IronLogDatabaseMigrationTest",
-    "com.ironlog.app.data.backup.BackupLifecycleRoundTripTest",
-    "com.ironlog.app.data.local.ProgressionCoachLifecycleTest",
-    "com.ironlog.app.data.local.MetaPlanSkipDaoTest",
-    "com.ironlog.app.data.local.WorkoutSetDaoContextScopeTest",
-    "com.ironlog.app.data.local.ProgressionSnapshotTransactionTest",
-    "com.ironlog.app.data.local.WorkoutSessionDateFilterTest",
+    "com.thrym.app.presentation.navigation.NavigationSmokeTest",
+    "com.thrym.app.data.local.ThrymDatabaseMigrationTest",
+    "com.thrym.app.data.backup.BackupLifecycleRoundTripTest",
+    "com.thrym.app.data.local.ProgressionCoachLifecycleTest",
+    "com.thrym.app.data.local.MetaPlanSkipDaoTest",
+    "com.thrym.app.data.local.WorkoutSetDaoContextScopeTest",
+    "com.thrym.app.data.local.ProgressionSnapshotTransactionTest",
+    "com.thrym.app.data.local.WorkoutSessionDateFilterTest",
 )
 
 # Absolute floor for the total number of executed tests. Comfortably above
@@ -202,8 +202,8 @@ def _selftest():
 
         partial_dir = root / "partial"
         partial_dir.mkdir()
-        (partial_dir / "TEST-com.ironlog.app.presentation.navigation.NavigationSmokeTest.xml").write_text(
-            '<testsuite name="com.ironlog.app.presentation.navigation.NavigationSmokeTest" '
+        (partial_dir / "TEST-com.thrym.app.presentation.navigation.NavigationSmokeTest.xml").write_text(
+            '<testsuite name="com.thrym.app.presentation.navigation.NavigationSmokeTest" '
             'tests="1" failures="0" errors="0"/>',
             encoding="utf-8",
         )

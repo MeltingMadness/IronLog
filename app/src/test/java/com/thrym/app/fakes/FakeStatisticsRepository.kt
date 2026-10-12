@@ -1,0 +1,115 @@
+package com.thrym.app.fakes
+
+import com.thrym.app.data.local.entity.EpochConverter
+import com.thrym.app.domain.model.PersonalRecord
+import com.thrym.app.domain.model.RecordType
+import com.thrym.app.domain.model.WorkoutSet
+import com.thrym.app.domain.repository.StatisticsRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import java.time.LocalDateTime
+
+class FakeStatisticsRepository : StatisticsRepository {
+
+    private val records = MutableStateFlow<List<PersonalRecord>>(emptyList())
+    private val exerciseSets = MutableStateFlow<List<WorkoutSet>>(emptyList())
+    private var nextId = 1L
+
+    /** Session-IDs, deren Session beendet ist (real: `endTime IS NOT NULL`). */
+    private val completedSessionIds = mutableSetOf<Long>()
+
+    val updatedRecords = mutableListOf<Triple<Long, RecordType, Double>>()
+
+    fun addRecord(record: PersonalRecord) {
+        records.value = records.value + record
+    }
+
+    fun addExerciseSet(set: WorkoutSet) {
+        exerciseSets.value = exerciseSets.value + set
+    }
+
+    /** Markiert die Session als beendet, damit ihre Sets in [getWorkSetsCompletedSince] zaehlen. */
+    fun markSessionCompleted(sessionId: Long) {
+        completedSessionIds += sessionId
+    }
+
+    override suspend fun checkAndUpdateRecord(exerciseId: Long, type: RecordType, value: Double): Boolean {
+        updatedRecords.add(Triple(exerciseId, type, value))
+        val existing = records.value.find { it.exerciseId == exerciseId && it.type == type }
+        if (existing == null || value > existing.value) {
+            val newRecord = PersonalRecord(
+                id = nextId++,
+                exerciseId = exerciseId,
+                type = type,
+                value = value,
+                achievedAt = LocalDateTime.now()
+            )
+            records.value = records.value.filter { !(it.exerciseId == exerciseId && it.type == type) } + newRecord
+            return true
+        }
+        return false
+    }
+
+    override fun getRecordsForExercise(exerciseId: Long): Flow<List<PersonalRecord>> =
+        records.map { list -> list.filter { it.exerciseId == exerciseId } }
+
+    override suspend fun getRecordsForExercisesList(exerciseIds: List<Long>): List<PersonalRecord> {
+        val idSet = exerciseIds.toSet()
+        return records.value.filter { it.exerciseId in idSet }.sortedByDescending { it.achievedAt }
+    }
+
+    override fun getRecentRecords(limit: Int): Flow<List<PersonalRecord>> =
+        records.map { list -> list.sortedByDescending { it.achievedAt }.take(limit) }
+
+    override suspend fun getRecentRecordsList(limit: Int): List<PersonalRecord> =
+        records.value.sortedByDescending { it.achievedAt }.take(limit)
+
+    override fun getSetsForExercise(exerciseId: Long): Flow<List<WorkoutSet>> =
+        exerciseSets.map { list -> list.filter { it.exerciseId == exerciseId } }
+
+    override fun observeExerciseTrainingSummaries(): Flow<List<com.thrym.app.domain.model.ExerciseTrainingSummary>> =
+        exerciseSets.map { list ->
+            list.filter { it.setType != com.thrym.app.domain.model.SetType.WARMUP && it.reps > 0 }
+                .groupBy { it.exerciseId }
+                .map { (exerciseId, sets) ->
+                    com.thrym.app.domain.model.ExerciseTrainingSummary(
+                        exerciseId = exerciseId,
+                        sessionCount = sets.map { it.sessionId }.distinct().size,
+                        lastCompletedAt = sets.maxOf { it.completedAt }
+                    )
+                }
+        }
+
+    override suspend fun getSetsForExerciseList(exerciseId: Long): List<WorkoutSet> =
+        exerciseSets.value.filter { it.exerciseId == exerciseId }
+
+    override suspend fun getCompletedSetsForExerciseList(
+        exerciseId: Long,
+        nowEpochMillis: Long
+    ): List<WorkoutSet> = exerciseSets.value.filter { set ->
+        set.exerciseId == exerciseId &&
+            set.sessionId in completedSessionIds &&
+            EpochConverter.toLong(set.completedAt) <= nowEpochMillis
+    }
+
+    override suspend fun getMaxWeightForExercise(exerciseId: Long): Double? =
+        exerciseSets.value.filter { it.exerciseId == exerciseId }.maxByOrNull { it.weightKg }?.weightKg
+
+    override suspend fun getMaxRepsForExercise(exerciseId: Long): Int? =
+        exerciseSets.value.filter { it.exerciseId == exerciseId }.maxByOrNull { it.reps }?.reps
+
+    override suspend fun getWorkSetsCompletedSince(sinceEpochMillis: Long): List<WorkoutSet> =
+        exerciseSets.value.filter { set ->
+            set.sessionId in completedSessionIds &&
+                !set.isWarmup &&
+                EpochConverter.toLong(set.completedAt) >= sinceEpochMillis
+        }
+
+    override suspend fun getWorkSetsCompletedBetween(
+        sinceEpochMillis: Long,
+        untilEpochMillis: Long
+    ): List<WorkoutSet> = getWorkSetsCompletedSince(sinceEpochMillis).filter { set ->
+        EpochConverter.toLong(set.completedAt) <= untilEpochMillis
+    }
+}

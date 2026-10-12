@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_audit_plan_target_with_weight">Plan-Ziel: %1$d × %2$d @ %3$s</string>
+    <string name="workout_audit_plan_target_no_weight">Plan-Ziel: %1$d × %2$d</string>
+    <string name="workout_audit_previous_session_title">Vorherige Einheit (%1$s)</string>
+    <string name="workout_audit_coach_suggestion">Coach-Vorschlag: %1$s</string>
+    <string name="workout_audit_apply_coach_weight">Übernehmen</string>
+    <string name="workout_audit_warmup_set">⚡ Aufwärmsatz %1$d</string>
+    <string name="workout_audit_drop_set">⚡ Drop-Set %1$d</string>
+    <string name="workout_audit_failure_set">⚡ Fehlversuch %1$d</string>
+    <string name="workout_glass_weight">Gewicht</string>
+    <string name="workout_glass_reps">Wiederholungen</string>
+    <string name="workout_glass_weight_decrease">Gewicht um %1$s %2$s verringern</string>
+    <string name="workout_glass_weight_increase">Gewicht um %1$s %2$s erhöhen</string>
+    <string name="workout_glass_reps_decrease">Wiederholungen verringern</string>
+    <string name="workout_glass_reps_increase">Wiederholungen erhöhen</string>
+    <string name="workout_glass_intensity_label">Anstrengung · %1$s</string>
+    <string name="workout_glass_exercise_position">%1$s · Übung %2$d von %3$d</string>
+    <string name="workout_glass_rail_done">erledigt</string>
+    <string name="workout_glass_rail_current">aktuell</string>
+    <string name="workout_glass_pause">Pause</string>
+    <string name="workout_glass_pause_open">Pause öffnen</string>
+    <string name="workout_glass_pause_close">Zum Training</string>
+    <string name="workout_glass_pause_minus_cd">Pause um 15 Sekunden verkürzen</string>
+    <string name="workout_glass_pause_plus_cd">Pause um 30 Sekunden verlängern</string>
+    <string name="workout_glass_pause_next">Als Nächstes</string>
+    <string name="workout_glass_pause_next_set">%1$s · Satz %2$d</string>
+    <string name="workout_glass_pause_of_total">von %1$s</string>
+    <string name="workout_glass_pause_skip">Pause überspringen</string>
+    <string name="workout_glass_pause_skip_short">Überspringen</string>
+    <string name="workout_glass_pause_remaining_cd">Noch %1$s %2$s Pause</string>
+    <string name="workout_glass_done_headline">Geschafft.</string>
+    <string name="workout_glass_exercises_label">Übungen</string>
+    <plurals name="workout_glass_exercise_unit">
+        <item quantity="one">Übung</item>
+        <item quantity="other">Übungen</item>
+    </plurals>
+    <plurals name="workout_glass_new_records">
+        <item quantity="one">Neuer Rekord</item>
+        <item quantity="other">Neue Rekorde</item>
+    </plurals>
+    <string name="workout_glass_rail_upcoming">Als Nächstes</string>
+    <string name="workout_picker_selected_count">%1$d ausgewählt</string>
+    <string name="workout_picker_clear_selection">Auswahl leeren</string>
+    <string name="workout_reps_short">Wdh.</string>
+    <string name="workout_set_save_failed">Satz konnte nicht gespeichert werden: %1$s</string>
+    <string name="workout_set_delete_failed">Satz konnte nicht gelöscht werden: %1$s</string>
+    <string name="workout_set_restore_failed">Satz konnte nicht wiederhergestellt werden: %1$s</string>
+    <string name="workout_set_update_failed">Satz konnte nicht aktualisiert werden: %1$s</string>
+    <string name="workout_finish_failed">Training konnte nicht beendet werden: %1$s</string>
+    <string name="workout_intensity_invalid">Ungültiger %1$s-Wert</string>
+    <string name="workout_reps_invalid">Wiederholungen müssen größer als 0 sein</string>
+    <string name="workout_weight_invalid">Gewicht muss endlich und nicht negativ sein</string>
+    <string name="workout_picker_load_failed">Übungen konnten nicht geladen werden: %1$s</string>
+    <string name="workout_picker_unknown_error">Unbekannter Fehler</string>
+    <string name="workout_picker_create_failed">Übung konnte nicht erstellt werden</string>
+    <string name="workout_set_badge_warmup">W%1$d</string>
+    <string name="workout_set_badge_drop_set">D%1$d</string>
+    <string name="workout_set_badge_failure">F%1$d</string>
+    <string name="workout_set_badge_backoff">B%1$d</string>
+    <plurals name="workout_glass_pause_minutes">
+        <item quantity="one">%1$d Minute</item>
+        <item quantity="other">%1$d Minuten</item>
+    </plurals>
+    <plurals name="workout_glass_pause_seconds">
+        <item quantity="one">%1$d Sekunde</item>
+        <item quantity="other">%1$d Sekunden</item>
+    </plurals>
+    <plurals name="workout_picker_add_selected">
+        <item quantity="one">%1$d Übung hinzufügen</item>
+        <item quantity="other">%1$d Übungen hinzufügen</item>
+    </plurals>
+</resources>

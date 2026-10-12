@@ -4,7 +4,7 @@
 }
 
 android {
-    namespace = "com.ironlog.feature.workout"
+    namespace = "com.thrym.feature.workout"
     compileSdk = 36
 
     defaultConfig {

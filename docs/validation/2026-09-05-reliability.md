@@ -50,7 +50,7 @@ Die app-Testauswahl war auf folgende Klassen beschränkt: `ProgressionReviewView
 - APK-SHA-256: `60da4ccb7cbcd66d11bd44ba2308913fd5a6955c67d942777e93f4fa0f95ac0a`
 - Der zugehörige frühere Quellstand ist in `2026-09-05-candidate.sha256` dokumentiert; die anschließende Wochenübersicht verändert diesen Stand. Für einen Abgleich mit dem früheren Stand: `shasum -a 256 -c docs/validation/2026-09-05-candidate.sha256`.
 - Die JUnit-Ergebnisse liegen in den jeweiligen `build/test-results/`-Verzeichnissen, die lesbaren Berichte in `build/reports/tests/`.
-- Laufprotokolle: `/var/folders/w3/q2fjx2kd6jvgc8m0_ycv4wzm0000gn/T/ironlog-validation-gm6oqq7e/`.
+- Laufprotokolle: `$TMPDIR/ironlog-validation-gm6oqq7e/`.
 
 ## Noch nicht nachgewiesen
 

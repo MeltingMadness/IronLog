@@ -1,6 +1,8 @@
 # Architektur
 
-MVVM mit Clean-Architecture-Schichten, aufgeteilt in Gradle-Module. Die Pakete heißen durchgehend `com.ironlog.app.*`, auch wenn die Module anders aufgeteilt sind.
+Thrym hat zwei gleichberechtigte native Clients: **Android** (Kotlin, Jetpack Compose, dieses Gradle-Projekt, `applicationId` `com.thrym.app`) und **iOS** (SwiftUI in `iosApp/`, Bundle-ID `com.thrym.ios`). Beide nutzen den gemeinsamen Kotlin-Multiplatform-Kern `:shared` für Regeln, Backup-Format und Auswertungen. Die Datenhaltung ist plattformspezifisch: Room auf Android, eine JSON-Datei auf iOS.
+
+Android folgt MVVM mit Clean-Architecture-Schichten, aufgeteilt in Gradle-Module. Die Kotlin-Pakete heißen in allen Android-Modulen `com.thrym.app.*`, auch wenn die Module anders aufgeteilt sind. Die Gradle-Namespaces (und damit die `R`-Klassen) folgen dagegen dem Modul: `com.thrym.app` für `app`, `com.thrym.core.<modul>`, `com.thrym.data` und `com.thrym.feature.<modul>`. Der KMP-Kern liegt in `com.thrym.shared.*`.
 
 ## Module
 
@@ -8,10 +10,11 @@ MVVM mit Clean-Architecture-Schichten, aufgeteilt in Gradle-Module. Die Pakete h
 app/                    Einstieg: MainActivity, Koin-DI (di/AppModule.kt), Navigation, Bottom-Nav
 core/
   model/                Domain-Modelle (domain.model) und Repository-Interfaces (domain.repository)
-  common/               Reine Logik ohne Android: Formatierung, AppLogger, Progressions-Engine,
-                        Deload-Erkennung, Scheibenrechner, Muskelvolumen
+  common/               Logik ohne UI: Formatierung, AppLogger (einzige Android-API: android.util.Log),
+                        Progressions-Engine, Deload-Erkennung, Scheibenrechner, Muskelvolumen
   database/             Room: Entities, DAOs, Migrationen, exportierte Schemas (core/database/schemas/)
-  designsystem/         Theme, Design-Tokens, gemeinsame Compose-Komponenten, strings.xml, Fonts
+  designsystem/         Theme, Design-Tokens, gemeinsame Compose-Komponenten, gemeinsame UI-Texte
+                        (values/ Englisch, values-de/ Deutsch), Fonts
 data/                   Repository-Implementierungen, DataStore-Einstellungen, Backup,
                         Erinnerungen (WorkManager), Incident-Reports
 feature/
@@ -25,7 +28,7 @@ feature/
   statistics/           Statistik pro Übung
   settings/             Einstellungen, Backup, Incident-Report
 shared/                 Kotlin Multiplatform (Android + iOS), siehe unten
-iosApp/                 Native SwiftUI-App, siehe iosApp/README.md
+iosApp/                 Native SwiftUI-App (ThrymIOS), Projekt per generate_project.py, siehe iosApp/README.md
 ```
 
 **Abhängigkeitsrichtung:** `feature/*` → `core/*`. `data` implementiert die Interfaces aus `core:model`. Nur `app` kennt alle Module und verdrahtet sie über Koin.
@@ -34,7 +37,7 @@ iosApp/                 Native SwiftUI-App, siehe iosApp/README.md
 
 ## Datenbank (Room, Version 15)
 
-Das exportierte Schema liegt in `core/database/schemas/com.ironlog.app.data.local.IronLogDatabase/15.json`. Es gibt durchgehende Migrationen von 1 bis 15. Migration 14→15 ergänzt die Erfolgsbestätigung und stellt aktive Planregeln auf Revision 2 um; historische Snapshots behalten ihre Revision. Tests dazu: `app/src/androidTest/.../IronLogDatabaseMigrationTest.kt`.
+Die Datenbankklasse ist `ThrymDatabase` (`core/database`), die Datei heißt `thrym.db`. Das exportierte Schema liegt in `core/database/schemas/com.thrym.app.data.local.ThrymDatabase/15.json`. Es gibt durchgehende Migrationen von 1 bis 15. Migration 14→15 ergänzt die Erfolgsbestätigung und stellt aktive Planregeln auf Revision 2 um; historische Snapshots behalten ihre Revision. Tests dazu: `app/src/androidTest/.../ThrymDatabaseMigrationTest.kt`.
 
 | Tabelle | Zweck | Wichtige Beziehungen |
 |---|---|---|
@@ -62,10 +65,12 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Backup
 
-- Format: JSON, `BackupPayloadV1` mit `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.ironlog.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
+- Format: JSON, `BackupPayloadV1` mit `formatVersion = 1` und `schemaVersion = 15` (`CURRENT_BACKUP_SCHEMA_VERSION`). Es enthält auch die Readiness-Daten, Satzvorgaben, Erfolgsbestätigung und den Satztyp `BACKOFF`. Modelle und Validator liegen in `:shared` (`com.thrym.shared.backup`). `data` nutzt sie über Typaliase. Beim Import werden nur aktive Plan-Konfigurationen auf die aktuelle Regelrevision umgestellt; historische Quellen bleiben erhalten.
+- Android und iOS verwenden dasselbe Format aus `:shared`. Ein Backup ist sprachunabhängig, weil gespeicherte Werte keine übersetzten Texte enthalten (siehe Lokalisierung): Ein Export aus der deutschen Oberfläche importiert in die englische und umgekehrt.
 - Ältere Backups ohne neuere Felder (Meta-Plan-Skips, Progression, Readiness, Satzvorgaben) lassen sich weiter importieren. Backups aus einer neueren App-Version werden mit einer klaren Meldung abgelehnt. Fehlende Felder bekommen sichere Standardwerte.
+- **Umzug von IronLog:** Thrym ist wegen der neuen IDs eine neue App mit leerer Sandbox und sieht die IronLog-Daten nicht. Der Weg ist „Backup exportieren“ in den Einstellungen von IronLog und „Backup importieren“ in den Einstellungen von Thrym. Der Import ersetzt alle Trainingsdaten in Thrym. IronLog-Backups (`formatVersion` 1, jede `schemaVersion` bis 15) importieren auf beiden Plattformen. Diese Kompatibilität ist eine feste Zusage und braucht Tests, wenn sich das Format ändert. Abgesichert wird sie durch eingefrorene Golden-Backups von IronLog (Android 1.4.0 und iOS, Schema 15) in `IronLogBackupFixtures` (`:shared`, commonTest) und `data/src/test/resources/backup-fixtures/`, die beide `IronLogBackupFixtureImportTest` importieren. Die Fixtures sind per SHA-256 festgenagelt und werden nie geändert; schlägt ein solcher Test fehl, wird der Import-Code korrigiert.
 - Vor jedem Import und jeder Wiederherstellung legt die App ein **internes Sicherheitsbackup** an und prüft es per SHA-256 (`FileRecoveryBackupStore`).
-- Einstellungen und Erinnerungen sind **nicht** Teil des Backups.
+- Einstellungen (Einheiten, Design, Pausen-Timer, Scheiben …) und Erinnerungen sind **nicht** Teil des Backups. Nach einem Umzug müssen sie neu gesetzt werden.
 
 ## Einstellungen
 
@@ -73,8 +78,21 @@ Gewichte werden immer in **kg** gespeichert. Die Umrechnung nach lb passiert nur
 
 ## Kotlin Multiplatform (`:shared`)
 
-Enthält den plattformneutralen Kern (`com.ironlog.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
+Enthält den plattformneutralen Kern (`com.thrym.shared.*`): Transportmodelle, Backup-Format und -Validator, Progressionsregeln, Satzvorgaben (`plans`), Scheibenrechner (`plates`), Deload- und Auswertungslogik (`deload`, `analytics`), Trainingsbereitschaft (`readiness`), Tagesform/Satzintention (`readinessdata`), einen kanonischen Trainingsgraphen samt Store (`store`), Next-Set-Hinweise (`workout`) sowie Controller für Dashboard, Workout, Verlauf, Pläne, Statistik und Einstellungen.
 
-Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App speichert den Trainingsgraphen aus `store` als JSON-Datei und greift über `IosTrainingFeature` und `IosSettingsFeature` auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md).
+Android nutzt daraus vor allem Backup-Format und Validator, Readiness, Progression (über `PortableProgressionAdapter`), Satzvorgaben, Scheibenrechner und die Einstellungs-Controller. Die Android-Datenhaltung bleibt Room. Die iOS-App bindet `:shared` als statisches Framework `Shared` ein, speichert den Trainingsgraphen aus `store` als JSON-Datei unter `Application Support/Thrym/training-state.json` und greift über `IosTrainingFeature` und `IosSettingsFeature` (`shared/src/iosMain`) auf den Kern zu, siehe [`ios-feature-parity.md`](ios-feature-parity.md). Einstellungen liegen auf iOS in `UserDefaults`.
 
-Die Tests von `:shared` laufen über `./gradlew :shared:testAndroidHostTest`, **nicht** über `./gradlew test`.
+`:shared` liefert überwiegend Werte und Codes (z. B. Reason-Codes der Progression und Bereitschaft), die die Plattformen in ihre lokalisierten Texte übersetzen. Ausnahme: Einige Fehlermeldungen aus `SharedStateStore` und den iOS-Brücken (`IosTrainingFeature`, `IosSettingsFeature`) sind feste deutsche Texte. iOS übersetzt sie über `ilSharedMessage` (`iosApp/ThrymIOS/SharedBootstrap.swift`), das den deutschen Text als Schlüssel im String-Katalog nachschlägt (Einträge mit `extractionState` `manual`). Wer eine solche Meldung ändert, zieht den Katalogeintrag im selben PR mit, sonst erscheint sie in der englischen Oberfläche auf Deutsch. Technische Meldungen des Backup-Validators und der Progressions-Lifecycle-Prüfung sind englisch und erscheinen, wenn sie die Oberfläche erreichen, unverändert.
+
+Die Tests von `:shared` laufen über `./gradlew :shared:testAndroidHostTest`, **nicht** über `./gradlew test`. Die iOS-CI führt zusätzlich die Golden-Fixture-Tests (`IronLogBackupFixtureImportTest`) unter Kotlin/Native aus (`./gradlew :shared:iosSimulatorArm64Test`), weil die iOS-App den Kern nativ ausführt.
+
+## Lokalisierung
+
+Die App gibt es auf **Englisch** (Standard und Fallback) und **Deutsch**. Sie folgt der Systemsprache; ab Android 13 lässt sich die Sprache auch pro App wählen (`localeConfig` mit `en` und `de`), auf iOS in den Systemeinstellungen der App.
+
+- **Android:** Jedes Modul mit UI-Texten hat `res/values/` (Englisch) und `res/values-de/` (Deutsch) mit denselben Schlüsseln. Gemeinsame Texte und Plurale liegen in `core:designsystem`, featurespezifische im Feature-Modul. Sprachneutrale Strings stehen nur in `values/` mit `translatable="false"`. ViewModels arbeiten mit Ressourcen-IDs oder lösen sie über `UiStrings` auf. Lint (`MissingTranslation`) und `.github/scripts/check-translations.py` sichern ab, dass beide Sprachen vollständig sind und die Platzhalter übereinstimmen.
+- **iOS:** Zwei String-Kataloge: `iosApp/ThrymIOS/Localizable.xcstrings` für UI-Texte und `iosApp/ThrymIOS/Exercises.xcstrings` für die Namen der eingebauten Übungen. Schlüssel ist der deutsche Text (`sourceLanguage` `de`), jeder Eintrag hat eine `en`- und eine `de`-Lokalisierung, Mengen als Plural-Varianten. Die `developmentRegion` des Projekts ist `en`, damit Englisch der Fallback für andere Systemsprachen ist. Auch hier prüft `check-translations.py` Vollständigkeit und Platzhalter, allerdings nur für Schlüssel, die schon im Katalog stehen. Das generierte Projekt extrahiert keine Strings; neue Texte werden von Hand in den Katalog eingetragen (siehe [`iosApp/README.md`](../iosApp/README.md#lokalisierung)).
+- **Gespeicherte Werte sind sprachneutral.** Enum-Konstanten wie `BRUST`, `RUECKEN`, `LANGHANTEL`, `WARMUP` oder `PLANNED_FAILURE` sind Speicherschlüssel in Room, im iOS-Store und im Backup. Übersetzt wird nur ihre Anzeige.
+- **Eingebaute Übungen** werden unter ihrem deutschen kanonischen Namen gespeichert (Android-Seed `ExerciseSeedData.kt` in `core/database`, iOS-Katalog `DefaultExerciseCatalog` in `:shared`). Beide Plattformen übersetzen diese Namen nur für die Anzeige: Android über `BuiltInExerciseNames` (`core:designsystem`) mit `values/` und `values-de/exercise_names.xml`, iOS über `ilExerciseDisplayName` mit `Exercises.xcstrings`. Eigene Übungen erscheinen so, wie sie eingegeben wurden. Android lehnt eigene Übungen ab, deren Name dem einer eingebauten Übung in irgendeiner App-Sprache entspricht. So wird ein eigenes „Deadlift“ auch in der deutschen Oberfläche abgelehnt und steht nach einem Wechsel auf Englisch nicht doppelt in der Liste.
+- **Formatierung:** Zahlen und die Reihenfolge in Datumsangaben folgen der Geräteregion („82,5 kg“ auf Deutsch, „82.5 kg“ auf Englisch), Monats- und Wochentagsnamen der Sprache, in der die App tatsächlich angezeigt wird. Auf einem Gerät mit einer nicht unterstützten Sprache (etwa fr-FR) erscheinen Texte und Datumsnamen also einheitlich auf Englisch. Android bildet dafür aus der aufgelösten Ressourcensprache (`ui_language_tag`) und der Geräteregion ein eigenes Locale (`currentLocale()`, `Resources.uiLocale()` in `core:designsystem`). Vorbelegte Eingabefelder nutzen immer ASCII-Ziffern ohne Tausendertrennzeichen; nur das Dezimalzeichen (Komma oder Punkt) folgt der Sprache, wie auf iOS. Die Parser akzeptieren beide Dezimalzeichen und auch Ziffern anderer Schriften. Gewichte bleiben in kg gespeichert; lb ist nur Anzeige.
+- **Sprachwechsel zur Laufzeit:** Android-ViewModels überleben einen Sprachwechsel. Sie halten deshalb sprachneutrale Daten (Übungen, Datumswerte) im UI-State, und erst die Composables lösen Namen und Datumstexte auf.

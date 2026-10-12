@@ -1,0 +1,768 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0016736D196136E226498141 /* SharedBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24DB90074138FA27D7D5E065 /* SharedBootstrap.swift */; };
+		0453D846071EF7D5BBCD4FDB /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CDDDCC6B306D44725E8C3B /* TrainingData.swift */; };
+		07184457FB3C1EF0382A27E3 /* IOSPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682F3457BF29CA2C89A58865 /* IOSPlanEditorScreen.swift */; };
+		075E6E29C4A2C1C053D10CDF /* Geist-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */; };
+		0C8A93AF24DBC77CF800B81F /* IOSExerciseLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */; };
+		0CBA1C2ABF0D7495C137673E /* ThrymFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C24432BBA49DFDD9176238 /* ThrymFont.swift */; };
+		1079DDCBF80F6035B1474524 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6615F1684CAAE08BA07D3060 /* ShareSheet.swift */; };
+		11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */; };
+		12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */; };
+		152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */; };
+		15940760C4BFBEF6E77765E1 /* IOSWorkoutRestTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */; };
+		192B8743C56BB3F4B847BD6F /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C017FD1A064E1D9A97999E /* SettingsScreen.swift */; };
+		1E15ED726D1A240A56C091D6 /* ThrymApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06C029EB28B9B8DFA8EB257 /* ThrymApp.swift */; };
+		2732DB878A34ED8E29A19355 /* IOSProgressionReviewScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */; };
+		2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */; };
+		2890A5F4C453F4E9CD5A1ECF /* IOSWorkoutSetEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */; };
+		2D11D82A07934287F0C6D91D /* ThrymTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE26BB69E200C0434567A41 /* ThrymTheme.swift */; };
+		2DADCA32056FC9E39A81773B /* ExerciseDisplayName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */; };
+		336D8F7D69FEA96F40791BB2 /* WorkoutRestTimerPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB67C04D1909008666D4B2AB /* WorkoutRestTimerPersistenceTests.swift */; };
+		3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */; };
+		3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */; };
+		38B663E7B1FC0688050F5167 /* Geist-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B62C98E75DEF5F8EBE10F5FE /* Geist-Medium.ttf */; };
+		3A17CDA0D882CA60C7918F94 /* IOSWorkoutNextSetCoach.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */; };
+		3B24B3818F5BC61A3108FC8F /* IOSWeeklyVolumeTrendCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FDBD88DA2914E215D9D54D /* IOSWeeklyVolumeTrendCard.swift */; };
+		3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */; };
+		44060FDDCFA0710F19A60307 /* IOSPlansScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07378224E535901D2D24DF77 /* IOSPlansScreen.swift */; };
+		45E45BC954D143A102E6FFC3 /* IOSExerciseStatisticsGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED45311162B482FCA8B63D5 /* IOSExerciseStatisticsGlass.swift */; };
+		467E9088798B4F91B92BC2FB /* IOSWorkoutCompletionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D62D6C79390AED96C5CE64DD /* IOSWorkoutCompletionScreen.swift */; };
+		468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */; };
+		4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */; };
+		4EDC10180EC500E2E49FA0B7 /* IOSWorkoutExercisePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */; };
+		5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */; };
+		5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */; };
+		5B4063CD77FDFA3C1B8FC30D /* AnalyticsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */; };
+		5E22350D24D617FBD09D1618 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B88909E7F012EDD309E39DEE /* Assets.xcassets */; };
+		5EC635BE001AEBD56C864D1C /* ThrymCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2359EA6854A042AFE4135A8C /* ThrymCard.swift */; };
+		626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */; };
+		681D867FEABAF5CD430DAFC0 /* IOSDashboardGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */; };
+		69E5BA086F1027852CE94E3A /* IOSMetaPlanEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFBCEB9E5A7EB3D48561850 /* IOSMetaPlanEditorScreen.swift */; };
+		6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */; };
+		6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */; };
+		7022F82939E5099EE7259E8D /* IOSDashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03AD6F3E304A10130A9DF070 /* IOSDashboardScreen.swift */; };
+		746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */; };
+		83EFD6FCDC75BAB5C3B7CA58 /* IOSWorkoutSuperset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */; };
+		8436ECBCD7C2E0A7E34D37A9 /* IOSHistoryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */; };
+		84AAFA20CF75D4386C505FCB /* ThrymLiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */; };
+		8C79BC323D0EC1F76130807E /* Geist-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5520C40CCE8B86DFAAFF21F1 /* Geist-SemiBold.ttf */; };
+		9060EB2531467B89CBFEF653 /* BackupBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7838DB869BCC15E07679638E /* BackupBridgeTests.swift */; };
+		916C6AF65FBA8D8B3C3542FD /* IOSHistoryGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6028857DD325A7F9A1D2D06A /* IOSHistoryGlass.swift */; };
+		92E9FE3DD067EC95BA7C405B /* Geist-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EB7BB1CE6F7B229C510E6660 /* Geist-Italic.ttf */; };
+		9861FB6BB1B5A5F51A866C2A /* IOSTrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */; };
+		9C0741F51BC07A9038086982 /* IOSWorkoutScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DDEE657B9E610EEE48DAF5D /* IOSWorkoutScreen.swift */; };
+		9DBA38D1A2E509EEEC35DB4D /* IOSWorkoutStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4B30723AC61668DC29AC4E /* IOSWorkoutStartView.swift */; };
+		A34F1E6FCF6645B47823A4BD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B637839ED260DCCEDE13908 /* RootView.swift */; };
+		A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */; };
+		A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */; };
+		B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD65B83BB36D7689497F892 /* Readiness.swift */; };
+		B64146B4A52DDB3852663236 /* BinaryFileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */; };
+		BA3968065D314047D901169A /* IOSSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */; };
+		C0F5FED8DF09955F7A93E1A3 /* Geist-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8D66E0D6C780D99643A8D982 /* Geist-ExtraBold.ttf */; };
+		C80BB50656822CDF39C46418 /* ThrymMetricRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543F401A78D5C96A1EF9C75C /* ThrymMetricRing.swift */; };
+		C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 22EB9C83245895F54F157452 /* Geist-Regular.ttf */; };
+		C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */; };
+		CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */; };
+		D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */; };
+		D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */; };
+		D3A7429B86011C2F10380902 /* Geist-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CF45EE706088987B53B2E57 /* Geist-Black.ttf */; };
+		D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 175CDFFC00E37243DD0A1389 /* Shared.framework */; };
+		D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */; };
+		D883EE647FD2F508F84819DA /* BinaryFileDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */; };
+		DC4B7B772C7F3455EECB3D76 /* IOSWorkoutGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDB3991D700CD049F4D8846D /* IOSWorkoutGlass.swift */; };
+		DC65B269DAAA2935FEFF4176 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BEAF0C9E625D22A7D60C9E94 /* PrivacyInfo.xcprivacy */; };
+		E300F0BA46649AAA60F2A89E /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9231513E81873F9615996177 /* Localizable.xcstrings */; };
+		E5A32B9C378F9CC98AC91681 /* IOSDashboardDeloadCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */; };
+		EFEFDF4CFC853E1764F495EE /* ThrymIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */; };
+		FF1583353E5BDF9F05CB3ECC /* IOSPlansSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9702350B52121CFE4C708940 /* IOSPlansSupport.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWeekTests.swift; sourceTree = "<group>"; };
+		0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymWeeklyMuscleVolume.swift; sourceTree = "<group>"; };
+		02C24432BBA49DFDD9176238 /* ThrymFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymFont.swift; sourceTree = "<group>"; };
+		03AD6F3E304A10130A9DF070 /* IOSDashboardScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardScreen.swift; sourceTree = "<group>"; };
+		07378224E535901D2D24DF77 /* IOSPlansScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlansScreen.swift; sourceTree = "<group>"; };
+		07FDBD88DA2914E215D9D54D /* IOSWeeklyVolumeTrendCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWeeklyVolumeTrendCard.swift; sourceTree = "<group>"; };
+		08346D3592622BE21A3EB412 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutFormatting.swift; sourceTree = "<group>"; };
+		0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardDeloadCard.swift; sourceTree = "<group>"; };
+		0AD65B83BB36D7689497F892 /* Readiness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Readiness.swift; sourceTree = "<group>"; };
+		0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayName.swift; sourceTree = "<group>"; };
+		0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Bold.ttf; sourceTree = "<group>"; };
+		10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringCatalogTests.swift; sourceTree = "<group>"; };
+		128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryBridgeTests.swift; sourceTree = "<group>"; };
+		175CDFFC00E37243DD0A1389 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework"; sourceTree = SOURCE_ROOT; };
+		18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionDraftTests.swift; sourceTree = "<group>"; };
+		1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSSettingsViewModel.swift; sourceTree = "<group>"; };
+		22EB9C83245895F54F157452 /* Geist-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Regular.ttf; sourceTree = "<group>"; };
+		2359EA6854A042AFE4135A8C /* ThrymCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymCard.swift; sourceTree = "<group>"; };
+		24DB90074138FA27D7D5E065 /* SharedBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedBootstrap.swift; sourceTree = "<group>"; };
+		29CDDDCC6B306D44725E8C3B /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
+		2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryScreen.swift; sourceTree = "<group>"; };
+		2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsPresentation.swift; sourceTree = "<group>"; };
+		2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocumentTests.swift; sourceTree = "<group>"; };
+		30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutNextSetCoach.swift; sourceTree = "<group>"; };
+		312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
+		33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExercisePicker.swift; sourceTree = "<group>"; };
+		37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberInputFormatTests.swift; sourceTree = "<group>"; };
+		3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAnalytics.swift; sourceTree = "<group>"; };
+		404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSProgressionReviewScreen.swift; sourceTree = "<group>"; };
+		4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndividualSetTargetsTests.swift; sourceTree = "<group>"; };
+		4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSTrainingStore.swift; sourceTree = "<group>"; };
+		543F401A78D5C96A1EF9C75C /* ThrymMetricRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymMetricRing.swift; sourceTree = "<group>"; };
+		5520C40CCE8B86DFAAFF21F1 /* Geist-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-SemiBold.ttf; sourceTree = "<group>"; };
+		5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDayGuardTests.swift; sourceTree = "<group>"; };
+		5A4B30723AC61668DC29AC4E /* IOSWorkoutStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutStartView.swift; sourceTree = "<group>"; };
+		5CFBCEB9E5A7EB3D48561850 /* IOSMetaPlanEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSMetaPlanEditorScreen.swift; sourceTree = "<group>"; };
+		5ED45311162B482FCA8B63D5 /* IOSExerciseStatisticsGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseStatisticsGlass.swift; sourceTree = "<group>"; };
+		6028857DD325A7F9A1D2D06A /* IOSHistoryGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistoryGlass.swift; sourceTree = "<group>"; };
+		61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutRestTimer.swift; sourceTree = "<group>"; };
+		6615F1684CAAE08BA07D3060 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
+		682F3457BF29CA2C89A58865 /* IOSPlanEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlanEditorScreen.swift; sourceTree = "<group>"; };
+		6DDEE657B9E610EEE48DAF5D /* IOSWorkoutScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutScreen.swift; sourceTree = "<group>"; };
+		776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSuperset.swift; sourceTree = "<group>"; };
+		7838DB869BCC15E07679638E /* BackupBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupBridgeTests.swift; sourceTree = "<group>"; };
+		7CF45EE706088987B53B2E57 /* Geist-Black.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Black.ttf; sourceTree = "<group>"; };
+		7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Exercises.xcstrings; sourceTree = "<group>"; };
+		89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymLiquidGlass.swift; sourceTree = "<group>"; };
+		8B637839ED260DCCEDE13908 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		8D66E0D6C780D99643A8D982 /* Geist-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-ExtraBold.ttf; sourceTree = "<group>"; };
+		8EE26BB69E200C0434567A41 /* ThrymTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymTheme.swift; sourceTree = "<group>"; };
+		90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeloadModeTests.swift; sourceTree = "<group>"; };
+		9231513E81873F9615996177 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		9702350B52121CFE4C708940 /* IOSPlansSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSPlansSupport.swift; sourceTree = "<group>"; };
+		981B902E6F31E92A33ED6664 /* ThrymIOSTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; name = ThrymIOSTests.xctest; path = ThrymIOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSHistorySupport.swift; sourceTree = "<group>"; };
+		ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutPlateVisualizer.swift; sourceTree = "<group>"; };
+		B06C029EB28B9B8DFA8EB257 /* ThrymApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymApp.swift; sourceTree = "<group>"; };
+		B62C98E75DEF5F8EBE10F5FE /* Geist-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Medium.ttf; sourceTree = "<group>"; };
+		B88909E7F012EDD309E39DEE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseStatisticsScreen.swift; sourceTree = "<group>"; };
+		BDB3991D700CD049F4D8846D /* IOSWorkoutGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutGlass.swift; sourceTree = "<group>"; };
+		BEAF0C9E625D22A7D60C9E94 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeContrastTests.swift; sourceTree = "<group>"; };
+		C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSStatisticsScreen.swift; sourceTree = "<group>"; };
+		C7C017FD1A064E1D9A97999E /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
+		C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrymIOSTests.swift; sourceTree = "<group>"; };
+		CB67C04D1909008666D4B2AB /* WorkoutRestTimerPersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRestTimerPersistenceTests.swift; sourceTree = "<group>"; };
+		CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSDashboardGlass.swift; sourceTree = "<group>"; };
+		D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryFileDocument.swift; sourceTree = "<group>"; };
+		D62D6C79390AED96C5CE64DD /* IOSWorkoutCompletionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutCompletionScreen.swift; sourceTree = "<group>"; };
+		D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardWeekStripTests.swift; sourceTree = "<group>"; };
+		DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerAdjustTests.swift; sourceTree = "<group>"; };
+		E005FFFFA9545DCDCCC7F06B /* ThrymIOS.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; name = ThrymIOS.app; path = ThrymIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutExerciseCard.swift; sourceTree = "<group>"; };
+		EB7BB1CE6F7B229C510E6660 /* Geist-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Geist-Italic.ttf; sourceTree = "<group>"; };
+		F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSWorkoutSetEditor.swift; sourceTree = "<group>"; };
+		F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDisplayNameTests.swift; sourceTree = "<group>"; };
+		FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSExerciseLibraryScreen.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		33D4DB7ABCB439682E66300C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4913305545D768607E0F4D6 /* Shared.framework in Frameworks */ ,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		86218FCF4B4153B0362BD560 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00C45FD35CB0F9C5F764F070 /* Products */ = {
+			isa = PBXGroup;
+		children = (
+			E005FFFFA9545DCDCCC7F06B /* ThrymIOS.app */,
+			981B902E6F31E92A33ED6664 /* ThrymIOSTests.xctest */,
+		);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1075C18AFB168B2DFAEC5C36 /* Plans */ = {
+			isa = PBXGroup;
+		children = (
+			FAC19442B449CDE29E649187 /* IOSExerciseLibraryScreen.swift */,
+			5CFBCEB9E5A7EB3D48561850 /* IOSMetaPlanEditorScreen.swift */,
+			682F3457BF29CA2C89A58865 /* IOSPlanEditorScreen.swift */,
+			07378224E535901D2D24DF77 /* IOSPlansScreen.swift */,
+			9702350B52121CFE4C708940 /* IOSPlansSupport.swift */,
+		);
+			path = Plans;
+			sourceTree = "<group>";
+		};
+		1995C461453B201C270667A5 /* Dashboard */ = {
+			isa = PBXGroup;
+		children = (
+			2CD69523523CDDA46DF2B17A /* AnalyticsPresentation.swift */,
+			0ABA7C6DB97959D825730545 /* IOSDashboardDeloadCard.swift */,
+			CE1A20B4255E767E6B53EDA5 /* IOSDashboardGlass.swift */,
+			03AD6F3E304A10130A9DF070 /* IOSDashboardScreen.swift */,
+			07FDBD88DA2914E215D9D54D /* IOSWeeklyVolumeTrendCard.swift */,
+		);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		2A36BABB35BEF916C5D233BF /* Fonts */ = {
+			isa = PBXGroup;
+		children = (
+			7CF45EE706088987B53B2E57 /* Geist-Black.ttf */,
+			0F5AED01379FA5A130354C58 /* Geist-Bold.ttf */,
+			8D66E0D6C780D99643A8D982 /* Geist-ExtraBold.ttf */,
+			EB7BB1CE6F7B229C510E6660 /* Geist-Italic.ttf */,
+			B62C98E75DEF5F8EBE10F5FE /* Geist-Medium.ttf */,
+			22EB9C83245895F54F157452 /* Geist-Regular.ttf */,
+			5520C40CCE8B86DFAAFF21F1 /* Geist-SemiBold.ttf */,
+		);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		44AB20737046B73011DC7B99 /* Statistics */ = {
+			isa = PBXGroup;
+		children = (
+			5ED45311162B482FCA8B63D5 /* IOSExerciseStatisticsGlass.swift */,
+			BD989975A164D1C326800EAE /* IOSExerciseStatisticsScreen.swift */,
+			C6C525C5F153A16EBC353C51 /* IOSStatisticsScreen.swift */,
+		);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		8D5F0626C79621FB86CACCE1 /* Progression */ = {
+			isa = PBXGroup;
+		children = (
+			404F7BB55717CDA68382429B /* IOSProgressionReviewScreen.swift */,
+		);
+			path = Progression;
+			sourceTree = "<group>";
+		};
+		A39F31827FA20B6CC5BA6ACB /* Design */ = {
+			isa = PBXGroup;
+		children = (
+			2A36BABB35BEF916C5D233BF /* Fonts */,
+			2359EA6854A042AFE4135A8C /* ThrymCard.swift */,
+			02C24432BBA49DFDD9176238 /* ThrymFont.swift */,
+			89590DC86A5380D96E31FBB3 /* ThrymLiquidGlass.swift */,
+			543F401A78D5C96A1EF9C75C /* ThrymMetricRing.swift */,
+			8EE26BB69E200C0434567A41 /* ThrymTheme.swift */,
+			0128D750AEA5D9C781C284DA /* ThrymWeeklyMuscleVolume.swift */,
+		);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		CF8D0BD4B75E8C2C174692A5 /* ThrymIOS */ = {
+			isa = PBXGroup;
+		children = (
+			B88909E7F012EDD309E39DEE /* Assets.xcassets */,
+			1995C461453B201C270667A5 /* Dashboard */,
+			A39F31827FA20B6CC5BA6ACB /* Design */,
+			E2102CCEDF04CE3AD3E8872E /* History */,
+			F6AA6DE13F902674E46301CA /* Models */,
+			1075C18AFB168B2DFAEC5C36 /* Plans */,
+			8D5F0626C79621FB86CACCE1 /* Progression */,
+			44AB20737046B73011DC7B99 /* Statistics */,
+			D25050EF8BFCD4C91FEE3984 /* Workout */,
+			D0C550CDDEA21B550C78312E /* BinaryFileDocument.swift */,
+			7DA5F4FB5C938AB9BA998184 /* Exercises.xcstrings */,
+			08346D3592622BE21A3EB412 /* Info.plist */,
+			1BA98C683E5E4AF013C34F55 /* IOSSettingsViewModel.swift */,
+			4E5787FDE5840DAA96D9C88B /* IOSTrainingStore.swift */,
+			9231513E81873F9615996177 /* Localizable.xcstrings */,
+			BEAF0C9E625D22A7D60C9E94 /* PrivacyInfo.xcprivacy */,
+			8B637839ED260DCCEDE13908 /* RootView.swift */,
+			C7C017FD1A064E1D9A97999E /* SettingsScreen.swift */,
+			24DB90074138FA27D7D5E065 /* SharedBootstrap.swift */,
+			6615F1684CAAE08BA07D3060 /* ShareSheet.swift */,
+			B06C029EB28B9B8DFA8EB257 /* ThrymApp.swift */,
+		);
+			path = ThrymIOS;
+			sourceTree = "<group>";
+		};
+		D25050EF8BFCD4C91FEE3984 /* Workout */ = {
+			isa = PBXGroup;
+		children = (
+			D62D6C79390AED96C5CE64DD /* IOSWorkoutCompletionScreen.swift */,
+			EB00E307D3548D90E540F3DF /* IOSWorkoutExerciseCard.swift */,
+			33F110EA869723823AF99EA9 /* IOSWorkoutExercisePicker.swift */,
+			08B61A56EC5B76B344A0B6AB /* IOSWorkoutFormatting.swift */,
+			BDB3991D700CD049F4D8846D /* IOSWorkoutGlass.swift */,
+			304F02263B0983D46806548F /* IOSWorkoutNextSetCoach.swift */,
+			ACBEFC0D1E525226E333CCE8 /* IOSWorkoutPlateVisualizer.swift */,
+			61E8938B6497E648E5132A9F /* IOSWorkoutRestTimer.swift */,
+			6DDEE657B9E610EEE48DAF5D /* IOSWorkoutScreen.swift */,
+			F8374BCAC5F0C3B2B08B511A /* IOSWorkoutSetEditor.swift */,
+			5A4B30723AC61668DC29AC4E /* IOSWorkoutStartView.swift */,
+			776FF4C0E45990C16F2728D2 /* IOSWorkoutSuperset.swift */,
+		);
+			path = Workout;
+			sourceTree = "<group>";
+		};
+		D35BDCF6803CCB1A9C4483A8 /* Config */ = {
+			isa = PBXGroup;
+		children = (
+			30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */,
+		);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		D60ADEB63C860AFBC2C3F9EF /* ThrymIOS */ = {
+			isa = PBXGroup;
+		children = (
+			CF8D0BD4B75E8C2C174692A5 /* ThrymIOS */,
+			EEFE21A1443933CA4DE017DA /* ThrymIOSTests */,
+			D35BDCF6803CCB1A9C4483A8 /* Config */,
+			00C45FD35CB0F9C5F764F070 /* Products */,
+			ED2F3B048716C9DC7573911C /* Frameworks */,
+		);
+			sourceTree = "<group>";
+		};
+		E2102CCEDF04CE3AD3E8872E /* History */ = {
+			isa = PBXGroup;
+		children = (
+			6028857DD325A7F9A1D2D06A /* IOSHistoryGlass.swift */,
+			2B21EECD6390D3A31BBA78E9 /* IOSHistoryScreen.swift */,
+			9957C7624D0FE9A175D74E7D /* IOSHistorySupport.swift */,
+		);
+			path = History;
+			sourceTree = "<group>";
+		};
+		ED2F3B048716C9DC7573911C /* Frameworks */ = {
+			isa = PBXGroup;
+		children = (
+			175CDFFC00E37243DD0A1389 /* Shared.framework */,
+		);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		EEFE21A1443933CA4DE017DA /* ThrymIOSTests */ = {
+			isa = PBXGroup;
+		children = (
+			7838DB869BCC15E07679638E /* BackupBridgeTests.swift */,
+			2D5315BA288ECA3E76867E77 /* BinaryFileDocumentTests.swift */,
+			D9874E75EFD4E071277479B2 /* DashboardWeekStripTests.swift */,
+			F8B516F6F542CE6506348215 /* ExerciseDisplayNameTests.swift */,
+			00A68B1AAFF337FCFDA4931F /* HistoryWeekTests.swift */,
+			4962E29F512124C8B5C10963 /* IndividualSetTargetsTests.swift */,
+			5624491CC5906B319AE6AC57 /* LocalDayGuardTests.swift */,
+			312C7545BDDB95CB5C9FA14A /* LocalizationTests.swift */,
+			37C5F6B19C89596525D066C2 /* NumberInputFormatTests.swift */,
+			18566A034E4D999DC5889B2D /* ProgressionDraftTests.swift */,
+			128A227D306B2165DD3B529E /* RecoveryBridgeTests.swift */,
+			DD69F10A8DB983705BD2DDAA /* RestTimerAdjustTests.swift */,
+			10DB84179DBEC6BFBC2FBF35 /* StringCatalogTests.swift */,
+			C12C06093440E3DE5A6428C7 /* ThemeContrastTests.swift */,
+			C91D5C61121DECAF869D90FF /* ThrymIOSTests.swift */,
+			90EBEDE56DBDDEFE1A7EE028 /* WorkoutDeloadModeTests.swift */,
+			CB67C04D1909008666D4B2AB /* WorkoutRestTimerPersistenceTests.swift */,
+		);
+			path = ThrymIOSTests;
+			sourceTree = "<group>";
+		};
+		F6AA6DE13F902674E46301CA /* Models */ = {
+			isa = PBXGroup;
+		children = (
+			0EB30A3F5B5AAEA3BEA856FD /* ExerciseDisplayName.swift */,
+			0AD65B83BB36D7689497F892 /* Readiness.swift */,
+			3E3E11A41596F0CDA9FF4698 /* TrainingAnalytics.swift */,
+			29CDDDCC6B306D44725E8C3B /* TrainingData.swift */,
+		);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* ThrymIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6999223B144664B5601B7EE0 /* Build configuration list for PBXNativeTarget "ThrymIOS" */;
+			buildPhases = (
+				3790D7103163C98E573B492A /* Build Shared Framework */,
+				D7FDE3A15F5D8A309D2F1B09 /* Sources */,
+				33D4DB7ABCB439682E66300C /* Frameworks */,
+				31B11E31C793B81C2C833089 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ThrymIOS;
+			productName = ThrymIOS;
+			productReference = E005FFFFA9545DCDCCC7F06B /* ThrymIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7EC8F98B7A265120217712DE /* ThrymIOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 896302F3B0CBBDA7B3457F1A /* Build configuration list for PBXNativeTarget "ThrymIOSTests" */;
+			buildPhases = (
+				A2D16A52C8A07E55D9BD57CD /* Sources */,
+				86218FCF4B4153B0362BD560 /* Frameworks */,
+				4448936AF211E1FBD1BBC19B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				768F8B228D9788DC87302A82 /* PBXTargetDependency */,
+			);
+			name = ThrymIOSTests;
+			productName = ThrymIOSTests;
+			productReference = 981B902E6F31E92A33ED6664 /* ThrymIOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		266E7E5321CE785E8C8B76BF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					29C7B681C8D62CBAC94D51C0 = { CreatedOnToolsVersion = 1600; };
+					7EC8F98B7A265120217712DE = { CreatedOnToolsVersion = 1600; TestTargetID = 29C7B681C8D62CBAC94D51C0; };
+				};
+			};
+			buildConfigurationList = FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "ThrymIOS" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				de,
+				Base,
+			);
+			mainGroup = D60ADEB63C860AFBC2C3F9EF /* ThrymIOS */;
+			productRefGroup = 00C45FD35CB0F9C5F764F070 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				29C7B681C8D62CBAC94D51C0 /* ThrymIOS */,
+				7EC8F98B7A265120217712DE /* ThrymIOSTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		31B11E31C793B81C2C833089 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E22350D24D617FBD09D1618 /* Assets.xcassets in Resources */,
+				D3A7429B86011C2F10380902 /* Geist-Black.ttf in Resources */,
+				075E6E29C4A2C1C053D10CDF /* Geist-Bold.ttf in Resources */,
+				C0F5FED8DF09955F7A93E1A3 /* Geist-ExtraBold.ttf in Resources */,
+				92E9FE3DD067EC95BA7C405B /* Geist-Italic.ttf in Resources */,
+				38B663E7B1FC0688050F5167 /* Geist-Medium.ttf in Resources */,
+				C92D55D45FDFF5281B9C6786 /* Geist-Regular.ttf in Resources */,
+				8C79BC323D0EC1F76130807E /* Geist-SemiBold.ttf in Resources */,
+				D0D50C557E77322A8F8E6567 /* Exercises.xcstrings in Resources */,
+				E300F0BA46649AAA60F2A89E /* Localizable.xcstrings in Resources */,
+				DC65B269DAAA2935FEFF4176 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4448936AF211E1FBD1BBC19B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3790D7103163C98E573B492A /* Build Shared Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Shared Framework";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\"$SRCROOT/scripts/build-shared.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D7FDE3A15F5D8A309D2F1B09 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B4063CD77FDFA3C1B8FC30D /* AnalyticsPresentation.swift in Sources */, 
+				E5A32B9C378F9CC98AC91681 /* IOSDashboardDeloadCard.swift in Sources */, 
+				681D867FEABAF5CD430DAFC0 /* IOSDashboardGlass.swift in Sources */, 
+				7022F82939E5099EE7259E8D /* IOSDashboardScreen.swift in Sources */, 
+				3B24B3818F5BC61A3108FC8F /* IOSWeeklyVolumeTrendCard.swift in Sources */, 
+				5EC635BE001AEBD56C864D1C /* ThrymCard.swift in Sources */, 
+				0CBA1C2ABF0D7495C137673E /* ThrymFont.swift in Sources */, 
+				84AAFA20CF75D4386C505FCB /* ThrymLiquidGlass.swift in Sources */, 
+				C80BB50656822CDF39C46418 /* ThrymMetricRing.swift in Sources */, 
+				2D11D82A07934287F0C6D91D /* ThrymTheme.swift in Sources */, 
+				626FB6DF1330A4D64555E2C3 /* ThrymWeeklyMuscleVolume.swift in Sources */, 
+				916C6AF65FBA8D8B3C3542FD /* IOSHistoryGlass.swift in Sources */, 
+				8436ECBCD7C2E0A7E34D37A9 /* IOSHistoryScreen.swift in Sources */, 
+				3801BAF1C5064B747F1AD26B /* IOSHistorySupport.swift in Sources */, 
+				2DADCA32056FC9E39A81773B /* ExerciseDisplayName.swift in Sources */, 
+				B25A42A3B60E8077DAB716E0 /* Readiness.swift in Sources */, 
+				3732B63557AB5662341F6B35 /* TrainingAnalytics.swift in Sources */, 
+				0453D846071EF7D5BBCD4FDB /* TrainingData.swift in Sources */, 
+				0C8A93AF24DBC77CF800B81F /* IOSExerciseLibraryScreen.swift in Sources */, 
+				69E5BA086F1027852CE94E3A /* IOSMetaPlanEditorScreen.swift in Sources */, 
+				07184457FB3C1EF0382A27E3 /* IOSPlanEditorScreen.swift in Sources */, 
+				44060FDDCFA0710F19A60307 /* IOSPlansScreen.swift in Sources */, 
+				FF1583353E5BDF9F05CB3ECC /* IOSPlansSupport.swift in Sources */, 
+				2732DB878A34ED8E29A19355 /* IOSProgressionReviewScreen.swift in Sources */, 
+				45E45BC954D143A102E6FFC3 /* IOSExerciseStatisticsGlass.swift in Sources */, 
+				CA780A7F21BBB24698E62B1B /* IOSExerciseStatisticsScreen.swift in Sources */, 
+				4E8E8D657128A78649180D91 /* IOSStatisticsScreen.swift in Sources */, 
+				467E9088798B4F91B92BC2FB /* IOSWorkoutCompletionScreen.swift in Sources */, 
+				C93BCDFF2B67C400BF140E7D /* IOSWorkoutExerciseCard.swift in Sources */, 
+				4EDC10180EC500E2E49FA0B7 /* IOSWorkoutExercisePicker.swift in Sources */, 
+				5B3A946D7318148052FC8A9E /* IOSWorkoutFormatting.swift in Sources */, 
+				DC4B7B772C7F3455EECB3D76 /* IOSWorkoutGlass.swift in Sources */, 
+				3A17CDA0D882CA60C7918F94 /* IOSWorkoutNextSetCoach.swift in Sources */, 
+				A359F9A2E3DD08D667DECB2F /* IOSWorkoutPlateVisualizer.swift in Sources */, 
+				15940760C4BFBEF6E77765E1 /* IOSWorkoutRestTimer.swift in Sources */, 
+				9C0741F51BC07A9038086982 /* IOSWorkoutScreen.swift in Sources */, 
+				2890A5F4C453F4E9CD5A1ECF /* IOSWorkoutSetEditor.swift in Sources */, 
+				9DBA38D1A2E509EEEC35DB4D /* IOSWorkoutStartView.swift in Sources */, 
+				83EFD6FCDC75BAB5C3B7CA58 /* IOSWorkoutSuperset.swift in Sources */, 
+				B64146B4A52DDB3852663236 /* BinaryFileDocument.swift in Sources */, 
+				BA3968065D314047D901169A /* IOSSettingsViewModel.swift in Sources */, 
+				9861FB6BB1B5A5F51A866C2A /* IOSTrainingStore.swift in Sources */, 
+				A34F1E6FCF6645B47823A4BD /* RootView.swift in Sources */, 
+				192B8743C56BB3F4B847BD6F /* SettingsScreen.swift in Sources */, 
+				0016736D196136E226498141 /* SharedBootstrap.swift in Sources */, 
+				1079DDCBF80F6035B1474524 /* ShareSheet.swift in Sources */, 
+				1E15ED726D1A240A56C091D6 /* ThrymApp.swift in Sources */, 
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A2D16A52C8A07E55D9BD57CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9060EB2531467B89CBFEF653 /* BackupBridgeTests.swift in Sources */, 
+				D883EE647FD2F508F84819DA /* BinaryFileDocumentTests.swift in Sources */, 
+				2851A4E549A9EC0DD9E63BED /* DashboardWeekStripTests.swift in Sources */, 
+				6D4718E6C37028AAA5148B9D /* ExerciseDisplayNameTests.swift in Sources */, 
+				6DA78A548D7F2D8A288EA295 /* HistoryWeekTests.swift in Sources */, 
+				746A98C55667640D4AF4E007 /* IndividualSetTargetsTests.swift in Sources */, 
+				D7DACE2D51AC653ECDA8F8FF /* LocalDayGuardTests.swift in Sources */, 
+				A68322B3D55169D67795DC0A /* LocalizationTests.swift in Sources */, 
+				5ACBCD167629AA8DF5847CF5 /* NumberInputFormatTests.swift in Sources */, 
+				D117D5DE4323BE768D532A8B /* ProgressionDraftTests.swift in Sources */, 
+				3E4CE13DCF91E45C46CC3F1D /* RecoveryBridgeTests.swift in Sources */, 
+				468CE6AAFD00F889AD84B773 /* RestTimerAdjustTests.swift in Sources */, 
+				11197F7C9E7A09037100A62C /* StringCatalogTests.swift in Sources */, 
+				12A15834909B4B19E6C2B81C /* ThemeContrastTests.swift in Sources */, 
+				EFEFDF4CFC853E1764F495EE /* ThrymIOSTests.swift in Sources */, 
+				152A58BEDBC7DD64FFF69717 /* WorkoutDeloadModeTests.swift in Sources */, 
+				336D8F7D69FEA96F40791BB2 /* WorkoutRestTimerPersistenceTests.swift in Sources */, 
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		768F8B228D9788DC87302A82 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29C7B681C8D62CBAC94D51C0 /* ThrymIOS */;
+			targetProxy = 2C135CA110FDB5658326B736 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		2C135CA110FDB5658326B736 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 266E7E5321CE785E8C8B76BF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29C7B681C8D62CBAC94D51C0;
+			remoteInfo = ThrymIOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin XCBuildConfiguration section */
+		877A6BA951A2EA0025A2ABE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_NAME = ThrymIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		959134B361DD7E21ADEA3164 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_NAME = ThrymIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		3CF6A4F2E05B3AAE7E2CBFEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APP_DISPLAY_NAME = Thrym;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ThrymIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
+				PRODUCT_NAME = ThrymIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		23FB2CAEB38545C3793097DD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APP_DISPLAY_NAME = Thrym;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_TESTABILITY = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ThrymIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID)";
+				PRODUCT_NAME = ThrymIOS;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E2657B9FA91DD4A55652006F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
+				PRODUCT_NAME = ThrymIOSTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThrymIOS.app/ThrymIOS";
+			};
+			name = Debug;
+		};
+		B4343C19535B18410503AED7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 30067E4D0E16F8AA9F6308CC /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/Frameworks @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "$(THRYM_BUNDLE_ID).tests";
+				PRODUCT_NAME = ThrymIOSTests;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ThrymIOS.app/ThrymIOS";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FCBE72429C0B1B8B87DC8CC9 /* Build configuration list for PBXProject "ThrymIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				877A6BA951A2EA0025A2ABE8 /* Debug */,
+				959134B361DD7E21ADEA3164 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6999223B144664B5601B7EE0 /* Build configuration list for PBXNativeTarget "ThrymIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3CF6A4F2E05B3AAE7E2CBFEE /* Debug */,
+				23FB2CAEB38545C3793097DD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		896302F3B0CBBDA7B3457F1A /* Build configuration list for PBXNativeTarget "ThrymIOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2657B9FA91DD4A55652006F /* Debug */,
+				B4343C19535B18410503AED7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 266E7E5321CE785E8C8B76BF /* Project object */;
+}

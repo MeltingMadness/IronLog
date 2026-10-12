@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="common_error_unknown">unerwarteter Fehler</string>
+
+    <string name="error_exercise_not_saved">Nur gespeicherte Übungen können bearbeitet werden</string>
+    <string name="error_exercise_not_found">Übung wurde nicht gefunden</string>
+    <string name="error_exercise_not_custom_edit">Nur eigene Übungen können bearbeitet werden</string>
+    <string name="error_exercise_not_custom_delete">Nur eigene Übungen können gelöscht werden</string>
+    <string name="error_exercise_duplicate_name">Eine aktive Übung mit diesem Namen existiert bereits</string>
+    <string name="error_exercise_name_length">Name muss zwischen %1$d und %2$d Zeichen haben</string>
+    <string name="error_exercise_notes_too_long">Notiz darf maximal %1$d Zeichen enthalten</string>
+    <string name="error_exercise_too_many_secondary">Maximal drei sekundäre Muskelgruppen erlaubt</string>
+    <string name="error_exercise_primary_also_secondary">Primäre Muskelgruppe darf nicht gleichzeitig sekundär sein</string>
+
+    <string name="error_intensity_rpe_range">RPE muss zwischen %1$d und %2$d liegen</string>
+    <string name="error_intensity_rir_range">RIR muss zwischen %1$d und %2$d liegen</string>
+
+    <string name="error_plan_apply_session_not_found">Training nicht gefunden</string>
+    <string name="error_plan_apply_session_not_finished">Bitte Training zuerst beenden</string>
+    <string name="error_plan_apply_no_plan">Kein Plan für dieses Training vorhanden</string>
+    <string name="error_plan_apply_plan_exercise_missing">Plan wurde geändert. Bitte im Editor prüfen.</string>
+    <string name="error_plan_apply_plan_changed" tools:ignore="Typos">Plan wurde seit dem Training geändert. Bitte im Editor prüfen.</string>
+</resources>
