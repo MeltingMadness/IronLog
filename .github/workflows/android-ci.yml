@@ -43,7 +43,7 @@ jobs:
         run: python3 .github/scripts/check-translations.py --platform android
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -102,7 +102,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -177,7 +177,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
