@@ -28,7 +28,7 @@ body:
     attributes:
       label: App version
       description: The version is shown in the app's Settings.
-      placeholder: e.g. 1.4.0 (9)
+      placeholder: e.g. 1.5.0 (10)
     validations:
       required: true
 
