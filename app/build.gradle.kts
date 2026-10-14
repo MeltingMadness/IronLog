@@ -17,7 +17,7 @@ if (hasReleaseSigning) {
 
 android {
     namespace = "com.thrym.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.thrym.app"
@@ -57,7 +57,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    sourceSets.getByName("androidTest").assets.srcDir("../core/database/schemas")
+    sourceSets.getByName("androidTest").assets.directories.add("../core/database/schemas")
 
     buildFeatures {
         compose = true
@@ -137,7 +137,7 @@ dependencies {
 
     // Core
     implementation(libs.core.ktx)
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.core:core-splashscreen:1.2.0")
     implementation(libs.datastore.preferences)
     implementation(libs.work.runtime)
     implementation(libs.serialization.json)

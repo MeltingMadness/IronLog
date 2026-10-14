@@ -13,7 +13,7 @@ val appDisplayName: String = Properties().run {
 
 android {
     namespace = "com.thrym.core.designsystem"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26

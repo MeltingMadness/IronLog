@@ -58,18 +58,16 @@ import com.thrym.app.presentation.theme.semantic
 import com.thrym.app.presentation.theme.semanticText
 import com.thrym.feature.statistics.R as StatisticsR
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
@@ -97,7 +95,7 @@ fun ExerciseStatsScreen(
             val unitSystem = preferences.unitSystem
             withContext(Dispatchers.Default) {
                 modelProducer.runTransaction {
-                    lineSeries {
+                    lineModel {
                         series(state.chartData.map { WeightFormatting.convertToDisplay(it.value.toDouble(), unitSystem) })
                     }
                 }
@@ -391,7 +389,7 @@ fun ExerciseStatsScreen(
                                     rememberLineCartesianLayer(
                                         lineProvider = LineCartesianLayer.LineProvider.series(
                                             LineCartesianLayer.rememberLine(
-                                                fill = LineCartesianLayer.LineFill.single(fill(lineColor))
+                                                fill = LineCartesianLayer.LineFill.single(Fill(lineColor))
                                             )
                                         )
                                     ),

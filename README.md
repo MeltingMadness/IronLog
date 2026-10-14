@@ -52,7 +52,7 @@ Every IronLog backup (backup format version 1, schema version up to 15) can be i
 
 ## Building from source
 
-**Android:** you need JDK 17 and an Android SDK with platforms 35 and 36 and build-tools 36.0.0. Point Gradle to the SDK with `ANDROID_HOME` or a `local.properties` file containing `sdk.dir=...`.
+**Android:** you need JDK 17 and an Android SDK with platforms 35 and 37.0 and build-tools 36.0.0. Point Gradle to the SDK with `ANDROID_HOME` or a `local.properties` file containing `sdk.dir=...`.
 
 ```bash
 ./gradlew assembleDebug                      # → app/build/outputs/apk/debug/app-debug.apk

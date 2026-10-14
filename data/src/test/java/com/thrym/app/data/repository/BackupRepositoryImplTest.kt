@@ -1076,83 +1076,63 @@ class BackupRepositoryImplTest {
         fun stubMutations() {
             coEvery { progressionDao.deleteAllSuggestions() } answers {
                 events += "delete-suggestions"
-                Unit
             }
             coEvery { personalRecordDao.deleteAll() } answers {
                 events += "delete-records"
-                Unit
             }
             coEvery { workoutSetDao.deleteAll() } answers {
                 events += "delete-sets"
-                Unit
             }
             coEvery { progressionDao.deleteAllTargets() } answers {
                 events += "delete-targets"
-                Unit
             }
             coEvery { metaTrainingPlanDao.deleteAllMetaPlanItems() } answers {
                 events += "delete-meta-items"
-                Unit
             }
             coEvery { metaTrainingPlanDao.deleteAllMetaPlanSkips() } answers {
                 events += "delete-meta-skips"
-                Unit
             }
             coEvery { trainingPlanDao.deleteAllPlanExercises() } answers {
                 events += "delete-plan-exercises"
-                Unit
             }
             coEvery { workoutSessionDao.deleteAll() } answers {
                 events += "delete-sessions"
-                Unit
             }
             coEvery { metaTrainingPlanDao.deleteAllMetaPlans() } answers {
                 events += "delete-meta-plans"
-                Unit
             }
             coEvery { trainingPlanDao.deleteAllPlans() } answers {
                 events += "delete-plans"
-                Unit
             }
             coEvery { exerciseDao.deleteAll() } answers {
                 events += "delete-exercises"
-                Unit
             }
             coEvery { exerciseDao.deleteAllCustomExercises() } answers {
                 events += "delete-custom-exercises"
-                Unit
             }
             coEvery { exerciseDao.replaceAll(any()) } answers {
                 events += "insert-exercises"
-                Unit
             }
             coEvery { trainingPlanDao.replaceAllPlans(any()) } answers {
                 events += "insert-plans"
-                Unit
             }
             coEvery { metaTrainingPlanDao.replaceAllMetaPlans(any()) } answers {
                 events += "insert-meta-plans"
-                Unit
             }
             coEvery { metaTrainingPlanDao.replaceAllMetaPlanSkips(any()) } answers {
                 events += "insert-meta-skips"
-                Unit
             }
             coEvery { metaTrainingPlanDao.replaceAllItems(any()) } answers {
                 events += "insert-meta-items"
-                Unit
             }
             coEvery { progressionDao.replaceAllTargets(any()) } answers {
                 events += "insert-targets"
-                Unit
             }
             coEvery { workoutSetDao.replaceAll(any()) } answers {
                 events += "insert-sets"
-                Unit
             }
             coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
                 events += "insert-suggestions"
-                Unit
             }
         }
 
@@ -1179,32 +1159,26 @@ class BackupRepositoryImplTest {
             coEvery { progressionDao.deleteAllSuggestions() } answers {
                 events += "delete-suggestions"
                 currentProgressionSuggestions = emptyList()
-                Unit
             }
             coEvery { workoutSetDao.deleteAll() } answers {
                 events += "delete-sets"
                 currentProgressionSets = emptyList()
-                Unit
             }
             coEvery { progressionDao.deleteAllTargets() } answers {
                 events += "delete-targets"
                 currentProgressionTargets = emptyList()
-                Unit
             }
             coEvery { progressionDao.replaceAllTargets(any()) } answers {
                 events += "insert-targets"
                 currentProgressionTargets = firstArg()
-                Unit
             }
             coEvery { workoutSetDao.replaceAll(any()) } answers {
                 events += "insert-sets"
                 currentProgressionSets = firstArg()
-                Unit
             }
             coEvery { progressionDao.replaceAllSuggestions(any()) } answers {
                 events += "insert-suggestions"
                 currentProgressionSuggestions = firstArg()
-                Unit
             }
         }
     }

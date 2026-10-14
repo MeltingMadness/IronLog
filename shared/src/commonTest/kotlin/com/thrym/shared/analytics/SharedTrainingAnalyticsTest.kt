@@ -13,11 +13,11 @@ import com.thrym.shared.backup.DROP_SET_TYPE
 import com.thrym.shared.backup.FAILURE_SET_TYPE
 import com.thrym.shared.backup.NORMAL_SET_TYPE
 import com.thrym.shared.backup.WARMUP_SET_TYPE
-import kotlinx.datetime.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 class SharedTrainingAnalyticsTest {
 

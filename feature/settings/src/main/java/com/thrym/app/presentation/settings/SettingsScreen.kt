@@ -906,7 +906,7 @@ private fun PreferenceCard(
 
     Column {
         Text(
-            text = title.uppercase(java.util.Locale.getDefault()),
+            text = title.uppercase(currentLocale()),
             style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp),
             color = MaterialTheme.accentText,
             modifier = Modifier.padding(start = dims.spacingMd, end = dims.spacingMd, bottom = dims.spacingXs)

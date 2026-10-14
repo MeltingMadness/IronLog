@@ -23,23 +23,21 @@ import com.thrym.app.presentation.theme.thrymDimens
 import com.thrym.app.presentation.theme.thrymSurfaceRoles
 import com.thrym.app.presentation.theme.semantic
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.thrym.app.domain.model.UnitSystem
 import com.thrym.app.domain.util.DateFormatting
 import com.thrym.app.domain.util.WeightFormatting
 import com.thrym.app.presentation.common.currentLocale
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
+import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.thrym.feature.dashboard.R as DashboardR
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -68,7 +66,7 @@ fun WeeklyVolumeCard(
         if (weeklyVolume.size >= 2) {
             withContext(Dispatchers.Default) {
                 modelProducer.runTransaction {
-                    lineSeries {
+                    lineModel {
                         series(weeklyVolume.map { WeightFormatting.convertToDisplay(it.second, unitSystem) })
                     }
                 }
@@ -103,7 +101,7 @@ fun WeeklyVolumeCard(
                         rememberLineCartesianLayer(
                             lineProvider = LineCartesianLayer.LineProvider.series(
                                 LineCartesianLayer.rememberLine(
-                                    fill = LineCartesianLayer.LineFill.single(fill(MaterialTheme.semantic.teal))
+                                    fill = LineCartesianLayer.LineFill.single(Fill(MaterialTheme.semantic.teal))
                                 )
                             )
                         ),

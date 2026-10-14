@@ -10,13 +10,13 @@ import com.thrym.shared.backup.NORMAL_SET_TYPE
 import com.thrym.shared.backup.WARMUP_SET_TYPE
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.round
+import kotlin.time.Instant
 
 /**
  * Computes the bounded, read-only training projection consumed by iOS.

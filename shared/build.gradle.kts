@@ -7,7 +7,7 @@ plugins {
 kotlin {
     android {
         namespace = "com.thrym.shared"
-        compileSdk = 36
+        compileSdk = 37
         minSdk = 26
         withHostTestBuilder {}
         withJava()

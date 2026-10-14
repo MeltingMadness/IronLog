@@ -12,8 +12,8 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 JAVA_HOME_17=/usr/lib/jvm/java-17-openjdk-amd64
 SDK_ROOT="$HOME/android-sdk"
 # Muss zu den Versionen in app/build.gradle.kts und AGENTS.md passen.
-CMDLINE_TOOLS_ZIP=commandlinetools-linux-13114758_latest.zip
-SDK_PACKAGES=("platforms;android-35" "platforms;android-36" "build-tools;36.0.0" "platform-tools")
+CMDLINE_TOOLS_ZIP=commandlinetools-linux-15859902_latest.zip
+SDK_PACKAGES=("platforms;android-35" "platforms;android-37.0" "build-tools;36.0.0" "platform-tools")
 
 log() { echo "[session-start] $*" >&2; }
 
