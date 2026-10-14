@@ -78,7 +78,7 @@ jobs:
       # Kotlin/Native toolchain and its LLVM/sysroot dependencies (~1 GB).
       # The Kotlin version lives in gradle/libs.versions.toml.
       - name: Cache Kotlin/Native toolchain (~/.konan)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.konan
           key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
