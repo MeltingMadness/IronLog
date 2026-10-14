@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Thrym background, full-bleed (Android adaptive-icon background; also the iOS base).
+    Brand Amber gradient plus a soft forge glow just above the centre. Opaque, no text, no filters.
+  -->
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF8A2A"/>
+      <stop offset="1" stop-color="#E85500"/>
+    </linearGradient>
+    <radialGradient id="forge-glow" cx="512" cy="470" r="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB15C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB15C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect id="base" width="1024" height="1024" fill="url(#amber)"/>
+  <rect id="glow" width="1024" height="1024" fill="url(#forge-glow)"/>
+</svg>

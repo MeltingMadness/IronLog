@@ -1,4 +1,9 @@
-# Thrym
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-light.svg">
+    <img src="docs/brand/lockup-dark.svg" alt="Thrym" width="300">
+  </picture>
+</h1>
 
 Thrym is a strength training log for Android and iPhone that works completely offline. You plan your training, log sets quickly at the gym, and a progression coach suggests your next targets. You decide whether to accept them. Your data stays on your device: there is no account, no server, no ads and no tracking. The app is available in English and German. Both apps are native: Android uses Kotlin and Jetpack Compose, iOS uses SwiftUI, and the training logic shared between them lives in a common Kotlin Multiplatform core.
 
@@ -10,7 +15,7 @@ Thrym was previously called **IronLog**. See [Migrating from IronLog](#migrating
 | **iOS** | iPhone with iOS 17 or later |
 | **Languages** | English (default) and German. The app follows the device language. On Android 13 or later you can also set the language for Thrym alone in the system settings. |
 | **Status** | In active development. There are no prebuilt downloads yet, so for now you build the app from source. Distribution through F-Droid, GitHub Releases and the App Store is planned. |
-| **License** | [Apache License 2.0](LICENSE) for the source code. The name and icon are not covered, see [License](#license). |
+| **License** | [Apache License 2.0](LICENSE) for the source code. The name, logo and icon are not covered, see [License](#license). |
 
 ## Features
 
@@ -95,6 +100,7 @@ The internal design and engineering documents in `docs/` are written in **German
 |---|---|
 | [`docs/architektur.md`](docs/architektur.md) | Modules, layers, database schema, backup format, invariants |
 | [`docs/design-system.md`](docs/design-system.md) | Current design (Liquid Glass, with Ember as an option): color schemes, typography, components |
+| [`docs/brand/README.md`](docs/brand/README.md) | Logo and app icon: source files, where they are used, brand rules |
 | [`docs/features/progressions-coach.md`](docs/features/progressions-coach.md) | Rules and flow of the progression coach |
 | [`docs/features/meta-plaene.md`](docs/features/meta-plaene.md) | Meta-plan rotation, skipping, weight history |
 | [`docs/readiness-data-integration.md`](docs/readiness-data-integration.md) | Daily check-in and set intention: data model and integration |
@@ -115,4 +121,4 @@ Bug reports, translations and pull requests are welcome. Please read [`CONTRIBUT
 
 The source code of Thrym is licensed under the [Apache License, Version 2.0](LICENSE). Attribution notices are in [`NOTICE`](NOTICE). The bundled Geist font is licensed under the [SIL Open Font License 1.1](docs/licenses/Geist-OFL.txt).
 
-**Name and icon.** The Apache License covers the code, not the brand. As section 6 of the license says, it grants no permission to use the name "Thrym". The Thrym logo and app icon, which are the launcher icon files in `app/src/main/res/` and `iosApp/ThrymIOS/Assets.xcassets/AppIcon.appiconset/` and the store icon `fastlane/metadata/android/en-US/images/icon.png` (all listed in [`NOTICE`](NOTICE)), are not licensed for use by forks either. They are in this repository so that the official app can be built from it. If you publish a fork, give it its own name, its own icon, its own Android `applicationId` and its own iOS bundle ID. Saying that your fork is based on Thrym is fine.
+**Name and icon.** The Apache License covers the code, not the brand. As section 6 of the license says, it grants no permission to use the name "Thrym". The Thrym logo and app icon, which are the SVG sources in [`docs/brand/`](docs/brand/), the launcher icon files in `app/src/main/res/` and `iosApp/ThrymIOS/Assets.xcassets/AppIcon.appiconset/` and the store icon `fastlane/metadata/android/en-US/images/icon.png` (all listed in [`NOTICE`](NOTICE)), are not licensed for use by forks either. They are in this repository so that the official app can be built from it. If you publish a fork, give it its own name, its own icon and logo, its own Android `applicationId` and its own iOS bundle ID. Saying that your fork is based on Thrym is fine.

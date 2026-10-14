@@ -2,7 +2,9 @@
 <resources>
     <style name="Theme.Thrym" parent="android:Theme.Material.Light.NoActionBar" />
 
-    <style name="Theme.Thrym.Splash" parent="Theme.SplashScreen">
+    <!-- The IconBackground parent is required: plain Theme.SplashScreen ignores
+         windowSplashScreenIconBackgroundColor, and the dark mark would vanish on #0C0806. -->
+    <style name="Theme.Thrym.Splash" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenBackground">#0C0806</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="windowSplashScreenIconBackgroundColor">#FF6B00</item>

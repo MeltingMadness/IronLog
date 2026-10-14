@@ -196,6 +196,6 @@ Thrym is licensed under the [Apache License 2.0](LICENSE). Under section 5 of th
 You are welcome to fork Thrym under the Apache License. The name "Thrym", the logo and the app icon are not licensed for use by forks (see [README → License](README.md#license)). A published fork needs:
 
 - its own name (`appDisplayName` in `branding.properties`)
-- its own app icon
+- its own app icon and logo (replace the files listed in `NOTICE`, including `docs/brand/`)
 - its own Android `applicationId` (`app/build.gradle.kts`)
 - its own iOS bundle ID (`THRYM_BUNDLE_ID` in `iosApp/Config/Signing.xcconfig`)

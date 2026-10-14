@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Thrym app icon, iOS 18+/26 tinted appearance: grayscale on black; the system maps luminance to the tint.
+    Same geometry as icon.svg.
+  -->
+  <defs>
+    <linearGradient id="gray-plate" x1="0" y1="187" x2="0" y2="837" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C8C8C8"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="460" x2="0" y2="564" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6E6E6E"/>
+      <stop offset="0.2" stop-color="#F0F0F0"/>
+      <stop offset="0.3" stop-color="#F0F0F0"/>
+      <stop offset="0.5" stop-color="#7A7A7A"/>
+      <stop offset="1" stop-color="#3A3A3A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#000000"/>
+  <g id="thurs-mark">
+    <!-- sleeve (steel): hidden under the stave, shows in the plate gaps and as the tip -->
+    <path id="sleeve" fill="url(#steel)" d="M417.9 460 L817 460 C827.7 460 836.5 468.7 836.5 479.5 L836.5 544.5 C836.5 555.3 827.7 564 817 564 L417.9 564 Z"/>
+    <!-- stave: big plate -->
+    <path id="stave" fill="url(#gray-plate)" d="M342 192.7 C345.6 189.1 350.6 187 355.8 187 L396.8 187 C402 187 406.9 189.1 410.6 192.7 L451.2 233.3 C454.8 236.9 456.9 241.9 456.9 247.1 L456.9 776.9 C456.9 782.1 454.8 787.1 451.2 790.7 L410.6 831.3 C406.9 834.9 402 837 396.8 837 L355.8 837 C350.6 837 345.6 834.9 342 831.3 L301.4 790.7 C297.7 787.1 295.7 782.1 295.7 776.9 L295.7 247.1 C295.7 241.9 297.7 236.9 301.4 233.3 Z"/>
+    <!-- thorn step 1: middle plate -->
+    <path id="plate2" fill="url(#gray-plate)" d="M508.4 355.2 C512 351.6 517 349.5 522.2 349.5 L581.4 349.5 C586.6 349.5 591.5 351.6 595.2 355.2 L622.8 382.8 C626.4 386.4 628.5 391.4 628.5 396.6 L628.5 627.4 C628.5 632.6 626.4 637.6 622.8 641.2 L595.2 668.8 C591.5 672.4 586.6 674.5 581.4 674.5 L522.2 674.5 C517 674.5 512 672.4 508.4 668.8 L480.8 641.2 C477.1 637.6 475.1 632.6 475.1 627.4 L475.1 396.6 C475.1 391.4 477.1 386.4 480.8 382.8 Z"/>
+    <!-- thorn step 2: small plate -->
+    <path id="plate3" fill="url(#gray-plate)" d="M673.5 409.8 C677.1 406.2 682.1 404.1 687.3 404.1 L736.1 404.1 C741.3 404.1 746.2 406.2 749.9 409.8 L771 430.9 C774.6 434.5 776.7 439.5 776.7 444.7 L776.7 579.3 C776.7 584.5 774.6 589.5 771 593.1 L749.9 614.2 C746.2 617.8 741.3 619.9 736.1 619.9 L687.3 619.9 C682.1 619.9 677.1 617.8 673.5 614.2 L652.4 593.1 C648.7 589.5 646.7 584.5 646.7 579.3 L646.7 444.7 C646.7 439.5 648.7 434.5 652.4 430.9 Z"/>
+  </g>
+</svg>
