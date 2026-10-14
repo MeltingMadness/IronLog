@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -20,11 +21,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import com.thrym.app.domain.model.AppearanceStyle
-import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazePerformanceMode
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.blur.HazeBlurDefaults
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -42,6 +45,12 @@ val LocalAppearanceStyle = staticCompositionLocalOf { AppearanceStyle.EMBER }
 
 /** Backdrop that [GlassLevel.STRONG] surfaces blur; `null` outside a [LiquidGlassHost]. */
 internal val LocalGlassHazeState = staticCompositionLocalOf<HazeState?> { null }
+
+/**
+ * Whether [GlassLevel.STRONG] surfaces really blur, decided once by [LiquidGlassHost]. When it is
+ * `false`, Haze draws the tinted fallback of [liquidGlass] instead.
+ */
+private val LocalGlassBlurEnabled = compositionLocalOf { false }
 
 private val GlassTeal = Color(0xFF2EC4B6)
 private val GlassViolet = Color(0xFF6D5BFF)
@@ -74,10 +83,14 @@ fun LiquidGlassHost(
     content: @Composable BoxScope.() -> Unit
 ) {
     val reduced = LocalThrymMotion.current.reduced
-    val hazeState = rememberHazeState(blurEnabled = !reduced && HazeDefaults.blurEnabled())
+    val hazeState = rememberHazeState()
+    val blurEnabled = !reduced && HazeBlurDefaults.isBlurEnabledByDefault()
     Box(modifier) {
         LiquidBackground(Modifier.matchParentSize().hazeSource(hazeState))
-        CompositionLocalProvider(LocalGlassHazeState provides hazeState) {
+        CompositionLocalProvider(
+            LocalGlassHazeState provides hazeState,
+            LocalGlassBlurEnabled provides blurEnabled
+        ) {
             content()
         }
     }
@@ -136,6 +149,7 @@ fun Modifier.liquidGlass(
 ): Modifier = composed {
     val dark = isDarkGlass()
     val hazeState = LocalGlassHazeState.current
+    val glassBlurEnabled = LocalGlassBlurEnabled.current
     val tintColor = tint ?: MaterialTheme.colorScheme.primary
     val translucent = glassSurfaceTint(level, dark, tintColor)
     val opaque = when (level) {
@@ -158,15 +172,18 @@ fun Modifier.liquidGlass(
 
     val surface = when {
         hazeState == null -> Modifier.background(opaque)
-        level == GlassLevel.STRONG -> Modifier.hazeEffect(
-            state = hazeState,
-            style = HazeStyle(
-                backgroundColor = if (dark) GlassDarkBase else GlassLightBase,
-                tint = HazeTint(translucent),
-                blurRadius = 32.dp,
-                noiseFactor = 0f,
-                fallbackTint = HazeTint(opaque)
-            )
+        level == GlassLevel.STRONG -> Modifier.hazeBlur(
+            input = HazeInput.Sources(hazeState),
+            style = HazeBlurStyle {
+                blurEnabled(glassBlurEnabled)
+                backgroundColor(if (dark) GlassDarkBase else GlassLightBase)
+                colorEffects(listOf(HazeColorEffect.tint(translucent)))
+                blurRadius(32.dp)
+                noiseFactor(0f)
+                fallbackColorEffect(HazeColorEffect.tint(opaque))
+            },
+            // Full-resolution backdrop as in Haze 1; the Haze 2 default downsamples it.
+            performanceMode = HazePerformanceMode.Quality
         )
         else -> Modifier.background(translucent)
     }

@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.compose.animation)
     implementation(libs.compose.material3)
     implementation(libs.haze)
+    implementation(libs.haze.blur)
     implementation(libs.compose.material.icons)
     debugImplementation(libs.compose.ui.tooling)
 
