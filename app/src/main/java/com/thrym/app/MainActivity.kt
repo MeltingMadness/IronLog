@@ -45,6 +45,10 @@ class MainActivity : ComponentActivity() {
     // avoiding a white flash between the dark splash theme and the dark Compose UI.
     private val splashKeepOnScreen = mutableStateOf(true)
 
+    // Read by the system bar style on every configuration change that does not recreate the
+    // activity (activity 1.13 re-applies edge-to-edge then), so it has to follow the current theme.
+    private var systemBarsDark = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen().setKeepOnScreenCondition { splashKeepOnScreen.value }
         super.onCreate(savedInstanceState)
@@ -54,15 +58,15 @@ class MainActivity : ComponentActivity() {
         // Preferences load asynchronously; until then the app-default theme mode (DARK) applies,
         // so the launch theme is dark regardless of the system setting.
         val launchThemeMode = ThemeMode.DARK
-        val launchIsDark = when (launchThemeMode) {
+        systemBarsDark = when (launchThemeMode) {
             ThemeMode.DARK -> true
             ThemeMode.LIGHT -> false
             ThemeMode.SYSTEM -> systemInDarkMode
         }
         val transparentScrim = android.graphics.Color.TRANSPARENT
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(transparentScrim, transparentScrim) { launchIsDark },
-            navigationBarStyle = SystemBarStyle.auto(transparentScrim, transparentScrim) { launchIsDark }
+            statusBarStyle = SystemBarStyle.auto(transparentScrim, transparentScrim) { systemBarsDark },
+            navigationBarStyle = SystemBarStyle.auto(transparentScrim, transparentScrim) { systemBarsDark }
         )
         setContent {
             val preferencesRepository: AppPreferencesRepository = koinInject()
@@ -89,6 +93,7 @@ class MainActivity : ComponentActivity() {
                 appearanceStyle = preferences.appearanceStyle
             ) {
                 LaunchedEffect(isDarkTheme) {
+                    systemBarsDark = isDarkTheme
                     val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                     insetsController.isAppearanceLightStatusBars = !isDarkTheme
                     insetsController.isAppearanceLightNavigationBars = !isDarkTheme
