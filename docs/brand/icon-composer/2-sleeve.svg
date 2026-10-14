@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Icon Composer layer 2 (middle): the steel sleeve, transparent, iOS geometry (same as icon.svg).
+  -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="460" x2="0" y2="564" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A4752"/>
+      <stop offset="0.2" stop-color="#C9D7E2"/>
+      <stop offset="0.3" stop-color="#C9D7E2"/>
+      <stop offset="0.5" stop-color="#3E4C57"/>
+      <stop offset="1" stop-color="#151C21"/>
+    </linearGradient>
+  </defs>
+  <!-- sleeve (steel): hidden under the stave, shows in the plate gaps and as the tip -->
+  <path id="sleeve" fill="url(#steel)" d="M417.9 460 L817 460 C827.7 460 836.5 468.7 836.5 479.5 L836.5 544.5 C836.5 555.3 827.7 564 817 564 L417.9 564 Z"/>
+</svg>

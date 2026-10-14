@@ -1,8 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Amber backdrop of the "Level Up" icon, same gradient as iosApp AppIcon.svg. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient
-        android:angle="270"
-        android:startColor="#FF8A2A"
-        android:endColor="#E85500" />
-</shape>
+<!-- Thrym app icon, adaptive background: Amber gradient with forge glow.
+     Converted from docs/brand/background.svg (Svg2Vector); 1024 viewport units = 108 dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <path
+        android:pathData="M0,0h1024v1024h-1024z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="0"
+                android:endY="1024"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFFF8A2A"/>
+                <item android:offset="1" android:color="#FFE85500"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M0,0h1024v1024h-1024z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="512"
+                android:centerY="470"
+                android:gradientRadius="520"
+                android:type="radial">
+                <item android:offset="0" android:color="#8CFFB15C"/>
+                <item android:offset="1" android:color="#00FFB15C"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

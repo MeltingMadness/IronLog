@@ -50,7 +50,7 @@ Google Play ist derzeit nicht vorgesehen. Käme es dazu, wären Developer-Konto,
 Die App hält alle Trainingsdaten lokal auf dem Gerät. Es gibt keinen Server, kein Konto, keine Analyse und kein Tracking. Das App-Manifest (`app/src/main/AndroidManifest.xml`) deklariert selbst nur `POST_NOTIFICATIONS`. Im gemergten Manifest ergänzt WorkManager (Erinnerungen) `WAKE_LOCK`, `ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED` und `FOREGROUND_SERVICE`, AndroidX Core die app-interne Signatur-Berechtigung `com.thrym.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Eine Internet-Berechtigung (`android.permission.INTERNET`) gibt es nicht; vor jedem Release ist das im gemergten Manifest aus der CI-Evidence zu prüfen. Daraus folgen:
 
 - App Store: Datenschutzangabe „Keine Daten erfasst“. Der Incident-Report verlässt das Gerät nur, wenn Nutzer ihn selbst teilen. Das Privacy-Manifest (`iosApp/ThrymIOS/PrivacyInfo.xcprivacy`) deklariert nur app-eigene `UserDefaults` mit Grund `CA92.1`.
-- F-Droid: keine Anti-Features wegen Tracking oder Netzwerkdiensten. Zu klären ist, ob F-Droid das nicht frei lizenzierte App-Icon als Anti-Feature `NonFreeAssets` einstuft.
+- F-Droid: keine Anti-Features wegen Tracking oder Netzwerkdiensten. Zu klären ist, ob F-Droid das nicht frei lizenzierte App-Icon samt Logo (`docs/brand/`) als Anti-Feature `NonFreeAssets` einstuft.
 
 Diese Aussagen gelten nur, solange Backup und Export keine Server-Ziele erhalten. Vor jeder solchen Änderung sind die Angaben neu zu bewerten.
 

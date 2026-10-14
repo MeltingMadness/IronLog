@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="658.8" height="218" viewBox="0 0 658.784 218.0">
+  <!--
+    Thrym horizontal lockup, transparent background. Dark ink, for light backgrounds (README light mode).
+    Mark (amber plates, steel sleeve) + "THRYM" drawn as geometric Latin capitals in the spirit of Geist Bold
+    (paths only, no font). Brand rule: never pair the mark with other runes, a runic spelling of the name,
+    rune-in-circle frames or a black-white-red palette.
+  -->
+  <defs>
+    <linearGradient id="amber-plate" x1="0" y1="28" x2="0" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9A3C"/>
+      <stop offset="1" stop-color="#E85500"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="96" x2="0" y2="122" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5B6B78"/>
+      <stop offset="0.2" stop-color="#D5E0E8"/>
+      <stop offset="0.3" stop-color="#D5E0E8"/>
+      <stop offset="0.5" stop-color="#6C7E8C"/>
+      <stop offset="1" stop-color="#34414B"/>
+    </linearGradient>
+  </defs>
+  <g id="thurs-mark">
+    <!-- sleeve (steel): hidden under the stave, shows in the plate gaps and as the tip -->
+    <path id="sleeve" fill="url(#steel)" d="M58.5 96 L157.9 96 C160.6 96 162.8 98.2 162.8 100.9 L162.8 117.1 C162.8 119.8 160.6 122 157.9 122 L58.5 122 Z"/>
+    <!-- stave: big plate -->
+    <path id="stave" fill="url(#amber-plate)" d="M39.5 29.4 C40.4 28.5 41.7 28 43 28 L53.2 28 C54.5 28 55.7 28.5 56.6 29.4 L66.8 39.5 C67.7 40.4 68.2 41.7 68.2 43 L68.2 175 C68.2 176.3 67.7 177.6 66.8 178.5 L56.6 188.6 C55.7 189.5 54.5 190 53.2 190 L43 190 C41.7 190 40.4 189.5 39.5 188.6 L29.4 178.5 C28.5 177.6 28 176.3 28 175 L28 43 C28 41.7 28.5 40.4 29.4 39.5 Z"/>
+    <!-- thorn step 1: middle plate -->
+    <path id="plate2" fill="url(#amber-plate)" d="M81 69.9 C81.9 69 83.2 68.5 84.4 68.5 L99.2 68.5 C100.5 68.5 101.7 69 102.6 69.9 L109.5 76.8 C110.4 77.7 110.9 78.9 110.9 80.2 L110.9 137.8 C110.9 139.1 110.4 140.3 109.5 141.2 L102.6 148.1 C101.7 149 100.5 149.5 99.2 149.5 L84.4 149.5 C83.2 149.5 81.9 149 81 148.1 L74.1 141.2 C73.2 140.3 72.7 139.1 72.7 137.8 L72.7 80.2 C72.7 78.9 73.2 77.7 74.1 76.8 Z"/>
+    <!-- thorn step 2: small plate -->
+    <path id="plate3" fill="url(#amber-plate)" d="M122.2 83.5 C123.1 82.6 124.3 82.1 125.6 82.1 L137.8 82.1 C139.1 82.1 140.3 82.6 141.2 83.5 L146.5 88.8 C147.4 89.7 147.9 90.9 147.9 92.2 L147.9 125.8 C147.9 127.1 147.4 128.3 146.5 129.2 L141.2 134.5 C140.3 135.4 139.1 135.9 137.8 135.9 L125.6 135.9 C124.3 135.9 123.1 135.4 122.2 134.5 L116.9 129.2 C116 128.3 115.5 127.1 115.5 125.8 L115.5 92.2 C115.5 90.9 116 89.7 116.9 88.8 Z"/>
+  </g>
+  <g id="wordmark" fill="#1A100A">
+    <path d="M202.8 59 L268.8 59 L268.8 76 L202.8 76 Z"/>
+    <path d="M227.3 59 L244.3 59 L244.3 159 L227.3 159 Z"/>
+    <path d="M281.8 59 L298.8 59 L298.8 159 L281.8 159 Z"/>
+    <path d="M337.8 59 L354.8 59 L354.8 159 L337.8 159 Z"/>
+    <path d="M281.8 97.2 L354.8 97.2 L354.8 112.8 L281.8 112.8 Z"/>
+    <path d="M375.8 59 L392.8 59 L392.8 159 L375.8 159 Z"/>
+    <path d="M398.8 107.2 L418.8 107.2 L443.8 159 L423.8 159 Z"/>
+    <path d="M454.8 59 L474.2 59 L491.8 95.7 L509.4 59 L528.8 59 L500.3 118.5 L500.3 159 L483.3 159 L483.3 118.5 Z"/>
+    <path d="M544.8 159 L544.8 59 L562.2 59 L587.8 133.6 L613.3 59 L630.8 59 L630.8 159 L613.8 159 L613.8 108.6 L596.5 159 L579.1 159 L561.8 108.6 L561.8 159 Z"/>
+    <path fill-rule="evenodd" d="M375.78 59 H412.78 A28 28 0 0 1 412.78 115 H375.78 Z M392.78 76 V99.5 H412.53 A11.75 11.75 0 0 0 412.53 76 Z"/>
+  </g>
+</svg>

@@ -8,13 +8,14 @@ Name and icon:
 The Apache License does not cover the name "Thrym", the Thrym logo or the
 app icon. All rights to them are reserved. They are included only so that
 the official app can be built from this repository, and they are not
-licensed for use by forks. The icon files are:
+licensed for use by forks. The logo and icon files are:
+  docs/brand/ (all SVG files, including icon-composer/)
   app/src/main/res/drawable/ic_launcher_background.xml
   app/src/main/res/drawable/ic_launcher_foreground.xml
   app/src/main/res/drawable/ic_launcher_monochrome.xml
   app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
   app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
-  iosApp/ThrymIOS/Assets.xcassets/AppIcon.appiconset/ (AppIcon.png, AppIcon.svg)
+  iosApp/ThrymIOS/Assets.xcassets/AppIcon.appiconset/ (all images)
   fastlane/metadata/android/en-US/images/icon.png
 See README.md, section "License".
 
