@@ -4,10 +4,10 @@ Hinweise für KI-Agenten (Claude Code, Cursor u. a.). Überblick über das Proje
 
 Thrym (früher IronLog) ist eine Open-Source-App (Apache-2.0) zum Protokollieren von Krafttraining: offline, ohne Konto, alle Daten auf dem Gerät. Es gibt sie nativ auf zwei gleichberechtigten Plattformen:
 
-- **Android:** Kotlin, Jetpack Compose, mehrere Gradle-Module. `applicationId` `com.thrym.app`, minSdk 26, targetSdk 35, compileSdk 36.
+- **Android:** Kotlin, Jetpack Compose, mehrere Gradle-Module. `applicationId` `com.thrym.app`, minSdk 26, targetSdk 35, compileSdk 37.
 - **iOS:** SwiftUI-App in `iosApp/`. Bundle-ID `com.thrym.ios`, iOS 17.0+, Swift 5.10 Language Mode. Sie nutzt das Kotlin-Multiplatform-Modul `:shared` als Framework `Shared`.
 
-Gebaut wird mit Gradle 9.1.0 (Wrapper), AGP 9.0.0, Kotlin 2.3.10 und **JDK 17**, die iOS-App mit Xcode 26.x.
+Gebaut wird mit Gradle 9.8.1 (Wrapper), AGP 9.4.1, Kotlin 2.4.21 und **JDK 17**, die iOS-App mit Xcode 26.x.
 
 ## Sprache im Repository
 
@@ -17,7 +17,7 @@ Gebaut wird mit Gradle 9.1.0 (Wrapper), AGP 9.0.0, Kotlin 2.3.10 und **JDK 17**,
 
 ## Umgebung
 
-- **Claude Code im Web:** `.claude/hooks/session-start.sh` läuft beim Session-Start und richtet alles ein. Das sind JDK 17, Android SDK unter `~/android-sdk` (Plattformen 35 und 36, build-tools 36.0.0, platform-tools), `local.properties`, ein Maven-Central-Spiegel in `~/.gradle/init.d/` und die Variablen `JAVA_HOME`/`ANDROID_HOME`. Die Netzwerk-Policy der Umgebung muss `dl.google.com` und `maven.google.com` erlauben.
+- **Claude Code im Web:** `.claude/hooks/session-start.sh` läuft beim Session-Start und richtet alles ein. Das sind JDK 17, Android SDK unter `~/android-sdk` (Plattformen 35 und 37.0, build-tools 36.0.0, platform-tools), `local.properties`, ein Maven-Central-Spiegel in `~/.gradle/init.d/` und die Variablen `JAVA_HOME`/`ANDROID_HOME`. Die Netzwerk-Policy der Umgebung muss `dl.google.com` und `maven.google.com` erlauben.
 - **Cursor Cloud:** JDK 17, SDK und `local.properties` sind im VM-Snapshot vorinstalliert.
 - **Sonst (Linux):** vor Gradle-Aufrufen setzen:
   - `export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`

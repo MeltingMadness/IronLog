@@ -5,7 +5,7 @@
 
 android {
     namespace = "com.thrym.feature.history"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26

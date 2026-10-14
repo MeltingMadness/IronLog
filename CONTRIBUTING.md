@@ -21,9 +21,9 @@ By taking part, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). P
 **Android** (any OS):
 
 - JDK 17 (CI uses Temurin 17)
-- Android SDK with `platforms;android-35`, `platforms;android-36`, `build-tools;36.0.0` and `platform-tools`
+- Android SDK with `platforms;android-35`, `platforms;android-37.0`, `build-tools;36.0.0` and `platform-tools`
 - The SDK location, either through `ANDROID_HOME` or a `local.properties` file in the repository root containing `sdk.dir=/path/to/sdk`. The file is gitignored.
-- Gradle comes with the wrapper (`./gradlew`, Gradle 9.1.0). Android Studio is optional; if you use it, pick a version that supports AGP 9.0.
+- Gradle comes with the wrapper (`./gradlew`, Gradle 9.8.1). Android Studio is optional; if you use it, pick a version that supports AGP 9.4.
 
 **iOS** (macOS only):
 
@@ -31,7 +31,7 @@ By taking part, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). P
 - Python 3, for the project generator
 - JDK 17: the Xcode build phase runs Gradle to build the shared Kotlin framework. `iosApp/scripts/build-shared.sh` uses `JAVA_HOME` if it is set (it must be JDK 17). Otherwise it looks for JDK 17 through `/usr/libexec/java_home -v 17` and in the usual Homebrew locations. It does not install anything.
 
-Toolchain versions: Kotlin 2.3.10, AGP 9.0.0, minSdk 26, targetSdk 35, compileSdk 36, iOS deployment target 17.0, Swift 5.10 language mode.
+Toolchain versions: Kotlin 2.4.21, AGP 9.4.1, minSdk 26, targetSdk 35, compileSdk 37, iOS deployment target 17.0, Swift 5.10 language mode.
 
 ## Android: build and test
 

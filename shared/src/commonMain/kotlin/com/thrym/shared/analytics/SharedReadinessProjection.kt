@@ -21,10 +21,10 @@ import com.thrym.shared.readiness.SetIntentionCodes
 import com.thrym.shared.readiness.SetType
 import com.thrym.shared.readiness.TodaySessionInput
 import com.thrym.shared.readiness.TrendSetInput
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 /**
  * Binds the neutral readiness core to the durable training graph.

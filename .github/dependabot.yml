@@ -8,10 +8,6 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
-    ignore:
-      # Haze 1.7.3+ needs Compose 1.12 (see gradle/libs.versions.toml); drop this once Compose is upgraded.
-      - dependency-name: "dev.chrisbanes.haze:haze"
-        versions: [">=1.7.3"]
     groups:
       gradle-minor-and-patch:
         patterns:

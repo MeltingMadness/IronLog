@@ -25,13 +25,13 @@ import com.thrym.shared.readinessdata.ReadinessCheckIn
 import com.thrym.shared.readinessdata.ReadinessData
 import com.thrym.shared.readinessdata.SetIntention
 import com.thrym.shared.readinessdata.SetIntentionRecord
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 /**
  * Targeted adapter tests. They cover the mapping decisions that are easy to get

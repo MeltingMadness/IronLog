@@ -11,6 +11,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import com.thrym.core.designsystem.R
 import com.thrym.app.domain.util.DateFormatting
@@ -28,7 +29,7 @@ import java.util.Locale
 @Composable
 @ReadOnlyComposable
 fun currentLocale(): Locale = uiLocale(
-    configured = LocalConfiguration.current.locales[0] ?: Locale.getDefault(),
+    configured = LocalLocale.current.platformLocale,
     resolvedLanguage = stringResource(R.string.ui_language_tag)
 )
 
